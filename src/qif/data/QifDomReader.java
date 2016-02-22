@@ -91,7 +91,7 @@ public class QifDomReader {
 
 		this.refdom = refdom;
 
-		this.dom = new QifDom(refdom);
+		this.dom = (refdom != null) ? new QifDom(refdom) : new QifDom();
 		this.rdr = new QFileReader(f);
 
 		this.nextAccountID = 1;
@@ -185,7 +185,7 @@ public class QifDomReader {
 		}
 
 		if (null == dom.findCategory("Fix Me")) {
-			Category cat = new Category(this.nextAccountID++);
+			Category cat = new Category(this.nextCategoryID++);
 			cat.name = "Fix Me";
 			dom.addCategory(cat);
 		}
@@ -242,8 +242,13 @@ public class QifDomReader {
 				break;
 			}
 
-			acct.id = this.nextAccountID++;
-			dom.addAccount(acct);
+			Account existing = this.dom.findAccount(acct.name);
+			if (existing != null) {
+				dom.updateAccount(existing, acct);
+			} else {
+				acct.id = this.nextAccountID++;
+				dom.addAccount(acct);
+			}
 		}
 	}
 
@@ -276,6 +281,59 @@ public class QifDomReader {
 				break;
 			case AcctStmtDate:
 				acct.stmtDate = Common.GetDate(qline.value);
+				break;
+
+			default:
+				Common.reportError("syntax error");
+			}
+		}
+	}
+
+	private void readSecurities() {
+		for (;;) {
+			String s = this.rdr.peekLine();
+			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
+				break;
+			}
+
+			Security sec = loadSecurity();
+			if (sec == null) {
+				break;
+			}
+
+			Security existing = this.dom.findSecurityByName(sec.name);
+			if (existing != null) {
+				// TODO verify
+			} else {
+				sec.id = this.nextSecurityID++;
+				dom.securities.add(sec);
+			}
+		}
+	}
+
+	public Security loadSecurity() {
+		QFileReader.QLine qline = new QFileReader.QLine();
+
+		Security security = new Security();
+
+		for (;;) {
+			this.rdr.nextSecurityLine(qline);
+
+			switch (qline.type) {
+			case EndOfSection:
+				return security;
+
+			case SecName:
+				security.name = qline.value;
+				break;
+			case SecSymbol:
+				security.symbol = qline.value;
+				break;
+			case SecType:
+				security.type = qline.value;
+				break;
+			case SecGoal:
+				security.goal = qline.value;
 				break;
 
 			default:
@@ -570,53 +628,6 @@ public class QifDomReader {
 
 			Security sec = dom.findSecurityBySymbol(price.symbol);
 			sec.addPrice(price);
-		}
-	}
-
-	private void readSecurities() {
-		for (;;) {
-			String s = this.rdr.peekLine();
-			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
-				break;
-			}
-
-			Security sec = loadSecurity();
-			if (sec == null) {
-				break;
-			}
-
-			dom.securities.add(sec);
-		}
-	}
-
-	public Security loadSecurity() {
-		QFileReader.QLine qline = new QFileReader.QLine();
-
-		Security security = new Security(this.nextSecurityID++);
-
-		for (;;) {
-			this.rdr.nextSecurityLine(qline);
-
-			switch (qline.type) {
-			case EndOfSection:
-				return security;
-
-			case SecName:
-				security.name = qline.value;
-				break;
-			case SecSymbol:
-				security.symbol = qline.value;
-				break;
-			case SecType:
-				security.type = qline.value;
-				break;
-			case SecGoal:
-				security.goal = qline.value;
-				break;
-
-			default:
-				Common.reportError("syntax error");
-			}
 		}
 	}
 

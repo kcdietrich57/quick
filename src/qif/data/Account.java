@@ -81,13 +81,13 @@ public class Account {
 		stmtDate = other.stmtDate;
 		stmtBalance = other.stmtBalance;
 
-//		for (GenericTxn t : other.transactions) {
-//			this.transactions.add(GenericTxn.cloneTransaction(t));
-//		}
-//
-//		for (Statement s : this.statements) {
-//			this.statements.add(s);
-//		}
+		// for (GenericTxn t : other.transactions) {
+		// this.transactions.add(GenericTxn.cloneTransaction(t));
+		// }
+		//
+		// for (Statement s : this.statements) {
+		// this.statements.add(s);
+		// }
 	}
 
 	public boolean isNonInvestmentAccount() {
