@@ -3,10 +3,8 @@ package qif.data;
 
 import java.math.BigDecimal;
 
-// !Type:Cat
-class Category {
-	private static short nextid = 1;
-	public final short id;
+public class Category {
+	public short id;
 
 	public String name;
 	public String description;
@@ -22,46 +20,22 @@ class Category {
 	// }
 
 	public Category() {
-		this.id = nextid++;
+		this.id = (short) 0;
 	}
 
-	public static Category load(QFileReader reader) {
-		QFileReader.QLine qline = new QFileReader.QLine();
+	public Category(short id) {
+		this.id = id;
+	}
 
-		Category cat = new Category();
+	public Category(Category other) {
+		this(other.id);
 
-		for (;;) {
-			reader.nextCategoryLine(qline);
-
-			switch (qline.type) {
-			case EndOfSection:
-				return cat;
-
-			case CatName:
-				cat.name = qline.value;
-				break;
-			case CatDescription:
-				cat.description = qline.value;
-				break;
-			case CatTaxRelated:
-				cat.taxRelated = Common.GetBoolean(qline.value);
-				break;
-			case CatIncomeCategory:
-				cat.incomeCategory = Common.GetBoolean(qline.value);
-				break;
-			case CatExpenseCategory:
-				cat.expenseCategory = Common.GetBoolean(qline.value);
-				break;
-			case CatBudgetAmount:
-				cat.budgetAmount = Common.getDecimal(qline.value);
-				break;
-			case CatTaxSchedule:
-				break;
-
-			default:
-				Common.reportError("syntax error");
-			}
-		}
+		this.name = other.name;
+		this.description = other.description;
+		this.taxRelated = other.taxRelated;
+		incomeCategory = other.incomeCategory;
+		expenseCategory = other.expenseCategory;
+		budgetAmount = other.budgetAmount;
 	}
 
 	public String toString() {
@@ -75,25 +49,4 @@ class Category {
 
 		return s;
 	}
-
-	// static void Export(StreamWriter writer, List<CategoryListTransaction>
-	// list) {
-	// if ((list == null) || (list.Count == 0)) {
-	// return;
-	// }
-	//
-	// writer.WriteLine(Headers.CategoryList);
-	//
-	// foreach (CategoryListTransaction item in list) {
-	// writer.WriteLine(BudgetAmount +
-	// item.BudgetAmount.ToString(CultureInfo.CurrentCulture));
-	// writeIfSet(CategoryName, item.CategoryName);
-	// writeIfSet(Description, item.Description);
-	// writer.WriteLine(ExpenseCategory + item.ExpenseCategory.ToString());
-	// writer.WriteLine(IncomeCategory + item.IncomeCategory.ToString());
-	// writer.WriteLine(TaxRelated + item.TaxRelated.ToString());
-	// writeIfSet(TaxSchedule, item.TaxSchedule);
-	// writer.WriteLine(EndOfEntry);
-	// }
-	// }
 };

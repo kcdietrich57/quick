@@ -1,11 +1,7 @@
 ﻿
 package qif.data;
 
-import java.io.File;
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 //--------------------------------------------------------------------
@@ -23,47 +19,26 @@ import java.util.List;
 // 2/13 Non-Investment Statements
 // 2/16 Balance Non-Investment Statements
 // 2/20 Relaxed loading, fix load bugs, better errors, load old files
+// 2/21 Add to git
+// Merge/compare files
 //
-// Non-investment running balance
-// Investment cash balance
-// Investment share balance
+//Code review/cleanup
+//Point-in time positions (net worth)
+//Investment cash balance
+//Investment transactions - share balance
+// Non-investment register - running balance
 //
 // Encryption, security
 // Persistence
-// Register
+// GUI Register
 // Reports
-// Statements
-// Net worth
-// Graphics
+// Graphs
 //
 // Look up transaction by id?
 //--------------------------------------------------------------------
 
 // Document Object Model for a QIF file.
 public class QifDom {
-	public static void main(String[] args) {
-		String file = "/tmp/dietrich.qif";
-		file = "/tmp/jk.qif";
-		if (new File("c:" + file).exists()) {
-			file = "c:" + file;
-		}
-
-		if (!new File(file).exists()) {
-			System.out.println("Input file '" + file + "' does not exist");
-			;
-			return;
-		}
-
-		QifDomReader rdr = new QifDomReader();
-		rdr.load(file);
-
-		QifDom.thedom.reportAccounts();
-
-		// System.out.println(dom);
-	}
-
-	public static QifDom thedom = null;
-
 	public List<Account> accounts;
 	public List<Account> accounts_bytime;
 	public List<Category> categories;
@@ -75,15 +50,23 @@ public class QifDom {
 	public Account currAccount = null;
 
 	public QifDom() {
-		thedom = this;
-
+		this.categories = new ArrayList<Category>();
 		this.accounts = new ArrayList<Account>();
 		this.accounts_bytime = new ArrayList<Account>();
-		this.categories = new ArrayList<Category>();
 		this.securities = new ArrayList<Security>();
 
 		// this.classes = new ArrayList<Class>();
 		// this.memorizedTxns = new ArrayList<MemorizedTxn>();
+	}
+
+	public QifDom(QifDom other) {
+		this();
+
+		for (Category c : other.categories) {
+			if (c != null) {
+				addCategory(new Category(c));
+			}
+		}
 	}
 
 	public String toString() {
@@ -193,111 +176,5 @@ public class QifDom {
 		// System.out.println("Updating account:\n" //
 		// + " " + existing //
 		// + " " + newacct);
-	}
-
-	private void reportAccounts() {
-		System.out.println("============================");
-		System.out.println("Accounts");
-		System.out.println("============================");
-
-		for (Account a : this.accounts_bytime) {
-			if (a == null) {
-				continue;
-			}
-
-			switch (a.type) {
-			case Bank:
-			case CCard:
-			case Cash:
-			case Asset:
-			case Liability:
-				reportNonInvestmentAccount(a, true);
-				break;
-
-			case Inv401k:
-			case InvMutual:
-			case InvPort:
-			case Invest:
-				reportInvestmentAccount(a);
-				break;
-
-			default:
-				break;
-			}
-		}
-	}
-
-	private void reportNonInvestmentAccount(Account a, boolean includePseudoStatements) {
-		System.out.println("----------------------------");
-		System.out.println(a.name + " " + a.type + " " + a.description);
-		int ntran = a.transactions.size();
-
-		// System.out.println(" " + ntran + " transactions");
-
-		if (ntran > 0) {
-			GenericTxn ft = a.transactions.get(0);
-			GenericTxn lt = a.transactions.get(ntran - 1);
-
-			System.out.println("    Date range: " //
-					+ Common.getDateString(ft.getDate()) //
-					+ " - " + Common.getDateString(lt.getDate()));
-			if (includePseudoStatements) {
-				System.out.println("----------------------------");
-			}
-
-			int curNumTxn = 0;
-			int curYear = -1;
-			int curMonth = -1;
-			BigDecimal bal = new BigDecimal(0);
-			Calendar cal = Calendar.getInstance();
-
-			for (GenericTxn t : a.transactions) {
-				Date d = t.getDate();
-				cal.setTime(d);
-
-				if (includePseudoStatements) {
-					if ((cal.get(Calendar.YEAR) != curYear) //
-							|| (cal.get(Calendar.MONTH) != curMonth)) {
-						System.out.println(Common.getDateString(t.getDate()) //
-								+ ": " + bal //
-								+ " " + curNumTxn + " transactions");
-
-						curNumTxn = 0;
-						curYear = cal.get(Calendar.YEAR);
-						curMonth = cal.get(Calendar.MONTH);
-					}
-
-					++curNumTxn;
-				}
-
-				bal = bal.add(t.amount);
-			}
-
-			System.out.println("    " + ntran + " transactions");
-			System.out.println("    Final: " + bal);
-			// System.out.println(a.name + " " + a.type + " " + a.description);
-		}
-
-		System.out.println("----------------------------");
-	}
-
-	private void reportInvestmentAccount(Account a) {
-		System.out.println("----------------------------");
-		System.out.println(a.name + " " + a.type + " " + a.description);
-		int ntran = a.transactions.size();
-
-		System.out.println("" + ntran + " transactions");
-
-		if (ntran > 0) {
-			GenericTxn ft = a.transactions.get(0);
-			GenericTxn lt = a.transactions.get(ntran - 1);
-
-			System.out.println("Date range: " //
-					+ Common.getDateString(ft.getDate()) //
-					+ " - " + Common.getDateString(lt.getDate()));
-			System.out.println("----------------------------");
-		}
-
-		System.out.println("----------------------------");
 	}
 };

@@ -41,18 +41,18 @@ class SimpleTxn {
 		return this.amount;
 	}
 
-	public String toString() {
+	public String toString(QifDom dom) {
 		String s = "Tx" + this.id + ":";
-		s += " acct=" + QifDom.thedom.accounts.get(this.acctid).name;
+		s += " acct=" + dom.accounts.get(this.acctid).name;
 		s += " amt=" + this.amount;
 		s += " memo=" + this.memo;
 		if (this.xacct < (short) 0) {
-			s += " xacct=" + QifDom.thedom.accounts.get(-this.xacct).name;
+			s += " xacct=" + dom.accounts.get(-this.xacct).name;
 		}
 		if (this.catid < (short) 0) {
-			s += " xcat=" + QifDom.thedom.accounts.get(-this.catid).name;
+			s += " xcat=" + dom.accounts.get(-this.catid).name;
 		} else if (this.catid > (short) 0) {
-			s += " cat=" + QifDom.thedom.categories.get(this.catid).name;
+			s += " cat=" + dom.categories.get(this.catid).name;
 		}
 
 		return s;
@@ -233,8 +233,8 @@ class NonInvestmentTxn extends GenericTxn {
 		}
 	}
 
-	public String toString() {
-		return toStringLong();
+	public String toString(QifDom dom) {
+		return toStringLong(dom);
 	}
 
 	public String toStringShort() {
@@ -246,9 +246,9 @@ class NonInvestmentTxn extends GenericTxn {
 		return s;
 	}
 
-	public String toStringLong() {
+	public String toStringLong(QifDom dom) {
 		String s = "Tx" + this.id + ":";
-		s += " acct=" + QifDom.thedom.accounts.get(this.acctid).name;
+		s += " acct=" + dom.accounts.get(this.acctid).name;
 		s += " date=" + Common.getDateString(getDate());
 		s += " clr:" + this.clearedStatus;
 		s += " num=" + this.chkNumber;
@@ -256,9 +256,9 @@ class NonInvestmentTxn extends GenericTxn {
 		s += " amt=" + this.amount;
 		s += " memo=" + this.memo;
 		if (this.catid < (short) 0) {
-			s += " xacct=[" + QifDom.thedom.accounts.get(-this.catid).name + "]";
+			s += " xacct=[" + dom.accounts.get(-this.catid).name + "]";
 		} else if (this.catid > (short) 0) {
-			s += " cat=" + QifDom.thedom.categories.get(this.catid).name;
+			s += " cat=" + dom.categories.get(this.catid).name;
 		}
 
 		if (!this.address.isEmpty()) {
@@ -276,10 +276,10 @@ class NonInvestmentTxn extends GenericTxn {
 
 			for (SimpleTxn txn : this.split) {
 				if (txn.catid < (short) 0) {
-					s += " [" + QifDom.thedom.accounts.get(-txn.catid).name + "]";
+					s += " [" + dom.accounts.get(-txn.catid).name + "]";
 				}
 				if (txn.catid > (short) 0) {
-					s += " " + QifDom.thedom.categories.get(txn.catid).name;
+					s += " " + dom.categories.get(txn.catid).name;
 				}
 				s += " " + txn.amount;
 				if (txn.memo != null) {

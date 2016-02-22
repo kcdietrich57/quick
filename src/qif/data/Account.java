@@ -1,13 +1,5 @@
 ﻿package qif.data;
 
-import static qif.data.Headers.ACCT_CREDITLIMIT;
-import static qif.data.Headers.ACCT_DESCRIPTION;
-import static qif.data.Headers.ACCT_STMTBAL;
-import static qif.data.Headers.ACCT_STMTDATE;
-import static qif.data.Headers.ACCT_TYPE;
-import static qif.data.Headers.END;
-
-import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
@@ -51,64 +43,51 @@ public class Account {
 		}
 	};
 
-	private static short nextid = 1;
-	public final short id;
-
+	public short id;
 	public String name;
 	public AcctType type;
 	public String description;
 	public BigDecimal creditLimit;
 	public Date stmtDate;
 	public BigDecimal stmtBalance;
-	List<Statement> statements;
 
 	public List<GenericTxn> transactions;
+	public List<Statement> statements;
 
 	public Account() {
-		this.id = nextid++;
-
-		name = "";
-		description = "";
+		this.id = 0;
 
 		this.transactions = new ArrayList<GenericTxn>();
 		this.statements = new ArrayList<Statement>();
+
+		name = "";
+		description = "";
 	}
 
-	public static Account load(QFileReader qfr) {
-		QFileReader.QLine qline = new QFileReader.QLine();
+	public Account(short id) {
+		this();
 
-		Account acct = new Account();
+		this.id = id;
+	}
 
-		for (;;) {
-			qfr.nextAccountLine(qline);
+	public Account(Account other) {
+		this(other.id);
 
-			switch (qline.type) {
-			case EndOfSection:
-				return acct;
+		id = other.id;
+		name = other.name;
+		type = other.type;
+		description = other.description;
+		creditLimit = other.creditLimit;
+		stmtDate = other.stmtDate;
+		stmtBalance = other.stmtBalance;
 
-			case AcctType:
-				acct.type = AcctType.parse(qline.value);
-				break;
-			case AcctCreditLimit:
-				acct.creditLimit = Common.getDecimal(qline.value);
-				break;
-			case AcctDescription:
-				acct.description = qline.value;
-				break;
-			case AcctName:
-				acct.name = qline.value;
-				break;
-			case AcctStmtBal:
-				acct.stmtBalance = Common.getDecimal(qline.value);
-				break;
-			case AcctStmtDate:
-				acct.stmtDate = Common.GetDate(qline.value);
-				break;
-
-			default:
-				Common.reportError("syntax error");
-			}
-		}
+//		for (GenericTxn t : other.transactions) {
+//			this.transactions.add(GenericTxn.cloneTransaction(t));
+//		}
+//
+//		for (Statement s : this.statements) {
+//			this.statements.add(s);
+//		}
 	}
 
 	public boolean isNonInvestmentAccount() {
@@ -161,23 +140,5 @@ public class Account {
 				+ "\n";
 
 		return s;
-	}
-
-	public static void export(PrintWriter pw, List<Account> list) {
-		if ((list == null) || (list.size() == 0)) {
-			return;
-		}
-
-		Common.writeln(pw, Headers.HdrAccount);
-
-		for (Account acct : list) {
-			Common.writeIfSet(pw, ACCT_TYPE, "" + acct.type);
-			Common.write(pw, ACCT_CREDITLIMIT, acct.creditLimit.toString());
-			Common.writeIfSet(pw, ACCT_DESCRIPTION, acct.description);
-			Common.writeIfSet(pw, Headers.ACCT_NAME, acct.name);
-			Common.write(pw, ACCT_STMTBAL, acct.stmtBalance.toString());
-			Common.write(pw, ACCT_STMTDATE, acct.stmtDate.toString());
-			Common.write(pw, END);
-		}
 	}
 };

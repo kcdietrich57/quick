@@ -8,24 +8,40 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import qif.data.Account.AcctType;
 import qif.data.QFileReader.SectionType;
 
-class QifDomReader {
-	QFileReader rdr;
-	QifDom dom;
+public class QifDomReader {
+	private QFileReader rdr = null;
+	private QifDom dom = null;
+	private QifDom refdom = null;
+	private short nextAccountID = 1;
+	private short nextCategoryID = 1;
+	private short nextSecurityID = 1;
 
 	public QifDomReader() {
-		this.rdr = null;
-		this.dom = null;
 	}
 
-	public void load(String fileName) {
-		init(fileName);
+	public QifDom load(String fileName) {
+		return load(null, fileName);
+	}
+
+	public QifDom load(QifDom refdom, String fileName) {
+		if (new File("c:" + fileName).exists()) {
+			fileName = "c:" + fileName;
+		} else if (!new File(fileName).exists()) {
+			Common.reportError("Input file '" + fileName + "' does not exist");
+
+			return null;
+		}
+
+		init(fileName, refdom);
+
 		processFile();
 		cleanUpTransactions();
 		validateStatements();
 
-		Collections.sort(QifDom.thedom.accounts_bytime, new Comparator<Account>() {
+		Collections.sort(this.dom.accounts_bytime, new Comparator<Account>() {
 			public int compare(Account a1, Account a2) {
 				if (a1 == null) {
 					return (a2 == null) ? 0 : 1;
@@ -63,16 +79,23 @@ class QifDomReader {
 		});
 
 		balanceStatements();
+
+		return this.dom;
 	}
 
-	private void init(String filename) {
+	private void init(String filename, QifDom refdom) {
 		File f = new File(filename);
 		if (!f.exists()) {
 			Common.reportError("File '" + filename + "' does not exist");
 		}
 
-		this.dom = new QifDom();
+		this.refdom = refdom;
+
+		this.dom = new QifDom(refdom);
 		this.rdr = new QFileReader(f);
+
+		this.nextAccountID = 1;
+		this.nextCategoryID = 1;
 	}
 
 	private void processFile() {
@@ -82,25 +105,15 @@ class QifDomReader {
 		sectype != SectionType.EndOfFile; //
 		sectype = this.rdr.nextSection()) {
 			switch (sectype) {
-			case Account:
-				readAccounts();
-				break;
-
-			case Statement:
-				readStatements();
-				break;
-
-			case Security:
-				readSecurities();
-				break;
-
-			case Prices:
-				readPrices();
-				break;
-
 			case Tag:
 			case Category:
+				System.out.println("Loading categories");
 				readCategories();
+				break;
+
+			case Account:
+				System.out.println("Loading accounts");
+				readAccounts();
 				break;
 
 			case Asset:
@@ -108,11 +121,30 @@ class QifDomReader {
 			case Cash:
 			case CreditCard:
 			case Bank:
+				System.out.println("Loading transactions for " + this.dom.currAccount.name);
 				loadNonInvestmentTransactions();
 				break;
 
 			case Investment:
+				System.out.println("Loading transactions for " + this.dom.currAccount.name);
 				loadInvestmentTransactions();
+				break;
+
+			case Statement:
+				System.out.println("Loading statements");
+				readStatements();
+				break;
+
+			case Security:
+				if (this.dom.securities.isEmpty()) {
+					System.out.println("Loading securities");
+				}
+				readSecurities();
+				break;
+
+			case Prices:
+				// System.out.println("Loading prices");
+				readPrices();
 				break;
 
 			case QClass:
@@ -127,6 +159,127 @@ class QifDomReader {
 
 			default:
 				break;
+			}
+		}
+	}
+
+	private void readCategories() {
+		for (;;) {
+			String s = this.rdr.peekLine();
+			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
+				break;
+			}
+
+			Category cat = loadCategory();
+			if (cat == null) {
+				break;
+			}
+
+			Category existing = this.dom.findCategory(cat.name);
+			if (existing != null) {
+				// TODO verify
+			} else {
+				cat.id = this.nextCategoryID++;
+				dom.addCategory(cat);
+			}
+		}
+
+		if (null == dom.findCategory("Fix Me")) {
+			Category cat = new Category(this.nextAccountID++);
+			cat.name = "Fix Me";
+			dom.addCategory(cat);
+		}
+	}
+
+	public Category loadCategory() {
+		QFileReader.QLine qline = new QFileReader.QLine();
+
+		Category cat = new Category();
+
+		for (;;) {
+			this.rdr.nextCategoryLine(qline);
+
+			switch (qline.type) {
+			case EndOfSection:
+				return cat;
+
+			case CatName:
+				cat.name = qline.value;
+				break;
+			case CatDescription:
+				cat.description = qline.value;
+				break;
+			case CatTaxRelated:
+				cat.taxRelated = Common.GetBoolean(qline.value);
+				break;
+			case CatIncomeCategory:
+				cat.incomeCategory = Common.GetBoolean(qline.value);
+				break;
+			case CatExpenseCategory:
+				cat.expenseCategory = Common.GetBoolean(qline.value);
+				break;
+			case CatBudgetAmount:
+				cat.budgetAmount = Common.getDecimal(qline.value);
+				break;
+			case CatTaxSchedule:
+				break;
+
+			default:
+				Common.reportError("syntax error");
+			}
+		}
+	}
+
+	private void readAccounts() {
+		for (;;) {
+			String s = this.rdr.peekLine();
+			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
+				break;
+			}
+
+			Account acct = loadAccount();
+			if (acct == null) {
+				break;
+			}
+
+			acct.id = this.nextAccountID++;
+			dom.addAccount(acct);
+		}
+	}
+
+	public Account loadAccount() {
+		QFileReader.QLine qline = new QFileReader.QLine();
+
+		Account acct = new Account();
+
+		for (;;) {
+			this.rdr.nextAccountLine(qline);
+
+			switch (qline.type) {
+			case EndOfSection:
+				return acct;
+
+			case AcctType:
+				acct.type = AcctType.parse(qline.value);
+				break;
+			case AcctCreditLimit:
+				acct.creditLimit = Common.getDecimal(qline.value);
+				break;
+			case AcctDescription:
+				acct.description = qline.value;
+				break;
+			case AcctName:
+				acct.name = qline.value;
+				break;
+			case AcctStmtBal:
+				acct.stmtBalance = Common.getDecimal(qline.value);
+				break;
+			case AcctStmtDate:
+				acct.stmtDate = Common.GetDate(qline.value);
+				break;
+
+			default:
+				Common.reportError("syntax error");
 			}
 		}
 	}
@@ -403,28 +556,6 @@ class QifDomReader {
 		}
 	}
 
-	private void readCategories() {
-		for (;;) {
-			String s = this.rdr.peekLine();
-			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
-				break;
-			}
-
-			Category cat = Category.load(this.rdr);
-			if (cat == null) {
-				break;
-			}
-
-			dom.addCategory(cat);
-		}
-		
-		if (null == dom.findCategory("Fix Me")) {
-			Category cat = new Category();
-			cat.name = "Fix Me";
-			dom.addCategory(cat);
-		}
-	}
-
 	private void readPrices() {
 		for (;;) {
 			String s = this.rdr.peekLine();
@@ -449,12 +580,43 @@ class QifDomReader {
 				break;
 			}
 
-			Security sec = Security.load(this.rdr);
+			Security sec = loadSecurity();
 			if (sec == null) {
 				break;
 			}
 
 			dom.securities.add(sec);
+		}
+	}
+
+	public Security loadSecurity() {
+		QFileReader.QLine qline = new QFileReader.QLine();
+
+		Security security = new Security(this.nextSecurityID++);
+
+		for (;;) {
+			this.rdr.nextSecurityLine(qline);
+
+			switch (qline.type) {
+			case EndOfSection:
+				return security;
+
+			case SecName:
+				security.name = qline.value;
+				break;
+			case SecSymbol:
+				security.symbol = qline.value;
+				break;
+			case SecType:
+				security.type = qline.value;
+				break;
+			case SecGoal:
+				security.goal = qline.value;
+				break;
+
+			default:
+				Common.reportError("syntax error");
+			}
 		}
 	}
 
@@ -471,22 +633,6 @@ class QifDomReader {
 			}
 
 			dom.currAccount.statements.add(stmt);
-		}
-	}
-
-	private void readAccounts() {
-		for (;;) {
-			String s = this.rdr.peekLine();
-			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
-				break;
-			}
-
-			Account acct = Account.load(this.rdr);
-			if (acct == null) {
-				break;
-			}
-
-			dom.addAccount(acct);
 		}
 	}
 
