@@ -13,16 +13,36 @@ class SimpleTxn {
 	public final long id;
 
 	public short acctid;
+
 	protected BigDecimal amount;
 	public String memo;
 
-	public short xacct = 0;
+	public short xacctid;
 	public short catid; // >0: CategoryID; <0 AccountID
-	public SimpleTxn xtxn = null;
+	public SimpleTxn xtxn;
 
 	public SimpleTxn(short acctid) {
 		this.id = nextid++;
+
 		this.acctid = acctid;
+		this.amount = null;
+		this.memo = null;
+
+		this.catid = 0;
+		this.xacctid = 0;
+		this.xtxn = null;
+	}
+
+	public SimpleTxn(SimpleTxn other) {
+		this.id = nextid++;
+
+		this.acctid = other.acctid;
+		this.amount = other.amount;
+		this.memo = other.memo;
+		this.catid = other.catid;
+
+		this.xacctid = 0;
+		this.xtxn = null;
 	}
 
 	public boolean hasSplits() {
@@ -43,19 +63,27 @@ class SimpleTxn {
 
 	public String toString(QifDom dom) {
 		String s = "Tx" + this.id + ":";
-		s += " acct=" + dom.accounts.get(this.acctid).name;
+		s += " acct=" + ((dom != null) ? dom.accounts.get(this.acctid).name : this.acctid);
 		s += " amt=" + this.amount;
 		s += " memo=" + this.memo;
-		if (this.xacct < (short) 0) {
-			s += " xacct=" + dom.accounts.get(-this.xacct).name;
-		}
-		if (this.catid < (short) 0) {
-			s += " xcat=" + dom.accounts.get(-this.catid).name;
-		} else if (this.catid > (short) 0) {
-			s += " cat=" + dom.categories.get(this.catid).name;
+
+		if (dom == null) {
+			s += " acctid=" + this.xacctid;
+		} else {
+			if (this.xacctid < (short) 0) {
+				s += " xacct=" + dom.accounts.get(-this.xacctid).name;
+			} else if (this.catid < (short) 0) {
+				s += " xcat=" + dom.accounts.get(-this.catid).name;
+			} else if (this.catid > (short) 0) {
+				s += " cat=" + dom.categories.get(this.catid).name;
+			}
 		}
 
 		return s;
+	}
+
+	public String toString() {
+		return toString(null);
 	}
 };
 
@@ -65,6 +93,14 @@ class MultiSplitTxn extends SimpleTxn {
 	public MultiSplitTxn(short acctid) {
 		super(acctid);
 	}
+
+	public MultiSplitTxn(MultiSplitTxn other) {
+		super(other);
+
+		for (SimpleTxn st : other.subsplits) {
+			this.subsplits.add(new SimpleTxn(st));
+		}
+	}
 };
 
 public abstract class GenericTxn extends SimpleTxn {
@@ -72,12 +108,31 @@ public abstract class GenericTxn extends SimpleTxn {
 	public String clearedStatus;
 	public Date stmtdate;
 
+	public static GenericTxn clone(GenericTxn txn) {
+		if (txn instanceof NonInvestmentTxn) {
+			return new NonInvestmentTxn((NonInvestmentTxn) txn);
+		}
+		if (txn instanceof InvestmentTxn) {
+			return new InvestmentTxn((InvestmentTxn) txn);
+		}
+
+		return null;
+	}
+
 	public GenericTxn(short acctid) {
 		super(acctid);
 
 		this.date = null;
 		this.clearedStatus = null;
 		this.stmtdate = null;
+	}
+
+	public GenericTxn(GenericTxn other) {
+		super(other);
+
+		this.date = other.date;
+		this.clearedStatus = other.clearedStatus;
+		this.stmtdate = other.stmtdate;
 	}
 
 	public boolean isCleared() {
@@ -103,6 +158,10 @@ public abstract class GenericTxn extends SimpleTxn {
 };
 
 class NonInvestmentTxn extends GenericTxn {
+	public enum TransactionType {
+		Check, Deposit, Payment, Investment, ElectronicPayee
+	};
+
 	public String chkNumber;
 	public String payee;
 
@@ -112,13 +171,28 @@ class NonInvestmentTxn extends GenericTxn {
 	public NonInvestmentTxn(short acctid) {
 		super(acctid);
 
-		clearedStatus = "";
-		chkNumber = "";
-		payee = "";
-		memo = "";
-		catid = 0;
-		address = new ArrayList<String>();
+		this.chkNumber = "";
+		this.payee = "";
+
+		this.address = new ArrayList<String>();
 		this.split = new ArrayList<SimpleTxn>();
+	}
+
+	public NonInvestmentTxn(NonInvestmentTxn other) {
+		super(other);
+
+		this.chkNumber = other.chkNumber;
+		this.payee = other.payee;
+
+		this.address = new ArrayList<String>();
+		this.split = new ArrayList<SimpleTxn>();
+
+		for (String a : other.address) {
+			this.address.add(new String(a));
+		}
+		for (SimpleTxn st : other.split) {
+			this.split.add(st);
+		}
 	}
 
 	public boolean hasSplits() {
@@ -127,94 +201,6 @@ class NonInvestmentTxn extends GenericTxn {
 
 	public List<SimpleTxn> getSplits() {
 		return this.split;
-	}
-
-	public static NonInvestmentTxn load(QFileReader qfr, QifDom dom) {
-		QFileReader.QLine qline = new QFileReader.QLine();
-
-		NonInvestmentTxn txn = new NonInvestmentTxn(dom.currAccount.id);
-		SimpleTxn cursplit = null;
-
-		for (;;) {
-			qfr.nextTxnLine(qline);
-
-			switch (qline.type) {
-			case EndOfSection:
-				return txn;
-
-			case TxnCategory:
-				txn.catid = dom.findCategoryID(qline.value);
-
-				if (txn.catid == 0) {
-					Common.reportError("Can't find xtxn: " + qline.value);
-				}
-				break;
-			case TxnAmount: {
-				BigDecimal amt = Common.getDecimal(qline.value);
-
-				if (txn.amount != null) {
-					if (!txn.amount.equals(amt)) {
-						Common.reportError("Inconsistent amount: " + qline.value);
-					}
-				} else {
-					txn.amount = amt;
-				}
-
-				break;
-			}
-			case TxnMemo:
-				txn.memo = qline.value;
-				break;
-
-			case TxnDate:
-				txn.setDate(Common.GetDate(qline.value));
-				break;
-			case TxnClearedStatus:
-				txn.clearedStatus = qline.value;
-				break;
-			case TxnNumber:
-				txn.chkNumber = qline.value;
-				break;
-			case TxnPayee:
-				txn.payee = qline.value;
-				break;
-			case TxnAddress:
-				txn.address.add(qline.value);
-				break;
-
-			case TxnSplitCategory:
-				if (cursplit == null || cursplit.catid != 0) {
-					cursplit = new SimpleTxn(txn.acctid);
-					txn.split.add(cursplit);
-				}
-
-				if (qline.value == null || qline.value.trim().isEmpty()) {
-					qline.value = "Fix Me";
-				}
-				cursplit.catid = dom.findCategoryID(qline.value);
-
-				if (cursplit.catid == 0) {
-					Common.reportError("Can't find xtxn: " + qline.value);
-				}
-				break;
-			case TxnSplitAmount:
-				if (cursplit == null || cursplit.amount != null) {
-					txn.split.add(cursplit);
-					cursplit = new SimpleTxn(txn.acctid);
-				}
-
-				cursplit.amount = Common.getDecimal(qline.value);
-				break;
-			case TxnSplitMemo:
-				if (cursplit != null) {
-					cursplit.memo = qline.value;
-				}
-				break;
-
-			default:
-				Common.reportError("syntax error; txn: " + qline);
-			}
-		}
 	}
 
 	public void verifySplit() {
@@ -233,6 +219,10 @@ class NonInvestmentTxn extends GenericTxn {
 		}
 	}
 
+	public String toString() {
+		return toString(null);
+	}
+
 	public String toString(QifDom dom) {
 		return toStringLong(dom);
 	}
@@ -248,17 +238,21 @@ class NonInvestmentTxn extends GenericTxn {
 
 	public String toStringLong(QifDom dom) {
 		String s = "Tx" + this.id + ":";
-		s += " acct=" + dom.accounts.get(this.acctid).name;
+		s += " acct=" + ((dom != null) ? dom.accounts.get(this.acctid).name : this.acctid);
 		s += " date=" + Common.getDateString(getDate());
 		s += " clr:" + this.clearedStatus;
 		s += " num=" + this.chkNumber;
 		s += " payee=" + this.payee;
 		s += " amt=" + this.amount;
 		s += " memo=" + this.memo;
-		if (this.catid < (short) 0) {
-			s += " xacct=[" + dom.accounts.get(-this.catid).name + "]";
-		} else if (this.catid > (short) 0) {
-			s += " cat=" + dom.categories.get(this.catid).name;
+		if (dom == null) {
+			s += " catid=" + this.catid;
+		} else {
+			if (this.catid < (short) 0) {
+				s += " xacct=[" + dom.accounts.get(-this.catid).name + "]";
+			} else if (this.catid > (short) 0) {
+				s += " cat=" + dom.categories.get(this.catid).name;
+			}
 		}
 
 		if (!this.address.isEmpty()) {
@@ -268,17 +262,13 @@ class NonInvestmentTxn extends GenericTxn {
 			}
 		}
 
-		// assert this.SplitCategories.size() == this.SplitAmounts.size();
-		// assert this.SplitMemos.size() == this.SplitAmounts.size();
-
 		if (!this.split.isEmpty()) {
 			s += "\n  splits \n";
 
 			for (SimpleTxn txn : this.split) {
 				if (txn.catid < (short) 0) {
 					s += " [" + dom.accounts.get(-txn.catid).name + "]";
-				}
-				if (txn.catid > (short) 0) {
+				} else if (txn.catid > (short) 0) {
 					s += " " + dom.categories.get(txn.catid).name;
 				}
 				s += " " + txn.amount;
@@ -291,37 +281,6 @@ class NonInvestmentTxn extends GenericTxn {
 
 		return s;
 	}
-
-	// static void Export(StreamWriter writer, List<BasicTransaction> list) {
-	// if ((list == null) || (list.Count == 0)) {
-	// return;
-	// }
-	//
-	// write(this.header);
-	//
-	// foreach (BasicTransaction item in list) {
-	// write(Date, item.Date.ToShortDateString());
-	//
-	// foreach (int i in item.Address.Keys) {
-	// write(Address, item.Address[i]);
-	// }
-	//
-	// write(Amount, item.Amount.ToString(CultureInfo.CurrentCulture));
-	// writeIfSet(Category, item.Category);
-	// writeIfSet(ClearedStatus, item.ClearedStatus);
-	// writeIfSet(Memo, item.Memo);
-	// writeIfSet(Number, item.Number);
-	// writeIfSet(Payee, item.Payee);
-	//
-	// foreach (int i in item.SplitCategories.Keys) {
-	// write(SplitCategory, item.SplitCategories[i]);
-	// write(SplitAmount, item.SplitAmounts[i]);
-	// writeIfSet(SplitMemo, item.SplitMemos[i]);
-	// }
-	//
-	// write(EndOfEntry);
-	// }
-	// }
 };
 
 class InvestmentTxn extends GenericTxn {
@@ -339,75 +298,25 @@ class InvestmentTxn extends GenericTxn {
 
 		this.action = "";
 		this.security = "";
+		this.price = null;
+		this.quantity = null;
 		this.textFirstLine = "";
-		this.memo = "";
+		this.commission = null;
 		this.accountForTransfer = "";
+		this.amountTransferred = null;
 	}
 
-	public static InvestmentTxn load(QFileReader qfr, QifDom dom) {
-		QFileReader.QLine qline = new QFileReader.QLine();
+	public InvestmentTxn(InvestmentTxn other) {
+		super(other);
 
-		InvestmentTxn txn = new InvestmentTxn(dom.currAccount.id);
-
-		for (;;) {
-			qfr.nextInvLine(qline);
-
-			switch (qline.type) {
-			case EndOfSection:
-				return txn;
-
-			case InvTransactionAmt: {
-				BigDecimal amt = Common.getDecimal(qline.value);
-
-				if (txn.amount != null) {
-					if (!txn.amount.equals(amt)) {
-						Common.reportError("Inconsistent amount: " + qline.value);
-					}
-				} else {
-					txn.amount = amt;
-				}
-
-				break;
-			}
-			case InvAction:
-				txn.action = qline.value;
-				break;
-			case InvClearedStatus:
-				txn.clearedStatus = qline.value;
-				break;
-			case InvCommission:
-				txn.commission = Common.getDecimal(qline.value);
-				break;
-			case InvDate:
-				txn.setDate(Common.GetDate(qline.value));
-				break;
-			case InvMemo:
-				txn.memo = qline.value;
-				break;
-			case InvPrice:
-				txn.price = Common.getDecimal(qline.value);
-				break;
-			case InvQuantity:
-				txn.quantity = Common.getDecimal(qline.value);
-				break;
-			case InvSecurity:
-				txn.security = qline.value;
-				break;
-			case InvFirstLine:
-				txn.textFirstLine = qline.value;
-				break;
-			case InvXferAmt:
-				txn.amountTransferred = Common.getDecimal(qline.value);
-				break;
-			case InvXferAcct:
-				txn.accountForTransfer = qline.value;
-				txn.xacct = dom.findCategoryID(qline.value);
-				break;
-
-			default:
-				Common.reportError("syntax error; txn: " + qline);
-			}
-		}
+		this.action = other.action;
+		this.security = other.security;
+		this.price = other.price;
+		this.quantity = other.quantity;
+		this.textFirstLine = other.textFirstLine;
+		this.commission = other.commission;
+		this.accountForTransfer = other.accountForTransfer;
+		this.amountTransferred = other.amountTransferred;
 	}
 
 	public BigDecimal getXferAmount() {
@@ -417,7 +326,7 @@ class InvestmentTxn extends GenericTxn {
 	}
 
 	public short getXferAcctid() {
-		return (short) -this.xacct;
+		return (short) -this.xacctid;
 	}
 
 	public String toString() {
@@ -438,33 +347,4 @@ class InvestmentTxn extends GenericTxn {
 
 		return s;
 	}
-
-	// static void Export(StreamWriter writer, List<InvestmentTxn> list) {
-	// if ((list == null) || (list.Count == 0)) {
-	// return;
-	// }
-	//
-	// writer.WriteLine(Headers.Investment);
-	//
-	// foreach (InvestmentTxn item in list) {
-	// writeIfSet(AccountForTransfer, item.AccountForTransfer);
-	// writeIfSet(Action, item.Action);
-	// writer.WriteLine(AmountTransferred +
-	// item.AmountTransferred.ToString(CultureInfo.CurrentCulture));
-	// writeIfSet(ClearedStatus, item.ClearedStatus);
-	// writer.WriteLine(Commission +
-	// item.Commission.ToString(CultureInfo.CurrentCulture));
-	// writer.WriteLine(Date + item.Date.ToShortDateString());
-	// writeIfSet(Memo, item.Memo);
-	// writer.WriteLine(Price +
-	// item.Price.ToString(CultureInfo.CurrentCulture));
-	// writer.WriteLine(Quantity +
-	// item.Quantity.ToString(CultureInfo.CurrentCulture));
-	// writeIfSet(Security, item.Security);
-	// writeIfSet(TextFirstLine, item.TextFirstLine);
-	// writer.WriteLine(TransactionAmount +
-	// item.TransactionAmount.ToString(CultureInfo.CurrentCulture));
-	// writer.WriteLine(EndOfEntry);
-	// }
-	// }
 };

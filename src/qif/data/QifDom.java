@@ -24,7 +24,7 @@ import java.util.List;
 // Merge/compare files
 // Synchronize data with updated qif file
 //
-//Code review/cleanup
+//Code review/cleanup - ids for more fields?
 //Point-in time positions (net worth)
 //Handle investment amounts and transfers
 //Investment cash balance

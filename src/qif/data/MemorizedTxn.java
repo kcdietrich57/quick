@@ -4,7 +4,8 @@ package qif.data;
 import java.math.BigDecimal;
 import java.util.Date;
 
-// !Type:Memorized
+import qif.data.NonInvestmentTxn.TransactionType;
+
 class MemorizedTxn extends GenericTxn {
 	public TransactionType Type;
 	public BigDecimal AmortizationCurrentLoanBalance;
@@ -104,65 +105,4 @@ class MemorizedTxn extends GenericTxn {
 	public MemorizedTxn(short acctid) {
 		super(acctid);
 	}
-
-	// static void Export(StreamWriter writer, List<MemorizedTxn> list) {
-	// if ((list != null) && (list.Count > 0)) {
-	// return;
-	// }
-	//
-	// writer.WriteLine(Headers.MemorizedTransactionList);
-	//
-	// foreach (MemorizedTxn item in list) {
-	// writeIfSet(Address, item.Address[i]);
-	// writer.WriteLine(AmortizationCurrentLoanBalance
-	// +
-	// item.AmortizationCurrentLoanBalance.ToString(CultureInfo.CurrentCulture));
-	// writer.WriteLine(AmortizationFirstPaymentDate
-	// + item.AmortizationFirstPaymentDate.ToShortDateString());
-	// writer.WriteLine(AmortizationInterestRate
-	// + item.AmortizationInterestRate.ToString(CultureInfo.CurrentCulture));
-	// writer.WriteLine(AmortizationNumberOfPaymentsAlreadyMade
-	// +
-	// item.AmortizationNumberOfPaymentsAlreadyMade.ToString(CultureInfo.CurrentCulture));
-	// writer.WriteLine(AmortizationNumberOfPeriodsPerYear
-	// +
-	// item.AmortizationNumberOfPeriodsPerYear.ToString(CultureInfo.CurrentCulture));
-	// writer.WriteLine(AmortizationOriginalLoanAmount
-	// +
-	// item.AmortizationOriginalLoanAmount.ToString(CultureInfo.CurrentCulture));
-	// writer.WriteLine(AmortizationTotalYearsForLoan
-	// +
-	// item.AmortizationTotalYearsForLoan.ToString(CultureInfo.CurrentCulture));
-	// writer.WriteLine(Amount
-	// + item.Amount.ToString(CultureInfo.CurrentCulture));
-	// writeIfSet(Category, item.Category);
-	// writeIfSet(ClearedStatus, item.ClearedStatus);
-	// writeIfSet(Memo, item.Memo);
-	// writeIfSet(Payee, item.Payee);
-	//
-	// foreach (int i in item.SplitCategories.Keys) {
-	// writer.WriteLine(SplitCategory + item.SplitCategories[i]);
-	// writer.WriteLine(SplitAmount + item.SplitAmounts[i]);
-	// writeIfSet(SplitMemo, item.SplitMemos[i]);
-	// }
-	//
-	// switch (item.Type) {
-	// case TransactionType.Check:
-	// writer.WriteLine(CheckTransaction);
-	// break;
-	// case TransactionType.Deposit:
-	// writer.WriteLine(DepositTransaction);
-	// break;
-	// case TransactionType.ElectronicPayee:
-	// writer.WriteLine(ElectronicPayeeTransaction);
-	// break;
-	// case TransactionType.Investment:
-	// writer.WriteLine(InvestmentTransaction);
-	// break;
-	// case TransactionType.Payment:
-	// writer.WriteLine(PaymentTransaction);
-	// break;
-	// }
-	// }
-	// }
 };

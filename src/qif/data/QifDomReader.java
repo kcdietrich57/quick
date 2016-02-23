@@ -8,7 +8,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
-import qif.data.Account.AcctType;
+import qif.data.Account.AccountType;
 import qif.data.QFileReader.SectionType;
 
 public class QifDomReader {
@@ -108,12 +108,12 @@ public class QifDomReader {
 			case Tag:
 			case Category:
 				System.out.println("Loading categories");
-				readCategories();
+				loadCategories();
 				break;
 
 			case Account:
 				System.out.println("Loading accounts");
-				readAccounts();
+				loadAccounts();
 				break;
 
 			case Asset:
@@ -132,19 +132,19 @@ public class QifDomReader {
 
 			case Statement:
 				System.out.println("Loading statements");
-				readStatements();
+				loadStatements();
 				break;
 
 			case Security:
 				if (this.dom.securities.isEmpty()) {
 					System.out.println("Loading securities");
 				}
-				readSecurities();
+				loadSecurities();
 				break;
 
 			case Prices:
 				// System.out.println("Loading prices");
-				readPrices();
+				loadPrices();
 				break;
 
 			case QClass:
@@ -163,7 +163,7 @@ public class QifDomReader {
 		}
 	}
 
-	private void readCategories() {
+	private void loadCategories() {
 		for (;;) {
 			String s = this.rdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
@@ -230,7 +230,7 @@ public class QifDomReader {
 		}
 	}
 
-	private void readAccounts() {
+	private void loadAccounts() {
 		for (;;) {
 			String s = this.rdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
@@ -265,7 +265,7 @@ public class QifDomReader {
 				return acct;
 
 			case AcctType:
-				acct.type = AcctType.parse(qline.value);
+				acct.type = AccountType.parse(qline.value);
 				break;
 			case AcctCreditLimit:
 				acct.creditLimit = Common.getDecimal(qline.value);
@@ -276,11 +276,11 @@ public class QifDomReader {
 			case AcctName:
 				acct.name = qline.value;
 				break;
-			case AcctStmtBal:
-				acct.stmtBalance = Common.getDecimal(qline.value);
-				break;
 			case AcctStmtDate:
-				acct.stmtDate = Common.GetDate(qline.value);
+				// acct.stmtDate = Common.GetDate(qline.value);
+				break;
+			case AcctStmtBal:
+				// acct.stmtBalance = Common.getDecimal(qline.value);
 				break;
 
 			default:
@@ -289,7 +289,7 @@ public class QifDomReader {
 		}
 	}
 
-	private void readSecurities() {
+	private void loadSecurities() {
 		for (;;) {
 			String s = this.rdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
@@ -587,12 +587,78 @@ public class QifDomReader {
 				break;
 			}
 
-			InvestmentTxn txn = InvestmentTxn.load(this.rdr, dom);
+			InvestmentTxn txn = loadInvestmentTransaction();
 			if (txn == null) {
 				break;
 			}
 
 			dom.currAccount.addTransaction(txn);
+		}
+	}
+
+	public InvestmentTxn loadInvestmentTransaction() {
+		QFileReader.QLine qline = new QFileReader.QLine();
+
+		InvestmentTxn txn = new InvestmentTxn(dom.currAccount.id);
+
+		for (;;) {
+			this.rdr.nextInvLine(qline);
+
+			switch (qline.type) {
+			case EndOfSection:
+				return txn;
+
+			case InvTransactionAmt: {
+				BigDecimal amt = Common.getDecimal(qline.value);
+
+				if (txn.amount != null) {
+					if (!txn.amount.equals(amt)) {
+						Common.reportError("Inconsistent amount: " + qline.value);
+					}
+				} else {
+					txn.amount = amt;
+				}
+
+				break;
+			}
+			case InvAction:
+				txn.action = qline.value;
+				break;
+			case InvClearedStatus:
+				txn.clearedStatus = qline.value;
+				break;
+			case InvCommission:
+				txn.commission = Common.getDecimal(qline.value);
+				break;
+			case InvDate:
+				txn.setDate(Common.GetDate(qline.value));
+				break;
+			case InvMemo:
+				txn.memo = qline.value;
+				break;
+			case InvPrice:
+				txn.price = Common.getDecimal(qline.value);
+				break;
+			case InvQuantity:
+				txn.quantity = Common.getDecimal(qline.value);
+				break;
+			case InvSecurity:
+				txn.security = qline.value;
+				break;
+			case InvFirstLine:
+				txn.textFirstLine = qline.value;
+				break;
+			case InvXferAmt:
+				txn.amountTransferred = Common.getDecimal(qline.value);
+				break;
+			case InvXferAcct:
+				txn.accountForTransfer = qline.value;
+				txn.xacctid = dom.findCategoryID(qline.value);
+				break;
+
+			default:
+				Common.reportError("syntax error; txn: " + qline);
+			}
 		}
 	}
 
@@ -603,7 +669,7 @@ public class QifDomReader {
 				break;
 			}
 
-			NonInvestmentTxn txn = NonInvestmentTxn.load(this.rdr, dom);
+			NonInvestmentTxn txn = loadNonInvestmentTransaction();
 			if (txn == null) {
 				break;
 			}
@@ -614,7 +680,95 @@ public class QifDomReader {
 		}
 	}
 
-	private void readPrices() {
+	public NonInvestmentTxn loadNonInvestmentTransaction() {
+		QFileReader.QLine qline = new QFileReader.QLine();
+
+		NonInvestmentTxn txn = new NonInvestmentTxn(dom.currAccount.id);
+		SimpleTxn cursplit = null;
+
+		for (;;) {
+			this.rdr.nextTxnLine(qline);
+
+			switch (qline.type) {
+			case EndOfSection:
+				return txn;
+
+			case TxnCategory:
+				txn.catid = dom.findCategoryID(qline.value);
+
+				if (txn.catid == 0) {
+					Common.reportError("Can't find xtxn: " + qline.value);
+				}
+				break;
+			case TxnAmount: {
+				BigDecimal amt = Common.getDecimal(qline.value);
+
+				if (txn.amount != null) {
+					if (!txn.amount.equals(amt)) {
+						Common.reportError("Inconsistent amount: " + qline.value);
+					}
+				} else {
+					txn.amount = amt;
+				}
+
+				break;
+			}
+			case TxnMemo:
+				txn.memo = qline.value;
+				break;
+
+			case TxnDate:
+				txn.setDate(Common.GetDate(qline.value));
+				break;
+			case TxnClearedStatus:
+				txn.clearedStatus = qline.value;
+				break;
+			case TxnNumber:
+				txn.chkNumber = qline.value;
+				break;
+			case TxnPayee:
+				txn.payee = qline.value;
+				break;
+			case TxnAddress:
+				txn.address.add(qline.value);
+				break;
+
+			case TxnSplitCategory:
+				if (cursplit == null || cursplit.catid != 0) {
+					cursplit = new SimpleTxn(txn.acctid);
+					txn.split.add(cursplit);
+				}
+
+				if (qline.value == null || qline.value.trim().isEmpty()) {
+					qline.value = "Fix Me";
+				}
+				cursplit.catid = dom.findCategoryID(qline.value);
+
+				if (cursplit.catid == 0) {
+					Common.reportError("Can't find xtxn: " + qline.value);
+				}
+				break;
+			case TxnSplitAmount:
+				if (cursplit == null || cursplit.amount != null) {
+					txn.split.add(cursplit);
+					cursplit = new SimpleTxn(txn.acctid);
+				}
+
+				cursplit.amount = Common.getDecimal(qline.value);
+				break;
+			case TxnSplitMemo:
+				if (cursplit != null) {
+					cursplit.memo = qline.value;
+				}
+				break;
+
+			default:
+				Common.reportError("syntax error; txn: " + qline);
+			}
+		}
+	}
+
+	private void loadPrices() {
 		for (;;) {
 			String s = this.rdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
@@ -631,7 +785,7 @@ public class QifDomReader {
 		}
 	}
 
-	private void readStatements() {
+	private void loadStatements() {
 		for (;;) {
 			String s = this.rdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {

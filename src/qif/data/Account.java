@@ -2,54 +2,68 @@
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class Account {
-	enum AcctType { //
+	enum AccountType { //
 		Bank, CCard, Cash, Asset, Liability, Invest, InvPort, Inv401k, InvMutual;
 
-		public static AcctType parse(String s) {
-			if (s.equals("Bank")) {
-				return Bank;
-			}
-			if (s.equals("CCard")) {
-				return CCard;
-			}
-			if (s.equals("Cash")) {
-				return Cash;
-			}
-			if (s.equals("Oth A")) {
-				return Asset;
-			}
-			if (s.equals("Oth L")) {
-				return Liability;
-			}
-			if (s.equals("Port")) {
-				return InvPort;
-			}
-			if (s.equals("Invst")) {
-				return Invest;
-			}
-			if (s.equals("401(k)/403(b)")) {
-				return Inv401k;
-			}
-			if (s.equals("Mutual")) {
-				return InvMutual;
+		public static AccountType parse(String s) {
+			switch (s.charAt(0)) {
+			case 'B':
+				if (s.equals("Bank")) {
+					return Bank;
+				}
+				break;
+			case 'C':
+				if (s.equals("CCard")) {
+					return CCard;
+				}
+				if (s.equals("Cash")) {
+					return Cash;
+				}
+				break;
+			case 'I':
+				if (s.equals("Invst")) {
+					return Invest;
+				}
+				break;
+			case 'M':
+				if (s.equals("Mutual")) {
+					return InvMutual;
+				}
+				break;
+			case 'O':
+				if (s.equals("Oth A")) {
+					return Asset;
+				}
+				if (s.equals("Oth L")) {
+					return Liability;
+				}
+				break;
+			case 'P':
+				if (s.equals("Port")) {
+					return InvPort;
+				}
+				break;
+			case '4':
+				if (s.equals("401(k)/403(b)")) {
+					return Inv401k;
+				}
+				break;
 			}
 
 			Common.reportError("Unknown account type: " + s);
-			return AcctType.Bank;
+			return AccountType.Bank;
 		}
 	};
 
 	public short id;
+
 	public String name;
-	public AcctType type;
+	public AccountType type;
 	public String description;
 	public BigDecimal creditLimit;
-	public Date stmtDate;
-	public BigDecimal stmtBalance;
 
 	public List<GenericTxn> transactions;
 	public List<Statement> statements;
@@ -57,11 +71,13 @@ public class Account {
 	public Account() {
 		this.id = 0;
 
+		this.name = "";
+		this.type = null;
+		this.description = "";
+		this.creditLimit = null;
+
 		this.transactions = new ArrayList<GenericTxn>();
 		this.statements = new ArrayList<Statement>();
-
-		name = "";
-		description = "";
 	}
 
 	public Account(short id) {
@@ -73,21 +89,18 @@ public class Account {
 	public Account(Account other) {
 		this(other.id);
 
-		id = other.id;
-		name = other.name;
-		type = other.type;
-		description = other.description;
-		creditLimit = other.creditLimit;
-		stmtDate = other.stmtDate;
-		stmtBalance = other.stmtBalance;
+		this.name = other.name;
+		this.type = other.type;
+		this.description = other.description;
+		this.creditLimit = other.creditLimit;
 
-		// for (GenericTxn t : other.transactions) {
-		// this.transactions.add(GenericTxn.cloneTransaction(t));
-		// }
-		//
-		// for (Statement s : this.statements) {
-		// this.statements.add(s);
-		// }
+		for (GenericTxn t : other.transactions) {
+			this.transactions.add(GenericTxn.clone(t));
+		}
+
+		for (Statement s : this.statements) {
+			this.statements.add(new Statement(s));
+		}
 	}
 
 	public boolean isNonInvestmentAccount() {
@@ -134,8 +147,6 @@ public class Account {
 				+ " type=" + this.type //
 				+ " desc=" + this.description //
 				+ " limit=" + this.creditLimit //
-				+ " bal=" + this.stmtBalance //
-				+ " asof " + this.stmtDate //
 				+ " #tx= " + this.transactions.size() //
 				+ "\n";
 

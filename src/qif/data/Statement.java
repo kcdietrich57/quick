@@ -19,6 +19,14 @@ public class Statement {
 		this.credits = this.debits = this.balance = null;
 	}
 
+	public Statement(Statement other) {
+		this.acctid = other.acctid;
+		this.date = other.date;
+		this.credits = other.credits;
+		this.debits = other.debits;
+		this.balance = other.balance;
+	}
+
 	public static Statement load(QFileReader qfr, short acctid) {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
