@@ -21,6 +21,7 @@ import java.util.List;
 // 2/20 Relaxed loading, fix load bugs, better errors, load old files
 // 2/21 Add to git
 // 2/22 Cloning Category/Security/Account info in new file (prep for merge)
+// 2/28 Running cash balance
 // Merge/compare files
 // Synchronize data with updated qif file
 //

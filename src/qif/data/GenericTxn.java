@@ -61,6 +61,10 @@ class SimpleTxn {
 		return this.amount;
 	}
 
+	public BigDecimal getTotalAmount() {
+		return this.amount;
+	}
+
 	public String toString(QifDom dom) {
 		String s = "Tx" + this.id + ":";
 		s += " acct=" + ((dom != null) ? dom.accounts.get(this.acctid).name : this.acctid);
@@ -101,12 +105,23 @@ class MultiSplitTxn extends SimpleTxn {
 			this.subsplits.add(new SimpleTxn(st));
 		}
 	}
+
+	public BigDecimal getTotalAmount() {
+		BigDecimal total = new BigDecimal(0);
+
+		for (SimpleTxn t : this.subsplits) {
+			total = total.add(t.amount);
+		}
+
+		return total;
+	}
 };
 
 public abstract class GenericTxn extends SimpleTxn {
 	private Date date;
 	public String clearedStatus;
 	public Date stmtdate;
+	public BigDecimal runningTotal;
 
 	public static GenericTxn clone(GenericTxn txn) {
 		if (txn instanceof NonInvestmentTxn) {
@@ -125,6 +140,7 @@ public abstract class GenericTxn extends SimpleTxn {
 		this.date = null;
 		this.clearedStatus = null;
 		this.stmtdate = null;
+		this.runningTotal = null;
 	}
 
 	public GenericTxn(GenericTxn other) {
@@ -133,6 +149,7 @@ public abstract class GenericTxn extends SimpleTxn {
 		this.date = other.date;
 		this.clearedStatus = other.clearedStatus;
 		this.stmtdate = other.stmtdate;
+		this.runningTotal = null;
 	}
 
 	public boolean isCleared() {
@@ -254,6 +271,7 @@ class NonInvestmentTxn extends GenericTxn {
 				s += " cat=" + dom.categories.get(this.catid).name;
 			}
 		}
+		s += " bal=" + this.runningTotal;
 
 		if (!this.address.isEmpty()) {
 			s += "\n  addr= ";

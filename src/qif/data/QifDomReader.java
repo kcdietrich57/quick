@@ -345,7 +345,19 @@ public class QifDomReader {
 	private void cleanUpTransactions() {
 		sortTransactions();
 		cleanUpSplits();
+		calculateRunningTotals();
 		connectTransfers();
+	}
+
+	private void calculateRunningTotals() {
+		for (Account a : this.dom.accounts_bytime) {
+			BigDecimal total = new BigDecimal(0);
+
+			for (GenericTxn t : a.transactions) {
+				total = total.add(t.getTotalAmount());
+				t.runningTotal = total;
+			}
+		}
 	}
 
 	private void sortTransactions() {
@@ -389,18 +401,18 @@ public class QifDomReader {
 			}
 
 			for (GenericTxn txn : a.transactions) {
-				connectTransfers(dom, txn);
+				connectTransfers(txn);
 			}
 		}
 	}
 
-	private static void connectTransfers(QifDom dom, GenericTxn txn) {
+	private void connectTransfers(GenericTxn txn) {
 		if ((txn instanceof NonInvestmentTxn) && !((NonInvestmentTxn) txn).split.isEmpty()) {
 			for (SimpleTxn stxn : ((NonInvestmentTxn) txn).split) {
-				connectTransfers(dom, stxn, txn.getDate());
+				connectTransfers(stxn, txn.getDate());
 			}
 		} else if (txn.catid < 0) {
-			connectTransfers(dom, txn, txn.getDate());
+			connectTransfers(txn, txn.getDate());
 		}
 	}
 
@@ -801,7 +813,7 @@ public class QifDomReader {
 		}
 	}
 
-	private static void massageSplits(GenericTxn txn) {
+	private void massageSplits(GenericTxn txn) {
 		if (!(txn instanceof NonInvestmentTxn)) {
 			return;
 		}
@@ -842,7 +854,7 @@ public class QifDomReader {
 	private static int totalXfers = 0;
 	private static int failedXfers = 0;
 
-	private static void connectTransfers(QifDom dom, SimpleTxn txn, Date date) {
+	private void connectTransfers(SimpleTxn txn, Date date) {
 		if (txn.catid >= 0) {
 			return;
 		}
@@ -873,7 +885,7 @@ public class QifDomReader {
 
 	private static final List<SimpleTxn> txns = new ArrayList<SimpleTxn>();
 
-	private static List<SimpleTxn> findMatches(Account acct, SimpleTxn txn, Date date) {
+	private List<SimpleTxn> findMatches(Account acct, SimpleTxn txn, Date date) {
 		txns.clear();
 
 		int idx = findDateRange(acct, date);
@@ -910,7 +922,7 @@ public class QifDomReader {
 		return txns;
 	}
 
-	private static SimpleTxn checkMatch(SimpleTxn txn, GenericTxn gtxn) {
+	private SimpleTxn checkMatch(SimpleTxn txn, GenericTxn gtxn) {
 		assert -txn.catid == gtxn.acctid;
 
 		if (!gtxn.hasSplits()) {
@@ -930,7 +942,7 @@ public class QifDomReader {
 		return null;
 	}
 
-	private static boolean amountIsEqual(SimpleTxn txn1, SimpleTxn txn2, boolean strict) {
+	private boolean amountIsEqual(SimpleTxn txn1, SimpleTxn txn2, boolean strict) {
 		if (strict) {
 			return txn1.getXferAmount().equals(txn2.getXferAmount().negate());
 		} else {
