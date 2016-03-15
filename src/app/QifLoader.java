@@ -7,7 +7,7 @@ import qif.data.QifReporter;
 public class QifLoader {
 	public static void main(String[] args) {
 		String file = "/tmp/dietrich.qif";
-		file = "/tmp/jk.qif";
+		file = "/Users/greg/qif/87to16.qif";
 
 		QifDomReader rdr = new QifDomReader();
 		QifDom dom = rdr.load(file);

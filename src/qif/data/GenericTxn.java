@@ -14,7 +14,7 @@ class SimpleTxn {
 
 	public short acctid;
 
-	protected BigDecimal amount;
+	private BigDecimal amount;
 	public String memo;
 
 	public short xacctid;
@@ -45,6 +45,21 @@ class SimpleTxn {
 		this.xtxn = null;
 	}
 
+	public enum Action {
+		ActionOther, ActionCash, ActionXIn, ActionXOut, ActionWithdrwX, //
+		ActionContribX, ActionIntInc, ActionMiscIncX, //
+		ActionBuy, ActionBuyX, ActionSell, ActionSellX, //
+		ActionGrant, ActionVest, ActionExercisX, ActionExpire, //
+		ActionShrsIn, ActionShrsOut, //
+		ActionDiv, ActionReinvDiv, ActionReinvLg, ActionReinvSh, //
+		ActionReinvInt, //
+		ActionStockSplit, ActionReminder
+	};
+
+	public Action getAction() {
+		return Action.ActionOther;
+	}
+
 	public boolean hasSplits() {
 		return false;
 	}
@@ -57,6 +72,14 @@ class SimpleTxn {
 		return (short) ((this.catid < 0) ? -this.catid : 0);
 	}
 
+	public void setAmount(BigDecimal amount) {
+		this.amount = amount;
+	}
+
+	public BigDecimal getAmount() {
+		return this.amount;
+	}
+
 	public BigDecimal getXferAmount() {
 		return this.amount;
 	}
@@ -65,7 +88,20 @@ class SimpleTxn {
 		return this.amount;
 	}
 
+	public String toString() {
+		return toString(null);
+	}
+
 	public String toString(QifDom dom) {
+		return toStringLong(dom);
+	}
+
+	public String toStringShort() {
+		// TODO implement
+		return "";
+	}
+
+	public String toStringLong(QifDom dom) {
 		String s = "Tx" + this.id + ":";
 		s += " acct=" + ((dom != null) ? dom.accounts.get(this.acctid).name : this.acctid);
 		s += " amt=" + this.amount;
@@ -84,10 +120,6 @@ class SimpleTxn {
 		}
 
 		return s;
-	}
-
-	public String toString() {
-		return toString(null);
 	}
 };
 
@@ -110,7 +142,7 @@ class MultiSplitTxn extends SimpleTxn {
 		BigDecimal total = new BigDecimal(0);
 
 		for (SimpleTxn t : this.subsplits) {
-			total = total.add(t.amount);
+			total = total.add(t.getAmount());
 		}
 
 		return total;
@@ -152,6 +184,12 @@ public abstract class GenericTxn extends SimpleTxn {
 		this.runningTotal = null;
 	}
 
+	public void repair() {
+		if (getAmount() == null) {
+			setAmount(new BigDecimal(0));
+		}
+	}
+
 	public boolean isCleared() {
 		return this.stmtdate != null;
 	}
@@ -166,11 +204,6 @@ public abstract class GenericTxn extends SimpleTxn {
 
 	public Date getDate() {
 		return this.date;
-	}
-
-	public String toStringShort() {
-		// TODO implement
-		return "";
 	}
 };
 
@@ -228,16 +261,12 @@ class NonInvestmentTxn extends GenericTxn {
 		BigDecimal dec = new BigDecimal(0);
 
 		for (SimpleTxn txn : this.split) {
-			dec = dec.add(txn.amount);
+			dec = dec.add(txn.getAmount());
 		}
 
-		if (!dec.equals(this.amount)) {
-			Common.reportError("Total(" + this.amount + ") does not match split total (" + dec + ")");
+		if (!dec.equals(getAmount())) {
+			Common.reportError("Total(" + getAmount() + ") does not match split total (" + dec + ")");
 		}
-	}
-
-	public String toString() {
-		return toString(null);
 	}
 
 	public String toString(QifDom dom) {
@@ -247,7 +276,7 @@ class NonInvestmentTxn extends GenericTxn {
 	public String toStringShort() {
 		String s = Common.getDateString(getDate());
 		s += " " + this.chkNumber;
-		s += " " + this.amount;
+		s += " " + getAmount();
 		s += " " + this.payee;
 
 		return s;
@@ -260,7 +289,7 @@ class NonInvestmentTxn extends GenericTxn {
 		s += " clr:" + this.clearedStatus;
 		s += " num=" + this.chkNumber;
 		s += " payee=" + this.payee;
-		s += " amt=" + this.amount;
+		s += " amt=" + getAmount();
 		s += " memo=" + this.memo;
 		if (dom == null) {
 			s += " catid=" + this.catid;
@@ -289,7 +318,7 @@ class NonInvestmentTxn extends GenericTxn {
 				} else if (txn.catid > (short) 0) {
 					s += " " + dom.categories.get(txn.catid).name;
 				}
-				s += " " + txn.amount;
+				s += " " + txn.getAmount();
 				if (txn.memo != null) {
 					s += " " + txn.memo;
 				}
@@ -337,24 +366,172 @@ class InvestmentTxn extends GenericTxn {
 		this.amountTransferred = other.amountTransferred;
 	}
 
+	public void repair() {
+		switch (getAction()) {
+		case ActionCash: { // amt
+			BigDecimal amt = getAmount();
+
+			if (amt != null) {
+				// setAmount(amt.negate());
+			} else if ((getAmount() == null) && (this.amountTransferred == null)) {
+				setAmount(new BigDecimal(0));
+			}
+			break;
+		}
+
+		case ActionXIn: // amt/xamt
+		case ActionIntInc: // amt
+		case ActionMiscIncX: // amt
+		case ActionContribX: // amt/xamt
+		case ActionWithdrwX: // + amt/xamt
+		case ActionShrsIn: // amt
+		case ActionShrsOut: // no amt?
+		case ActionBuy: // amt
+		case ActionSell: // + amt
+		case ActionBuyX: // amt/xamt
+		case ActionSellX: // + amt/xamt
+		case ActionStockSplit: // n/a
+		case ActionDiv: // amt
+		case ActionReinvDiv: // amt
+		case ActionReinvLg: // amt
+		case ActionReinvSh: // amt
+		case ActionReinvInt: // amt
+		case ActionGrant: // amt
+		case ActionVest: // amt
+		case ActionExercisX: // amt
+		case ActionExpire: // amt
+		case ActionReminder: // amt
+			super.repair();
+			break;
+
+		case ActionXOut: { // + amt/xamt
+			BigDecimal amt = this.amountTransferred.negate();
+			this.amountTransferred = amt;
+			setAmount(amt);
+			super.repair();
+			break;
+		}
+
+		default:
+			super.repair();
+			break;
+		}
+	}
+
+	public Action getAction() {
+		if ("StkSplit".equals(this.action)) {
+			return Action.ActionStockSplit;
+		}
+		if ("Cash".equals(this.action)) {
+			return Action.ActionCash;
+		}
+		if ("XIn".equals(this.action)) {
+			return Action.ActionXIn;
+		}
+		if ("XOut".equals(this.action)) {
+			return Action.ActionXOut;
+		}
+		if ("Buy".equals(this.action)) {
+			return Action.ActionBuy;
+		}
+		if ("BuyX".equals(this.action)) {
+			return Action.ActionBuyX;
+		}
+		if ("Sell".equals(this.action)) {
+			return Action.ActionSell;
+		}
+		if ("SellX".equals(this.action)) {
+			return Action.ActionSellX;
+		}
+		if ("ShrsIn".equals(this.action)) {
+			return Action.ActionShrsIn;
+		}
+		if ("ShrsOut".equals(this.action)) {
+			return Action.ActionShrsOut;
+		}
+		if ("Grant".equals(this.action)) {
+			return Action.ActionGrant;
+		}
+		if ("Vest".equals(this.action)) {
+			return Action.ActionVest;
+		}
+		if ("ExercisX".equals(this.action)) {
+			return Action.ActionExercisX;
+		}
+		if ("Expire".equals(this.action)) {
+			return Action.ActionExpire;
+		}
+		if ("WithdrwX".equals(this.action)) {
+			return Action.ActionWithdrwX;
+		}
+		if ("IntInc".equals(this.action)) {
+			return Action.ActionIntInc;
+		}
+		if ("MiscIncX".equals(this.action)) {
+			return Action.ActionMiscIncX;
+		}
+		if ("Div".equals(this.action)) {
+			return Action.ActionDiv;
+		}
+		if ("ReinvDiv".equals(this.action)) {
+			return Action.ActionReinvDiv;
+		}
+		if ("ReinvLg".equals(this.action)) {
+			return Action.ActionReinvLg;
+		}
+		if ("ReinvSh".equals(this.action)) {
+			return Action.ActionReinvSh;
+		}
+		if ("ReinvInt".equals(this.action)) {
+			return Action.ActionReinvInt;
+		}
+		if ("ContribX".equals(this.action)) {
+			return Action.ActionContribX;
+		}
+		if ("Reminder".equals(this.action)) {
+			return Action.ActionReminder;
+		}
+
+		return Action.ActionOther;
+	}
+
+	public BigDecimal getTotalAmount() {
+		BigDecimal tot = super.getTotalAmount();
+
+		if (tot == null) {
+			tot = getXferAmount();
+		}
+
+		return tot;
+	}
+
 	public BigDecimal getXferAmount() {
-		return (this.amountTransferred != null) //
-				? this.amountTransferred //
-				: super.getXferAmount();
+		if (this.amountTransferred == null) {
+			return super.getXferAmount();
+		}
+
+		switch (getAction()) {
+		case ActionSellX:
+			return this.amountTransferred.negate();
+
+		default:
+			return this.amountTransferred;
+		}
 	}
 
 	public short getXferAcctid() {
 		return (short) -this.xacctid;
 	}
 
-	public String toString() {
+	public String toStringLong(QifDom dom) {
 		String s = "InvTx:";
+		s += " acct=" + ((dom != null) ? dom.accounts.get(this.acctid).name : this.acctid);
 		s += " dt=" + Common.getDateString(getDate());
 		s += " act=" + this.action;
 		s += " sec=" + this.security;
 		s += " price=" + this.price;
 		s += " qty=" + this.quantity;
-		s += " amt=" + this.amount;
+		s += " amt=" + getAmount();
 		s += " clr=" + this.clearedStatus;
 		s += " txt=" + this.textFirstLine;
 		s += " memo=" + this.memo;

@@ -80,7 +80,7 @@ public class QifReporter {
 					++curNumTxn;
 				}
 
-				bal = bal.add(t.amount);
+				bal = bal.add(t.getAmount());
 			}
 
 			System.out.println("    " + ntran + " transactions");

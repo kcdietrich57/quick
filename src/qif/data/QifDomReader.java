@@ -10,11 +10,12 @@ import java.util.List;
 
 import qif.data.Account.AccountType;
 import qif.data.QFileReader.SectionType;
+import qif.data.SimpleTxn.Action;
 
 public class QifDomReader {
 	private QFileReader rdr = null;
 	private QifDom dom = null;
-	private QifDom refdom = null;
+	// private QifDom refdom = null;
 	private short nextAccountID = 1;
 	private short nextCategoryID = 1;
 	private short nextSecurityID = 1;
@@ -89,7 +90,7 @@ public class QifDomReader {
 			Common.reportError("File '" + filename + "' does not exist");
 		}
 
-		this.refdom = refdom;
+		// this.refdom = refdom;
 
 		this.dom = (refdom != null) ? new QifDom(refdom) : new QifDom();
 		this.rdr = new QFileReader(f);
@@ -354,8 +355,15 @@ public class QifDomReader {
 			BigDecimal total = new BigDecimal(0);
 
 			for (GenericTxn t : a.transactions) {
-				total = total.add(t.getTotalAmount());
-				t.runningTotal = total;
+				switch (t.getAction()) {
+				case ActionStockSplit:
+					break;
+
+				default:
+					total = total.add(t.getTotalAmount());
+					t.runningTotal = total;
+					break;
+				}
 			}
 		}
 	}
@@ -411,7 +419,9 @@ public class QifDomReader {
 			for (SimpleTxn stxn : ((NonInvestmentTxn) txn).split) {
 				connectTransfers(stxn, txn.getDate());
 			}
-		} else if (txn.catid < 0) {
+		} else if ((txn.catid < 0) && //
+		// opening balance shows up as xfer to same acct
+		(-txn.catid != txn.acctid)) {
 			connectTransfers(txn, txn.getDate());
 		}
 	}
@@ -524,7 +534,7 @@ public class QifDomReader {
 		txns_work.addAll(txns);
 
 		for (int ii = max - 1; ii >= 0; --ii) {
-			BigDecimal newtot = tot.subtract(txns.get(ii).amount);
+			BigDecimal newtot = tot.subtract(txns.get(ii).getAmount());
 			GenericTxn t = txns_work.remove(ii);
 
 			if ((nn == 1) && (newtot.signum() == 0)) {
@@ -563,7 +573,7 @@ public class QifDomReader {
 	private BigDecimal sumAmounts(List<GenericTxn> txns) {
 		BigDecimal totaltx = new BigDecimal(0);
 		for (GenericTxn t : txns) {
-			totaltx = totaltx.add(t.amount);
+			totaltx = totaltx.add(t.getAmount());
 		}
 
 		return totaltx;
@@ -618,17 +628,18 @@ public class QifDomReader {
 
 			switch (qline.type) {
 			case EndOfSection:
+				txn.repair();
 				return txn;
 
 			case InvTransactionAmt: {
 				BigDecimal amt = Common.getDecimal(qline.value);
 
-				if (txn.amount != null) {
-					if (!txn.amount.equals(amt)) {
+				if (txn.getAmount() != null) {
+					if (!txn.getAmount().equals(amt)) {
 						Common.reportError("Inconsistent amount: " + qline.value);
 					}
 				} else {
-					txn.amount = amt;
+					txn.setAmount(amt);
 				}
 
 				break;
@@ -715,12 +726,12 @@ public class QifDomReader {
 			case TxnAmount: {
 				BigDecimal amt = Common.getDecimal(qline.value);
 
-				if (txn.amount != null) {
-					if (!txn.amount.equals(amt)) {
+				if (txn.getAmount() != null) {
+					if (!txn.getAmount().equals(amt)) {
 						Common.reportError("Inconsistent amount: " + qline.value);
 					}
 				} else {
-					txn.amount = amt;
+					txn.setAmount(amt);
 				}
 
 				break;
@@ -761,12 +772,12 @@ public class QifDomReader {
 				}
 				break;
 			case TxnSplitAmount:
-				if (cursplit == null || cursplit.amount != null) {
+				if (cursplit == null || cursplit.getAmount() != null) {
 					txn.split.add(cursplit);
 					cursplit = new SimpleTxn(txn.acctid);
 				}
 
-				cursplit.amount = Common.getDecimal(qline.value);
+				cursplit.setAmount(Common.getDecimal(qline.value));
 				break;
 			case TxnSplitMemo:
 				if (cursplit != null) {
@@ -836,12 +847,12 @@ public class QifDomReader {
 						mtxn = new MultiSplitTxn(txn.acctid);
 						nitxn.split.set(ii, mtxn);
 
-						mtxn.amount = stxn.amount;
+						mtxn.setAmount(stxn.getAmount());
 						mtxn.catid = stxn.catid;
 						mtxn.subsplits.add(stxn);
 					}
 
-					mtxn.amount = mtxn.amount.add(stxn2.amount);
+					mtxn.setAmount(mtxn.getAmount().add(stxn2.getAmount()));
 					mtxn.subsplits.add(stxn2);
 
 					nitxn.split.remove(jj);
@@ -855,16 +866,22 @@ public class QifDomReader {
 	private static int failedXfers = 0;
 
 	private void connectTransfers(SimpleTxn txn, Date date) {
-		if (txn.catid >= 0) {
+		// Opening balance appears as a transfer to the same acct
+		if ((txn.catid >= 0) || (txn.catid == -txn.getXferAcctid())) {
 			return;
 		}
 
 		Account a = dom.accounts.get(-txn.catid);
 
-		List<SimpleTxn> matches = findMatches(a, txn, date);
+		findMatches(a, txn, date, true);
+
 		++totalXfers;
 
-		if (matches.isEmpty()) {
+		if (this.matchingTxns.isEmpty()) {
+			findMatches(a, txn, date, false); // SellX openingBal void
+		}
+
+		if (this.matchingTxns.isEmpty()) {
 			++failedXfers;
 			System.out.println("match not found for xfer: " + txn);
 			System.out.println("  " + failedXfers + " of " + totalXfers + " failed");
@@ -872,25 +889,29 @@ public class QifDomReader {
 		}
 
 		SimpleTxn xtxn = null;
-		if (matches.size() == 1) {
-			xtxn = matches.get(0);
+		if (this.matchingTxns.size() == 1) {
+			xtxn = this.matchingTxns.get(0);
 		} else {
 			// TODO choose one more deliberately
-			xtxn = matches.get(0);
+			xtxn = this.matchingTxns.get(0);
 		}
 
 		txn.xtxn = xtxn;
 		xtxn.xtxn = txn;
 	}
 
-	private static final List<SimpleTxn> txns = new ArrayList<SimpleTxn>();
+	private final List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
 
-	private List<SimpleTxn> findMatches(Account acct, SimpleTxn txn, Date date) {
-		txns.clear();
+	private void findMatches(Account acct, SimpleTxn txn, Date date) {
+		findMatches(acct, txn, date, false);
+	}
+
+	private void findMatches(Account acct, SimpleTxn txn, Date date, boolean strict) {
+		this.matchingTxns.clear();
 
 		int idx = findDateRange(acct, date);
 		if (idx < 0) {
-			return txns;
+			return;
 		}
 
 		boolean datematch = false;
@@ -902,9 +923,9 @@ public class QifDomReader {
 				GenericTxn gtxn = acct.transactions.get(idx + inc);
 				datematch = date.equals(gtxn.getDate());
 
-				SimpleTxn match = checkMatch(txn, gtxn);
+				SimpleTxn match = checkMatch(txn, gtxn, strict);
 				if (match != null) {
-					txns.add(match);
+					this.matchingTxns.add(match);
 				}
 			}
 
@@ -912,28 +933,30 @@ public class QifDomReader {
 				GenericTxn gtxn = acct.transactions.get(idx - inc);
 				datematch = datematch || date.equals(gtxn.getDate());
 
-				SimpleTxn match = checkMatch(txn, gtxn);
+				SimpleTxn match = checkMatch(txn, gtxn, strict);
 				if (match != null) {
-					txns.add(match);
+					this.matchingTxns.add(match);
 				}
 			}
 		}
-
-		return txns;
 	}
 
 	private SimpleTxn checkMatch(SimpleTxn txn, GenericTxn gtxn) {
+		return checkMatch(txn, gtxn, false);
+	}
+
+	private SimpleTxn checkMatch(SimpleTxn txn, GenericTxn gtxn, boolean strict) {
 		assert -txn.catid == gtxn.acctid;
 
 		if (!gtxn.hasSplits()) {
 			if ((gtxn.getXferAcctid() == txn.acctid) //
-					&& amountIsEqual(gtxn, txn, false)) {
+					&& amountIsEqual(gtxn, txn, strict)) {
 				return gtxn;
 			}
 		} else {
 			for (SimpleTxn splitxn : gtxn.getSplits()) {
 				if ((splitxn.getXferAcctid() == txn.acctid) //
-						&& amountIsEqual(splitxn, txn, false)) {
+						&& amountIsEqual(splitxn, txn, strict)) {
 					return splitxn;
 				}
 			}
@@ -942,12 +965,43 @@ public class QifDomReader {
 		return null;
 	}
 
+	int cashok = 0;
+	int cashbad = 0;
+
 	private boolean amountIsEqual(SimpleTxn txn1, SimpleTxn txn2, boolean strict) {
-		if (strict) {
-			return txn1.getXferAmount().equals(txn2.getXferAmount().negate());
-		} else {
-			return txn1.getXferAmount().abs().equals(txn2.getXferAmount().abs());
+		BigDecimal amt1 = txn1.getXferAmount();
+		BigDecimal amt2 = txn2.getXferAmount();
+
+		if (amt1.abs().compareTo(amt2.abs()) != 0) {
+			return false;
 		}
+
+		if (BigDecimal.ZERO.compareTo(amt1) == 0) {
+			return true;
+		}
+
+		// We know the magnitude is the same and non-zero
+		// Check whether they are equal or negative of each other
+		boolean eq = amt1.equals(amt2);
+
+		boolean ret = !eq || !strict;
+
+		if ((txn1.getAction() == Action.ActionCash) //
+				|| (txn2.getAction() == Action.ActionCash)) {
+			if (eq) {
+				++cashbad;
+			} else {
+				++cashok;
+			}
+
+			System.out.println(txn1.toString());
+			System.out.println(txn2.toString());
+			System.out.println("Cash ok=" + cashok + " bad=" + cashbad);
+
+			return ret;
+		}
+
+		return ret;
 	}
 
 	private static int findDateRange(Account acct, Date date) {

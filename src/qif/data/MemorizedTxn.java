@@ -50,7 +50,7 @@ class MemorizedTxn extends GenericTxn {
 				txn.AmortizationTotalYearsForLoan = Common.getDecimal(qline.value);
 				break;
 			case MemtxnAmount:
-				txn.amount = Common.getDecimal(qline.value);
+				txn.setAmount(Common.getDecimal(qline.value));
 				break;
 			case MemtxnCategory:
 				// txn.catid = qline.value;
