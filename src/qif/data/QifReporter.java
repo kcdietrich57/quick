@@ -39,7 +39,8 @@ public class QifReporter {
 
 	private static void reportNonInvestmentAccount(Account a, boolean includePseudoStatements) {
 		System.out.println("----------------------------");
-		System.out.println(a.name + " " + a.type + " " + a.description);
+		//System.out.println(a.name + " " + a.type + " " + a.description);
+		System.out.println(a.toString());
 		int ntran = a.transactions.size();
 
 		// System.out.println(" " + ntran + " transactions");
@@ -58,7 +59,7 @@ public class QifReporter {
 			int curNumTxn = 0;
 			int curYear = -1;
 			int curMonth = -1;
-			BigDecimal bal = new BigDecimal(0);
+			BigDecimal bal = BigDecimal.ZERO;
 			Calendar cal = Calendar.getInstance();
 
 			for (GenericTxn t : a.transactions) {

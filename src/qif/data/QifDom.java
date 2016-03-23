@@ -43,6 +43,14 @@ import java.util.List;
 
 // Document Object Model for a QIF file.
 public class QifDom {
+	private static short nextdomid = 1;
+	private static List<QifDom> doms = new ArrayList<QifDom>();
+
+	public static QifDom getDomById(short domid) {
+		return ((domid >= 0) && (doms.size() > domid)) ? doms.get(domid) : null;
+	}
+
+	public final short domid;
 	public List<Account> accounts;
 	public List<Account> accounts_bytime;
 	public List<Category> categories;
@@ -54,6 +62,14 @@ public class QifDom {
 	public Account currAccount = null;
 
 	public QifDom() {
+		this.domid = nextdomid++;
+		
+		while (doms.size() < this.domid) {
+			doms.add(null);
+		}
+
+		doms.add(this);
+
 		this.categories = new ArrayList<Category>();
 		this.accounts = new ArrayList<Account>();
 		this.accounts_bytime = new ArrayList<Account>();
@@ -80,7 +96,7 @@ public class QifDom {
 
 		for (Account a : other.accounts) {
 			if (a != null) {
-				addAccount(new Account(a));
+				addAccount(new Account(a, this));
 			}
 		}
 	}
@@ -195,6 +211,7 @@ public class QifDom {
 	public String toString() {
 		String s = "";
 
+		s += "ID: " + this.domid;
 		s += "Categories: " + this.categories;
 		s += "Accounts: " + this.accounts_bytime;
 		s += "Securities: " + this.securities;

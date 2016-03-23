@@ -9,9 +9,10 @@ import java.util.List;
 class SimpleTxn {
 	private static final List<SimpleTxn> NOSPLITS = new ArrayList<SimpleTxn>();
 
-	protected static long nextid = 1;
-	public final long id;
+	protected static int nextid = 1;
+	public final int id;
 
+	public short domid;
 	public short acctid;
 
 	private BigDecimal amount;
@@ -21,9 +22,10 @@ class SimpleTxn {
 	public short catid; // >0: CategoryID; <0 AccountID
 	public SimpleTxn xtxn;
 
-	public SimpleTxn(short acctid) {
+	public SimpleTxn(short domid, short acctid) {
 		this.id = nextid++;
 
+		this.domid = domid;
 		this.acctid = acctid;
 		this.amount = null;
 		this.memo = null;
@@ -33,9 +35,10 @@ class SimpleTxn {
 		this.xtxn = null;
 	}
 
-	public SimpleTxn(SimpleTxn other) {
+	public SimpleTxn(short domid, SimpleTxn other) {
 		this.id = nextid++;
 
+		this.domid = domid;
 		this.acctid = other.acctid;
 		this.amount = other.amount;
 		this.memo = other.memo;
@@ -89,11 +92,7 @@ class SimpleTxn {
 	}
 
 	public String toString() {
-		return toString(null);
-	}
-
-	public String toString(QifDom dom) {
-		return toStringLong(dom);
+		return toStringLong();
 	}
 
 	public String toStringShort() {
@@ -101,22 +100,20 @@ class SimpleTxn {
 		return "";
 	}
 
-	public String toStringLong(QifDom dom) {
+	public String toStringLong() {
+		QifDom dom = QifDom.getDomById(this.domid);
+
 		String s = "Tx" + this.id + ":";
-		s += " acct=" + ((dom != null) ? dom.accounts.get(this.acctid).name : this.acctid);
+		s += " acct=" + dom.accounts.get(this.acctid).name;
 		s += " amt=" + this.amount;
 		s += " memo=" + this.memo;
 
-		if (dom == null) {
-			s += " acctid=" + this.xacctid;
-		} else {
-			if (this.xacctid < (short) 0) {
-				s += " xacct=" + dom.accounts.get(-this.xacctid).name;
-			} else if (this.catid < (short) 0) {
-				s += " xcat=" + dom.accounts.get(-this.catid).name;
-			} else if (this.catid > (short) 0) {
-				s += " cat=" + dom.categories.get(this.catid).name;
-			}
+		if (this.xacctid < (short) 0) {
+			s += " xacct=" + dom.accounts.get(-this.xacctid).name;
+		} else if (this.catid < (short) 0) {
+			s += " xcat=" + dom.accounts.get(-this.catid).name;
+		} else if (this.catid > (short) 0) {
+			s += " cat=" + dom.categories.get(this.catid).name;
 		}
 
 		return s;
@@ -126,20 +123,20 @@ class SimpleTxn {
 class MultiSplitTxn extends SimpleTxn {
 	public List<SimpleTxn> subsplits = new ArrayList<SimpleTxn>();
 
-	public MultiSplitTxn(short acctid) {
-		super(acctid);
+	public MultiSplitTxn(short domid, short acctid) {
+		super(domid, acctid);
 	}
 
-	public MultiSplitTxn(MultiSplitTxn other) {
-		super(other);
+	public MultiSplitTxn(short domid, MultiSplitTxn other) {
+		super(domid, other);
 
 		for (SimpleTxn st : other.subsplits) {
-			this.subsplits.add(new SimpleTxn(st));
+			this.subsplits.add(new SimpleTxn(domid, st));
 		}
 	}
 
 	public BigDecimal getTotalAmount() {
-		BigDecimal total = new BigDecimal(0);
+		BigDecimal total = BigDecimal.ZERO;
 
 		for (SimpleTxn t : this.subsplits) {
 			total = total.add(t.getAmount());
@@ -155,19 +152,19 @@ public abstract class GenericTxn extends SimpleTxn {
 	public Date stmtdate;
 	public BigDecimal runningTotal;
 
-	public static GenericTxn clone(GenericTxn txn) {
+	public static GenericTxn clone(short domid, GenericTxn txn) {
 		if (txn instanceof NonInvestmentTxn) {
-			return new NonInvestmentTxn((NonInvestmentTxn) txn);
+			return new NonInvestmentTxn(domid, (NonInvestmentTxn) txn);
 		}
 		if (txn instanceof InvestmentTxn) {
-			return new InvestmentTxn((InvestmentTxn) txn);
+			return new InvestmentTxn(domid, (InvestmentTxn) txn);
 		}
 
 		return null;
 	}
 
-	public GenericTxn(short acctid) {
-		super(acctid);
+	public GenericTxn(short domid, short acctid) {
+		super(domid, acctid);
 
 		this.date = null;
 		this.clearedStatus = null;
@@ -175,8 +172,8 @@ public abstract class GenericTxn extends SimpleTxn {
 		this.runningTotal = null;
 	}
 
-	public GenericTxn(GenericTxn other) {
-		super(other);
+	public GenericTxn(short domid, GenericTxn other) {
+		super(domid, other);
 
 		this.date = other.date;
 		this.clearedStatus = other.clearedStatus;
@@ -186,7 +183,7 @@ public abstract class GenericTxn extends SimpleTxn {
 
 	public void repair() {
 		if (getAmount() == null) {
-			setAmount(new BigDecimal(0));
+			setAmount(BigDecimal.ZERO);
 		}
 	}
 
@@ -218,8 +215,8 @@ class NonInvestmentTxn extends GenericTxn {
 	public List<String> address;
 	public List<SimpleTxn> split;
 
-	public NonInvestmentTxn(short acctid) {
-		super(acctid);
+	public NonInvestmentTxn(short domid, short acctid) {
+		super(domid, acctid);
 
 		this.chkNumber = "";
 		this.payee = "";
@@ -228,8 +225,8 @@ class NonInvestmentTxn extends GenericTxn {
 		this.split = new ArrayList<SimpleTxn>();
 	}
 
-	public NonInvestmentTxn(NonInvestmentTxn other) {
-		super(other);
+	public NonInvestmentTxn(short domid, NonInvestmentTxn other) {
+		super(domid, other);
 
 		this.chkNumber = other.chkNumber;
 		this.payee = other.payee;
@@ -258,7 +255,7 @@ class NonInvestmentTxn extends GenericTxn {
 			return;
 		}
 
-		BigDecimal dec = new BigDecimal(0);
+		BigDecimal dec = BigDecimal.ZERO;
 
 		for (SimpleTxn txn : this.split) {
 			dec = dec.add(txn.getAmount());
@@ -267,10 +264,6 @@ class NonInvestmentTxn extends GenericTxn {
 		if (!dec.equals(getAmount())) {
 			Common.reportError("Total(" + getAmount() + ") does not match split total (" + dec + ")");
 		}
-	}
-
-	public String toString(QifDom dom) {
-		return toStringLong(dom);
 	}
 
 	public String toStringShort() {
@@ -282,24 +275,24 @@ class NonInvestmentTxn extends GenericTxn {
 		return s;
 	}
 
-	public String toStringLong(QifDom dom) {
+	public String toStringLong() {
+		QifDom dom = QifDom.getDomById(this.domid);
+
 		String s = "Tx" + this.id + ":";
-		s += " acct=" + ((dom != null) ? dom.accounts.get(this.acctid).name : this.acctid);
+		s += " acct=" + dom.accounts.get(this.acctid).name;
 		s += " date=" + Common.getDateString(getDate());
 		s += " clr:" + this.clearedStatus;
 		s += " num=" + this.chkNumber;
 		s += " payee=" + this.payee;
 		s += " amt=" + getAmount();
 		s += " memo=" + this.memo;
-		if (dom == null) {
-			s += " catid=" + this.catid;
-		} else {
-			if (this.catid < (short) 0) {
-				s += " xacct=[" + dom.accounts.get(-this.catid).name + "]";
-			} else if (this.catid > (short) 0) {
-				s += " cat=" + dom.categories.get(this.catid).name;
-			}
+
+		if (this.catid < (short) 0) {
+			s += " xacct=[" + dom.accounts.get(-this.catid).name + "]";
+		} else if (this.catid > (short) 0) {
+			s += " cat=" + dom.categories.get(this.catid).name;
 		}
+
 		s += " bal=" + this.runningTotal;
 
 		if (!this.address.isEmpty()) {
@@ -318,10 +311,13 @@ class NonInvestmentTxn extends GenericTxn {
 				} else if (txn.catid > (short) 0) {
 					s += " " + dom.categories.get(txn.catid).name;
 				}
+
 				s += " " + txn.getAmount();
+
 				if (txn.memo != null) {
 					s += " " + txn.memo;
 				}
+
 				s += "\n";
 			}
 		}
@@ -340,8 +336,8 @@ class InvestmentTxn extends GenericTxn {
 	public String accountForTransfer;
 	public BigDecimal amountTransferred;
 
-	public InvestmentTxn(short acctid) {
-		super(acctid);
+	public InvestmentTxn(short domid, short acctid) {
+		super(domid, acctid);
 
 		this.action = "";
 		this.security = "";
@@ -353,8 +349,8 @@ class InvestmentTxn extends GenericTxn {
 		this.amountTransferred = null;
 	}
 
-	public InvestmentTxn(InvestmentTxn other) {
-		super(other);
+	public InvestmentTxn(short domid, InvestmentTxn other) {
+		super(domid, other);
 
 		this.action = other.action;
 		this.security = other.security;
@@ -374,7 +370,7 @@ class InvestmentTxn extends GenericTxn {
 			if (amt != null) {
 				// setAmount(amt.negate());
 			} else if ((getAmount() == null) && (this.amountTransferred == null)) {
-				setAmount(new BigDecimal(0));
+				setAmount(BigDecimal.ZERO);
 			}
 			break;
 		}
@@ -523,9 +519,11 @@ class InvestmentTxn extends GenericTxn {
 		return (short) -this.xacctid;
 	}
 
-	public String toStringLong(QifDom dom) {
+	public String toStringLong() {
+		QifDom dom = QifDom.getDomById(this.domid);
+
 		String s = "InvTx:";
-		s += " acct=" + ((dom != null) ? dom.accounts.get(this.acctid).name : this.acctid);
+		s += " acct=" + dom.accounts.get(this.acctid).name;
 		s += " dt=" + Common.getDateString(getDate());
 		s += " act=" + this.action;
 		s += " sec=" + this.security;

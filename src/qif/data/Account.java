@@ -58,36 +58,41 @@ public class Account {
 		}
 	};
 
+	public short domid;
 	public short id;
 
 	public String name;
 	public AccountType type;
 	public String description;
 	public BigDecimal creditLimit;
+	public BigDecimal balance;
+	public BigDecimal clearedBalance;
 
 	public List<GenericTxn> transactions;
 	public List<Statement> statements;
 
-	public Account() {
+	public Account(QifDom dom) {
+		this.domid = dom.domid;
 		this.id = 0;
 
 		this.name = "";
 		this.type = null;
 		this.description = "";
 		this.creditLimit = null;
+		this.balance = this.clearedBalance = BigDecimal.ZERO;
 
 		this.transactions = new ArrayList<GenericTxn>();
 		this.statements = new ArrayList<Statement>();
 	}
 
-	public Account(short id) {
-		this();
+	public Account(short id, QifDom dom) {
+		this(dom);
 
 		this.id = id;
 	}
 
-	public Account(Account other) {
-		this(other.id);
+	public Account(Account other, QifDom dom) {
+		this(other.id, dom);
 
 		this.name = other.name;
 		this.type = other.type;
@@ -95,7 +100,7 @@ public class Account {
 		this.creditLimit = other.creditLimit;
 
 		for (GenericTxn t : other.transactions) {
-			this.transactions.add(GenericTxn.clone(t));
+			this.transactions.add(GenericTxn.clone(dom.domid, t));
 		}
 
 		for (Statement s : this.statements) {
@@ -145,6 +150,8 @@ public class Account {
 	public String toString() {
 		String s = "Account" + this.id + ": " + this.name //
 				+ " type=" + this.type //
+				+ " clbal=" + this.clearedBalance //
+				+ " bal=" + this.balance //
 				+ " desc=" + this.description //
 				+ " limit=" + this.creditLimit //
 				+ " #tx= " + this.transactions.size() //

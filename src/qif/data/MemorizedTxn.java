@@ -19,7 +19,7 @@ class MemorizedTxn extends GenericTxn {
 	public static MemorizedTxn load(QFileReader qfr) {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
-		MemorizedTxn txn = new MemorizedTxn((short) -1);
+		MemorizedTxn txn = new MemorizedTxn((short)0, (short) -1);
 
 		for (;;) {
 			qfr.nextSecurityLine(qline);
@@ -102,7 +102,7 @@ class MemorizedTxn extends GenericTxn {
 		}
 	}
 
-	public MemorizedTxn(short acctid) {
-		super(acctid);
+	public MemorizedTxn(short domid, short acctid) {
+		super(domid, acctid);
 	}
 };
