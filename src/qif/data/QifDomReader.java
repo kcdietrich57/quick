@@ -79,6 +79,7 @@ public class QifDomReader {
 			}
 		});
 
+		processSecurities();
 		balanceStatements();
 
 		return this.dom;
@@ -108,12 +109,12 @@ public class QifDomReader {
 			switch (sectype) {
 			case Tag:
 			case Category:
-				System.out.println("Loading categories");
+				// System.out.println("Loading categories");
 				loadCategories();
 				break;
 
 			case Account:
-				System.out.println("Loading accounts");
+				// System.out.println("Loading accounts");
 				loadAccounts();
 				break;
 
@@ -122,24 +123,26 @@ public class QifDomReader {
 			case Cash:
 			case CreditCard:
 			case Bank:
-				System.out.println("Loading transactions for " + this.dom.currAccount.name);
+				// System.out.println("Loading transactions for " +
+				// this.dom.currAccount.name);
 				loadNonInvestmentTransactions();
 				break;
 
 			case Investment:
-				System.out.println("Loading transactions for " + this.dom.currAccount.name);
+				// System.out.println("Loading transactions for " +
+				// this.dom.currAccount.name);
 				loadInvestmentTransactions();
 				break;
 
 			case Statement:
-				System.out.println("Loading statements");
+				// System.out.println("Loading statements");
 				loadStatements();
 				break;
 
 			case Security:
-				if (this.dom.securities.isEmpty()) {
-					System.out.println("Loading securities");
-				}
+				// if (this.dom.securities.isEmpty()) {
+				// System.out.println("Loading securities");
+				// }
 				loadSecurities();
 				break;
 
@@ -266,7 +269,7 @@ public class QifDomReader {
 				return acct;
 
 			case AcctType:
-				acct.type = AccountType.parse(qline.value);
+				acct.type = parseAccountType(qline.value);
 				break;
 			case AcctCreditLimit:
 				acct.creditLimit = Common.getDecimal(qline.value);
@@ -288,6 +291,55 @@ public class QifDomReader {
 				Common.reportError("syntax error");
 			}
 		}
+	}
+
+	public static AccountType parseAccountType(String s) {
+		switch (s.charAt(0)) {
+		case 'B':
+			if (s.equals("Bank")) {
+				return AccountType.Bank;
+			}
+			break;
+		case 'C':
+			if (s.equals("CCard")) {
+				return AccountType.CCard;
+			}
+			if (s.equals("Cash")) {
+				return AccountType.Cash;
+			}
+			break;
+		case 'I':
+			if (s.equals("Invst")) {
+				return AccountType.Invest;
+			}
+			break;
+		case 'M':
+			if (s.equals("Mutual")) {
+				return AccountType.InvMutual;
+			}
+			break;
+		case 'O':
+			if (s.equals("Oth A")) {
+				return AccountType.Asset;
+			}
+			if (s.equals("Oth L")) {
+				return AccountType.Liability;
+			}
+			break;
+		case 'P':
+			if (s.equals("Port")) {
+				return AccountType.InvPort;
+			}
+			break;
+		case '4':
+			if (s.equals("401(k)/403(b)")) {
+				return AccountType.Inv401k;
+			}
+			break;
+		}
+
+		Common.reportError("Unknown account type: " + s);
+		return AccountType.Bank;
 	}
 
 	private void loadSecurities() {
@@ -355,16 +407,59 @@ public class QifDomReader {
 			a.clearedBalance = a.balance = BigDecimal.ZERO;
 
 			for (GenericTxn t : a.transactions) {
+				BigDecimal amt = t.getTotalAmount();
+				if (t instanceof InvestmentTxn) {
+					switch (t.getAction()) {
+					case ActionBuy:
+					case ActionSell:
+						break;
+
+					case ActionShrsIn:
+					case ActionShrsOut: // no xfer info?
+					case ActionBuyX:
+					case ActionSellX:
+					case ActionReinvDiv:
+					case ActionReinvInt:
+					case ActionReinvLg:
+					case ActionReinvSh:
+					case ActionGrant:
+					case ActionVest:
+					case ActionExercisX:
+					case ActionExpire:
+					case ActionStockSplit:
+						// No net cash change
+						continue;
+
+					case ActionCash:
+					case ActionContribX:
+					case ActionDiv:
+					case ActionIntInc:
+					case ActionMiscIncX:
+					case ActionOther:
+					case ActionReminder:
+					case ActionWithdrwX:
+					case ActionXIn:
+					case ActionXOut:
+						break;
+					}
+				}
+
 				switch (t.getAction()) {
 				case ActionStockSplit:
 					break;
 
+				case ActionBuy:
+					// TODO take care of this in transaction instead?
+					amt = amt.negate();
+
+					// fall through
+
 				default:
-					a.balance = a.balance.add(t.getTotalAmount());
+					a.balance = a.balance.add(amt);
 					t.runningTotal = a.balance;
 
 					if (t.isCleared()) {
-						a.clearedBalance = a.clearedBalance.add(t.getTotalAmount());
+						a.clearedBalance = a.clearedBalance.add(amt);
 					}
 					break;
 				}
@@ -606,6 +701,72 @@ public class QifDomReader {
 		return txns;
 	}
 
+	private void processSecurities() {
+		int nullQuantities = 0;
+
+		for (Account a : dom.accounts) {
+			if ((a == null) || !a.isInvestmentAccount()) {
+				continue;
+			}
+
+			for (GenericTxn gtxn : a.transactions) {
+				if (!(gtxn instanceof InvestmentTxn)) {
+					continue;
+				}
+
+				InvestmentTxn txn = (InvestmentTxn) gtxn;
+				if (txn.security == null) {
+					continue;
+				}
+
+				a.securities.transactions.add(txn);
+
+				SecurityPosition pos = a.securities.getPosition(txn.security);
+
+				switch (txn.getAction()) {
+				case ActionBuy:
+				case ActionShrsIn:
+				case ActionReinvDiv:
+				case ActionReinvLg:
+				case ActionReinvSh:
+				case ActionGrant:
+				case ActionExpire:
+					if (txn.quantity == null) {
+						// TODO what to do about this?
+						System.out.println("NULL quantities: " + ++nullQuantities);
+						break;
+					}
+				case ActionBuyX:
+				case ActionReinvInt:
+				case ActionVest:
+					pos.shares = pos.shares.add(txn.quantity);
+					break;
+
+				case ActionShrsOut:
+				case ActionSell:
+				case ActionSellX:
+				case ActionExercisX:
+					pos.shares = pos.shares.subtract(txn.quantity);
+					break;
+
+				case ActionStockSplit:
+					pos.shares = pos.shares.multiply(txn.quantity);
+					break;
+
+				case ActionCash:
+				case ActionDiv:
+				case ActionIntInc:
+				case ActionMiscIncX:
+					break;
+
+				default:
+					System.out.println();
+					break;
+				}
+			}
+		}
+	}
+
 	private void loadInvestmentTransactions() {
 		for (;;) {
 			String s = this.rdr.peekLine();
@@ -649,7 +810,7 @@ public class QifDomReader {
 				break;
 			}
 			case InvAction:
-				txn.action = qline.value;
+				txn.action = parseAction(qline.value);
 				break;
 			case InvClearedStatus:
 				txn.clearedStatus = qline.value;
@@ -670,7 +831,7 @@ public class QifDomReader {
 				txn.quantity = Common.getDecimal(qline.value);
 				break;
 			case InvSecurity:
-				txn.security = qline.value;
+				txn.security = this.dom.findSecurityByName(qline.value);
 				break;
 			case InvFirstLine:
 				txn.textFirstLine = qline.value;
@@ -687,6 +848,83 @@ public class QifDomReader {
 				Common.reportError("syntax error; txn: " + qline);
 			}
 		}
+	}
+
+	private Action parseAction(String s) {
+		if ("StkSplit".equals(s)) {
+			return Action.ActionStockSplit;
+		}
+		if ("Cash".equals(s)) {
+			return Action.ActionCash;
+		}
+		if ("XIn".equals(s)) {
+			return Action.ActionXIn;
+		}
+		if ("XOut".equals(s)) {
+			return Action.ActionXOut;
+		}
+		if ("Buy".equals(s)) {
+			return Action.ActionBuy;
+		}
+		if ("BuyX".equals(s)) {
+			return Action.ActionBuyX;
+		}
+		if ("Sell".equals(s)) {
+			return Action.ActionSell;
+		}
+		if ("SellX".equals(s)) {
+			return Action.ActionSellX;
+		}
+		if ("ShrsIn".equals(s)) {
+			return Action.ActionShrsIn;
+		}
+		if ("ShrsOut".equals(s)) {
+			return Action.ActionShrsOut;
+		}
+		if ("Grant".equals(s)) {
+			return Action.ActionGrant;
+		}
+		if ("Vest".equals(s)) {
+			return Action.ActionVest;
+		}
+		if ("ExercisX".equals(s)) {
+			return Action.ActionExercisX;
+		}
+		if ("Expire".equals(s)) {
+			return Action.ActionExpire;
+		}
+		if ("WithdrwX".equals(s)) {
+			return Action.ActionWithdrwX;
+		}
+		if ("IntInc".equals(s)) {
+			return Action.ActionIntInc;
+		}
+		if ("MiscIncX".equals(s)) {
+			return Action.ActionMiscIncX;
+		}
+		if ("Div".equals(s)) {
+			return Action.ActionDiv;
+		}
+		if ("ReinvDiv".equals(s)) {
+			return Action.ActionReinvDiv;
+		}
+		if ("ReinvLg".equals(s)) {
+			return Action.ActionReinvLg;
+		}
+		if ("ReinvSh".equals(s)) {
+			return Action.ActionReinvSh;
+		}
+		if ("ReinvInt".equals(s)) {
+			return Action.ActionReinvInt;
+		}
+		if ("ContribX".equals(s)) {
+			return Action.ActionContribX;
+		}
+		if ("Reminder".equals(s)) {
+			return Action.ActionReminder;
+		}
+
+		return Action.ActionOther;
 	}
 
 	private void loadNonInvestmentTransactions() {

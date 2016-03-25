@@ -327,8 +327,8 @@ class NonInvestmentTxn extends GenericTxn {
 };
 
 class InvestmentTxn extends GenericTxn {
-	public String action;
-	public String security;
+	public Action action;
+	public Security security;
 	public BigDecimal price;
 	public BigDecimal quantity;
 	public String textFirstLine;
@@ -339,8 +339,8 @@ class InvestmentTxn extends GenericTxn {
 	public InvestmentTxn(short domid, short acctid) {
 		super(domid, acctid);
 
-		this.action = "";
-		this.security = "";
+		this.action = Action.ActionOther;
+		this.security = null;
 		this.price = null;
 		this.quantity = null;
 		this.textFirstLine = "";
@@ -352,8 +352,10 @@ class InvestmentTxn extends GenericTxn {
 	public InvestmentTxn(short domid, InvestmentTxn other) {
 		super(domid, other);
 
+		QifDom dom = QifDom.getDomById(domid);
+
 		this.action = other.action;
-		this.security = other.security;
+		this.security = dom.findSecurityByName(other.security.name);
 		this.price = other.price;
 		this.quantity = other.quantity;
 		this.textFirstLine = other.textFirstLine;
@@ -415,80 +417,7 @@ class InvestmentTxn extends GenericTxn {
 	}
 
 	public Action getAction() {
-		if ("StkSplit".equals(this.action)) {
-			return Action.ActionStockSplit;
-		}
-		if ("Cash".equals(this.action)) {
-			return Action.ActionCash;
-		}
-		if ("XIn".equals(this.action)) {
-			return Action.ActionXIn;
-		}
-		if ("XOut".equals(this.action)) {
-			return Action.ActionXOut;
-		}
-		if ("Buy".equals(this.action)) {
-			return Action.ActionBuy;
-		}
-		if ("BuyX".equals(this.action)) {
-			return Action.ActionBuyX;
-		}
-		if ("Sell".equals(this.action)) {
-			return Action.ActionSell;
-		}
-		if ("SellX".equals(this.action)) {
-			return Action.ActionSellX;
-		}
-		if ("ShrsIn".equals(this.action)) {
-			return Action.ActionShrsIn;
-		}
-		if ("ShrsOut".equals(this.action)) {
-			return Action.ActionShrsOut;
-		}
-		if ("Grant".equals(this.action)) {
-			return Action.ActionGrant;
-		}
-		if ("Vest".equals(this.action)) {
-			return Action.ActionVest;
-		}
-		if ("ExercisX".equals(this.action)) {
-			return Action.ActionExercisX;
-		}
-		if ("Expire".equals(this.action)) {
-			return Action.ActionExpire;
-		}
-		if ("WithdrwX".equals(this.action)) {
-			return Action.ActionWithdrwX;
-		}
-		if ("IntInc".equals(this.action)) {
-			return Action.ActionIntInc;
-		}
-		if ("MiscIncX".equals(this.action)) {
-			return Action.ActionMiscIncX;
-		}
-		if ("Div".equals(this.action)) {
-			return Action.ActionDiv;
-		}
-		if ("ReinvDiv".equals(this.action)) {
-			return Action.ActionReinvDiv;
-		}
-		if ("ReinvLg".equals(this.action)) {
-			return Action.ActionReinvLg;
-		}
-		if ("ReinvSh".equals(this.action)) {
-			return Action.ActionReinvSh;
-		}
-		if ("ReinvInt".equals(this.action)) {
-			return Action.ActionReinvInt;
-		}
-		if ("ContribX".equals(this.action)) {
-			return Action.ActionContribX;
-		}
-		if ("Reminder".equals(this.action)) {
-			return Action.ActionReminder;
-		}
-
-		return Action.ActionOther;
+		return this.action;
 	}
 
 	public BigDecimal getTotalAmount() {
@@ -526,7 +455,9 @@ class InvestmentTxn extends GenericTxn {
 		s += " acct=" + dom.accounts.get(this.acctid).name;
 		s += " dt=" + Common.getDateString(getDate());
 		s += " act=" + this.action;
-		s += " sec=" + this.security;
+		if (this.security != null) {
+			s += " sec=" + this.security.name;
+		}
 		s += " price=" + this.price;
 		s += " qty=" + this.quantity;
 		s += " amt=" + getAmount();

@@ -4,59 +4,48 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+class SecurityPosition {
+	Security security;
+	BigDecimal shares;
+
+	public SecurityPosition(Security sec, BigDecimal shares) {
+		this.security = sec;
+		this.shares = shares;
+	}
+
+	public SecurityPosition(Security sec) {
+		this.security = sec;
+		this.shares = BigDecimal.ZERO;
+	}
+}
+
+class SecurityDetails {
+	List<SecurityPosition> positions;
+	List<InvestmentTxn> transactions;
+
+	public SecurityDetails() {
+		this.positions = new ArrayList<SecurityPosition>();
+		this.transactions = new ArrayList<InvestmentTxn>();
+	}
+
+	public SecurityPosition getPosition(Security sec) {
+		for (SecurityPosition pos : this.positions) {
+			if (pos.security == sec) {
+				return pos;
+			}
+		}
+
+		SecurityPosition newpos = new SecurityPosition(sec);
+		this.positions.add(newpos);
+
+		return newpos;
+	}
+}
+
 public class Account {
 	enum AccountType { //
 		Bank, CCard, Cash, Asset, Liability, Invest, InvPort, Inv401k, InvMutual;
-
-		public static AccountType parse(String s) {
-			switch (s.charAt(0)) {
-			case 'B':
-				if (s.equals("Bank")) {
-					return Bank;
-				}
-				break;
-			case 'C':
-				if (s.equals("CCard")) {
-					return CCard;
-				}
-				if (s.equals("Cash")) {
-					return Cash;
-				}
-				break;
-			case 'I':
-				if (s.equals("Invst")) {
-					return Invest;
-				}
-				break;
-			case 'M':
-				if (s.equals("Mutual")) {
-					return InvMutual;
-				}
-				break;
-			case 'O':
-				if (s.equals("Oth A")) {
-					return Asset;
-				}
-				if (s.equals("Oth L")) {
-					return Liability;
-				}
-				break;
-			case 'P':
-				if (s.equals("Port")) {
-					return InvPort;
-				}
-				break;
-			case '4':
-				if (s.equals("401(k)/403(b)")) {
-					return Inv401k;
-				}
-				break;
-			}
-
-			Common.reportError("Unknown account type: " + s);
-			return AccountType.Bank;
-		}
-	};
+	}
 
 	public short domid;
 	public short id;
@@ -70,6 +59,7 @@ public class Account {
 
 	public List<GenericTxn> transactions;
 	public List<Statement> statements;
+	public SecurityDetails securities;
 
 	public Account(QifDom dom) {
 		this.domid = dom.domid;
@@ -83,6 +73,7 @@ public class Account {
 
 		this.transactions = new ArrayList<GenericTxn>();
 		this.statements = new ArrayList<Statement>();
+		this.securities = new SecurityDetails();
 	}
 
 	public Account(short id, QifDom dom) {
@@ -108,16 +99,35 @@ public class Account {
 		}
 	}
 
+	public boolean isInvestmentAccount() {
+		switch (this.type) {
+		case Bank:
+		case CCard:
+		case Cash:
+		case Asset:
+		case Liability:
+			return false;
+
+		case Inv401k:
+		case InvMutual:
+		case InvPort:
+		case Invest:
+			return true;
+
+		default:
+			Common.reportError("unknown acct type: " + this.type);
+			return false;
+		}
+	}
+
 	public boolean isNonInvestmentAccount() {
 		switch (this.type) {
 		case Bank:
 		case CCard:
 		case Cash:
-			return true;
-
 		case Asset:
 		case Liability:
-			return false; // TODO for now
+			return true;
 
 		case Inv401k:
 		case InvMutual:
@@ -157,6 +167,13 @@ public class Account {
 				+ " #tx= " + this.transactions.size() //
 				+ "\n";
 
+		if (!this.securities.positions.isEmpty()) {
+			s += "Securities Held:\n";
+
+			for (SecurityPosition p : this.securities.positions) {
+				s += p.security.name + " " + p.shares + "\n";
+			}
+		}
 		return s;
 	}
-};
+}

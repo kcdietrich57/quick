@@ -5,13 +5,22 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class QifReporter {
+	public static boolean compact = false;
+
 	public static void reportAccounts(QifDom dom) {
 		System.out.println("============================");
 		System.out.println("Accounts");
 		System.out.println("============================");
 
 		for (Account a : dom.accounts_bytime) {
-			if (a == null) {
+			if ((a == null) || //
+					!a.isInvestmentAccount() || //
+					(a.balance.compareTo(BigDecimal.ZERO) == 0)) {
+				continue;
+			}
+
+			if (compact) {
+			System.out.println(a.name + " " + a.type + " " + a.balance);
 				continue;
 			}
 
@@ -39,7 +48,7 @@ public class QifReporter {
 
 	private static void reportNonInvestmentAccount(Account a, boolean includePseudoStatements) {
 		System.out.println("----------------------------");
-		//System.out.println(a.name + " " + a.type + " " + a.description);
+		// System.out.println(a.name + " " + a.type + " " + a.description);
 		System.out.println(a.toString());
 		int ntran = a.transactions.size();
 
@@ -94,7 +103,8 @@ public class QifReporter {
 
 	private static void reportInvestmentAccount(Account a) {
 		System.out.println("----------------------------");
-		System.out.println(a.name + " " + a.type + " " + a.description);
+		//System.out.println(a.name + " " + a.type + " " + a.description);
+		System.out.println(a.toString());
 		int ntran = a.transactions.size();
 
 		System.out.println("" + ntran + " transactions");
