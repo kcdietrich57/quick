@@ -377,43 +377,55 @@ class InvestmentTxn extends GenericTxn {
 			break;
 		}
 
+		case ActionBuy:
+		case ActionShrsIn:
+		case ActionReinvDiv:
+		case ActionReinvLg:
+		case ActionReinvSh:
+		case ActionGrant:
+		case ActionExpire:
+			if (this.quantity == null) {
+				// TODO what to do about this?
+				// System.out.println("NULL quantities: " + ++nullQuantities);
+				this.quantity = BigDecimal.ZERO;
+				break;
+			}
+
+		case ActionBuyX:
+		case ActionReinvInt:
+		case ActionVest:
+			break;
+
+		case ActionShrsOut:
+		case ActionSell:
+		case ActionSellX:
+		case ActionExercisX:
+			this.quantity = this.quantity.negate();
+			break;
+
+		case ActionStockSplit:
+			break;
+
 		case ActionXIn: // amt/xamt
 		case ActionIntInc: // amt
 		case ActionMiscIncX: // amt
 		case ActionContribX: // amt/xamt
 		case ActionWithdrwX: // + amt/xamt
-		case ActionShrsIn: // amt
-		case ActionShrsOut: // no amt?
-		case ActionBuy: // amt
-		case ActionSell: // + amt
-		case ActionBuyX: // amt/xamt
-		case ActionSellX: // + amt/xamt
-		case ActionStockSplit: // n/a
 		case ActionDiv: // amt
-		case ActionReinvDiv: // amt
-		case ActionReinvLg: // amt
-		case ActionReinvSh: // amt
-		case ActionReinvInt: // amt
-		case ActionGrant: // amt
-		case ActionVest: // amt
-		case ActionExercisX: // amt
-		case ActionExpire: // amt
-		case ActionReminder: // amt
-			super.repair();
 			break;
 
 		case ActionXOut: { // + amt/xamt
 			BigDecimal amt = this.amountTransferred.negate();
 			this.amountTransferred = amt;
 			setAmount(amt);
-			super.repair();
 			break;
 		}
 
 		default:
-			super.repair();
 			break;
 		}
+		
+		super.repair();
 	}
 
 	public Action getAction() {

@@ -7,25 +7,31 @@ import java.util.List;
 class SecurityPosition {
 	Security security;
 	BigDecimal shares;
+	List<InvestmentTxn> transactions;
 
 	public SecurityPosition(Security sec, BigDecimal shares) {
 		this.security = sec;
 		this.shares = shares;
+		this.transactions = new ArrayList<InvestmentTxn>();
 	}
 
 	public SecurityPosition(Security sec) {
-		this.security = sec;
-		this.shares = BigDecimal.ZERO;
+		this(sec, BigDecimal.ZERO);
+	}
+
+	public String toString() {
+		String s = "Sec: " + this.security.name + //
+				" Shares: " + this.shares + //
+				" Txns: " + this.transactions.size();
+		return s;
 	}
 }
 
 class SecurityDetails {
 	List<SecurityPosition> positions;
-	List<InvestmentTxn> transactions;
 
 	public SecurityDetails() {
 		this.positions = new ArrayList<SecurityPosition>();
-		this.transactions = new ArrayList<InvestmentTxn>();
 	}
 
 	public SecurityPosition getPosition(Security sec) {

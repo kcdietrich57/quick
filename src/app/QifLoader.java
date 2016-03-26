@@ -1,5 +1,6 @@
 package app;
 
+import qif.data.Account;
 import qif.data.QifDom;
 import qif.data.QifDomReader;
 import qif.data.QifReporter;
@@ -11,6 +12,9 @@ public class QifLoader {
 
 		QifDomReader rdr = new QifDomReader();
 		QifDom dom = rdr.load(file);
+
+		Account a = dom.findAccount("ETrade");
+		QifReporter.reportInvestmentAccount(a);
 
 		QifReporter.reportAccounts(dom);
 

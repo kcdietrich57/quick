@@ -702,8 +702,6 @@ public class QifDomReader {
 	}
 
 	private void processSecurities() {
-		int nullQuantities = 0;
-
 		for (Account a : dom.accounts) {
 			if ((a == null) || !a.isInvestmentAccount()) {
 				continue;
@@ -719,9 +717,8 @@ public class QifDomReader {
 					continue;
 				}
 
-				a.securities.transactions.add(txn);
-
 				SecurityPosition pos = a.securities.getPosition(txn.security);
+				pos.transactions.add(txn);
 
 				switch (txn.getAction()) {
 				case ActionBuy:
@@ -731,26 +728,26 @@ public class QifDomReader {
 				case ActionReinvSh:
 				case ActionGrant:
 				case ActionExpire:
-					if (txn.quantity == null) {
-						// TODO what to do about this?
-						System.out.println("NULL quantities: " + ++nullQuantities);
-						break;
-					}
+//					if (txn.quantity == null) {
+//						// TODO what to do about this?
+//						System.out.println("NULL quantities: " + ++nullQuantities);
+//						break;
+//					}
 				case ActionBuyX:
 				case ActionReinvInt:
 				case ActionVest:
-					pos.shares = pos.shares.add(txn.quantity);
-					break;
-
 				case ActionShrsOut:
 				case ActionSell:
 				case ActionSellX:
 				case ActionExercisX:
-					pos.shares = pos.shares.subtract(txn.quantity);
+					pos.shares = pos.shares.add(txn.quantity);
 					break;
+//					pos.shares = pos.shares.subtract(txn.quantity);
+//					break;
 
 				case ActionStockSplit:
 					pos.shares = pos.shares.multiply(txn.quantity);
+					pos.shares = pos.shares.divide(BigDecimal.TEN);
 					break;
 
 				case ActionCash:

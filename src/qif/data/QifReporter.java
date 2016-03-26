@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
 
+import qif.data.SimpleTxn.Action;
+
 public class QifReporter {
 	public static boolean compact = false;
 
@@ -20,7 +22,7 @@ public class QifReporter {
 			}
 
 			if (compact) {
-			System.out.println(a.name + " " + a.type + " " + a.balance);
+				System.out.println(a.name + " " + a.type + " " + a.balance);
 				continue;
 			}
 
@@ -101,9 +103,9 @@ public class QifReporter {
 		System.out.println("----------------------------");
 	}
 
-	private static void reportInvestmentAccount(Account a) {
+	public static void reportInvestmentAccount(Account a) {
 		System.out.println("----------------------------");
-		//System.out.println(a.name + " " + a.type + " " + a.description);
+		// System.out.println(a.name + " " + a.type + " " + a.description);
 		System.out.println(a.toString());
 		int ntran = a.transactions.size();
 
@@ -117,6 +119,28 @@ public class QifReporter {
 					+ Common.getDateString(ft.getDate()) //
 					+ " - " + Common.getDateString(lt.getDate()));
 			System.out.println("----------------------------");
+		}
+
+		for (SecurityPosition p : a.securities.positions) {
+			BigDecimal shrbal = BigDecimal.ZERO;
+
+			System.out.println("Sec: " + p.security.name);
+
+			for (InvestmentTxn t : p.transactions) {
+				if (t.getAction() == Action.ActionStockSplit) {
+					shrbal = shrbal.multiply(t.quantity);
+					shrbal = shrbal.divide(BigDecimal.TEN);
+				} else if (t.quantity != null) {
+					shrbal = shrbal.add(t.quantity);
+				}
+
+				if (t.quantity != null) {
+					System.out.println(Common.getDateString(t.getDate()) + //
+							" " + t.action + //
+							" Shares: " + t.quantity + //
+							" Bal: " + shrbal);
+				}
+			}
 		}
 
 		System.out.println("----------------------------");
