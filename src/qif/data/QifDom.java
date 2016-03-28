@@ -2,7 +2,11 @@
 package qif.data;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+
+import qif.data.Account.AccountType;
 
 //--------------------------------------------------------------------
 //TODO
@@ -22,15 +26,18 @@ import java.util.List;
 // 2/21 Add to git
 // 2/22 Cloning Category/Security/Account info in new file (prep for merge)
 // 2/28 Running cash balance
+// 3/5 Non-investment register - running balance
+// 3/27 Investment cash balance
+// 3/27 Investment transactions - share balance
+//
+// Track investments - lots, share xfers, cost basis/gain/loss
+//
 // Merge/compare files
 // Synchronize data with updated qif file
 //
 //Code review/cleanup - ids for more fields?
 //Point-in time positions (net worth)
 //Handle investment amounts and transfers
-//Investment cash balance
-//Investment transactions - share balance
-// Non-investment register - running balance
 //
 // Encryption, security
 // Persistence
@@ -46,15 +53,15 @@ public class QifDom {
 	private static short nextdomid = 1;
 	private static List<QifDom> doms = new ArrayList<QifDom>();
 
-	public static QifDom getDomById(short domid) {
+	public static QifDom getDomById(int domid) {
 		return ((domid >= 0) && (doms.size() > domid)) ? doms.get(domid) : null;
 	}
 
 	public final short domid;
-	public List<Account> accounts;
-	public List<Account> accounts_bytime;
-	public List<Category> categories;
-	public List<Security> securities;
+	private List<Account> accounts;
+	private List<Account> accounts_bytime;
+	private List<Category> categories;
+	private List<Security> securities;
 
 	// public List<QClass> classes;
 	// public List<MemorizedTxn> memorizedTxns;
@@ -63,7 +70,7 @@ public class QifDom {
 
 	public QifDom() {
 		this.domid = nextdomid++;
-		
+
 		while (doms.size() < this.domid) {
 			doms.add(null);
 		}
@@ -101,6 +108,30 @@ public class QifDom {
 		}
 	}
 
+	public int getNumAccounts() {
+		return this.accounts.size() - 1;
+	}
+
+	public int getNumCategories() {
+		return this.categories.size() - 1;
+	}
+
+	public int getNumSecurities() {
+		return this.securities.size() - 1;
+	}
+
+	public Account getAccount(int acctid) {
+		return this.accounts.get(acctid);
+	}
+
+	public Account getAccountByTime(int acctid) {
+		return this.accounts_bytime.get(acctid);
+	}
+
+	public Category getCategory(int catid) {
+		return this.categories.get(catid);
+	}
+
 	public void addAccount(Account acct) {
 		while (this.accounts.size() <= acct.id) {
 			this.accounts.add(null);
@@ -110,20 +141,64 @@ public class QifDom {
 		this.accounts_bytime.add(acct);
 
 		this.currAccount = acct;
+
+		Collections.sort(this.accounts_bytime, new Comparator<Account>() {
+			public int compare(Account a1, Account a2) {
+				if (a1 == null) {
+					return (a2 == null) ? 0 : 1;
+				} else if (a2 == null) {
+					return -1;
+				}
+
+				// Order by firsttran, lasttran
+				int ct1 = a1.transactions.size();
+				int ct2 = a2.transactions.size();
+
+				if (ct1 == 0) {
+					return (ct2 == 0) ? 0 : -1;
+				} else if (ct2 == 0) {
+					return 1;
+				}
+
+				GenericTxn firsttxn1 = a1.transactions.get(0);
+				GenericTxn lasttxn1 = a1.transactions.get(ct1 - 1);
+				GenericTxn firsttxn2 = a2.transactions.get(0);
+				GenericTxn lasttxn2 = a2.transactions.get(ct2 - 1);
+
+				int diff = firsttxn1.getDate().compareTo(firsttxn2.getDate());
+				if (diff != 0) {
+					return diff;
+				}
+
+				diff = lasttxn1.getDate().compareTo(lasttxn2.getDate());
+				if (diff != 0) {
+					return diff;
+				}
+
+				return (a1.name.compareTo(a2.name));
+			}
+		});
 	}
 
 	public void updateAccount(Account oldacct, Account newacct) {
-		// TODO better compare and/or update
+		String msg = "Account type mismatch: " //
+				+ oldacct.type + " vs " + newacct.type;
+
 		if (oldacct.type != newacct.type) {
-			Common.reportWarning("Account type mismatch: " //
-					+ oldacct.type + " vs " + newacct.type);
+			if (oldacct.isInvestmentAccount() != newacct.isInvestmentAccount()) {
+				Common.reportError(msg);
+			}
+
+			if (newacct.type != AccountType.Invest) {
+				Common.reportWarning(msg);
+			}
 		}
 
 		this.currAccount = oldacct;
+	}
 
-		// System.out.println("Updating account:\n" //
-		// + " " + existing //
-		// + " " + newacct);
+	public Account getAccount(short acctid) {
+		return this.accounts.get(acctid);
 	}
 
 	public void addCategory(Category cat) {

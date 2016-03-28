@@ -10,6 +10,18 @@ class SimpleTxn {
 	private static final List<SimpleTxn> NOSPLITS = new ArrayList<SimpleTxn>();
 
 	protected static int nextid = 1;
+
+	public enum Action {
+		ActionOther, ActionCash, ActionXIn, ActionXOut, ActionWithdrwX, //
+		ActionContribX, ActionIntInc, ActionMiscIncX, //
+		ActionBuy, ActionBuyX, ActionSell, ActionSellX, //
+		ActionGrant, ActionVest, ActionExercisX, ActionExpire, //
+		ActionShrsIn, ActionShrsOut, //
+		ActionDiv, ActionReinvDiv, ActionReinvLg, ActionReinvSh, //
+		ActionReinvInt, //
+		ActionStockSplit, ActionReminder
+	};
+
 	public final int id;
 
 	public short domid;
@@ -48,16 +60,11 @@ class SimpleTxn {
 		this.xtxn = null;
 	}
 
-	public enum Action {
-		ActionOther, ActionCash, ActionXIn, ActionXOut, ActionWithdrwX, //
-		ActionContribX, ActionIntInc, ActionMiscIncX, //
-		ActionBuy, ActionBuyX, ActionSell, ActionSellX, //
-		ActionGrant, ActionVest, ActionExercisX, ActionExpire, //
-		ActionShrsIn, ActionShrsOut, //
-		ActionDiv, ActionReinvDiv, ActionReinvLg, ActionReinvSh, //
-		ActionReinvInt, //
-		ActionStockSplit, ActionReminder
-	};
+	public Account getAccount() {
+		QifDom dom = QifDom.getDomById(this.domid);
+
+		return dom.getAccount(this.acctid);
+	}
 
 	public Action getAction() {
 		return Action.ActionOther;
@@ -104,16 +111,16 @@ class SimpleTxn {
 		QifDom dom = QifDom.getDomById(this.domid);
 
 		String s = "Tx" + this.id + ":";
-		s += " acct=" + dom.accounts.get(this.acctid).name;
+		s += " acct=" + dom.getAccount(this.acctid).name;
 		s += " amt=" + this.amount;
 		s += " memo=" + this.memo;
 
 		if (this.xacctid < (short) 0) {
-			s += " xacct=" + dom.accounts.get(-this.xacctid).name;
+			s += " xacct=" + dom.getAccount(-this.xacctid).name;
 		} else if (this.catid < (short) 0) {
-			s += " xcat=" + dom.accounts.get(-this.catid).name;
+			s += " xcat=" + dom.getAccount(-this.catid).name;
 		} else if (this.catid > (short) 0) {
-			s += " cat=" + dom.categories.get(this.catid).name;
+			s += " cat=" + dom.getCategory(this.catid).name;
 		}
 
 		return s;
@@ -279,7 +286,7 @@ class NonInvestmentTxn extends GenericTxn {
 		QifDom dom = QifDom.getDomById(this.domid);
 
 		String s = "Tx" + this.id + ":";
-		s += " acct=" + dom.accounts.get(this.acctid).name;
+		s += " acct=" + dom.getAccount(this.acctid).name;
 		s += " date=" + Common.getDateString(getDate());
 		s += " clr:" + this.clearedStatus;
 		s += " num=" + this.chkNumber;
@@ -288,9 +295,9 @@ class NonInvestmentTxn extends GenericTxn {
 		s += " memo=" + this.memo;
 
 		if (this.catid < (short) 0) {
-			s += " xacct=[" + dom.accounts.get(-this.catid).name + "]";
+			s += " xacct=[" + dom.getAccount(-this.catid).name + "]";
 		} else if (this.catid > (short) 0) {
-			s += " cat=" + dom.categories.get(this.catid).name;
+			s += " cat=" + dom.getCategory(this.catid).name;
 		}
 
 		s += " bal=" + this.runningTotal;
@@ -307,9 +314,9 @@ class NonInvestmentTxn extends GenericTxn {
 
 			for (SimpleTxn txn : this.split) {
 				if (txn.catid < (short) 0) {
-					s += " [" + dom.accounts.get(-txn.catid).name + "]";
+					s += " [" + dom.getAccount(-txn.catid).name + "]";
 				} else if (txn.catid > (short) 0) {
-					s += " " + dom.categories.get(txn.catid).name;
+					s += " " + dom.getCategory(txn.catid).name;
 				}
 
 				s += " " + txn.getAmount();
@@ -366,12 +373,8 @@ class InvestmentTxn extends GenericTxn {
 
 	public void repair() {
 		switch (getAction()) {
-		case ActionCash: { // amt
-			BigDecimal amt = getAmount();
-
-			if (amt != null) {
-				// setAmount(amt.negate());
-			} else if ((getAmount() == null) && (this.amountTransferred == null)) {
+		case ActionCash: {
+			if ((getAmount() == null) && (this.amountTransferred == null)) {
 				setAmount(BigDecimal.ZERO);
 			}
 			break;
@@ -388,18 +391,27 @@ class InvestmentTxn extends GenericTxn {
 				// TODO what to do about this?
 				// System.out.println("NULL quantities: " + ++nullQuantities);
 				this.quantity = BigDecimal.ZERO;
-				break;
 			}
+
+			// fall through
 
 		case ActionBuyX:
 		case ActionReinvInt:
 		case ActionVest:
+			if (this.price == null) {
+				this.price = BigDecimal.ZERO;
+			}
+
 			break;
 
 		case ActionShrsOut:
 		case ActionSell:
 		case ActionSellX:
 		case ActionExercisX:
+			if (this.price == null) {
+				this.price = BigDecimal.ZERO;
+			}
+
 			this.quantity = this.quantity.negate();
 			break;
 
@@ -424,7 +436,93 @@ class InvestmentTxn extends GenericTxn {
 		default:
 			break;
 		}
-		
+
+		BigDecimal amt = getTotalAmount();
+		if (amt == null) {
+			amt = BigDecimal.ZERO;
+		}
+
+		switch (getAction()) {
+		case ActionBuy:
+		case ActionBuyX:
+		case ActionReinvDiv:
+		case ActionReinvInt:
+		case ActionReinvLg:
+		case ActionReinvSh: {
+			BigDecimal tot = this.quantity.multiply(this.price);
+			if (this.commission == null) {
+				this.commission = BigDecimal.ZERO;
+			}
+			tot = tot.add(this.commission);
+
+			BigDecimal diff = tot.subtract(amt).abs();
+
+			if (diff.compareTo(new BigDecimal("0.005")) > 0) {
+				BigDecimal newprice = tot.divide(this.quantity).abs();
+
+				String s = "Inconsistent " + this.action + " transaction:" + //
+						" acct=" + QifDom.getDomById(1).getAccount(this.acctid).name + //
+						" " + Common.getDateString(getDate()) + "\n" + //
+						"  sec=" + this.security.name + //
+						" qty=" + this.quantity + //
+						" price=" + this.price;
+
+				if (this.commission != null && //
+						this.commission.compareTo(BigDecimal.ZERO) != 0) {
+					s += " comm=" + this.commission;
+				}
+
+				s += " tot=" + tot + //
+						" txamt=" + amt + //
+						" diff=" + diff + "\n";
+				s += "  Corrected price: " + newprice;
+
+				Common.reportWarning(s);
+
+				this.price = newprice;
+			}
+		}
+			break;
+
+		case ActionSell:
+		case ActionSellX: {
+			BigDecimal tot = this.quantity.multiply(price);
+			if (this.commission == null) {
+				this.commission = BigDecimal.ZERO;
+			}
+			tot = tot.add(this.commission);
+
+			BigDecimal diff = tot.subtract(amt.negate()).abs();
+
+			if (diff.compareTo(new BigDecimal("0.005")) > 0) {
+				Common.reportWarning("Inconsistent buy transaction");
+			}
+		}
+
+		case ActionDiv:
+		case ActionExercisX:
+		case ActionExpire:
+		case ActionGrant:
+		case ActionShrsIn:
+		case ActionShrsOut:
+		case ActionStockSplit:
+		case ActionVest:
+			break;
+
+		case ActionCash:
+		case ActionContribX:
+		case ActionIntInc:
+		case ActionMiscIncX:
+		case ActionReminder:
+		case ActionWithdrwX:
+		case ActionXIn:
+		case ActionXOut:
+			break;
+
+		case ActionOther:
+			break;
+		}
+
 		super.repair();
 	}
 
@@ -464,7 +562,7 @@ class InvestmentTxn extends GenericTxn {
 		QifDom dom = QifDom.getDomById(this.domid);
 
 		String s = "InvTx:";
-		s += " acct=" + dom.accounts.get(this.acctid).name;
+		s += " acct=" + dom.getAccount(this.acctid).name;
 		s += " dt=" + Common.getDateString(getDate());
 		s += " act=" + this.action;
 		if (this.security != null) {

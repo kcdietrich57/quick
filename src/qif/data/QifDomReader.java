@@ -42,43 +42,6 @@ public class QifDomReader {
 		cleanUpTransactions();
 		validateStatements();
 
-		Collections.sort(this.dom.accounts_bytime, new Comparator<Account>() {
-			public int compare(Account a1, Account a2) {
-				if (a1 == null) {
-					return (a2 == null) ? 0 : 1;
-				} else if (a2 == null) {
-					return -1;
-				}
-
-				// Order by firsttran, lasttran
-				int ct1 = a1.transactions.size();
-				int ct2 = a2.transactions.size();
-
-				if (ct1 == 0) {
-					return (ct2 == 0) ? 0 : -1;
-				} else if (ct2 == 0) {
-					return 1;
-				}
-
-				GenericTxn firsttxn1 = a1.transactions.get(0);
-				GenericTxn lasttxn1 = a1.transactions.get(ct1 - 1);
-				GenericTxn firsttxn2 = a2.transactions.get(0);
-				GenericTxn lasttxn2 = a2.transactions.get(ct2 - 1);
-
-				int diff = firsttxn1.getDate().compareTo(firsttxn2.getDate());
-				if (diff != 0) {
-					return diff;
-				}
-
-				diff = lasttxn1.getDate().compareTo(lasttxn2.getDate());
-				if (diff != 0) {
-					return diff;
-				}
-
-				return (a1.name.compareTo(a2.name));
-			}
-		});
-
 		processSecurities();
 		balanceStatements();
 
@@ -359,7 +322,7 @@ public class QifDomReader {
 				// TODO verify
 			} else {
 				sec.id = this.nextSecurityID++;
-				dom.securities.add(sec);
+				dom.addSecurity(sec);
 			}
 		}
 	}
@@ -403,7 +366,9 @@ public class QifDomReader {
 	}
 
 	private void calculateRunningTotals() {
-		for (Account a : this.dom.accounts_bytime) {
+		for (int idx = 0; idx < this.dom.getNumAccounts(); ++idx) {
+			Account a = this.dom.getAccountByTime(idx);
+
 			a.clearedBalance = a.balance = BigDecimal.ZERO;
 
 			for (GenericTxn t : a.transactions) {
@@ -468,7 +433,8 @@ public class QifDomReader {
 	}
 
 	private void sortTransactions() {
-		for (Account a : dom.accounts) {
+		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
+			Account a = dom.getAccount(acctid);
 			if (a == null) {
 				continue;
 			}
@@ -490,7 +456,8 @@ public class QifDomReader {
 	}
 
 	private void cleanUpSplits() {
-		for (Account a : dom.accounts) {
+		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
+			Account a = dom.getAccount(acctid);
 			if (a == null) {
 				continue;
 			}
@@ -502,7 +469,8 @@ public class QifDomReader {
 	}
 
 	private void connectTransfers() {
-		for (Account a : dom.accounts) {
+		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
+			Account a = dom.getAccount(acctid);
 			if (a == null) {
 				continue;
 			}
@@ -526,7 +494,8 @@ public class QifDomReader {
 	}
 
 	private void validateStatements() {
-		for (Account a : dom.accounts) {
+		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
+			Account a = dom.getAccount(acctid);
 			if (a == null) {
 				continue;
 			}
@@ -544,7 +513,8 @@ public class QifDomReader {
 	}
 
 	private void balanceStatements() {
-		for (Account a : dom.accounts) {
+		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
+			Account a = dom.getAccount(acctid);
 			if ((a == null) //
 					// TODO partly unimplemented
 					|| !a.isNonInvestmentAccount()) {
@@ -569,7 +539,6 @@ public class QifDomReader {
 		List<GenericTxn> txns = gatherTransactionsForStatement(a, s);
 		List<GenericTxn> uncleared = null;
 
-		// curbal + totaltx = s.balance
 		BigDecimal totaltx = sumAmounts(txns);
 		BigDecimal diff = totaltx.add(curbal).subtract(s.balance);
 
@@ -702,7 +671,8 @@ public class QifDomReader {
 	}
 
 	private void processSecurities() {
-		for (Account a : dom.accounts) {
+		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
+			Account a = dom.getAccount(acctid);
 			if ((a == null) || !a.isInvestmentAccount()) {
 				continue;
 			}
@@ -728,11 +698,12 @@ public class QifDomReader {
 				case ActionReinvSh:
 				case ActionGrant:
 				case ActionExpire:
-//					if (txn.quantity == null) {
-//						// TODO what to do about this?
-//						System.out.println("NULL quantities: " + ++nullQuantities);
-//						break;
-//					}
+					// if (txn.quantity == null) {
+					// // TODO what to do about this?
+					// System.out.println("NULL quantities: " +
+					// ++nullQuantities);
+					// break;
+					// }
 				case ActionBuyX:
 				case ActionReinvInt:
 				case ActionVest:
@@ -742,8 +713,8 @@ public class QifDomReader {
 				case ActionExercisX:
 					pos.shares = pos.shares.add(txn.quantity);
 					break;
-//					pos.shares = pos.shares.subtract(txn.quantity);
-//					break;
+				// pos.shares = pos.shares.subtract(txn.quantity);
+				// break;
 
 				case ActionStockSplit:
 					pos.shares = pos.shares.multiply(txn.quantity);
@@ -1110,7 +1081,7 @@ public class QifDomReader {
 			return;
 		}
 
-		Account a = dom.accounts.get(-txn.catid);
+		Account a = dom.getAccount(-txn.catid);
 
 		findMatches(a, txn, date, true);
 

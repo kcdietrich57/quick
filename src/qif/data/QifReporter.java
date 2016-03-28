@@ -14,7 +14,9 @@ public class QifReporter {
 		System.out.println("Accounts");
 		System.out.println("============================");
 
-		for (Account a : dom.accounts_bytime) {
+		for (int idx = 0; idx < dom.getNumAccounts(); ++idx) {
+			Account a = dom.getAccountByTime(idx);
+
 			if ((a == null) || //
 					!a.isInvestmentAccount() || //
 					(a.balance.compareTo(BigDecimal.ZERO) == 0)) {
@@ -135,10 +137,12 @@ public class QifReporter {
 				}
 
 				if (t.quantity != null) {
-					System.out.println(Common.getDateString(t.getDate()) + //
-							" " + t.action + //
-							" Shares: " + t.quantity + //
-							" Bal: " + shrbal);
+					System.out.println(String.format( //
+							"  %-12s  %-16s Shares: %10.3f  Bal: %10.3f", //
+							Common.getDateString(t.getDate()), //
+							t.action.toString(), //
+							t.quantity, //
+							shrbal));
 				}
 			}
 		}
