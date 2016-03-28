@@ -11,7 +11,7 @@ import qif.data.Account.AccountType;
 //--------------------------------------------------------------------
 //TODO
 //--------------------------------------------------------------------
-// 2/9 Use Acct ID in transactions
+// 2/9/16 Use Acct ID in transactions
 // 2/9 Use Category ID in transactions
 // 2/9 Create Split transactions with IDs
 // 2/9 Verify split consistency
@@ -29,8 +29,14 @@ import qif.data.Account.AccountType;
 // 3/5 Non-investment register - running balance
 // 3/27 Investment cash balance
 // 3/27 Investment transactions - share balance
+// 3/28 Verify all transaction types - Dividends, Splits
 //
 // Track investments - lots, share xfers, cost basis/gain/loss
+// Associate security sales with purchases
+// Options - Grant, Vest, Exercise, Expire
+//
+// Assets
+// Loans
 //
 // Merge/compare files
 // Synchronize data with updated qif file

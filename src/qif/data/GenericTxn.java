@@ -377,8 +377,8 @@ class InvestmentTxn extends GenericTxn {
 			if ((getAmount() == null) && (this.amountTransferred == null)) {
 				setAmount(BigDecimal.ZERO);
 			}
-			break;
 		}
+			break;
 
 		case ActionBuy:
 		case ActionShrsIn:
@@ -401,7 +401,6 @@ class InvestmentTxn extends GenericTxn {
 			if (this.price == null) {
 				this.price = BigDecimal.ZERO;
 			}
-
 			break;
 
 		case ActionShrsOut:
@@ -437,76 +436,47 @@ class InvestmentTxn extends GenericTxn {
 			break;
 		}
 
-		BigDecimal amt = getTotalAmount();
-		if (amt == null) {
-			amt = BigDecimal.ZERO;
-		}
-
 		switch (getAction()) {
 		case ActionBuy:
 		case ActionBuyX:
 		case ActionReinvDiv:
 		case ActionReinvInt:
 		case ActionReinvLg:
-		case ActionReinvSh: {
-			BigDecimal tot = this.quantity.multiply(this.price);
-			if (this.commission == null) {
-				this.commission = BigDecimal.ZERO;
-			}
-			tot = tot.add(this.commission);
-
-			BigDecimal diff = tot.subtract(amt).abs();
-
-			if (diff.compareTo(new BigDecimal("0.005")) > 0) {
-				BigDecimal newprice = tot.divide(this.quantity).abs();
-
-				String s = "Inconsistent " + this.action + " transaction:" + //
-						" acct=" + QifDom.getDomById(1).getAccount(this.acctid).name + //
-						" " + Common.getDateString(getDate()) + "\n" + //
-						"  sec=" + this.security.name + //
-						" qty=" + this.quantity + //
-						" price=" + this.price;
-
-				if (this.commission != null && //
-						this.commission.compareTo(BigDecimal.ZERO) != 0) {
-					s += " comm=" + this.commission;
-				}
-
-				s += " tot=" + tot + //
-						" txamt=" + amt + //
-						" diff=" + diff + "\n";
-				s += "  Corrected price: " + newprice;
-
-				Common.reportWarning(s);
-
-				this.price = newprice;
-			}
-		}
+		case ActionReinvSh:
+		case ActionSell:
+		case ActionSellX:
+			repairBuySell();
 			break;
 
-		case ActionSell:
-		case ActionSellX: {
-			BigDecimal tot = this.quantity.multiply(price);
-			if (this.commission == null) {
-				this.commission = BigDecimal.ZERO;
-			}
-			tot = tot.add(this.commission);
-
-			BigDecimal diff = tot.subtract(amt.negate()).abs();
-
-			if (diff.compareTo(new BigDecimal("0.005")) > 0) {
-				Common.reportWarning("Inconsistent buy transaction");
-			}
-		}
-
 		case ActionDiv:
-		case ActionExercisX:
-		case ActionExpire:
+			assert (this.price == null) && (this.quantity == null);
+			break;
+
 		case ActionGrant:
+			// Strike price, open/close price, vest/expire date, qty
+			// System.out.println(this);
+			break;
+
+		case ActionVest:
+			// Connect to Grant
+			// System.out.println(this);
+			break;
+
+		case ActionExercisX:
+			// Connect to Grant, qty/price
+			// System.out.println(this);
+			break;
+
+		case ActionExpire:
+			// Connect to Grant, qty
+			// System.out.println(this);
+			break;
+
 		case ActionShrsIn:
 		case ActionShrsOut:
+			break;
+
 		case ActionStockSplit:
-		case ActionVest:
 			break;
 
 		case ActionCash:
@@ -520,10 +490,63 @@ class InvestmentTxn extends GenericTxn {
 			break;
 
 		case ActionOther:
+			Common.reportError("Transaction has unknown type: " + //
+					QifDom.getDomById(1).getAccount(this.acctid).name);
 			break;
 		}
 
 		super.repair();
+	}
+
+	private void repairBuySell() {
+		BigDecimal amt = getTotalAmount();
+		if (amt == null) {
+			amt = BigDecimal.ZERO;
+		}
+
+		BigDecimal tot = this.quantity.multiply(this.price);
+		if (this.commission == null) {
+			this.commission = BigDecimal.ZERO;
+		}
+		tot = tot.add(this.commission);
+
+		BigDecimal diff;
+
+		switch (getAction()) {
+		case ActionSell:
+		case ActionSellX:
+			diff = tot.add(amt).abs();
+			break;
+
+		default:
+			diff = tot.subtract(amt).abs();
+			break;
+		}
+
+		if (diff.compareTo(new BigDecimal("0.005")) > 0) {
+			BigDecimal newprice = tot.divide(this.quantity).abs();
+
+			String s = "Inconsistent " + this.action + " transaction:" + //
+					" acct=" + QifDom.getDomById(1).getAccount(this.acctid).name + //
+					" " + Common.getDateString(getDate()) + "\n" + //
+					"  sec=" + this.security.name + //
+					" qty=" + this.quantity + //
+					" price=" + this.price;
+
+			if (this.commission != null && //
+					this.commission.compareTo(BigDecimal.ZERO) != 0) {
+				s += " comm=" + this.commission;
+			}
+
+			s += " tot=" + tot + //
+					" txamt=" + amt + //
+					" diff=" + diff + "\n";
+			s += "  Corrected price: " + newprice;
+
+			Common.reportWarning(s);
+
+			this.price = newprice;
+		}
 	}
 
 	public Action getAction() {
