@@ -34,7 +34,7 @@ public class Security {
 	}
 
 	public String toString() {
-		String s = "Security" + this.id + ": " + this.name //
+		String s = "Security[" + this.id + "]: " + this.name //
 				+ " sym=" + this.symbol //
 				+ " type=" + this.type //
 				+ " numprices=" + this.prices.size() //

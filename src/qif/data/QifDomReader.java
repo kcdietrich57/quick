@@ -2,6 +2,8 @@ package qif.data;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -19,6 +21,8 @@ public class QifDomReader {
 	private short nextAccountID = 1;
 	private short nextCategoryID = 1;
 	private short nextSecurityID = 1;
+
+	private final List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
 
 	public QifDomReader() {
 	}
@@ -363,6 +367,7 @@ public class QifDomReader {
 		cleanUpSplits();
 		calculateRunningTotals();
 		connectTransfers();
+		connectSecurityTransfers();
 	}
 
 	private void calculateRunningTotals() {
@@ -493,12 +498,166 @@ public class QifDomReader {
 		}
 	}
 
+	private void connectSecurityTransfers() {
+		List<InvestmentTxn> xins = new ArrayList<InvestmentTxn>();
+		List<InvestmentTxn> xouts = new ArrayList<InvestmentTxn>();
+
+		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
+			Account a = dom.getAccount(acctid);
+			if (!a.isInvestmentAccount()) {
+				continue;
+			}
+
+			System.out.println();
+
+			for (GenericTxn txn : a.transactions) {
+				if (!(txn instanceof InvestmentTxn)) {
+					continue;
+				}
+
+				if (((InvestmentTxn) txn).security != null) {
+					System.out.println();
+				}
+				if ((txn.getAction() == Action.ActionShrsIn)) {
+					xins.add((InvestmentTxn) txn);
+				} else if (txn.getAction() == Action.ActionShrsOut) {
+					xouts.add((InvestmentTxn) txn);
+				}
+			}
+		}
+
+		connectSecurityTransfers(xins, xouts);
+	}
+
+	private void connectSecurityTransfers(List<InvestmentTxn> xins, List<InvestmentTxn> xouts) {
+		Comparator<InvestmentTxn> cpr = new Comparator<InvestmentTxn>() {
+			public int compare(InvestmentTxn o1, InvestmentTxn o2) {
+				int diff;
+
+				diff = o1.getDate().compareTo(o2.getDate());
+				if (diff != 0) {
+					return diff;
+				}
+
+				diff = o1.security.name.compareTo(o2.security.name);
+				if (diff != 0) {
+					return diff;
+				}
+
+				return o2.getAction().ordinal() - o1.getAction().ordinal();
+			}
+		};
+
+		List<InvestmentTxn> txns = new ArrayList<InvestmentTxn>(xins);
+		txns.addAll(xouts);
+		Collections.sort(txns, cpr);
+		for (InvestmentTxn t : txns) {
+			System.out.println(t);
+		}
+
+		Collections.sort(xins, cpr);
+		Collections.sort(xouts, cpr);
+
+		List<InvestmentTxn> ins = new ArrayList<InvestmentTxn>();
+		List<InvestmentTxn> outs = new ArrayList<InvestmentTxn>();
+		List<InvestmentTxn> unmatched = new ArrayList<InvestmentTxn>();
+
+		BigDecimal inshrs;
+		BigDecimal outshrs;
+
+		while (!xins.isEmpty()) {
+			ins.clear();
+			outs.clear();
+
+			InvestmentTxn t = xins.get(0);
+			inshrs = gatherTransactionsForSecurityTransfer(ins, xins, null, t.security, t.getDate());
+			outshrs = gatherTransactionsForSecurityTransfer(outs, xouts, unmatched, t.security, t.getDate());
+
+			if (outs.isEmpty()) {
+				unmatched.addAll(ins);
+			} else {
+				BigDecimal inshrs2 = inshrs.setScale(3, RoundingMode.HALF_UP);
+				BigDecimal outshrs2 = outshrs.setScale(3, RoundingMode.HALF_UP);
+
+				if (inshrs2.abs().compareTo(outshrs2.abs()) != 0) {
+					Common.reportError("Mismatched security transfer");
+				}
+
+				for (InvestmentTxn t2 : ins) {
+					t2.xferInv = outs;
+				}
+				for (InvestmentTxn t2 : outs) {
+					t2.xferInv = ins;
+				}
+			}
+
+			String s = String.format(//
+					"%-20s : %5s(%2d) %s INSH=%10.3f (%2d txns) OUTSH=%10.3f (%2d txns)", //
+					t.getAccount().name, t.security.symbol, t.security.id, //
+					Common.getDateString(t.getDate()), //
+					inshrs, ins.size(), outshrs, outs.size());
+			System.out.println(s);
+		}
+
+		for (InvestmentTxn t : unmatched) {
+			String pad = (t.getAction() == Action.ActionShrsIn) //
+					? "" //
+					: "                          ";
+
+			String s = String.format("%-20s : %5s(%2d) %s %s SHR=%10.3f", //
+					t.getAccount().name, t.security.symbol, t.security.id, //
+					Common.getDateString(t.getDate()), pad, t.quantity);
+			System.out.println(s);
+		}
+	}
+
+	private BigDecimal gatherTransactionsForSecurityTransfer( //
+			List<InvestmentTxn> rettxns, //
+			List<InvestmentTxn> srctxns, //
+			List<InvestmentTxn> unmatched, //
+			Security s, Date d) {
+		BigDecimal numshrs = BigDecimal.ZERO;
+
+		if (srctxns.isEmpty()) {
+			return numshrs;
+		}
+
+		InvestmentTxn t = srctxns.get(0);
+
+		while (t.getDate().compareTo(d) < 0 || //
+				(t.getDate().equals(d) && (t.security.name.compareTo(s.name) < 0))) {
+			unmatched.add(srctxns.remove(0));
+			if (srctxns.isEmpty()) {
+				break;
+			}
+
+			t = srctxns.get(0);
+		}
+
+		while (!srctxns.isEmpty()) {
+			t = srctxns.get(0);
+
+			if ((t.security != s) || //
+					(t.getDate().compareTo(d) != 0)) {
+				break;
+			}
+
+			rettxns.add(t);
+			numshrs = numshrs.add(t.quantity);
+
+			if (srctxns.isEmpty()) {
+				break;
+			}
+
+			srctxns.remove(0);
+		}
+
+		return numshrs;
+	}
+
 	private void validateStatements() {
 		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
 			Account a = dom.getAccount(acctid);
-			if (a == null) {
-				continue;
-			}
 
 			BigDecimal bal = BigDecimal.ZERO;
 			for (Statement s : a.statements) {
@@ -515,9 +674,7 @@ public class QifDomReader {
 	private void balanceStatements() {
 		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
 			Account a = dom.getAccount(acctid);
-			if ((a == null) //
-					// TODO partly unimplemented
-					|| !a.isNonInvestmentAccount()) {
+			if (!a.isNonInvestmentAccount()) {
 				continue;
 			}
 
@@ -1110,11 +1267,9 @@ public class QifDomReader {
 		xtxn.xtxn = txn;
 	}
 
-	private final List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
-
-	private void findMatches(Account acct, SimpleTxn txn, Date date) {
-		findMatches(acct, txn, date, false);
-	}
+	// private void findMatches(Account acct, SimpleTxn txn, Date date) {
+	// findMatches(acct, txn, date, false);
+	// }
 
 	private void findMatches(Account acct, SimpleTxn txn, Date date, boolean strict) {
 		this.matchingTxns.clear();
@@ -1151,9 +1306,9 @@ public class QifDomReader {
 		}
 	}
 
-	private SimpleTxn checkMatch(SimpleTxn txn, GenericTxn gtxn) {
-		return checkMatch(txn, gtxn, false);
-	}
+	// private SimpleTxn checkMatch(SimpleTxn txn, GenericTxn gtxn) {
+	// return checkMatch(txn, gtxn, false);
+	// }
 
 	private SimpleTxn checkMatch(SimpleTxn txn, GenericTxn gtxn, boolean strict) {
 		assert -txn.catid == gtxn.acctid;

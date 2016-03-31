@@ -342,6 +342,7 @@ class InvestmentTxn extends GenericTxn {
 	public BigDecimal commission;
 	public String accountForTransfer;
 	public BigDecimal amountTransferred;
+	public List<InvestmentTxn> xferInv;
 
 	public InvestmentTxn(short domid, short acctid) {
 		super(domid, acctid);
@@ -354,6 +355,7 @@ class InvestmentTxn extends GenericTxn {
 		this.commission = null;
 		this.accountForTransfer = "";
 		this.amountTransferred = null;
+		this.xferInv = null;
 	}
 
 	public InvestmentTxn(short domid, InvestmentTxn other) {
@@ -369,6 +371,8 @@ class InvestmentTxn extends GenericTxn {
 		this.commission = other.commission;
 		this.accountForTransfer = other.accountForTransfer;
 		this.amountTransferred = other.amountTransferred;
+
+		this.xferInv = null;
 	}
 
 	public void repair() {

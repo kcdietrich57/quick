@@ -30,10 +30,29 @@ import qif.data.Account.AccountType;
 // 3/27 Investment cash balance
 // 3/27 Investment transactions - share balance
 // 3/28 Verify all transaction types - Dividends, Splits
+// 3/29 ShrsIn/ShrsOut (xfer)
 //
-// Track investments - lots, share xfers, cost basis/gain/loss
-// Associate security sales with purchases
+// Share balance in account positions
+// Splits
+// Security positions (all accounts)
+// Security position by account and security for any date
+// Dump portfolio for each month (positions)
+// Security price history
+// Portfolio market value
+// Associate security sales with purchases (lots)
+// ShrsIn/ShrsOut - add/remove
+// Track cost basis/gain/loss
+// ESPP grants
+// Extra ESPP tax info
 // Options - Grant, Vest, Exercise, Expire
+// Include vested options in portfolio
+// Optionally include non-vested options in portfolio (separately, perhaps)
+// Exclude expired options
+// Statements - store separately
+// Specify expected statements per account
+// Prompt for info for missing statements; persist information
+// Investment statement with additional info for securities
+// Persist info in extended QIF files
 //
 // Assets
 // Loans
