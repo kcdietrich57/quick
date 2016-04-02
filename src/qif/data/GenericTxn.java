@@ -12,14 +12,14 @@ class SimpleTxn {
 	protected static int nextid = 1;
 
 	public enum Action {
-		ActionOther, ActionCash, ActionXIn, ActionXOut, ActionWithdrwX, //
-		ActionContribX, ActionIntInc, ActionMiscIncX, //
-		ActionBuy, ActionBuyX, ActionSell, ActionSellX, //
-		ActionGrant, ActionVest, ActionExercisX, ActionExpire, //
-		ActionShrsIn, ActionShrsOut, //
-		ActionDiv, ActionReinvDiv, ActionReinvLg, ActionReinvSh, //
-		ActionReinvInt, //
-		ActionStockSplit, ActionReminder
+		OTHER, CASH, XIN, XOUT, WITHDRAWX, //
+		CONTRIBX, INT_INC, MISC_INCX, //
+		BUY, BUYX, SELL, SELLX, //
+		GRANT, VEST, EXERCISEX, EXPIRE, //
+		SHRS_IN, SHRS_OUT, //
+		DIV, REINV_DIV, REINV_LG, REINV_SH, //
+		REINV_INT, //
+		STOCKSPLIT, REMINDER
 	};
 
 	public final int id;
@@ -61,13 +61,13 @@ class SimpleTxn {
 	}
 
 	public Account getAccount() {
-		QifDom dom = QifDom.getDomById(this.domid);
+		final QifDom dom = QifDom.getDomById(this.domid);
 
 		return dom.getAccount(this.acctid);
 	}
 
 	public Action getAction() {
-		return Action.ActionOther;
+		return Action.OTHER;
 	}
 
 	public boolean hasSplits() {
@@ -108,7 +108,7 @@ class SimpleTxn {
 	}
 
 	public String toStringLong() {
-		QifDom dom = QifDom.getDomById(this.domid);
+		final QifDom dom = QifDom.getDomById(this.domid);
 
 		String s = "Tx" + this.id + ":";
 		s += " acct=" + dom.getAccount(this.acctid).name;
@@ -137,7 +137,7 @@ class MultiSplitTxn extends SimpleTxn {
 	public MultiSplitTxn(short domid, MultiSplitTxn other) {
 		super(domid, other);
 
-		for (SimpleTxn st : other.subsplits) {
+		for (final SimpleTxn st : other.subsplits) {
 			this.subsplits.add(new SimpleTxn(domid, st));
 		}
 	}
@@ -145,7 +145,7 @@ class MultiSplitTxn extends SimpleTxn {
 	public BigDecimal getTotalAmount() {
 		BigDecimal total = BigDecimal.ZERO;
 
-		for (SimpleTxn t : this.subsplits) {
+		for (final SimpleTxn t : this.subsplits) {
 			total = total.add(t.getAmount());
 		}
 
@@ -241,10 +241,10 @@ class NonInvestmentTxn extends GenericTxn {
 		this.address = new ArrayList<String>();
 		this.split = new ArrayList<SimpleTxn>();
 
-		for (String a : other.address) {
+		for (final String a : other.address) {
 			this.address.add(new String(a));
 		}
-		for (SimpleTxn st : other.split) {
+		for (final SimpleTxn st : other.split) {
 			this.split.add(st);
 		}
 	}
@@ -264,7 +264,7 @@ class NonInvestmentTxn extends GenericTxn {
 
 		BigDecimal dec = BigDecimal.ZERO;
 
-		for (SimpleTxn txn : this.split) {
+		for (final SimpleTxn txn : this.split) {
 			dec = dec.add(txn.getAmount());
 		}
 
@@ -283,7 +283,7 @@ class NonInvestmentTxn extends GenericTxn {
 	}
 
 	public String toStringLong() {
-		QifDom dom = QifDom.getDomById(this.domid);
+		final QifDom dom = QifDom.getDomById(this.domid);
 
 		String s = "Tx" + this.id + ":";
 		s += " acct=" + dom.getAccount(this.acctid).name;
@@ -304,7 +304,7 @@ class NonInvestmentTxn extends GenericTxn {
 
 		if (!this.address.isEmpty()) {
 			s += "\n  addr= ";
-			for (String a : this.address) {
+			for (final String a : this.address) {
 				s += "\n  " + a;
 			}
 		}
@@ -312,7 +312,7 @@ class NonInvestmentTxn extends GenericTxn {
 		if (!this.split.isEmpty()) {
 			s += "\n  splits \n";
 
-			for (SimpleTxn txn : this.split) {
+			for (final SimpleTxn txn : this.split) {
 				if (txn.catid < (short) 0) {
 					s += " [" + dom.getAccount(-txn.catid).name + "]";
 				} else if (txn.catid > (short) 0) {
@@ -347,7 +347,7 @@ class InvestmentTxn extends GenericTxn {
 	public InvestmentTxn(short domid, short acctid) {
 		super(domid, acctid);
 
-		this.action = Action.ActionOther;
+		this.action = Action.OTHER;
 		this.security = null;
 		this.price = null;
 		this.quantity = null;
@@ -361,7 +361,7 @@ class InvestmentTxn extends GenericTxn {
 	public InvestmentTxn(short domid, InvestmentTxn other) {
 		super(domid, other);
 
-		QifDom dom = QifDom.getDomById(domid);
+		final QifDom dom = QifDom.getDomById(domid);
 
 		this.action = other.action;
 		this.security = dom.findSecurityByName(other.security.name);
@@ -377,20 +377,20 @@ class InvestmentTxn extends GenericTxn {
 
 	public void repair() {
 		switch (getAction()) {
-		case ActionCash: {
+		case CASH: {
 			if ((getAmount() == null) && (this.amountTransferred == null)) {
 				setAmount(BigDecimal.ZERO);
 			}
 		}
 			break;
 
-		case ActionBuy:
-		case ActionShrsIn:
-		case ActionReinvDiv:
-		case ActionReinvLg:
-		case ActionReinvSh:
-		case ActionGrant:
-		case ActionExpire:
+		case BUY:
+		case SHRS_IN:
+		case REINV_DIV:
+		case REINV_LG:
+		case REINV_SH:
+		case GRANT:
+		case EXPIRE:
 			if (this.quantity == null) {
 				// TODO what to do about this?
 				// System.out.println("NULL quantities: " + ++nullQuantities);
@@ -399,18 +399,18 @@ class InvestmentTxn extends GenericTxn {
 
 			// fall through
 
-		case ActionBuyX:
-		case ActionReinvInt:
-		case ActionVest:
+		case BUYX:
+		case REINV_INT:
+		case VEST:
 			if (this.price == null) {
 				this.price = BigDecimal.ZERO;
 			}
 			break;
 
-		case ActionShrsOut:
-		case ActionSell:
-		case ActionSellX:
-		case ActionExercisX:
+		case SHRS_OUT:
+		case SELL:
+		case SELLX:
+		case EXERCISEX:
 			if (this.price == null) {
 				this.price = BigDecimal.ZERO;
 			}
@@ -418,19 +418,19 @@ class InvestmentTxn extends GenericTxn {
 			this.quantity = this.quantity.negate();
 			break;
 
-		case ActionStockSplit:
+		case STOCKSPLIT:
 			break;
 
-		case ActionXIn: // amt/xamt
-		case ActionIntInc: // amt
-		case ActionMiscIncX: // amt
-		case ActionContribX: // amt/xamt
-		case ActionWithdrwX: // + amt/xamt
-		case ActionDiv: // amt
+		case XIN: // amt/xamt
+		case INT_INC: // amt
+		case MISC_INCX: // amt
+		case CONTRIBX: // amt/xamt
+		case WITHDRAWX: // + amt/xamt
+		case DIV: // amt
 			break;
 
-		case ActionXOut: { // + amt/xamt
-			BigDecimal amt = this.amountTransferred.negate();
+		case XOUT: { // + amt/xamt
+			final BigDecimal amt = this.amountTransferred.negate();
 			this.amountTransferred = amt;
 			setAmount(amt);
 			break;
@@ -441,59 +441,59 @@ class InvestmentTxn extends GenericTxn {
 		}
 
 		switch (getAction()) {
-		case ActionBuy:
-		case ActionBuyX:
-		case ActionReinvDiv:
-		case ActionReinvInt:
-		case ActionReinvLg:
-		case ActionReinvSh:
-		case ActionSell:
-		case ActionSellX:
+		case BUY:
+		case BUYX:
+		case REINV_DIV:
+		case REINV_INT:
+		case REINV_LG:
+		case REINV_SH:
+		case SELL:
+		case SELLX:
 			repairBuySell();
 			break;
 
-		case ActionDiv:
+		case DIV:
 			assert (this.price == null) && (this.quantity == null);
 			break;
 
-		case ActionGrant:
+		case GRANT:
 			// Strike price, open/close price, vest/expire date, qty
 			// System.out.println(this);
 			break;
 
-		case ActionVest:
+		case VEST:
 			// Connect to Grant
 			// System.out.println(this);
 			break;
 
-		case ActionExercisX:
+		case EXERCISEX:
 			// Connect to Grant, qty/price
 			// System.out.println(this);
 			break;
 
-		case ActionExpire:
+		case EXPIRE:
 			// Connect to Grant, qty
 			// System.out.println(this);
 			break;
 
-		case ActionShrsIn:
-		case ActionShrsOut:
+		case SHRS_IN:
+		case SHRS_OUT:
 			break;
 
-		case ActionStockSplit:
+		case STOCKSPLIT:
 			break;
 
-		case ActionCash:
-		case ActionContribX:
-		case ActionIntInc:
-		case ActionMiscIncX:
-		case ActionReminder:
-		case ActionWithdrwX:
-		case ActionXIn:
-		case ActionXOut:
+		case CASH:
+		case CONTRIBX:
+		case INT_INC:
+		case MISC_INCX:
+		case REMINDER:
+		case WITHDRAWX:
+		case XIN:
+		case XOUT:
 			break;
 
-		case ActionOther:
+		case OTHER:
 			Common.reportError("Transaction has unknown type: " + //
 					QifDom.getDomById(1).getAccount(this.acctid).name);
 			break;
@@ -517,8 +517,8 @@ class InvestmentTxn extends GenericTxn {
 		BigDecimal diff;
 
 		switch (getAction()) {
-		case ActionSell:
-		case ActionSellX:
+		case SELL:
+		case SELLX:
 			diff = tot.add(amt).abs();
 			break;
 
@@ -528,7 +528,7 @@ class InvestmentTxn extends GenericTxn {
 		}
 
 		if (diff.compareTo(new BigDecimal("0.005")) > 0) {
-			BigDecimal newprice = tot.divide(this.quantity).abs();
+			final BigDecimal newprice = tot.divide(this.quantity).abs();
 
 			String s = "Inconsistent " + this.action + " transaction:" + //
 					" acct=" + QifDom.getDomById(1).getAccount(this.acctid).name + //
@@ -573,7 +573,7 @@ class InvestmentTxn extends GenericTxn {
 		}
 
 		switch (getAction()) {
-		case ActionSellX:
+		case SELLX:
 			return this.amountTransferred.negate();
 
 		default:
@@ -586,7 +586,7 @@ class InvestmentTxn extends GenericTxn {
 	}
 
 	public String toStringLong() {
-		QifDom dom = QifDom.getDomById(this.domid);
+		final QifDom dom = QifDom.getDomById(this.domid);
 
 		String s = "InvTx:";
 		s += " acct=" + dom.getAccount(this.acctid).name;

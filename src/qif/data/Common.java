@@ -22,7 +22,7 @@ public class Common {
 	}
 
 	public static String GetRealDateString(String qifDateString) {
-		int i = qifDateString.indexOf("'");
+		final int i = qifDateString.indexOf("'");
 		if (i != -1) {
 			qifDateString = qifDateString.substring(0, i) + "/" + qifDateString.substring(i + 1);
 		}
@@ -31,9 +31,9 @@ public class Common {
 	}
 
 	public static BigDecimal getDecimal(String value) {
-		StringBuilder sb = new StringBuilder(value);
+		final StringBuilder sb = new StringBuilder(value);
 		for (;;) {
-			int comma = sb.indexOf(",");
+			final int comma = sb.indexOf(",");
 			if (comma < 0) {
 				break;
 			}
@@ -46,12 +46,12 @@ public class Common {
 
 	public static Date GetDate(String value) {
 		try {
-			DateFormat dateFormat = new SimpleDateFormat("MM/dd/yy");
-			String s = GetRealDateString(value);
+			final DateFormat dateFormat = new SimpleDateFormat("MM/dd/yy");
+			final String s = GetRealDateString(value);
 
-			Date d = dateFormat.parse(s);
+			final Date d = dateFormat.parse(s);
 			return d;
-		} catch (ParseException e) {
+		} catch (final ParseException e) {
 			e.printStackTrace();
 		}
 
@@ -59,7 +59,7 @@ public class Common {
 	}
 
 	public static String getDateString(Date date) {
-		DateFormat dfmt = new SimpleDateFormat("MM/dd/yyyy");
+		final DateFormat dfmt = new SimpleDateFormat("MM/dd/yyyy");
 		return dfmt.format(date);
 	}
 

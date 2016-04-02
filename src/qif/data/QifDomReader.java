@@ -2,7 +2,6 @@ package qif.data;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,11 +48,13 @@ public class QifDomReader {
 		processSecurities();
 		balanceStatements();
 
+		fixPortfolios();
+
 		return this.dom;
 	}
 
 	private void init(String filename, QifDom refdom) {
-		File f = new File(filename);
+		final File f = new File(filename);
 		if (!f.exists()) {
 			Common.reportError("File '" + filename + "' does not exist");
 		}
@@ -136,36 +137,36 @@ public class QifDomReader {
 
 	private void loadCategories() {
 		for (;;) {
-			String s = this.rdr.peekLine();
+			final String s = this.rdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			Category cat = loadCategory();
+			final Category cat = loadCategory();
 			if (cat == null) {
 				break;
 			}
 
-			Category existing = this.dom.findCategory(cat.name);
+			final Category existing = this.dom.findCategory(cat.name);
 			if (existing != null) {
 				// TODO verify
 			} else {
 				cat.id = this.nextCategoryID++;
-				dom.addCategory(cat);
+				this.dom.addCategory(cat);
 			}
 		}
 
-		if (null == dom.findCategory("Fix Me")) {
-			Category cat = new Category(this.nextCategoryID++);
+		if (null == this.dom.findCategory("Fix Me")) {
+			final Category cat = new Category(this.nextCategoryID++);
 			cat.name = "Fix Me";
-			dom.addCategory(cat);
+			this.dom.addCategory(cat);
 		}
 	}
 
 	public Category loadCategory() {
-		QFileReader.QLine qline = new QFileReader.QLine();
+		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		Category cat = new Category();
+		final Category cat = new Category();
 
 		for (;;) {
 			this.rdr.nextCategoryLine(qline);
@@ -203,30 +204,30 @@ public class QifDomReader {
 
 	private void loadAccounts() {
 		for (;;) {
-			String s = this.rdr.peekLine();
+			final String s = this.rdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			Account acct = loadAccount();
+			final Account acct = loadAccount();
 			if (acct == null) {
 				break;
 			}
 
-			Account existing = this.dom.findAccount(acct.name);
+			final Account existing = this.dom.findAccount(acct.name);
 			if (existing != null) {
-				dom.updateAccount(existing, acct);
+				this.dom.updateAccount(existing, acct);
 			} else {
 				acct.id = this.nextAccountID++;
-				dom.addAccount(acct);
+				this.dom.addAccount(acct);
 			}
 		}
 	}
 
 	public Account loadAccount() {
-		QFileReader.QLine qline = new QFileReader.QLine();
+		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		Account acct = new Account(this.dom);
+		final Account acct = new Account(this.dom);
 
 		for (;;) {
 			this.rdr.nextAccountLine(qline);
@@ -311,30 +312,30 @@ public class QifDomReader {
 
 	private void loadSecurities() {
 		for (;;) {
-			String s = this.rdr.peekLine();
+			final String s = this.rdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			Security sec = loadSecurity();
+			final Security sec = loadSecurity();
 			if (sec == null) {
 				break;
 			}
 
-			Security existing = this.dom.findSecurityByName(sec.name);
+			final Security existing = this.dom.findSecurityByName(sec.name);
 			if (existing != null) {
 				// TODO verify
 			} else {
 				sec.id = this.nextSecurityID++;
-				dom.addSecurity(sec);
+				this.dom.addSecurity(sec);
 			}
 		}
 	}
 
 	public Security loadSecurity() {
-		QFileReader.QLine qline = new QFileReader.QLine();
+		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		Security security = new Security();
+		final Security security = new Security();
 
 		for (;;) {
 			this.rdr.nextSecurityLine(qline);
@@ -372,53 +373,53 @@ public class QifDomReader {
 
 	private void calculateRunningTotals() {
 		for (int idx = 0; idx < this.dom.getNumAccounts(); ++idx) {
-			Account a = this.dom.getAccountByTime(idx);
+			final Account a = this.dom.getAccountByTime(idx);
 
 			a.clearedBalance = a.balance = BigDecimal.ZERO;
 
-			for (GenericTxn t : a.transactions) {
+			for (final GenericTxn t : a.transactions) {
 				BigDecimal amt = t.getTotalAmount();
 				if (t instanceof InvestmentTxn) {
 					switch (t.getAction()) {
-					case ActionBuy:
-					case ActionSell:
+					case BUY:
+					case SELL:
 						break;
 
-					case ActionShrsIn:
-					case ActionShrsOut: // no xfer info?
-					case ActionBuyX:
-					case ActionSellX:
-					case ActionReinvDiv:
-					case ActionReinvInt:
-					case ActionReinvLg:
-					case ActionReinvSh:
-					case ActionGrant:
-					case ActionVest:
-					case ActionExercisX:
-					case ActionExpire:
-					case ActionStockSplit:
+					case SHRS_IN:
+					case SHRS_OUT: // no xfer info?
+					case BUYX:
+					case SELLX:
+					case REINV_DIV:
+					case REINV_INT:
+					case REINV_LG:
+					case REINV_SH:
+					case GRANT:
+					case VEST:
+					case EXERCISEX:
+					case EXPIRE:
+					case STOCKSPLIT:
 						// No net cash change
 						continue;
 
-					case ActionCash:
-					case ActionContribX:
-					case ActionDiv:
-					case ActionIntInc:
-					case ActionMiscIncX:
-					case ActionOther:
-					case ActionReminder:
-					case ActionWithdrwX:
-					case ActionXIn:
-					case ActionXOut:
+					case CASH:
+					case CONTRIBX:
+					case DIV:
+					case INT_INC:
+					case MISC_INCX:
+					case OTHER:
+					case REMINDER:
+					case WITHDRAWX:
+					case XIN:
+					case XOUT:
 						break;
 					}
 				}
 
 				switch (t.getAction()) {
-				case ActionStockSplit:
+				case STOCKSPLIT:
 					break;
 
-				case ActionBuy:
+				case BUY:
 					// TODO take care of this in transaction instead?
 					amt = amt.negate();
 
@@ -438,22 +439,20 @@ public class QifDomReader {
 	}
 
 	private void sortTransactions() {
-		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
-			Account a = dom.getAccount(acctid);
+		for (int acctid = 1; acctid <= this.dom.getNumAccounts(); ++acctid) {
+			final Account a = this.dom.getAccount(acctid);
 			if (a == null) {
 				continue;
 			}
 
-			Comparator<GenericTxn> cmptor = new Comparator<GenericTxn>() {
-				public int compare(GenericTxn t1, GenericTxn t2) {
-					int diff = t1.getDate().compareTo(t2.getDate());
+			final Comparator<GenericTxn> cmptor = (t1, t2) -> {
+				final int diff = t1.getDate().compareTo(t2.getDate());
 
-					if (diff != 0) {
-						return diff;
-					}
-
-					return (int) (t1.id - t2.id);
+				if (diff != 0) {
+					return diff;
 				}
+
+				return t1.id - t2.id;
 			};
 
 			Collections.sort(a.transactions, cmptor);
@@ -461,26 +460,26 @@ public class QifDomReader {
 	}
 
 	private void cleanUpSplits() {
-		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
-			Account a = dom.getAccount(acctid);
+		for (int acctid = 1; acctid <= this.dom.getNumAccounts(); ++acctid) {
+			final Account a = this.dom.getAccount(acctid);
 			if (a == null) {
 				continue;
 			}
 
-			for (GenericTxn txn : a.transactions) {
+			for (final GenericTxn txn : a.transactions) {
 				massageSplits(txn);
 			}
 		}
 	}
 
 	private void connectTransfers() {
-		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
-			Account a = dom.getAccount(acctid);
+		for (int acctid = 1; acctid <= this.dom.getNumAccounts(); ++acctid) {
+			final Account a = this.dom.getAccount(acctid);
 			if (a == null) {
 				continue;
 			}
 
-			for (GenericTxn txn : a.transactions) {
+			for (final GenericTxn txn : a.transactions) {
 				connectTransfers(txn);
 			}
 		}
@@ -488,7 +487,7 @@ public class QifDomReader {
 
 	private void connectTransfers(GenericTxn txn) {
 		if ((txn instanceof NonInvestmentTxn) && !((NonInvestmentTxn) txn).split.isEmpty()) {
-			for (SimpleTxn stxn : ((NonInvestmentTxn) txn).split) {
+			for (final SimpleTxn stxn : ((NonInvestmentTxn) txn).split) {
 				connectTransfers(stxn, txn.getDate());
 			}
 		} else if ((txn.catid < 0) && //
@@ -498,29 +497,58 @@ public class QifDomReader {
 		}
 	}
 
-	private void connectSecurityTransfers() {
-		List<InvestmentTxn> xins = new ArrayList<InvestmentTxn>();
-		List<InvestmentTxn> xouts = new ArrayList<InvestmentTxn>();
+	private void fixPortfolios() {
+		fixPortfolio(this.dom.portfolio);
 
-		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
-			Account a = dom.getAccount(acctid);
+		for (int acctid = 1; acctid <= this.dom.getNumAccounts(); ++acctid) {
+			final Account a = this.dom.getAccount(acctid);
+
+			if (a.isInvestmentAccount()) {
+				fixPortfolio(a.securities);
+			}
+		}
+	}
+
+	private void fixPortfolio(SecurityPortfolio port) {
+		for (final SecurityPosition pos : port.positions) {
+			fixPosition(pos);
+		}
+	}
+
+	private void fixPosition(SecurityPosition p) {
+		BigDecimal shrbal = BigDecimal.ZERO;
+		p.shrBalance.clear();
+
+		for (final InvestmentTxn t : p.transactions) {
+			if (t.getAction() == Action.STOCKSPLIT) {
+				shrbal = shrbal.multiply(t.quantity);
+				shrbal = shrbal.divide(BigDecimal.TEN);
+			} else if (t.quantity != null) {
+				shrbal = shrbal.add(t.quantity);
+			}
+
+			p.shrBalance.add(shrbal);
+		}
+	}
+
+	private void connectSecurityTransfers() {
+		final List<InvestmentTxn> xins = new ArrayList<InvestmentTxn>();
+		final List<InvestmentTxn> xouts = new ArrayList<InvestmentTxn>();
+
+		for (int acctid = 1; acctid <= this.dom.getNumAccounts(); ++acctid) {
+			final Account a = this.dom.getAccount(acctid);
 			if (!a.isInvestmentAccount()) {
 				continue;
 			}
 
-			System.out.println();
-
-			for (GenericTxn txn : a.transactions) {
+			for (final GenericTxn txn : a.transactions) {
 				if (!(txn instanceof InvestmentTxn)) {
 					continue;
 				}
 
-				if (((InvestmentTxn) txn).security != null) {
-					System.out.println();
-				}
-				if ((txn.getAction() == Action.ActionShrsIn)) {
+				if ((txn.getAction() == Action.SHRS_IN)) {
 					xins.add((InvestmentTxn) txn);
-				} else if (txn.getAction() == Action.ActionShrsOut) {
+				} else if (txn.getAction() == Action.SHRS_OUT) {
 					xouts.add((InvestmentTxn) txn);
 				}
 			}
@@ -530,37 +558,35 @@ public class QifDomReader {
 	}
 
 	private void connectSecurityTransfers(List<InvestmentTxn> xins, List<InvestmentTxn> xouts) {
-		Comparator<InvestmentTxn> cpr = new Comparator<InvestmentTxn>() {
-			public int compare(InvestmentTxn o1, InvestmentTxn o2) {
-				int diff;
+		final Comparator<InvestmentTxn> cpr = (o1, o2) -> {
+			int diff;
 
-				diff = o1.getDate().compareTo(o2.getDate());
-				if (diff != 0) {
-					return diff;
-				}
-
-				diff = o1.security.name.compareTo(o2.security.name);
-				if (diff != 0) {
-					return diff;
-				}
-
-				return o2.getAction().ordinal() - o1.getAction().ordinal();
+			diff = o1.getDate().compareTo(o2.getDate());
+			if (diff != 0) {
+				return diff;
 			}
+
+			diff = o1.security.name.compareTo(o2.security.name);
+			if (diff != 0) {
+				return diff;
+			}
+
+			return o2.getAction().ordinal() - o1.getAction().ordinal();
 		};
 
-		List<InvestmentTxn> txns = new ArrayList<InvestmentTxn>(xins);
+		final List<InvestmentTxn> txns = new ArrayList<InvestmentTxn>(xins);
 		txns.addAll(xouts);
 		Collections.sort(txns, cpr);
-		for (InvestmentTxn t : txns) {
+		for (final InvestmentTxn t : txns) {
 			System.out.println(t);
 		}
 
 		Collections.sort(xins, cpr);
 		Collections.sort(xouts, cpr);
 
-		List<InvestmentTxn> ins = new ArrayList<InvestmentTxn>();
-		List<InvestmentTxn> outs = new ArrayList<InvestmentTxn>();
-		List<InvestmentTxn> unmatched = new ArrayList<InvestmentTxn>();
+		final List<InvestmentTxn> ins = new ArrayList<InvestmentTxn>();
+		final List<InvestmentTxn> outs = new ArrayList<InvestmentTxn>();
+		final List<InvestmentTxn> unmatched = new ArrayList<InvestmentTxn>();
 
 		BigDecimal inshrs;
 		BigDecimal outshrs;
@@ -569,29 +595,29 @@ public class QifDomReader {
 			ins.clear();
 			outs.clear();
 
-			InvestmentTxn t = xins.get(0);
+			final InvestmentTxn t = xins.get(0);
 			inshrs = gatherTransactionsForSecurityTransfer(ins, xins, null, t.security, t.getDate());
 			outshrs = gatherTransactionsForSecurityTransfer(outs, xouts, unmatched, t.security, t.getDate());
 
 			if (outs.isEmpty()) {
 				unmatched.addAll(ins);
 			} else {
-				BigDecimal inshrs2 = inshrs.setScale(3, RoundingMode.HALF_UP);
-				BigDecimal outshrs2 = outshrs.setScale(3, RoundingMode.HALF_UP);
+				final BigDecimal inshrs2 = inshrs.setScale(3, RoundingMode.HALF_UP);
+				final BigDecimal outshrs2 = outshrs.setScale(3, RoundingMode.HALF_UP);
 
 				if (inshrs2.abs().compareTo(outshrs2.abs()) != 0) {
 					Common.reportError("Mismatched security transfer");
 				}
 
-				for (InvestmentTxn t2 : ins) {
+				for (final InvestmentTxn t2 : ins) {
 					t2.xferInv = outs;
 				}
-				for (InvestmentTxn t2 : outs) {
+				for (final InvestmentTxn t2 : outs) {
 					t2.xferInv = ins;
 				}
 			}
 
-			String s = String.format(//
+			final String s = String.format(//
 					"%-20s : %5s(%2d) %s INSH=%10.3f (%2d txns) OUTSH=%10.3f (%2d txns)", //
 					t.getAccount().name, t.security.symbol, t.security.id, //
 					Common.getDateString(t.getDate()), //
@@ -599,12 +625,12 @@ public class QifDomReader {
 			System.out.println(s);
 		}
 
-		for (InvestmentTxn t : unmatched) {
-			String pad = (t.getAction() == Action.ActionShrsIn) //
+		for (final InvestmentTxn t : unmatched) {
+			final String pad = (t.getAction() == Action.SHRS_IN) //
 					? "" //
 					: "                          ";
 
-			String s = String.format("%-20s : %5s(%2d) %s %s SHR=%10.3f", //
+			final String s = String.format("%-20s : %5s(%2d) %s %s SHR=%10.3f", //
 					t.getAccount().name, t.security.symbol, t.security.id, //
 					Common.getDateString(t.getDate()), pad, t.quantity);
 			System.out.println(s);
@@ -656,11 +682,11 @@ public class QifDomReader {
 	}
 
 	private void validateStatements() {
-		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
-			Account a = dom.getAccount(acctid);
+		for (int acctid = 1; acctid <= this.dom.getNumAccounts(); ++acctid) {
+			final Account a = this.dom.getAccount(acctid);
 
 			BigDecimal bal = BigDecimal.ZERO;
-			for (Statement s : a.statements) {
+			for (final Statement s : a.statements) {
 				bal = bal.add(s.credits);
 				bal = bal.subtract(s.debits);
 
@@ -672,15 +698,15 @@ public class QifDomReader {
 	}
 
 	private void balanceStatements() {
-		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
-			Account a = dom.getAccount(acctid);
+		for (int acctid = 1; acctid <= this.dom.getNumAccounts(); ++acctid) {
+			final Account a = this.dom.getAccount(acctid);
 			if (!a.isNonInvestmentAccount()) {
 				continue;
 			}
 
 			BigDecimal balance = BigDecimal.ZERO;
 
-			for (Statement s : a.statements) {
+			for (final Statement s : a.statements) {
 				if (!balanceStatement(a, balance, s)) {
 					System.out.println("Can't balance account: " + a);
 					System.out.println(" Stmt: " + s);
@@ -693,11 +719,11 @@ public class QifDomReader {
 	}
 
 	private boolean balanceStatement(Account a, BigDecimal curbal, Statement s) {
-		List<GenericTxn> txns = gatherTransactionsForStatement(a, s);
+		final List<GenericTxn> txns = gatherTransactionsForStatement(a, s);
 		List<GenericTxn> uncleared = null;
 
-		BigDecimal totaltx = sumAmounts(txns);
-		BigDecimal diff = totaltx.add(curbal).subtract(s.balance);
+		final BigDecimal totaltx = sumAmounts(txns);
+		final BigDecimal diff = totaltx.add(curbal).subtract(s.balance);
 
 		if (diff.signum() != 0) {
 			uncleared = findSubsetTotaling(txns, diff);
@@ -717,7 +743,7 @@ public class QifDomReader {
 				+ " cr=" + s.credits + " db=" + s.debits //
 				+ " bal=" + s.balance);
 
-		for (GenericTxn t : txns) {
+		for (final GenericTxn t : txns) {
 			System.out.println(t.toStringShort());
 		}
 
@@ -725,7 +751,7 @@ public class QifDomReader {
 		System.out.println("Uncleared transactions:");
 
 		if (uncleared != null) {
-			for (GenericTxn t : uncleared) {
+			for (final GenericTxn t : uncleared) {
 				System.out.println(t.toString());
 			}
 		}
@@ -737,7 +763,7 @@ public class QifDomReader {
 		List<List<GenericTxn>> matches = null;
 
 		for (int nn = 1; nn < txns.size(); ++nn) {
-			List<List<GenericTxn>> subsets = findSubsetsTotaling(txns, diff, nn, txns.size());
+			final List<List<GenericTxn>> subsets = findSubsetsTotaling(txns, diff, nn, txns.size());
 
 			if (!subsets.isEmpty()) {
 				matches = subsets;
@@ -750,20 +776,20 @@ public class QifDomReader {
 
 	private List<List<GenericTxn>> findSubsetsTotaling( //
 			List<GenericTxn> txns, BigDecimal tot, int nn, int max) {
-		List<List<GenericTxn>> ret = new ArrayList<List<GenericTxn>>();
+		final List<List<GenericTxn>> ret = new ArrayList<List<GenericTxn>>();
 		if (nn >= txns.size()) {
 			return ret;
 		}
 
-		List<GenericTxn> txns_work = new ArrayList<>();
+		final List<GenericTxn> txns_work = new ArrayList<>();
 		txns_work.addAll(txns);
 
 		for (int ii = max - 1; ii >= 0; --ii) {
-			BigDecimal newtot = tot.subtract(txns.get(ii).getAmount());
-			GenericTxn t = txns_work.remove(ii);
+			final BigDecimal newtot = tot.subtract(txns.get(ii).getAmount());
+			final GenericTxn t = txns_work.remove(ii);
 
 			if ((nn == 1) && (newtot.signum() == 0)) {
-				List<GenericTxn> l = new ArrayList<GenericTxn>();
+				final List<GenericTxn> l = new ArrayList<GenericTxn>();
 				l.add(t);
 				ret.add(l);
 
@@ -771,11 +797,11 @@ public class QifDomReader {
 			}
 
 			if (nn > 1 && nn <= ii) {
-				List<List<GenericTxn>> subsets = findSubsetsTotaling(txns_work, newtot, nn - 1, ii);
+				final List<List<GenericTxn>> subsets = findSubsetsTotaling(txns_work, newtot, nn - 1, ii);
 				txns_work.add(ii, t);
 
 				if (!subsets.isEmpty()) {
-					for (List<GenericTxn> l : subsets) {
+					for (final List<GenericTxn> l : subsets) {
 						l.add(t);
 					}
 
@@ -790,14 +816,14 @@ public class QifDomReader {
 	}
 
 	private void clearTransactions(List<GenericTxn> txns, Statement s) {
-		for (GenericTxn t : txns) {
+		for (final GenericTxn t : txns) {
 			t.stmtdate = s.date;
 		}
 	}
 
 	private BigDecimal sumAmounts(List<GenericTxn> txns) {
 		BigDecimal totaltx = BigDecimal.ZERO;
-		for (GenericTxn t : txns) {
+		for (final GenericTxn t : txns) {
 			totaltx = totaltx.add(t.getAmount());
 		}
 
@@ -805,15 +831,15 @@ public class QifDomReader {
 	}
 
 	private List<GenericTxn> gatherTransactionsForStatement(Account a, Statement s) {
-		List<GenericTxn> txns = new ArrayList<GenericTxn>();
+		final List<GenericTxn> txns = new ArrayList<GenericTxn>();
 
-		int idx1 = a.findFirstNonClearedTransaction();
+		final int idx1 = a.findFirstNonClearedTransaction();
 		if (idx1 < 0) {
 			return txns;
 		}
 
 		for (int ii = idx1; ii <= a.transactions.size(); ++ii) {
-			GenericTxn t = a.transactions.get(ii);
+			final GenericTxn t = a.transactions.get(ii);
 
 			if (t.getDate().compareTo(s.date) > 0) {
 				break;
@@ -828,90 +854,95 @@ public class QifDomReader {
 	}
 
 	private void processSecurities() {
-		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
-			Account a = dom.getAccount(acctid);
+		processSecurities2(this.dom.portfolio, this.dom.getAllTransactions());
+
+		for (int acctid = 1; acctid <= this.dom.getNumAccounts(); ++acctid) {
+			final Account a = this.dom.getAccount(acctid);
 			if ((a == null) || !a.isInvestmentAccount()) {
 				continue;
 			}
 
-			for (GenericTxn gtxn : a.transactions) {
-				if (!(gtxn instanceof InvestmentTxn)) {
-					continue;
-				}
+			processSecurities2(a.securities, a.transactions);
+		}
+	}
 
-				InvestmentTxn txn = (InvestmentTxn) gtxn;
-				if (txn.security == null) {
-					continue;
-				}
+	private void processSecurities2(SecurityPortfolio port, List<GenericTxn> txns) {
+		for (final GenericTxn gtxn : txns) {
+			if (!(gtxn instanceof InvestmentTxn)) {
+				continue;
+			}
 
-				SecurityPosition pos = a.securities.getPosition(txn.security);
-				pos.transactions.add(txn);
+			final InvestmentTxn txn = (InvestmentTxn) gtxn;
+			if (txn.security == null) {
+				continue;
+			}
 
-				switch (txn.getAction()) {
-				case ActionBuy:
-				case ActionShrsIn:
-				case ActionReinvDiv:
-				case ActionReinvLg:
-				case ActionReinvSh:
-				case ActionGrant:
-				case ActionExpire:
-					// if (txn.quantity == null) {
-					// // TODO what to do about this?
-					// System.out.println("NULL quantities: " +
-					// ++nullQuantities);
-					// break;
-					// }
-				case ActionBuyX:
-				case ActionReinvInt:
-				case ActionVest:
-				case ActionShrsOut:
-				case ActionSell:
-				case ActionSellX:
-				case ActionExercisX:
-					pos.shares = pos.shares.add(txn.quantity);
-					break;
-				// pos.shares = pos.shares.subtract(txn.quantity);
+			final SecurityPosition pos = port.getPosition(txn.security);
+			pos.transactions.add(txn);
+
+			switch (txn.getAction()) {
+			case BUY:
+			case SHRS_IN:
+			case REINV_DIV:
+			case REINV_LG:
+			case REINV_SH:
+			case GRANT:
+			case EXPIRE:
+				// if (txn.quantity == null) {
+				// // TODO what to do about this?
+				// System.out.println("NULL quantities: " +
+				// ++nullQuantities);
 				// break;
+				// }
+			case BUYX:
+			case REINV_INT:
+			case VEST:
+			case SHRS_OUT:
+			case SELL:
+			case SELLX:
+			case EXERCISEX:
+				pos.shares = pos.shares.add(txn.quantity);
+				break;
+			// pos.shares = pos.shares.subtract(txn.quantity);
+			// break;
 
-				case ActionStockSplit:
-					pos.shares = pos.shares.multiply(txn.quantity);
-					pos.shares = pos.shares.divide(BigDecimal.TEN);
-					break;
+			case STOCKSPLIT:
+				pos.shares = pos.shares.multiply(txn.quantity);
+				pos.shares = pos.shares.divide(BigDecimal.TEN);
+				break;
 
-				case ActionCash:
-				case ActionDiv:
-				case ActionIntInc:
-				case ActionMiscIncX:
-					break;
+			case CASH:
+			case DIV:
+			case INT_INC:
+			case MISC_INCX:
+				break;
 
-				default:
-					System.out.println();
-					break;
-				}
+			default:
+				break;
 			}
 		}
 	}
 
 	private void loadInvestmentTransactions() {
 		for (;;) {
-			String s = this.rdr.peekLine();
+			final String s = this.rdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			InvestmentTxn txn = loadInvestmentTransaction();
+			final InvestmentTxn txn = loadInvestmentTransaction();
 			if (txn == null) {
 				break;
 			}
 
-			dom.currAccount.addTransaction(txn);
+			this.dom.currAccount.addTransaction(txn);
 		}
 	}
 
 	public InvestmentTxn loadInvestmentTransaction() {
-		QFileReader.QLine qline = new QFileReader.QLine();
+		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		InvestmentTxn txn = new InvestmentTxn(dom.domid, dom.currAccount.id);
+		final InvestmentTxn txn = new InvestmentTxn(this.dom.domid, this.dom.currAccount.id);
 
 		for (;;) {
 			this.rdr.nextInvLine(qline);
@@ -922,7 +953,7 @@ public class QifDomReader {
 				return txn;
 
 			case InvTransactionAmt: {
-				BigDecimal amt = Common.getDecimal(qline.value);
+				final BigDecimal amt = Common.getDecimal(qline.value);
 
 				if (txn.getAmount() != null) {
 					if (!txn.getAmount().equals(amt)) {
@@ -966,7 +997,7 @@ public class QifDomReader {
 				break;
 			case InvXferAcct:
 				txn.accountForTransfer = qline.value;
-				txn.xacctid = dom.findCategoryID(qline.value);
+				txn.xacctid = this.dom.findCategoryID(qline.value);
 				break;
 
 			default:
@@ -977,103 +1008,103 @@ public class QifDomReader {
 
 	private Action parseAction(String s) {
 		if ("StkSplit".equals(s)) {
-			return Action.ActionStockSplit;
+			return Action.STOCKSPLIT;
 		}
 		if ("Cash".equals(s)) {
-			return Action.ActionCash;
+			return Action.CASH;
 		}
 		if ("XIn".equals(s)) {
-			return Action.ActionXIn;
+			return Action.XIN;
 		}
 		if ("XOut".equals(s)) {
-			return Action.ActionXOut;
+			return Action.XOUT;
 		}
 		if ("Buy".equals(s)) {
-			return Action.ActionBuy;
+			return Action.BUY;
 		}
 		if ("BuyX".equals(s)) {
-			return Action.ActionBuyX;
+			return Action.BUYX;
 		}
 		if ("Sell".equals(s)) {
-			return Action.ActionSell;
+			return Action.SELL;
 		}
 		if ("SellX".equals(s)) {
-			return Action.ActionSellX;
+			return Action.SELLX;
 		}
 		if ("ShrsIn".equals(s)) {
-			return Action.ActionShrsIn;
+			return Action.SHRS_IN;
 		}
 		if ("ShrsOut".equals(s)) {
-			return Action.ActionShrsOut;
+			return Action.SHRS_OUT;
 		}
 		if ("Grant".equals(s)) {
-			return Action.ActionGrant;
+			return Action.GRANT;
 		}
 		if ("Vest".equals(s)) {
-			return Action.ActionVest;
+			return Action.VEST;
 		}
 		if ("ExercisX".equals(s)) {
-			return Action.ActionExercisX;
+			return Action.EXERCISEX;
 		}
 		if ("Expire".equals(s)) {
-			return Action.ActionExpire;
+			return Action.EXPIRE;
 		}
 		if ("WithdrwX".equals(s)) {
-			return Action.ActionWithdrwX;
+			return Action.WITHDRAWX;
 		}
 		if ("IntInc".equals(s)) {
-			return Action.ActionIntInc;
+			return Action.INT_INC;
 		}
 		if ("MiscIncX".equals(s)) {
-			return Action.ActionMiscIncX;
+			return Action.MISC_INCX;
 		}
 		if ("Div".equals(s)) {
-			return Action.ActionDiv;
+			return Action.DIV;
 		}
 		if ("ReinvDiv".equals(s)) {
-			return Action.ActionReinvDiv;
+			return Action.REINV_DIV;
 		}
 		if ("ReinvLg".equals(s)) {
-			return Action.ActionReinvLg;
+			return Action.REINV_LG;
 		}
 		if ("ReinvSh".equals(s)) {
-			return Action.ActionReinvSh;
+			return Action.REINV_SH;
 		}
 		if ("ReinvInt".equals(s)) {
-			return Action.ActionReinvInt;
+			return Action.REINV_INT;
 		}
 		if ("ContribX".equals(s)) {
-			return Action.ActionContribX;
+			return Action.CONTRIBX;
 		}
 		if ("Reminder".equals(s)) {
-			return Action.ActionReminder;
+			return Action.REMINDER;
 		}
 
-		return Action.ActionOther;
+		return Action.OTHER;
 	}
 
 	private void loadNonInvestmentTransactions() {
 		for (;;) {
-			String s = this.rdr.peekLine();
+			final String s = this.rdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			NonInvestmentTxn txn = loadNonInvestmentTransaction();
+			final NonInvestmentTxn txn = loadNonInvestmentTransaction();
 			if (txn == null) {
 				break;
 			}
 
 			txn.verifySplit();
 
-			dom.currAccount.addTransaction(txn);
+			this.dom.currAccount.addTransaction(txn);
 		}
 	}
 
 	public NonInvestmentTxn loadNonInvestmentTransaction() {
-		QFileReader.QLine qline = new QFileReader.QLine();
+		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		NonInvestmentTxn txn = new NonInvestmentTxn(dom.domid, dom.currAccount.id);
+		final NonInvestmentTxn txn = new NonInvestmentTxn(this.dom.domid, this.dom.currAccount.id);
 		SimpleTxn cursplit = null;
 
 		for (;;) {
@@ -1084,14 +1115,14 @@ public class QifDomReader {
 				return txn;
 
 			case TxnCategory:
-				txn.catid = dom.findCategoryID(qline.value);
+				txn.catid = this.dom.findCategoryID(qline.value);
 
 				if (txn.catid == 0) {
 					Common.reportError("Can't find xtxn: " + qline.value);
 				}
 				break;
 			case TxnAmount: {
-				BigDecimal amt = Common.getDecimal(qline.value);
+				final BigDecimal amt = Common.getDecimal(qline.value);
 
 				if (txn.getAmount() != null) {
 					if (!txn.getAmount().equals(amt)) {
@@ -1125,14 +1156,14 @@ public class QifDomReader {
 
 			case TxnSplitCategory:
 				if (cursplit == null || cursplit.catid != 0) {
-					cursplit = new SimpleTxn(dom.domid, txn.acctid);
+					cursplit = new SimpleTxn(this.dom.domid, txn.acctid);
 					txn.split.add(cursplit);
 				}
 
 				if (qline.value == null || qline.value.trim().isEmpty()) {
 					qline.value = "Fix Me";
 				}
-				cursplit.catid = dom.findCategoryID(qline.value);
+				cursplit.catid = this.dom.findCategoryID(qline.value);
 
 				if (cursplit.catid == 0) {
 					Common.reportError("Can't find xtxn: " + qline.value);
@@ -1141,7 +1172,7 @@ public class QifDomReader {
 			case TxnSplitAmount:
 				if (cursplit == null || cursplit.getAmount() != null) {
 					txn.split.add(cursplit);
-					cursplit = new SimpleTxn(dom.domid, txn.acctid);
+					cursplit = new SimpleTxn(this.dom.domid, txn.acctid);
 				}
 
 				cursplit.setAmount(Common.getDecimal(qline.value));
@@ -1160,34 +1191,34 @@ public class QifDomReader {
 
 	private void loadPrices() {
 		for (;;) {
-			String s = this.rdr.peekLine();
+			final String s = this.rdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			Price price = Price.load(this.rdr);
+			final Price price = Price.load(this.rdr);
 			if (price == null) {
 				break;
 			}
 
-			Security sec = dom.findSecurityBySymbol(price.symbol);
+			final Security sec = this.dom.findSecurityBySymbol(price.symbol);
 			sec.addPrice(price);
 		}
 	}
 
 	private void loadStatements() {
 		for (;;) {
-			String s = this.rdr.peekLine();
+			final String s = this.rdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			Statement stmt = Statement.load(this.rdr, dom.currAccount.id);
+			final Statement stmt = Statement.load(this.rdr, this.dom.currAccount.id);
 			if (stmt == null) {
 				break;
 			}
 
-			dom.currAccount.statements.add(stmt);
+			this.dom.currAccount.statements.add(stmt);
 		}
 	}
 
@@ -1196,10 +1227,10 @@ public class QifDomReader {
 			return;
 		}
 
-		NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
+		final NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
 
 		for (int ii = 0; ii < nitxn.split.size(); ++ii) {
-			SimpleTxn stxn = nitxn.split.get(ii);
+			final SimpleTxn stxn = nitxn.split.get(ii);
 			if (stxn.catid >= 0) {
 				continue;
 			}
@@ -1207,11 +1238,11 @@ public class QifDomReader {
 			MultiSplitTxn mtxn = null;
 
 			for (int jj = ii + 1; jj < nitxn.split.size(); ++jj) {
-				SimpleTxn stxn2 = nitxn.split.get(jj);
+				final SimpleTxn stxn2 = nitxn.split.get(jj);
 
 				if (stxn.catid == stxn2.catid) {
 					if (mtxn == null) {
-						mtxn = new MultiSplitTxn(dom.domid, txn.acctid);
+						mtxn = new MultiSplitTxn(this.dom.domid, txn.acctid);
 						nitxn.split.set(ii, mtxn);
 
 						mtxn.setAmount(stxn.getAmount());
@@ -1238,7 +1269,7 @@ public class QifDomReader {
 			return;
 		}
 
-		Account a = dom.getAccount(-txn.catid);
+		final Account a = this.dom.getAccount(-txn.catid);
 
 		findMatches(a, txn, date, true);
 
@@ -1274,7 +1305,7 @@ public class QifDomReader {
 	private void findMatches(Account acct, SimpleTxn txn, Date date, boolean strict) {
 		this.matchingTxns.clear();
 
-		int idx = findDateRange(acct, date);
+		final int idx = findDateRange(acct, date);
 		if (idx < 0) {
 			return;
 		}
@@ -1285,20 +1316,20 @@ public class QifDomReader {
 			datematch = false;
 
 			if (idx + inc < acct.transactions.size()) {
-				GenericTxn gtxn = acct.transactions.get(idx + inc);
+				final GenericTxn gtxn = acct.transactions.get(idx + inc);
 				datematch = date.equals(gtxn.getDate());
 
-				SimpleTxn match = checkMatch(txn, gtxn, strict);
+				final SimpleTxn match = checkMatch(txn, gtxn, strict);
 				if (match != null) {
 					this.matchingTxns.add(match);
 				}
 			}
 
 			if (inc > 0 && idx >= inc) {
-				GenericTxn gtxn = acct.transactions.get(idx - inc);
+				final GenericTxn gtxn = acct.transactions.get(idx - inc);
 				datematch = datematch || date.equals(gtxn.getDate());
 
-				SimpleTxn match = checkMatch(txn, gtxn, strict);
+				final SimpleTxn match = checkMatch(txn, gtxn, strict);
 				if (match != null) {
 					this.matchingTxns.add(match);
 				}
@@ -1319,7 +1350,7 @@ public class QifDomReader {
 				return gtxn;
 			}
 		} else {
-			for (SimpleTxn splitxn : gtxn.getSplits()) {
+			for (final SimpleTxn splitxn : gtxn.getSplits()) {
 				if ((splitxn.getXferAcctid() == txn.acctid) //
 						&& amountIsEqual(splitxn, txn, strict)) {
 					return splitxn;
@@ -1334,8 +1365,8 @@ public class QifDomReader {
 	int cashbad = 0;
 
 	private boolean amountIsEqual(SimpleTxn txn1, SimpleTxn txn2, boolean strict) {
-		BigDecimal amt1 = txn1.getXferAmount();
-		BigDecimal amt2 = txn2.getXferAmount();
+		final BigDecimal amt1 = txn1.getXferAmount();
+		final BigDecimal amt2 = txn2.getXferAmount();
 
 		if (amt1.abs().compareTo(amt2.abs()) != 0) {
 			return false;
@@ -1347,21 +1378,21 @@ public class QifDomReader {
 
 		// We know the magnitude is the same and non-zero
 		// Check whether they are equal or negative of each other
-		boolean eq = amt1.equals(amt2);
+		final boolean eq = amt1.equals(amt2);
 
-		boolean ret = !eq || !strict;
+		final boolean ret = !eq || !strict;
 
-		if ((txn1.getAction() == Action.ActionCash) //
-				|| (txn2.getAction() == Action.ActionCash)) {
+		if ((txn1.getAction() == Action.CASH) //
+				|| (txn2.getAction() == Action.CASH)) {
 			if (eq) {
-				++cashbad;
+				++this.cashbad;
 			} else {
-				++cashok;
+				++this.cashok;
 			}
 
 			System.out.println(txn1.toString());
 			System.out.println(txn2.toString());
-			System.out.println("Cash ok=" + cashok + " bad=" + cashbad);
+			System.out.println("Cash ok=" + this.cashok + " bad=" + this.cashbad);
 
 			return ret;
 		}
@@ -1376,8 +1407,8 @@ public class QifDomReader {
 
 		int loidx = 0;
 		int hiidx = acct.transactions.size() - 1;
-		Date loval = acct.transactions.get(loidx).getDate();
-		Date hival = acct.transactions.get(hiidx).getDate();
+		final Date loval = acct.transactions.get(loidx).getDate();
+		final Date hival = acct.transactions.get(hiidx).getDate();
 		if (loval.compareTo(date) >= 0) {
 			return loidx;
 		}
@@ -1390,7 +1421,7 @@ public class QifDomReader {
 			if (idx <= loidx || idx >= hiidx) {
 				return idx;
 			}
-			Date val = acct.transactions.get(idx).getDate();
+			final Date val = acct.transactions.get(idx).getDate();
 
 			if (val.compareTo(date) < 0) {
 				loidx = idx;
@@ -1408,25 +1439,4 @@ public class QifDomReader {
 
 		return loidx;
 	}
-
-	// public static void Export(QifDom dom, String fileName) {
-	// if (File.Exists(fileName)) {
-	// File.SetAttributes(fileName, FileAttributes.Normal);
-	// }
-	//
-	// StreamWriter writer = new StreamWriter(fileName);
-	// writer.AutoFlush = true;
-	//
-	// Category.Export(writer, dom.categories);
-	// Class.Export(writer, dom.classes);
-	// Account.Export(writer, dom.accounts);
-	// MemorizedTransaction.Export(writer, dom.memorizedTxns);
-	//
-	// Asset.Export(writer, dom.assetTxns);
-	// BankTxn.Export(writer, dom.bankTxns);
-	// CashTxn.Export(writer, dom.cashTxns);
-	// CreditCardTxn.Export(writer, dom.creditCardTxns);
-	// InvestmentTxn.Export(writer, dom.investmentTxns);
-	// LiabilityTxn.Export(writer, dom.liabilityTxns);
-	// }
 }

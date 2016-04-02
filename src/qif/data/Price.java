@@ -14,7 +14,7 @@ class Price {
 	}
 
 	public static Price load(QFileReader qfr) {
-		QFileReader.QLine qline = new QFileReader.QLine();
+		final QFileReader.QLine qline = new QFileReader.QLine();
 
 		// Ex: "FEQIX",48 3/4," 2/16' 0"
 		String s = qfr.readLine();
@@ -31,7 +31,7 @@ class Price {
 			Common.reportError("syntax error for price");
 		}
 
-		String sym = s.substring(1, idx);
+		final String sym = s.substring(1, idx);
 		s = s.substring(idx + 1);
 
 		if (!s.startsWith(",")) {
@@ -43,7 +43,7 @@ class Price {
 			Common.reportError("syntax error for price");
 		}
 
-		String priceval = s.substring(1, idx);
+		final String priceval = s.substring(1, idx);
 		s = s.substring(idx + 1);
 
 		if (!s.startsWith("\"")) {
@@ -55,10 +55,10 @@ class Price {
 			Common.reportError("syntax error for price");
 		}
 
-		String datestr = s.substring(1, idx);
-		Date date = Common.GetDate(datestr);
+		final String datestr = s.substring(1, idx);
+		final Date date = Common.GetDate(datestr);
 
-		Price price = new Price();
+		final Price price = new Price();
 
 		price.symbol = sym;
 		price.price = priceval;
@@ -78,7 +78,7 @@ class Price {
 	}
 
 	public String toString() {
-		String s = "Price: " + this.symbol //
+		final String s = "Price: " + this.symbol //
 				+ " price=" + this.price //
 				+ " date=" + this.date //
 				+ "\n";

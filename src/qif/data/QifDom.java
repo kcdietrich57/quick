@@ -31,11 +31,11 @@ import qif.data.Account.AccountType;
 // 3/27 Investment transactions - share balance
 // 3/28 Verify all transaction types - Dividends, Splits
 // 3/29 ShrsIn/ShrsOut (xfer)
-//
-// Share balance in account positions
-// Splits
-// Security positions (all accounts)
+// 4/2 Share balance in account positions
+// 4/2 Security positions (all accounts)
 // Security position by account and security for any date
+//
+// Splits
 // Dump portfolio for each month (positions)
 // Security price history
 // Portfolio market value
@@ -83,10 +83,13 @@ public class QifDom {
 	}
 
 	public final short domid;
-	private List<Account> accounts;
-	private List<Account> accounts_bytime;
-	private List<Category> categories;
-	private List<Security> securities;
+	private final List<Category> categories;
+	private final List<Security> securities;
+
+	private final List<Account> accounts;
+	private final List<Account> accounts_bytime;
+
+	SecurityPortfolio portfolio;
 
 	// public List<QClass> classes;
 	// public List<MemorizedTxn> memorizedTxns;
@@ -107,6 +110,8 @@ public class QifDom {
 		this.accounts_bytime = new ArrayList<Account>();
 		this.securities = new ArrayList<Security>();
 
+		this.portfolio = new SecurityPortfolio();
+
 		// this.classes = new ArrayList<Class>();
 		// this.memorizedTxns = new ArrayList<MemorizedTxn>();
 	}
@@ -114,19 +119,19 @@ public class QifDom {
 	public QifDom(QifDom other) {
 		this();
 
-		for (Category c : other.categories) {
+		for (final Category c : other.categories) {
 			if (c != null) {
 				addCategory(new Category(c));
 			}
 		}
 
-		for (Security s : other.securities) {
+		for (final Security s : other.securities) {
 			if (s != null) {
 				addSecurity(new Security(s));
 			}
 		}
 
-		for (Account a : other.accounts) {
+		for (final Account a : other.accounts) {
 			if (a != null) {
 				addAccount(new Account(a, this));
 			}
@@ -157,6 +162,25 @@ public class QifDom {
 		return this.categories.get(catid);
 	}
 
+	public List<GenericTxn> getAllTransactions() {
+		final List<GenericTxn> txns = new ArrayList<GenericTxn>();
+
+		for (final Account a : this.accounts) {
+			if (a == null) {
+				continue;
+			}
+			txns.addAll(a.transactions);
+
+			final Comparator<GenericTxn> cpr = (o1, o2) -> {
+				return o1.getDate().compareTo(o2.getDate());
+			};
+
+			Collections.sort(txns, cpr);
+		}
+
+		return txns;
+	}
+
 	public void addAccount(Account acct) {
 		while (this.accounts.size() <= acct.id) {
 			this.accounts.add(null);
@@ -167,46 +191,44 @@ public class QifDom {
 
 		this.currAccount = acct;
 
-		Collections.sort(this.accounts_bytime, new Comparator<Account>() {
-			public int compare(Account a1, Account a2) {
-				if (a1 == null) {
-					return (a2 == null) ? 0 : 1;
-				} else if (a2 == null) {
-					return -1;
-				}
-
-				// Order by firsttran, lasttran
-				int ct1 = a1.transactions.size();
-				int ct2 = a2.transactions.size();
-
-				if (ct1 == 0) {
-					return (ct2 == 0) ? 0 : -1;
-				} else if (ct2 == 0) {
-					return 1;
-				}
-
-				GenericTxn firsttxn1 = a1.transactions.get(0);
-				GenericTxn lasttxn1 = a1.transactions.get(ct1 - 1);
-				GenericTxn firsttxn2 = a2.transactions.get(0);
-				GenericTxn lasttxn2 = a2.transactions.get(ct2 - 1);
-
-				int diff = firsttxn1.getDate().compareTo(firsttxn2.getDate());
-				if (diff != 0) {
-					return diff;
-				}
-
-				diff = lasttxn1.getDate().compareTo(lasttxn2.getDate());
-				if (diff != 0) {
-					return diff;
-				}
-
-				return (a1.name.compareTo(a2.name));
+		Collections.sort(this.accounts_bytime, (a1, a2) -> {
+			if (a1 == null) {
+				return (a2 == null) ? 0 : 1;
+			} else if (a2 == null) {
+				return -1;
 			}
+
+			// Order by firsttran, lasttran
+			final int ct1 = a1.transactions.size();
+			final int ct2 = a2.transactions.size();
+
+			if (ct1 == 0) {
+				return (ct2 == 0) ? 0 : -1;
+			} else if (ct2 == 0) {
+				return 1;
+			}
+
+			final GenericTxn firsttxn1 = a1.transactions.get(0);
+			final GenericTxn lasttxn1 = a1.transactions.get(ct1 - 1);
+			final GenericTxn firsttxn2 = a2.transactions.get(0);
+			final GenericTxn lasttxn2 = a2.transactions.get(ct2 - 1);
+
+			int diff = firsttxn1.getDate().compareTo(firsttxn2.getDate());
+			if (diff != 0) {
+				return diff;
+			}
+
+			diff = lasttxn1.getDate().compareTo(lasttxn2.getDate());
+			if (diff != 0) {
+				return diff;
+			}
+
+			return (a1.name.compareTo(a2.name));
 		});
 	}
 
 	public void updateAccount(Account oldacct, Account newacct) {
-		String msg = "Account type mismatch: " //
+		final String msg = "Account type mismatch: " //
 				+ oldacct.type + " vs " + newacct.type;
 
 		if (oldacct.type != newacct.type) {
@@ -227,7 +249,7 @@ public class QifDom {
 	}
 
 	public void addCategory(Category cat) {
-		Category existing = findCategory(cat.name);
+		final Category existing = findCategory(cat.name);
 
 		if (existing != null) {
 			Common.reportError("Adding duplicate category");
@@ -241,7 +263,7 @@ public class QifDom {
 	}
 
 	public void addSecurity(Security sec) {
-		Security existing = findSecurityByName(sec.name);
+		final Security existing = findSecurityByName(sec.name);
 
 		if (existing != null) {
 			Common.reportError("Adding duplicate security");
@@ -258,18 +280,18 @@ public class QifDom {
 		if (s.startsWith("[")) {
 			s = s.substring(1, s.length() - 1).trim();
 
-			Account acct = findAccount(s);
+			final Account acct = findAccount(s);
 
 			return (short) ((acct != null) ? (-acct.id) : 0);
 		}
 
-		Category cat = findCategory(s);
+		final Category cat = findCategory(s);
 
-		return (short) ((cat != null) ? (cat.id) : 0);
+		return (cat != null) ? (cat.id) : 0;
 	}
 
 	public Security findSecurityByName(String name) {
-		for (Security sec : this.securities) {
+		for (final Security sec : this.securities) {
 			if (sec != null && sec.name.equals(name)) {
 				return sec;
 			}
@@ -279,7 +301,7 @@ public class QifDom {
 	}
 
 	public Security findSecurityBySymbol(String sym) {
-		for (Security sec : this.securities) {
+		for (final Security sec : this.securities) {
 			if (sec != null && sec.symbol.equals(sym)) {
 				return sec;
 			}
@@ -289,7 +311,7 @@ public class QifDom {
 	}
 
 	public Account findAccount(String name) {
-		for (Account acct : this.accounts) {
+		for (final Account acct : this.accounts) {
 			if (acct != null && acct.name.equals(name)) {
 				return acct;
 			}
@@ -299,7 +321,7 @@ public class QifDom {
 	}
 
 	public Category findCategory(String name) {
-		for (Category cat : this.categories) {
+		for (final Category cat : this.categories) {
 			if ((cat != null) && cat.name.equals(name)) {
 				return cat;
 			}

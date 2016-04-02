@@ -28,9 +28,9 @@ public class Statement {
 	}
 
 	public static Statement load(QFileReader qfr, short acctid) {
-		QFileReader.QLine qline = new QFileReader.QLine();
+		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		Statement acct = new Statement(acctid);
+		final Statement acct = new Statement(acctid);
 
 		for (;;) {
 			qfr.nextStatementLine(qline);
@@ -63,7 +63,7 @@ public class Statement {
 	}
 
 	public String toString() {
-		String s = "Statement" //
+		final String s = "Statement" //
 				+ " dt=" + this.date //
 				+ " cr=" + this.credits //
 				+ " db=" + this.debits //

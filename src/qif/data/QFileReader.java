@@ -90,7 +90,7 @@ public class QFileReader {
 	public QFileReader(File file) {
 		try {
 			this.rdr = new LineNumberReader(new FileReader(file));
-		} catch (FileNotFoundException e) {
+		} catch (final FileNotFoundException e) {
 			this.rdr = null;
 		}
 	}
@@ -105,14 +105,14 @@ public class QFileReader {
 	public String readLine() {
 		try {
 			if (this.nextline != null) {
-				String ret = this.nextline;
+				final String ret = this.nextline;
 				this.nextline = null;
 
 				return ret;
 			}
 
 			return this.rdr.readLine();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 
@@ -120,7 +120,7 @@ public class QFileReader {
 	}
 
 	public String peekLine() {
-		String line = readLine();
+		final String line = readLine();
 		unreadLine(line);
 		return line;
 	}
@@ -147,11 +147,11 @@ public class QFileReader {
 
 				if (line.startsWith("!") && !line.startsWith("!Option") && !line.startsWith("!Clear")) {
 					line = line.trim();
-					SectionType st = parseSectionType(line);
+					final SectionType st = parseSectionType(line);
 					return st;
 				}
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 
@@ -212,7 +212,7 @@ public class QFileReader {
 				line.type = accountFieldType(line.typechar);
 				return;
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 
@@ -225,7 +225,7 @@ public class QFileReader {
 				line.type = statementFieldType(line.typechar);
 				return;
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 
@@ -238,7 +238,7 @@ public class QFileReader {
 				line.type = securityFieldType(line.typechar);
 				return;
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 
@@ -251,7 +251,7 @@ public class QFileReader {
 				line.type = priceFieldType(line.typechar);
 				return;
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 
@@ -264,7 +264,7 @@ public class QFileReader {
 				line.type = categoryFieldType(line.typechar);
 				return;
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 
@@ -277,7 +277,7 @@ public class QFileReader {
 				line.type = txnFieldType(line.typechar);
 				return;
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 
@@ -290,7 +290,7 @@ public class QFileReader {
 				line.type = invFieldType(line.typechar);
 				return;
 			}
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 
@@ -298,7 +298,7 @@ public class QFileReader {
 	}
 
 	private boolean nextLine(QLine line) throws Exception {
-		String s = readLine();
+		final String s = readLine();
 
 		if (s == null) {
 			line.type = FieldType.EndOfSection;

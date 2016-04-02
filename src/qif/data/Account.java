@@ -4,50 +4,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-class SecurityPosition {
-	Security security;
-	BigDecimal shares;
-	List<InvestmentTxn> transactions;
-
-	public SecurityPosition(Security sec, BigDecimal shares) {
-		this.security = sec;
-		this.shares = shares;
-		this.transactions = new ArrayList<InvestmentTxn>();
-	}
-
-	public SecurityPosition(Security sec) {
-		this(sec, BigDecimal.ZERO);
-	}
-
-	public String toString() {
-		String s = "Sec: " + this.security.name + //
-				" Shares: " + this.shares + //
-				" Txns: " + this.transactions.size();
-		return s;
-	}
-}
-
-class SecurityDetails {
-	List<SecurityPosition> positions;
-
-	public SecurityDetails() {
-		this.positions = new ArrayList<SecurityPosition>();
-	}
-
-	public SecurityPosition getPosition(Security sec) {
-		for (SecurityPosition pos : this.positions) {
-			if (pos.security == sec) {
-				return pos;
-			}
-		}
-
-		SecurityPosition newpos = new SecurityPosition(sec);
-		this.positions.add(newpos);
-
-		return newpos;
-	}
-}
-
 public class Account {
 	enum AccountType { //
 		Bank, CCard, Cash, Asset, Liability, Invest, InvPort, Inv401k, InvMutual;
@@ -65,7 +21,7 @@ public class Account {
 
 	public List<GenericTxn> transactions;
 	public List<Statement> statements;
-	public SecurityDetails securities;
+	public SecurityPortfolio securities;
 
 	public Account(QifDom dom) {
 		this.domid = dom.domid;
@@ -79,7 +35,7 @@ public class Account {
 
 		this.transactions = new ArrayList<GenericTxn>();
 		this.statements = new ArrayList<Statement>();
-		this.securities = new SecurityDetails();
+		this.securities = new SecurityPortfolio();
 	}
 
 	public Account(short id, QifDom dom) {
@@ -96,11 +52,11 @@ public class Account {
 		this.description = other.description;
 		this.creditLimit = other.creditLimit;
 
-		for (GenericTxn t : other.transactions) {
+		for (final GenericTxn t : other.transactions) {
 			this.transactions.add(GenericTxn.clone(dom.domid, t));
 		}
 
-		for (Statement s : this.statements) {
+		for (final Statement s : this.statements) {
 			this.statements.add(new Statement(s));
 		}
 	}
@@ -153,7 +109,7 @@ public class Account {
 
 	public int findFirstNonClearedTransaction() {
 		for (int ii = 0; ii < this.transactions.size(); ++ii) {
-			GenericTxn t = this.transactions.get(ii);
+			final GenericTxn t = this.transactions.get(ii);
 
 			if (!t.isCleared()) {
 				return ii;
@@ -173,13 +129,8 @@ public class Account {
 				+ " #tx= " + this.transactions.size() //
 				+ "\n";
 
-		if (!this.securities.positions.isEmpty()) {
-			s += "Securities Held:\n";
+		s += this.securities.toString();
 
-			for (SecurityPosition p : this.securities.positions) {
-				s += p.security.name + " " + p.shares + "\n";
-			}
-		}
 		return s;
 	}
 }

@@ -4,18 +4,18 @@ import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
 
-import qif.data.SimpleTxn.Action;
-
 public class QifReporter {
 	public static boolean compact = false;
 
-	public static void reportAccounts(QifDom dom) {
+	public static void reportDom(QifDom dom) {
+		reportGlobalPortfolio(dom.portfolio);
+
 		System.out.println("============================");
 		System.out.println("Accounts");
 		System.out.println("============================");
 
 		for (int idx = 0; idx < dom.getNumAccounts(); ++idx) {
-			Account a = dom.getAccountByTime(idx);
+			final Account a = dom.getAccountByTime(idx);
 
 			if ((a == null) || //
 					!a.isInvestmentAccount() || //
@@ -54,13 +54,13 @@ public class QifReporter {
 		System.out.println("----------------------------");
 		// System.out.println(a.name + " " + a.type + " " + a.description);
 		System.out.println(a.toString());
-		int ntran = a.transactions.size();
+		final int ntran = a.transactions.size();
 
 		// System.out.println(" " + ntran + " transactions");
 
 		if (ntran > 0) {
-			GenericTxn ft = a.transactions.get(0);
-			GenericTxn lt = a.transactions.get(ntran - 1);
+			final GenericTxn ft = a.transactions.get(0);
+			final GenericTxn lt = a.transactions.get(ntran - 1);
 
 			System.out.println("    Date range: " //
 					+ Common.getDateString(ft.getDate()) //
@@ -73,10 +73,10 @@ public class QifReporter {
 			int curYear = -1;
 			int curMonth = -1;
 			BigDecimal bal = BigDecimal.ZERO;
-			Calendar cal = Calendar.getInstance();
+			final Calendar cal = Calendar.getInstance();
 
-			for (GenericTxn t : a.transactions) {
-				Date d = t.getDate();
+			for (final GenericTxn t : a.transactions) {
+				final Date d = t.getDate();
 				cal.setTime(d);
 
 				if (includePseudoStatements) {
@@ -109,13 +109,13 @@ public class QifReporter {
 		System.out.println("----------------------------");
 		// System.out.println(a.name + " " + a.type + " " + a.description);
 		System.out.println(a.toString());
-		int ntran = a.transactions.size();
 
+		final int ntran = a.transactions.size();
 		System.out.println("" + ntran + " transactions");
 
 		if (ntran > 0) {
-			GenericTxn ft = a.transactions.get(0);
-			GenericTxn lt = a.transactions.get(ntran - 1);
+			final GenericTxn ft = a.transactions.get(0);
+			final GenericTxn lt = a.transactions.get(ntran - 1);
 
 			System.out.println("Date range: " //
 					+ Common.getDateString(ft.getDate()) //
@@ -123,28 +123,63 @@ public class QifReporter {
 			System.out.println("----------------------------");
 		}
 
-		for (SecurityPosition p : a.securities.positions) {
-			BigDecimal shrbal = BigDecimal.ZERO;
+		reportPortfolio(a.securities);
+	}
 
+	public static void reportPortfolio(SecurityPortfolio port) {
+		for (final SecurityPosition p : port.positions) {
 			System.out.println("Sec: " + p.security.name);
 
-			for (InvestmentTxn t : p.transactions) {
-				if (t.getAction() == Action.ActionStockSplit) {
-					shrbal = shrbal.multiply(t.quantity);
-					shrbal = shrbal.divide(BigDecimal.TEN);
-				} else if (t.quantity != null) {
-					shrbal = shrbal.add(t.quantity);
-				}
+			System.out.println(String.format( //
+					"  %-12s  %-10s  %10s  %10s", //
+					"Date", "Action", "Shares", "Balance"));
+
+			for (int ii = 0; ii < p.transactions.size(); ++ii) {
+				final InvestmentTxn t = p.transactions.get(ii);
 
 				if (t.quantity != null) {
+					final BigDecimal shrbal = p.shrBalance.get(ii);
+
 					System.out.println(String.format( //
-							"  %-12s  %-16s Shares: %10.3f  Bal: %10.3f", //
+							"  %-12s  %-10s  %10.3f  %10.3f", //
 							Common.getDateString(t.getDate()), //
 							t.action.toString(), //
 							t.quantity, //
 							shrbal));
 				}
 			}
+
+			System.out.println();
+		}
+
+		System.out.println("----------------------------");
+	}
+
+	public static void reportGlobalPortfolio(SecurityPortfolio port) {
+		for (final SecurityPosition p : port.positions) {
+			System.out.println("Sec: " + p.security.name);
+
+			System.out.println(String.format( //
+					"  %-12s  %-20s  %-10s  %10s  %10s", //
+					"Date", "Account", "Action", "Shares", "Balance"));
+
+			for (int ii = 0; ii < p.transactions.size(); ++ii) {
+				final InvestmentTxn t = p.transactions.get(ii);
+
+				if (t.quantity != null) {
+					final BigDecimal shrbal = p.shrBalance.get(ii);
+
+					System.out.println(String.format( //
+							"  %-12s  %-20s  %-10s  %10.3f  %10.3f", //
+							Common.getDateString(t.getDate()), //
+							QifDom.getDomById(t.domid).getAccount(t.acctid).name, //
+							t.action.toString(), //
+							t.quantity, //
+							shrbal));
+				}
+			}
+
+			System.out.println();
 		}
 
 		System.out.println("----------------------------");

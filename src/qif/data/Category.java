@@ -33,13 +33,13 @@ public class Category {
 		this.name = other.name;
 		this.description = other.description;
 		this.taxRelated = other.taxRelated;
-		incomeCategory = other.incomeCategory;
-		expenseCategory = other.expenseCategory;
-		budgetAmount = other.budgetAmount;
+		this.incomeCategory = other.incomeCategory;
+		this.expenseCategory = other.expenseCategory;
+		this.budgetAmount = other.budgetAmount;
 	}
 
 	public String toString() {
-		String s = "Category" + this.id + ": " + this.name //
+		final String s = "Category" + this.id + ": " + this.name //
 				+ " desc=" + this.description //
 				+ " tax=" + this.taxRelated //
 				+ " inccat=" + this.incomeCategory //

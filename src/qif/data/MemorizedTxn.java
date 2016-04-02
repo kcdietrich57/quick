@@ -17,9 +17,9 @@ class MemorizedTxn extends GenericTxn {
 	public BigDecimal AmortizationTotalYearsForLoan;
 
 	public static MemorizedTxn load(QFileReader qfr) {
-		QFileReader.QLine qline = new QFileReader.QLine();
+		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		MemorizedTxn txn = new MemorizedTxn((short)0, (short) -1);
+		final MemorizedTxn txn = new MemorizedTxn((short) 0, (short) -1);
 
 		for (;;) {
 			qfr.nextSecurityLine(qline);
