@@ -40,7 +40,7 @@ public class Statement {
 				return acct;
 
 			case StmtDate:
-				acct.date = Common.GetDate(qline.value);
+				acct.date = Common.parseDate(qline.value);
 				break;
 			case StmtCredits:
 				acct.credits = Common.getDecimal(qline.value);
@@ -72,22 +72,4 @@ public class Statement {
 
 		return s;
 	}
-
-	// public static void export(PrintWriter pw, List<Account> list) {
-	// if ((list == null) || (list.size() == 0)) {
-	// return;
-	// }
-	//
-	// Common.writeln(pw, Headers.HdrAccount);
-	//
-	// for (Account acct : list) {
-	// Common.writeIfSet(pw, STMT_DATE, "" + acct.date);
-	// Common.write(pw, ACCT_CREDITLIMIT, acct.creditLimit.toString());
-	// Common.writeIfSet(pw, ACCT_DESCRIPTION, acct.description);
-	// Common.writeIfSet(pw, Headers.ACCT_NAME, acct.name);
-	// Common.write(pw, ACCT_STMTBAL, acct.stmtBalance.toString());
-	// Common.write(pw, ACCT_STMTDATE, acct.stmtDate.toString());
-	// Common.write(pw, END);
-	// }
-	// }
 };

@@ -1,9 +1,11 @@
 ﻿
 package qif.data;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import qif.data.Account.AccountType;
@@ -33,7 +35,7 @@ import qif.data.Account.AccountType;
 // 3/29 ShrsIn/ShrsOut (xfer)
 // 4/2 Share balance in account positions
 // 4/2 Security positions (all accounts)
-// Security position by account and security for any date
+// 4/3 Security position by account and security for any date
 //
 // Splits
 // Dump portfolio for each month (positions)
@@ -328,6 +330,23 @@ public class QifDom {
 		}
 
 		return null;
+	}
+
+	public void reportStatusForDate(Date d, boolean itemizeAccounts) {
+		System.out.println();
+		System.out.println("Global status for date: " + Common.getDateString(d));
+		System.out.println("----------------------------------");
+		System.out.println(String.format("  %-36s : %10s", "Account", "Balance"));
+
+		BigDecimal bal = BigDecimal.ZERO;
+
+		for (final Account a : this.accounts) {
+			if (a != null) {
+				bal = bal.add(a.reportStatusForDate(d));
+			}
+		}
+
+		System.out.println("Balance: " + bal);
 	}
 
 	public String toString() {

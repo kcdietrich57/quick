@@ -2,6 +2,7 @@ package qif.data;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 // This can be global information, or for a single account
@@ -61,5 +62,24 @@ class SecurityPosition {
 				this.shrBalance.get(this.shrBalance.size() - 1), //
 				this.transactions.size());
 		return s;
+	}
+
+	public BigDecimal reportSecurityPositionForDate(Date d) {
+		final BigDecimal bal = BigDecimal.ZERO;
+
+		final int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
+		if (idx >= 0) {
+			final InvestmentTxn txn = this.transactions.get(idx);
+			final BigDecimal tshrbal = this.shrBalance.get(idx);
+			// TODO BigDecimal tshrprice = txn.security.getPriceForDate(d);
+
+			if (tshrbal.compareTo(BigDecimal.ZERO) != 0) {
+				System.out.println(String.format("    %-20s %10.3f", //
+						txn.security.name, tshrbal));
+				// TODO bal = bal.add(tshrbal.multiply(tshrprice));
+			}
+		}
+
+		return bal;
 	}
 }

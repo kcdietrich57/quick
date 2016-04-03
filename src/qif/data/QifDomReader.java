@@ -182,13 +182,13 @@ public class QifDomReader {
 				cat.description = qline.value;
 				break;
 			case CatTaxRelated:
-				cat.taxRelated = Common.GetBoolean(qline.value);
+				cat.taxRelated = Common.parseBoolean(qline.value);
 				break;
 			case CatIncomeCategory:
-				cat.incomeCategory = Common.GetBoolean(qline.value);
+				cat.incomeCategory = Common.parseBoolean(qline.value);
 				break;
 			case CatExpenseCategory:
-				cat.expenseCategory = Common.GetBoolean(qline.value);
+				cat.expenseCategory = Common.parseBoolean(qline.value);
 				break;
 			case CatBudgetAmount:
 				cat.budgetAmount = Common.getDecimal(qline.value);
@@ -975,7 +975,7 @@ public class QifDomReader {
 				txn.commission = Common.getDecimal(qline.value);
 				break;
 			case InvDate:
-				txn.setDate(Common.GetDate(qline.value));
+				txn.setDate(Common.parseDate(qline.value));
 				break;
 			case InvMemo:
 				txn.memo = qline.value;
@@ -1139,7 +1139,7 @@ public class QifDomReader {
 				break;
 
 			case TxnDate:
-				txn.setDate(Common.GetDate(qline.value));
+				txn.setDate(Common.parseDate(qline.value));
 				break;
 			case TxnClearedStatus:
 				txn.clearedStatus = qline.value;
@@ -1298,14 +1298,10 @@ public class QifDomReader {
 		xtxn.xtxn = txn;
 	}
 
-	// private void findMatches(Account acct, SimpleTxn txn, Date date) {
-	// findMatches(acct, txn, date, false);
-	// }
-
 	private void findMatches(Account acct, SimpleTxn txn, Date date, boolean strict) {
 		this.matchingTxns.clear();
 
-		final int idx = findDateRange(acct, date);
+		final int idx = Common.findLastTransactionOnOrBeforeDate(acct.transactions, date);
 		if (idx < 0) {
 			return;
 		}
@@ -1400,43 +1396,43 @@ public class QifDomReader {
 		return ret;
 	}
 
-	private static int findDateRange(Account acct, Date date) {
-		if (acct.transactions.isEmpty()) {
-			return -1;
-		}
-
-		int loidx = 0;
-		int hiidx = acct.transactions.size() - 1;
-		final Date loval = acct.transactions.get(loidx).getDate();
-		final Date hival = acct.transactions.get(hiidx).getDate();
-		if (loval.compareTo(date) >= 0) {
-			return loidx;
-		}
-		if (hival.compareTo(date) <= 0) {
-			return hiidx;
-		}
-
-		while (loidx < hiidx) {
-			int idx = (loidx + hiidx) / 2;
-			if (idx <= loidx || idx >= hiidx) {
-				return idx;
-			}
-			final Date val = acct.transactions.get(idx).getDate();
-
-			if (val.compareTo(date) < 0) {
-				loidx = idx;
-			} else if (val.compareTo(date) > 0) {
-				hiidx = idx;
-			} else {
-				while ((idx > 0) //
-						&& (acct.transactions.get(idx - 1).getDate().equals(date))) {
-					--idx;
-				}
-
-				return idx;
-			}
-		}
-
-		return loidx;
-	}
+	// private static int findDateRange(Account acct, Date date) {
+	// if (acct.transactions.isEmpty()) {
+	// return -1;
+	// }
+	//
+	// int loidx = 0;
+	// int hiidx = acct.transactions.size() - 1;
+	// final Date loval = acct.transactions.get(loidx).getDate();
+	// final Date hival = acct.transactions.get(hiidx).getDate();
+	// if (loval.compareTo(date) >= 0) {
+	// return loidx;
+	// }
+	// if (hival.compareTo(date) <= 0) {
+	// return hiidx;
+	// }
+	//
+	// while (loidx < hiidx) {
+	// int idx = (loidx + hiidx) / 2;
+	// if (idx <= loidx || idx >= hiidx) {
+	// return idx;
+	// }
+	// final Date val = acct.transactions.get(idx).getDate();
+	//
+	// if (val.compareTo(date) < 0) {
+	// loidx = idx;
+	// } else if (val.compareTo(date) > 0) {
+	// hiidx = idx;
+	// } else {
+	// while ((idx > 0) //
+	// && (acct.transactions.get(idx - 1).getDate().equals(date))) {
+	// --idx;
+	// }
+	//
+	// return idx;
+	// }
+	// }
+	//
+	// return loidx;
+	// }
 }

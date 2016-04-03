@@ -32,7 +32,7 @@ class MemorizedTxn extends GenericTxn {
 				txn.AmortizationCurrentLoanBalance = Common.getDecimal(qline.value);
 				break;
 			case MemtxnAmortizationFirstPaymentDate:
-				txn.AmortizationFirstPaymentDate = Common.GetDate(qline.value);
+				txn.AmortizationFirstPaymentDate = Common.parseDate(qline.value);
 				break;
 			case MemtxnAmortizationInterestRate:
 				txn.AmortizationInterestRate = Common.getDecimal(qline.value);

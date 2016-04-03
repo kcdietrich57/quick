@@ -56,7 +56,7 @@ class Price {
 		}
 
 		final String datestr = s.substring(1, idx);
-		final Date date = Common.GetDate(datestr);
+		final Date date = Common.parseDate(datestr);
 
 		final Price price = new Price();
 

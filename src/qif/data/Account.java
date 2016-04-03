@@ -2,6 +2,7 @@
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class Account {
@@ -117,6 +118,43 @@ public class Account {
 		}
 
 		return -1;
+	}
+
+	public BigDecimal reportStatusForDate(Date d) {
+		BigDecimal bal = BigDecimal.ZERO;
+
+		final int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
+		if (idx < 0) {
+			return bal;
+		}
+
+		final GenericTxn tx = this.transactions.get(idx);
+
+		final BigDecimal tbal = tx.runningTotal;
+
+		if ((tbal != null) && (tbal.compareTo(BigDecimal.ZERO) != 0)) {
+			bal = tbal;
+			System.out.println(String.format("  %-36s : %10.2f", this.name, bal));
+		}
+
+		bal = bal.add(reportPortfolioForDate(d));
+
+		return bal;
+	}
+
+	public BigDecimal reportPortfolioForDate(Date d) {
+		final BigDecimal bal = BigDecimal.ZERO;
+
+		for (final SecurityPosition pos : this.securities.positions) {
+
+			final BigDecimal shrs = pos.reportSecurityPositionForDate(d);
+
+			if (shrs.compareTo(BigDecimal.ZERO) != 0) {
+
+			}
+		}
+
+		return bal;
 	}
 
 	public String toString() {
