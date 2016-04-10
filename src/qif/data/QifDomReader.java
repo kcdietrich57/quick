@@ -1,6 +1,8 @@
 package qif.data;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.LineNumberReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -8,6 +10,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import qif.data.Account.AccountType;
 import qif.data.QFileReader.SectionType;
@@ -31,12 +34,14 @@ public class QifDomReader {
 	}
 
 	public QifDom load(QifDom refdom, String fileName) {
-		if (new File("c:" + fileName).exists()) {
-			fileName = "c:" + fileName;
-		} else if (!new File(fileName).exists()) {
-			Common.reportError("Input file '" + fileName + "' does not exist");
+		if (!new File(fileName).exists()) {
+			if (new File("c:" + fileName).exists()) {
+				fileName = "c:" + fileName;
+			} else {
+				Common.reportError("Input file '" + fileName + "' does not exist");
 
-			return null;
+				return null;
+			}
 		}
 
 		init(fileName, refdom);
@@ -50,7 +55,143 @@ public class QifDomReader {
 
 		fixPortfolios();
 
+		File d = new File(new File(fileName).getParentFile(), "quotes");
+
+		loadSecurityPriceHistory(d);
+
 		return this.dom;
+	}
+
+	private void loadSecurityPriceHistory(File quoteDirectory) {
+		if (!quoteDirectory.isDirectory()) {
+			return;
+		}
+
+		File quoteFiles[] = quoteDirectory.listFiles();
+
+		for (File f : quoteFiles) {
+			String symbol = f.getName();
+			symbol = symbol.replaceFirst(".csv", "");
+			Security sec = this.dom.findSecurityBySymbol(symbol);
+
+			if (sec != null) {
+				sec.prices = loadQuoteFile(f);
+			}
+		}
+	}
+
+	private List<Price> loadQuoteFile(File f) {
+		if (!f.getName().endsWith(".csv")) {
+			return null;
+		}
+
+		final List<Price> prices = new ArrayList<Price>();
+
+		// System.out.println("Reading file: " + f.getPath());
+
+		FileReader fr;
+		String line;
+		LineNumberReader rdr;
+
+		boolean dateprice = false;
+		boolean chlvd = false;
+		boolean dohlcv = false;
+
+		try {
+			fr = new FileReader(f);
+
+			rdr = new LineNumberReader(fr);
+
+			line = rdr.readLine();
+
+			while (line != null) {
+				if (line.startsWith("date")) {
+					chlvd = false;
+					dohlcv = false;
+					dateprice = true;
+					line = rdr.readLine();
+					continue;
+				}
+
+				if (line.startsWith("price")) {
+					chlvd = false;
+					dohlcv = false;
+					dateprice = false;
+					line = rdr.readLine();
+					continue;
+				}
+
+				if (line.startsWith("chlvd")) {
+					chlvd = true;
+					dohlcv = false;
+					dateprice = false;
+					line = rdr.readLine();
+					continue;
+				}
+
+				if (line.startsWith("dohlcv")) {
+					chlvd = false;
+					dohlcv = true;
+					dateprice = false;
+					line = rdr.readLine();
+					continue;
+				}
+
+				final StringTokenizer toker = new StringTokenizer(line, ",");
+
+				String pricestr;
+				String datestr;
+
+				if (chlvd) {
+					pricestr = toker.nextToken();
+					toker.nextToken();
+					toker.nextToken();
+					toker.nextToken();
+					datestr = toker.nextToken();
+				} else if (dohlcv) {
+					datestr = toker.nextToken();
+					toker.nextToken();
+					toker.nextToken();
+					toker.nextToken();
+					pricestr = toker.nextToken();
+				} else if (dateprice) {
+					datestr = toker.nextToken();
+					pricestr = toker.nextToken();
+				} else {
+					pricestr = toker.nextToken();
+					datestr = toker.nextToken();
+				}
+
+				final Date date = Common.parseDate(datestr);
+				BigDecimal price = null;
+				try {
+					price = new BigDecimal(pricestr);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+				final Price p = new Price();
+				p.date = date;
+				p.price = price;
+				prices.add(p);
+
+				// System.out.println(Common.getDateString(date) + " : " +
+				// price);
+				line = rdr.readLine();
+			}
+
+			System.out.println();
+
+			rdr.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+
+		Collections.sort(prices, (o1, o2) -> o1.date.compareTo(o2.date));
+
+		return prices;
 	}
 
 	private void init(String filename, QifDom refdom) {

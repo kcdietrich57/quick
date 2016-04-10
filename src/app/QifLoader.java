@@ -21,12 +21,7 @@ public class QifLoader {
 		// QifReporter.reportDom(dom);
 		// System.out.println(dom);
 
-		Date d = Common.parseDate("2/28/95");
-		dom.reportStatusForDate(d, true);
-		d = Common.parseDate("1/1/2000");
-		dom.reportStatusForDate(d, true);
-		d = Common.parseDate("1/1/2010");
-		dom.reportStatusForDate(d, true);
+		Date d;
 
 		final Scanner scn = new Scanner(System.in);
 		for (;;) {

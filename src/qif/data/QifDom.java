@@ -36,10 +36,10 @@ import qif.data.Account.AccountType;
 // 4/2 Share balance in account positions
 // 4/2 Security positions (all accounts)
 // 4/3 Security position by account and security for any date
+// Security price history
 //
 // Splits
 // Dump portfolio for each month (positions)
-// Security price history
 // Portfolio market value
 // Associate security sales with purchases (lots)
 // ShrsIn/ShrsOut - add/remove
@@ -304,7 +304,7 @@ public class QifDom {
 
 	public Security findSecurityBySymbol(String sym) {
 		for (final Security sec : this.securities) {
-			if (sec != null && sec.symbol.equals(sym)) {
+			if (sec != null && sec.symbol.equalsIgnoreCase(sym)) {
 				return sec;
 			}
 		}
@@ -340,9 +340,19 @@ public class QifDom {
 
 		BigDecimal bal = BigDecimal.ZERO;
 
-		for (final Account a : this.accounts) {
-			if (a != null) {
-				bal = bal.add(a.reportStatusForDate(d));
+		final AccountType atypes[] = { //
+				AccountType.Bank, AccountType.CCard, AccountType.Cash, //
+				AccountType.Asset, AccountType.Liability, AccountType.Invest, //
+				AccountType.InvPort, AccountType.Inv401k, AccountType.InvMutual //
+		};
+
+		for (final AccountType at : atypes) {
+			System.out.println("======== " + at + " accounts ========");
+
+			for (final Account a : this.accounts) {
+				if ((a != null) && (a.type == at)) {
+					bal = bal.add(a.reportStatusForDate(d));
+				}
 			}
 		}
 

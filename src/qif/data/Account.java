@@ -65,8 +65,8 @@ public class Account {
 	public boolean isInvestmentAccount() {
 		switch (this.type) {
 		case Bank:
-		case CCard:
 		case Cash:
+		case CCard:
 		case Asset:
 		case Liability:
 			return false;
@@ -76,6 +76,27 @@ public class Account {
 		case InvPort:
 		case Invest:
 			return true;
+
+		default:
+			Common.reportError("unknown acct type: " + this.type);
+			return false;
+		}
+	}
+
+	public boolean isCashAccount() {
+		switch (this.type) {
+		case Bank:
+		case Cash:
+			return true;
+
+		case CCard:
+		case Asset:
+		case Liability:
+		case Inv401k:
+		case InvMutual:
+		case InvPort:
+		case Invest:
+			return false;
 
 		default:
 			Common.reportError("unknown acct type: " + this.type);

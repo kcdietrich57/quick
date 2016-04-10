@@ -74,8 +74,11 @@ class SecurityPosition {
 			// TODO BigDecimal tshrprice = txn.security.getPriceForDate(d);
 
 			if (tshrbal.compareTo(BigDecimal.ZERO) != 0) {
-				System.out.println(String.format("    %-20s %10.3f", //
-						txn.security.name, tshrbal));
+				BigDecimal price = txn.security.getPriceForDate(d);
+				BigDecimal value = price.multiply(tshrbal);
+
+				System.out.println(String.format("    %-36s %10.3f %10.3f %10.3f", //
+						txn.security.name, tshrbal, price, value));
 				// TODO bal = bal.add(tshrbal.multiply(tshrprice));
 			}
 		}

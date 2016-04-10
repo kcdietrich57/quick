@@ -53,6 +53,26 @@ public class Common {
 			final Date d = dateFormat.parse(s);
 			return d;
 		} catch (final ParseException e) {
+			//e.printStackTrace();
+		}
+
+		try {
+			final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			final String s = convertQIFDateString(value);
+
+			final Date d = dateFormat.parse(s);
+			return d;
+		} catch (final ParseException e) {
+			//e.printStackTrace();
+		}
+
+		try {
+			final DateFormat dateFormat = new SimpleDateFormat("dd-MMM-yy");
+			final String s = convertQIFDateString(value);
+
+			final Date d = dateFormat.parse(s);
+			return d;
+		} catch (final ParseException e) {
 			e.printStackTrace();
 		}
 
