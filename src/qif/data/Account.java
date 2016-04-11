@@ -142,40 +142,37 @@ public class Account {
 	}
 
 	public BigDecimal reportStatusForDate(Date d) {
-		BigDecimal bal = BigDecimal.ZERO;
+		BigDecimal acctValue = BigDecimal.ZERO;
 
 		final int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
-		if (idx < 0) {
-			return bal;
-		}
+		if (idx >= 0) {
+			final GenericTxn tx = this.transactions.get(idx);
 
-		final GenericTxn tx = this.transactions.get(idx);
+			final BigDecimal cashBal = tx.runningTotal;
 
-		final BigDecimal tbal = tx.runningTotal;
-
-		if ((tbal != null) && (tbal.compareTo(BigDecimal.ZERO) != 0)) {
-			bal = tbal;
-			System.out.println(String.format("  %-36s : %10.2f", this.name, bal));
-		}
-
-		bal = bal.add(reportPortfolioForDate(d));
-
-		return bal;
-	}
-
-	public BigDecimal reportPortfolioForDate(Date d) {
-		final BigDecimal bal = BigDecimal.ZERO;
-
-		for (final SecurityPosition pos : this.securities.positions) {
-
-			final BigDecimal shrs = pos.reportSecurityPositionForDate(d);
-
-			if (shrs.compareTo(BigDecimal.ZERO) != 0) {
-
+			if (cashBal != null) {
+				acctValue = cashBal;
 			}
 		}
 
-		return bal;
+		acctValue = acctValue.add(this.securities.getPortfolioValueForDate(d));
+
+		if (acctValue.compareTo(BigDecimal.ZERO) != 0) {
+			System.out.println(String.format("  %-36s : %10.2f", this.name, acctValue));
+			reportPortfolioForDate(d);
+		}
+
+		return acctValue;
+	}
+
+	public BigDecimal reportPortfolioForDate(Date d) {
+		BigDecimal portValue = BigDecimal.ZERO;
+
+		for (final SecurityPosition pos : this.securities.positions) {
+			portValue = portValue.add(pos.reportSecurityPositionForDate(d));
+		}
+
+		return portValue;
 	}
 
 	public String toString() {

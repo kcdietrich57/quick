@@ -26,6 +26,16 @@ class SecurityPortfolio {
 		return newpos;
 	}
 
+	public BigDecimal getPortfolioValueForDate(Date d) {
+		BigDecimal portValue = BigDecimal.ZERO;
+
+		for (final SecurityPosition pos : this.positions) {
+			portValue = portValue.add(pos.getSecurityPositionValueForDate(d));
+		}
+
+		return portValue;
+	}
+
 	public String toString() {
 		String s = "Securities Held:\n";
 
@@ -64,25 +74,43 @@ class SecurityPosition {
 		return s;
 	}
 
-	public BigDecimal reportSecurityPositionForDate(Date d) {
-		final BigDecimal bal = BigDecimal.ZERO;
+	public BigDecimal getSecurityPositionValueForDate(Date d) {
+		BigDecimal posValue = BigDecimal.ZERO;
 
 		final int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
 		if (idx >= 0) {
 			final InvestmentTxn txn = this.transactions.get(idx);
 			final BigDecimal tshrbal = this.shrBalance.get(idx);
-			// TODO BigDecimal tshrprice = txn.security.getPriceForDate(d);
 
 			if (tshrbal.compareTo(BigDecimal.ZERO) != 0) {
-				BigDecimal price = txn.security.getPriceForDate(d);
-				BigDecimal value = price.multiply(tshrbal);
+				final BigDecimal price = txn.security.getPriceForDate(d);
+				final BigDecimal value = price.multiply(tshrbal);
 
-				System.out.println(String.format("    %-36s %10.3f %10.3f %10.3f", //
-						txn.security.name, tshrbal, price, value));
-				// TODO bal = bal.add(tshrbal.multiply(tshrprice));
+				posValue = posValue.add(value);
 			}
 		}
 
-		return bal;
+		return posValue;
+	}
+
+	public BigDecimal reportSecurityPositionForDate(Date d) {
+		BigDecimal posValue = BigDecimal.ZERO;
+
+		final int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
+		if (idx >= 0) {
+			final InvestmentTxn txn = this.transactions.get(idx);
+			final BigDecimal tshrbal = this.shrBalance.get(idx);
+
+			if (tshrbal.compareTo(BigDecimal.ZERO) != 0) {
+				final BigDecimal price = txn.security.getPriceForDate(d);
+				final BigDecimal value = price.multiply(tshrbal);
+
+				System.out.println(String.format("    %-36s %10.3f %10.3f %10.3f", //
+						txn.security.name, tshrbal, price, value));
+				posValue = posValue.add(value);
+			}
+		}
+
+		return posValue;
 	}
 }

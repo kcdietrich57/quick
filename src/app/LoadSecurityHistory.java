@@ -12,23 +12,20 @@ import java.util.StringTokenizer;
 
 import qif.data.Common;
 import qif.data.Price;
-import qif.data.Security;
 
 public class LoadSecurityHistory {
 
 	public static void main(String[] args) {
-		final Security sec = null;
-
-		String filenames[] = { //
-				"/Users/greg/quotes/ifmx", //0
-				"fmagx", //1
-				"frsgx", //2
-				"kdhax", //3
-				"mittx", //4
-				"/Users/greg/quotes/mpvlx", //5
-				"/Users/greg/quotes/pcapx", //6
-				"peugx", //7
-				"uncmx", //8
+		final String filenames[] = { //
+				"/Users/greg/quotes/ifmx", // 0
+				"fmagx", // 1
+				"frsgx", // 2
+				"kdhax", // 3
+				"mittx", // 4
+				"/Users/greg/quotes/mpvlx", // 5
+				"/Users/greg/quotes/pcapx", // 6
+				"peugx", // 7
+				"uncmx", // 8
 				"/Users/greg/quotes/zz" //
 		};
 		final File d = new File(filenames[8]);
@@ -45,29 +42,29 @@ public class LoadSecurityHistory {
 			}
 		}
 
-		List<List<Price>> mergedPrices = new ArrayList<List<Price>>();
+		final List<List<Price>> mergedPrices = new ArrayList<List<Price>>();
 		Date fd = getFirstDate(prices);
-		List<Price> extraPricesForDate = new ArrayList<Price>();
+		final List<Price> extraPricesForDate = new ArrayList<Price>();
 
 		while (fd != null) {
-			List<Price> pricesForDate = new ArrayList<Price>();
+			final List<Price> pricesForDate = new ArrayList<Price>();
 			pricesForDate.add(null);
 
 			for (int ii = 0; ii < prices.size(); ++ii) {
-				List<Price> list = prices.get(ii);
+				final List<Price> list = prices.get(ii);
 
 				if ((list == null) || list.isEmpty()) {
 					pricesForDate.add(null);
 					continue;
 				}
 
-				Price p = list.get(0);
+				final Price p = list.get(0);
 				if (p.date.compareTo(fd) == 0) {
 					list.remove(0);
 					pricesForDate.add(p);
 
 					while (!list.isEmpty()) {
-						Price pp = list.get(0);
+						final Price pp = list.get(0);
 						if (pp.date.compareTo(fd) != 0) {
 							break;
 						}
@@ -91,7 +88,7 @@ public class LoadSecurityHistory {
 			boolean allmatch = true;
 
 			for (int ii = 1; ii < pricesForDate.size(); ++ii) {
-				Price pp = pricesForDate.get(ii);
+				final Price pp = pricesForDate.get(ii);
 
 				if (pcommon == null) {
 					pcommon = pp;
@@ -113,13 +110,13 @@ public class LoadSecurityHistory {
 			String s = Common.getDateString(fd);
 
 			for (int ii = 1; ii < pricesForDate.size(); ++ii) {
-				Price p = pricesForDate.get(ii);
+				final Price p = pricesForDate.get(ii);
 				if (p == null) {
 					pricesForDate.remove(ii);
 					--ii;
 				} else {
 					for (int jj = ii + 1; jj < pricesForDate.size(); ++jj) {
-						Price pp = pricesForDate.get(jj);
+						final Price pp = pricesForDate.get(jj);
 
 						if ((pp != null) && (p.price.compareTo(pp.price) == 0)) {
 							pricesForDate.remove(jj);
@@ -129,8 +126,8 @@ public class LoadSecurityHistory {
 				}
 			}
 			for (int ii = 0; ii < extraPricesForDate.size(); ++ii) {
-				Price p = extraPricesForDate.get(ii);
-				for (Price pp : pricesForDate) {
+				final Price p = extraPricesForDate.get(ii);
+				for (final Price pp : pricesForDate) {
 					if ((pp != null) && (p.price.compareTo(pp.price) == 0)) {
 						extraPricesForDate.remove(ii);
 						--ii;
@@ -138,14 +135,14 @@ public class LoadSecurityHistory {
 				}
 			}
 
-			for (Price p : pricesForDate) {
+			for (final Price p : pricesForDate) {
 				if (p != null) {
 					s += String.format("  %10.3f", p.price);
 				} else {
 					s += "            ";
 				}
 			}
-			for (Price p : extraPricesForDate) {
+			for (final Price p : extraPricesForDate) {
 				s += String.format(" *%10.3f", p.price);
 			}
 			extraPricesForDate.clear();
@@ -156,9 +153,9 @@ public class LoadSecurityHistory {
 		}
 
 		for (int ii = 0; ii < prices.size() - 1; ++ii) {
-			List<Price> pp1 = prices.get(ii);
-			List<Price> pp2 = prices.get(ii + 1);
-			Date sdate = pp2.get(0).date;
+			final List<Price> pp1 = prices.get(ii);
+			final List<Price> pp2 = prices.get(ii + 1);
+			final Date sdate = pp2.get(0).date;
 
 			int jj = 0;
 			while ((jj < pp1.size()) && //
@@ -173,12 +170,12 @@ public class LoadSecurityHistory {
 	static Date getFirstDate(List<List<Price>> prices) {
 		Date ret = null;
 
-		for (List<Price> list : prices) {
+		for (final List<Price> list : prices) {
 			if (list.isEmpty()) {
 				continue;
 			}
 
-			Date d = list.get(0).date;
+			final Date d = list.get(0).date;
 
 			if ((ret == null) || (ret.compareTo(list.get(0).date) > 0)) {
 				ret = d;

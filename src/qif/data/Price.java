@@ -86,9 +86,9 @@ public class Price {
 		}
 
 		String fracstr = null;
-		int slash = pricestr.indexOf('/');
+		final int slash = pricestr.indexOf('/');
 		if (slash > 0) {
-			int space = pricestr.indexOf(' ');
+			final int space = pricestr.indexOf(' ');
 
 			fracstr = (space > 0) ? pricestr.substring(space) : pricestr;
 			pricestr = (space > 0) ? pricestr.substring(0, space) : "0";
@@ -96,7 +96,7 @@ public class Price {
 
 		BigDecimal price = new BigDecimal(pricestr);
 		if (fracstr != null) {
-			BigDecimal frac = parseFraction(fracstr);
+			final BigDecimal frac = parseFraction(fracstr);
 			price = frac.add(price);
 		}
 
@@ -110,7 +110,7 @@ public class Price {
 			return BigDecimal.ZERO;
 		}
 
-		int numerator = " 1 3 5 7".indexOf(fracstr.charAt(1));
+		final int numerator = " 1 3 5 7".indexOf(fracstr.charAt(1));
 		if ((numerator < 1) || ((numerator & 1) == 0)) {
 			return BigDecimal.ZERO;
 		}

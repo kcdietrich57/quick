@@ -55,7 +55,7 @@ public class QifDomReader {
 
 		fixPortfolios();
 
-		File d = new File(new File(fileName).getParentFile(), "quotes");
+		final File d = new File(new File(fileName).getParentFile(), "quotes");
 
 		loadSecurityPriceHistory(d);
 
@@ -67,12 +67,12 @@ public class QifDomReader {
 			return;
 		}
 
-		File quoteFiles[] = quoteDirectory.listFiles();
+		final File quoteFiles[] = quoteDirectory.listFiles();
 
-		for (File f : quoteFiles) {
+		for (final File f : quoteFiles) {
 			String symbol = f.getName();
 			symbol = symbol.replaceFirst(".csv", "");
-			Security sec = this.dom.findSecurityBySymbol(symbol);
+			final Security sec = this.dom.findSecurityBySymbol(symbol);
 
 			if (sec != null) {
 				sec.prices = loadQuoteFile(f);
@@ -166,7 +166,7 @@ public class QifDomReader {
 				BigDecimal price = null;
 				try {
 					price = new BigDecimal(pricestr);
-				} catch (Exception e) {
+				} catch (final Exception e) {
 					e.printStackTrace();
 				}
 
@@ -183,7 +183,7 @@ public class QifDomReader {
 			System.out.println();
 
 			rdr.close();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;

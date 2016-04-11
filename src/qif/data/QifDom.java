@@ -338,7 +338,7 @@ public class QifDom {
 		System.out.println("----------------------------------");
 		System.out.println(String.format("  %-36s : %10s", "Account", "Balance"));
 
-		BigDecimal bal = BigDecimal.ZERO;
+		BigDecimal netWorth = BigDecimal.ZERO;
 
 		final AccountType atypes[] = { //
 				AccountType.Bank, AccountType.CCard, AccountType.Cash, //
@@ -351,12 +351,12 @@ public class QifDom {
 
 			for (final Account a : this.accounts) {
 				if ((a != null) && (a.type == at)) {
-					bal = bal.add(a.reportStatusForDate(d));
+					netWorth = netWorth.add(a.reportStatusForDate(d));
 				}
 			}
 		}
 
-		System.out.println("Balance: " + bal);
+		System.out.println("Balance: " + netWorth);
 	}
 
 	public String toString() {

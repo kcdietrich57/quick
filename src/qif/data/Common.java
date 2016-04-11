@@ -53,7 +53,7 @@ public class Common {
 			final Date d = dateFormat.parse(s);
 			return d;
 		} catch (final ParseException e) {
-			//e.printStackTrace();
+			// e.printStackTrace();
 		}
 
 		try {
@@ -63,7 +63,7 @@ public class Common {
 			final Date d = dateFormat.parse(s);
 			return d;
 		} catch (final ParseException e) {
-			//e.printStackTrace();
+			// e.printStackTrace();
 		}
 
 		try {
