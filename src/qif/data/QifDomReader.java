@@ -5,15 +5,21 @@ import java.io.FileReader;
 import java.io.LineNumberReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.StringTokenizer;
 
 import qif.data.Account.AccountType;
 import qif.data.QFileReader.SectionType;
+import qif.data.Security.SplitInfo;
 import qif.data.SimpleTxn.Action;
 
 public class QifDomReader {
@@ -75,27 +81,34 @@ public class QifDomReader {
 			final Security sec = this.dom.findSecurityBySymbol(symbol);
 
 			if (sec != null) {
-				sec.prices = loadQuoteFile(f);
+				loadQuoteFile(sec, f);
 			}
 		}
 	}
 
-	private List<Price> loadQuoteFile(File f) {
+	public static void loadQuoteFile(Security sec, File f) {
 		if (!f.getName().endsWith(".csv")) {
-			return null;
+			return;
 		}
 
-		final List<Price> prices = new ArrayList<Price>();
+		final List<Price> prices = sec.prices;
+		final List<SplitInfo> splits = sec.splits;
 
-		// System.out.println("Reading file: " + f.getPath());
+		assert prices.isEmpty() && splits.isEmpty();
+		prices.clear();
+		splits.clear();
 
 		FileReader fr;
 		String line;
 		LineNumberReader rdr;
 
+		boolean isSplitAdjusted = false;
+		boolean isWeekly = false;
 		boolean dateprice = false;
 		boolean chlvd = false;
 		boolean dohlcv = false;
+
+		Date splitDate = null;
 
 		try {
 			fr = new FileReader(f);
@@ -105,34 +118,55 @@ public class QifDomReader {
 			line = rdr.readLine();
 
 			while (line != null) {
-				if (line.startsWith("date")) {
+				boolean isHeader = false;
+
+				if (line.startsWith("split adjusted")) {
+					isSplitAdjusted = true;
+					isHeader = true;
+				} else if (line.startsWith("weekly")) {
+					isWeekly = true;
+					isHeader = true;
+				} else if (line.startsWith("date")) {
 					chlvd = false;
 					dohlcv = false;
 					dateprice = true;
-					line = rdr.readLine();
-					continue;
-				}
-
-				if (line.startsWith("price")) {
+					isHeader = true;
+				} else if (line.startsWith("price")) {
 					chlvd = false;
 					dohlcv = false;
 					dateprice = false;
-					line = rdr.readLine();
-					continue;
-				}
-
-				if (line.startsWith("chlvd")) {
+					isHeader = true;
+				} else if (line.startsWith("chlvd")) {
 					chlvd = true;
 					dohlcv = false;
 					dateprice = false;
-					line = rdr.readLine();
-					continue;
-				}
-
-				if (line.startsWith("dohlcv")) {
+					isHeader = true;
+				} else if (line.startsWith("dohlcv")) {
 					chlvd = false;
 					dohlcv = true;
 					dateprice = false;
+					isHeader = true;
+				} else if (line.startsWith("split")) {
+					final StringTokenizer toker = new StringTokenizer(line, " ");
+					toker.nextToken();
+					final String newshrStr = toker.nextToken();
+					final String oldshrStr = toker.nextToken();
+					final String dateStr = toker.nextToken();
+
+					final BigDecimal splitAdjust = new BigDecimal(newshrStr).divide(new BigDecimal(oldshrStr));
+					splitDate = Common.parseDate(dateStr);
+
+					final SplitInfo si = new SplitInfo();
+					si.splitDate = splitDate;
+					si.splitRatio = splitAdjust;
+
+					splits.add(si);
+					Collections.sort(splits, (o1, o2) -> o1.splitDate.compareTo(o2.splitDate));
+
+					isHeader = true;
+				}
+
+				if (isHeader) {
 					line = rdr.readLine();
 					continue;
 				}
@@ -162,7 +196,7 @@ public class QifDomReader {
 					datestr = toker.nextToken();
 				}
 
-				final Date date = Common.parseDate(datestr);
+				Date date = Common.parseDate(datestr);
 				BigDecimal price = null;
 				try {
 					price = new BigDecimal(pricestr);
@@ -171,27 +205,42 @@ public class QifDomReader {
 				}
 
 				final Price p = new Price();
+
+				if (isWeekly) {
+					final Calendar cal = new GregorianCalendar();
+					cal.setTime(date);
+					final LocalDate d = LocalDate.of( //
+							cal.get(Calendar.YEAR), //
+							cal.get(Calendar.MONTH) + 1, //
+							cal.get(Calendar.DAY_OF_MONTH));
+					final LocalDate d2 = d.plusDays(4);
+					final Instant instant = d2.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
+					date = Date.from(instant);
+				}
 				p.date = date;
-				p.price = price;
+
+				final BigDecimal splitRatio = sec.getSplitRatioForDate(date);
+
+				if (isSplitAdjusted) {
+					p.splitAdjustedPrice = price;
+					p.price = price.multiply(splitRatio);
+				} else {
+					p.splitAdjustedPrice = price.divide(splitRatio);
+					p.price = price;
+				}
+
 				prices.add(p);
 
-				// System.out.println(Common.getDateString(date) + " : " +
-				// price);
 				line = rdr.readLine();
 			}
 
-			System.out.println();
-
 			rdr.close();
 		} catch (final Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return null;
+			return;
 		}
 
 		Collections.sort(prices, (o1, o2) -> o1.date.compareTo(o2.date));
-
-		return prices;
 	}
 
 	private void init(String filename, QifDom refdom) {

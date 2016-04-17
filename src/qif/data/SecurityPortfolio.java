@@ -75,42 +75,46 @@ class SecurityPosition {
 	}
 
 	public BigDecimal getSecurityPositionValueForDate(Date d) {
-		BigDecimal posValue = BigDecimal.ZERO;
-
-		final int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
-		if (idx >= 0) {
-			final InvestmentTxn txn = this.transactions.get(idx);
-			final BigDecimal tshrbal = this.shrBalance.get(idx);
-
-			if (tshrbal.compareTo(BigDecimal.ZERO) != 0) {
-				final BigDecimal price = txn.security.getPriceForDate(d);
-				final BigDecimal value = price.multiply(tshrbal);
-
-				posValue = posValue.add(value);
-			}
+		final int idx = getTransactionIndexForDate(d);
+		if (idx < 0) {
+			return BigDecimal.ZERO;
 		}
 
-		return posValue;
+		final InvestmentTxn txn = this.transactions.get(idx);
+		final BigDecimal tshrbal = this.shrBalance.get(idx);
+		final BigDecimal price = txn.security.getPriceForDate(d).price;
+
+		return price.multiply(tshrbal);
 	}
 
 	public BigDecimal reportSecurityPositionForDate(Date d) {
-		BigDecimal posValue = BigDecimal.ZERO;
-
-		final int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
-		if (idx >= 0) {
-			final InvestmentTxn txn = this.transactions.get(idx);
-			final BigDecimal tshrbal = this.shrBalance.get(idx);
-
-			if (tshrbal.compareTo(BigDecimal.ZERO) != 0) {
-				final BigDecimal price = txn.security.getPriceForDate(d);
-				final BigDecimal value = price.multiply(tshrbal);
-
-				System.out.println(String.format("    %-36s %10.3f %10.3f %10.3f", //
-						txn.security.name, tshrbal, price, value));
-				posValue = posValue.add(value);
-			}
+		final int idx = getTransactionIndexForDate(d);
+		if (idx < 0) {
+			return BigDecimal.ZERO;
 		}
 
-		return posValue;
+		final InvestmentTxn txn = this.transactions.get(idx);
+		final BigDecimal tshrbal = this.shrBalance.get(idx);
+		final BigDecimal price = txn.security.getPriceForDate(d).price;
+		final BigDecimal value = price.multiply(tshrbal);
+
+		System.out.println(String.format("    %-36s %10.3f %10.3f %10.3f", //
+				txn.security.name, tshrbal, price, value));
+
+		return value;
+	}
+
+	public int getTransactionIndexForDate(Date d) {
+		final int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
+		if (idx < 0) {
+			return -1;
+		}
+
+		final BigDecimal tshrbal = this.shrBalance.get(idx);
+		if (tshrbal.compareTo(BigDecimal.ZERO) <= 0) {
+			return -1;
+		}
+
+		return idx;
 	}
 }

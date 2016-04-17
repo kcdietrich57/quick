@@ -12,7 +12,14 @@ public class Security {
 	public String type;
 	public String goal;
 
-	List<Price> prices = new ArrayList<Price>();
+	public List<Price> prices = new ArrayList<Price>();
+
+	static class SplitInfo {
+		Date splitDate;
+		BigDecimal splitRatio;
+	}
+
+	List<SplitInfo> splits = new ArrayList<SplitInfo>();
 
 	public Security() {
 		this.id = 0;
@@ -35,9 +42,9 @@ public class Security {
 		this.prices.add(price);
 	}
 
-	public BigDecimal getPriceForDate(Date d) {
+	public Price getPriceForDate(Date d) {
 		if (this.prices.isEmpty()) {
-			return BigDecimal.ZERO;
+			return Price.ZERO;
 		}
 
 		int loidx = 0;
@@ -45,10 +52,10 @@ public class Security {
 		final Date loval = this.prices.get(loidx).date;
 		final Date hival = this.prices.get(hiidx).date;
 		if (loval.compareTo(d) >= 0) {
-			return this.prices.get(0).price;
+			return this.prices.get(0);
 		}
 		if (hival.compareTo(d) <= 0) {
-			return this.prices.get(hiidx).price;
+			return this.prices.get(hiidx);
 		}
 
 		int idx = loidx;
@@ -70,7 +77,22 @@ public class Security {
 			}
 		}
 
-		return this.prices.get(idx).price;
+		return this.prices.get(idx);
+	}
+
+	public BigDecimal getSplitRatioForDate(Date d) {
+		BigDecimal ret = BigDecimal.ONE;
+
+		for (int ii = this.splits.size() - 1; ii >= 0; --ii) {
+			final SplitInfo si = this.splits.get(ii);
+			if (si.splitDate.compareTo(d) < 0) {
+				break;
+			}
+
+			ret = ret.multiply(si.splitRatio);
+		}
+
+		return ret;
 	}
 
 	public String toString() {

@@ -1,17 +1,14 @@
 package app;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.LineNumberReader;
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import qif.data.Common;
 import qif.data.Price;
+import qif.data.QifDomReader;
+import qif.data.Security;
 
 public class LoadSecurityHistory {
 
@@ -22,36 +19,37 @@ public class LoadSecurityHistory {
 				"frsgx", // 2
 				"kdhax", // 3
 				"mittx", // 4
-				"/Users/greg/quotes/mpvlx", // 5
-				"/Users/greg/quotes/pcapx", // 6
+				"/mpvlx", // 5
+				"pcapx", // 6
 				"peugx", // 7
 				"uncmx", // 8
 				"/Users/greg/quotes/zz" //
 		};
-		final File d = new File(filenames[8]);
+		final File d = new File(filenames[0]);
 		final File[] files = d.listFiles();
 
-		final List<List<Price>> prices = new ArrayList<List<Price>>();
+		final List<Security> securities = new ArrayList<Security>();
 
 		for (final File f : files) {
 			try {
-				final List<Price> pp = loadQuoteFile(f);
-				prices.add(pp);
+				final Security sec = new Security();
+				securities.add(sec);
+				QifDomReader.loadQuoteFile(sec, f);
 			} catch (final Exception e) {
 				e.printStackTrace();
 			}
 		}
 
 		final List<List<Price>> mergedPrices = new ArrayList<List<Price>>();
-		Date fd = getFirstDate(prices);
+		Date fd = getFirstDate(securities);
 		final List<Price> extraPricesForDate = new ArrayList<Price>();
 
 		while (fd != null) {
 			final List<Price> pricesForDate = new ArrayList<Price>();
 			pricesForDate.add(null);
 
-			for (int ii = 0; ii < prices.size(); ++ii) {
-				final List<Price> list = prices.get(ii);
+			for (int ii = 0; ii < securities.size(); ++ii) {
+				final List<Price> list = securities.get(ii).prices;
 
 				if ((list == null) || list.isEmpty()) {
 					pricesForDate.add(null);
@@ -149,28 +147,17 @@ public class LoadSecurityHistory {
 
 			System.out.println(s);
 
-			fd = getFirstDate(prices);
+			fd = getFirstDate(securities);
 		}
 
-		for (int ii = 0; ii < prices.size() - 1; ++ii) {
-			final List<Price> pp1 = prices.get(ii);
-			final List<Price> pp2 = prices.get(ii + 1);
-			final Date sdate = pp2.get(0).date;
-
-			int jj = 0;
-			while ((jj < pp1.size()) && //
-					((pp1.get(jj) == null) || //
-							(sdate.compareTo(pp1.get(jj).date) > 0))) {
-				++jj;
-				pp2.add(0, null);
-			}
-		}
+		System.out.println("NumPrices = " + mergedPrices.size());
 	}
 
-	static Date getFirstDate(List<List<Price>> prices) {
+	static Date getFirstDate(List<Security> securities) {
 		Date ret = null;
 
-		for (final List<Price> list : prices) {
+		for (final Security sec : securities) {
+			final List<Price> list = sec.prices;
 			if (list.isEmpty()) {
 				continue;
 			}
@@ -183,102 +170,5 @@ public class LoadSecurityHistory {
 		}
 
 		return ret;
-	}
-
-	public static List<Price> loadQuoteFile(File f) throws Exception {
-		final List<Price> prices = new ArrayList<Price>();
-
-		if (!f.getName().endsWith(".csv")) {
-			return prices;
-		}
-
-		System.out.println("Reading file: " + f.getPath());
-
-		final FileReader fr = new FileReader(f);
-		final LineNumberReader rdr = new LineNumberReader(fr);
-
-		boolean dateprice = false;
-		boolean chlvd = false;
-		boolean dohlcv = false;
-
-		String line = rdr.readLine();
-
-		while (line != null) {
-			if (line.startsWith("date")) {
-				chlvd = false;
-				dohlcv = false;
-				dateprice = true;
-				line = rdr.readLine();
-				continue;
-			}
-
-			if (line.startsWith("price")) {
-				chlvd = false;
-				dohlcv = false;
-				dateprice = false;
-				line = rdr.readLine();
-				continue;
-			}
-
-			if (line.startsWith("chlvd")) {
-				chlvd = true;
-				dohlcv = false;
-				dateprice = false;
-				line = rdr.readLine();
-				continue;
-			}
-
-			if (line.startsWith("dohlcv")) {
-				chlvd = false;
-				dohlcv = true;
-				dateprice = false;
-				line = rdr.readLine();
-				continue;
-			}
-
-			final StringTokenizer toker = new StringTokenizer(line, ",");
-
-			String pricestr;
-			String datestr;
-
-			if (chlvd) {
-				pricestr = toker.nextToken();
-				toker.nextToken();
-				toker.nextToken();
-				toker.nextToken();
-				datestr = toker.nextToken();
-			} else if (dohlcv) {
-				datestr = toker.nextToken();
-				toker.nextToken();
-				toker.nextToken();
-				toker.nextToken();
-				pricestr = toker.nextToken();
-			} else if (dateprice) {
-				datestr = toker.nextToken();
-				pricestr = toker.nextToken();
-			} else {
-				pricestr = toker.nextToken();
-				datestr = toker.nextToken();
-			}
-
-			final Date date = Common.parseDate(datestr);
-			final BigDecimal price = new BigDecimal(pricestr);
-
-			final Price p = new Price();
-			p.date = date;
-			p.price = price;
-			prices.add(p);
-
-			// System.out.println(Common.getDateString(date) + " : " + price);
-			line = rdr.readLine();
-		}
-
-		System.out.println();
-
-		rdr.close();
-
-		Collections.sort(prices, (o1, o2) -> o1.date.compareTo(o2.date));
-
-		return prices;
 	}
 }

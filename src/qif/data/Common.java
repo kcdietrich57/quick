@@ -84,6 +84,50 @@ public class Common {
 		return dfmt.format(date);
 	}
 
+	public static BigDecimal parsePrice(String pricestr) {
+		if (pricestr.length() == 0) {
+			return BigDecimal.ZERO;
+		}
+
+		String fracstr = null;
+		final int slash = pricestr.indexOf('/');
+		if (slash > 0) {
+			final int space = pricestr.indexOf(' ');
+
+			fracstr = (space > 0) ? pricestr.substring(space) : pricestr;
+			pricestr = (space > 0) ? pricestr.substring(0, space) : "0";
+		}
+
+		BigDecimal price = new BigDecimal(pricestr);
+		if (fracstr != null) {
+			final BigDecimal frac = parseFraction(fracstr);
+			price = frac.add(price);
+		}
+
+		return price;
+	}
+
+	public static BigDecimal parseFraction(String fracstr) {
+		if ((fracstr.length() != 4) || //
+				(fracstr.charAt(0) != ' ') || //
+				(fracstr.charAt(2) != '/')) {
+			return BigDecimal.ZERO;
+		}
+
+		final int numerator = " 1 3 5 7".indexOf(fracstr.charAt(1));
+		if ((numerator < 1) || ((numerator & 1) == 0)) {
+			return BigDecimal.ZERO;
+		}
+
+		int denominator = " 248".indexOf(fracstr.charAt(3));
+		if (denominator < 1) {
+			return BigDecimal.ZERO;
+		}
+		denominator = 1 << denominator;
+
+		return new BigDecimal(numerator).divide(new BigDecimal(denominator));
+	}
+
 	public static void writeIfSet(PrintWriter pw, String tag, String value) {
 		pw.println("" + tag + value);
 	}

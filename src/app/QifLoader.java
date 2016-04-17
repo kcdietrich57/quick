@@ -12,8 +12,9 @@ public class QifLoader {
 		String file;
 		file = "/Users/greg/qif/87to05.qif";
 		file = "/Users/greg/qif/87to16.qif";
-		file = "/Users/greg/qif/dietrich.qif";
+
 		file = "/Users/greg/qif/75to87.qif";
+		file = "/Users/greg/qif/dietrich.qif";
 
 		final QifDomReader rdr = new QifDomReader();
 		final QifDom dom = rdr.load(file);

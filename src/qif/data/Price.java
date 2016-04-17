@@ -4,14 +4,26 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 public class Price {
+	public static final Price ZERO = new Price(new BigDecimal(0));
+
 	public String symbol;
+	// Price at the specified date
 	public BigDecimal price;
+	// Current price adjusted for splits
+	public BigDecimal splitAdjustedPrice;
 	public Date date;
 
 	public Price() {
 		this.symbol = "";
 		this.price = null;
+		this.splitAdjustedPrice = null;
 		this.date = null;
+	}
+
+	public Price(BigDecimal val) {
+		this();
+
+		this.price = val;
 	}
 
 	public static Price load(QFileReader qfr) {
@@ -45,7 +57,7 @@ public class Price {
 		}
 
 		final String pricestr = s.substring(1, idx);
-		final BigDecimal price = parsePrice(pricestr);
+		final BigDecimal price = Common.parsePrice(pricestr);
 
 		s = s.substring(idx + 1);
 
@@ -65,6 +77,9 @@ public class Price {
 
 		p.symbol = sym;
 		p.price = price;
+		// TODO figure this out if possible (or just ignore quicken's price
+		// history?Ïß)
+		p.splitAdjustedPrice = null;
 		p.date = date;
 
 		// Ex: "FEQIX",48 3/4," 2/16' 0"
@@ -80,54 +95,11 @@ public class Price {
 		}
 	}
 
-	private static BigDecimal parsePrice(String pricestr) {
-		if (pricestr.length() == 0) {
-			return BigDecimal.ZERO;
-		}
-
-		String fracstr = null;
-		final int slash = pricestr.indexOf('/');
-		if (slash > 0) {
-			final int space = pricestr.indexOf(' ');
-
-			fracstr = (space > 0) ? pricestr.substring(space) : pricestr;
-			pricestr = (space > 0) ? pricestr.substring(0, space) : "0";
-		}
-
-		BigDecimal price = new BigDecimal(pricestr);
-		if (fracstr != null) {
-			final BigDecimal frac = parseFraction(fracstr);
-			price = frac.add(price);
-		}
-
-		return price;
-	}
-
-	private static BigDecimal parseFraction(String fracstr) {
-		if ((fracstr.length() != 4) || //
-				(fracstr.charAt(0) != ' ') || //
-				(fracstr.charAt(2) != '/')) {
-			return BigDecimal.ZERO;
-		}
-
-		final int numerator = " 1 3 5 7".indexOf(fracstr.charAt(1));
-		if ((numerator < 1) || ((numerator & 1) == 0)) {
-			return BigDecimal.ZERO;
-		}
-
-		int denominator = " 248".indexOf(fracstr.charAt(3));
-		if (denominator < 1) {
-			return BigDecimal.ZERO;
-		}
-		denominator = 1 << denominator;
-
-		return new BigDecimal(numerator).divide(new BigDecimal(denominator));
-	}
-
 	public String toString() {
 		final String s = "Price: " + this.symbol //
-				+ " price=" + this.price //
 				+ " date=" + this.date //
+				+ " price=" + this.price //
+				+ " splitAdjusted=" + this.splitAdjustedPrice //
 				+ "\n";
 
 		return s;
