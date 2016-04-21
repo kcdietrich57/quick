@@ -56,14 +56,13 @@ public class QifDomReader {
 		cleanUpTransactions();
 		validateStatements();
 
+		final File d = new File(new File(fileName).getParentFile(), "quotes");
+		loadSecurityPriceHistory(d);
 		processSecurities();
+
 		balanceStatements();
 
 		fixPortfolios();
-
-		final File d = new File(new File(fileName).getParentFile(), "quotes");
-
-		loadSecurityPriceHistory(d);
 
 		return this.dom;
 	}
@@ -512,9 +511,15 @@ public class QifDomReader {
 				break;
 			}
 
-			final Security existing = this.dom.findSecurityByName(sec.name);
+			final Security existing = (sec.symbol != null) //
+					? this.dom.findSecurityBySymbol(sec.symbol) //
+					: this.dom.findSecurityByName(sec.getName());
+
 			if (existing != null) {
 				// TODO verify
+				if (!existing.names.contains(sec.getName())) {
+					existing.names.add(sec.getName());
+				}
 			} else {
 				sec.id = this.nextSecurityID++;
 				this.dom.addSecurity(sec);
@@ -525,32 +530,46 @@ public class QifDomReader {
 	public Security loadSecurity() {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		final Security security = new Security();
+		String symbol = null;
+		String name = null;
+		String type = null;
+		String goal = null;
 
-		for (;;) {
+		loop: for (;;) {
 			this.rdr.nextSecurityLine(qline);
 
 			switch (qline.type) {
 			case EndOfSection:
-				return security;
+				break loop;
 
 			case SecName:
-				security.name = qline.value;
+				name = qline.value;
 				break;
 			case SecSymbol:
-				security.symbol = qline.value;
+				symbol = qline.value;
 				break;
 			case SecType:
-				security.type = qline.value;
+				type = qline.value;
 				break;
 			case SecGoal:
-				security.goal = qline.value;
+				goal = qline.value;
 				break;
 
 			default:
 				Common.reportError("syntax error");
 			}
 		}
+
+		if (symbol == null) {
+			Common.reportWarning("Security '" + name + "' does not specify a ticker symbol.");
+		}
+
+		final Security security = new Security(symbol);
+		security.names.add(name);
+		security.type = type;
+		security.goal = goal;
+
+		return security;
 	}
 
 	private void cleanUpTransactions() {
@@ -756,7 +775,7 @@ public class QifDomReader {
 				return diff;
 			}
 
-			diff = o1.security.name.compareTo(o2.security.name);
+			diff = o1.security.getName().compareTo(o2.security.getName());
 			if (diff != 0) {
 				return diff;
 			}
@@ -841,7 +860,8 @@ public class QifDomReader {
 		InvestmentTxn t = srctxns.get(0);
 
 		while (t.getDate().compareTo(d) < 0 || //
-				(t.getDate().equals(d) && (t.security.name.compareTo(s.name) < 0))) {
+				(t.getDate().equals(d) //
+						&& (t.security.getName().compareTo(s.getName()) < 0))) {
 			unmatched.add(srctxns.remove(0));
 			if (srctxns.isEmpty()) {
 				break;
@@ -1125,6 +1145,10 @@ public class QifDomReader {
 				break;
 			}
 
+			if ((txn.security != null) && (txn.price != null)) {
+				txn.security.addTransaction(txn);
+			}
+
 			this.dom.currAccount.addTransaction(txn);
 		}
 	}
@@ -1178,6 +1202,11 @@ public class QifDomReader {
 				break;
 			case InvSecurity:
 				txn.security = this.dom.findSecurityByName(qline.value);
+				if (txn.security == null) {
+					txn.security = this.dom.findSecurityByName(qline.value);
+					Common.reportWarning("Txn for acct " + txn.acctid + ". " //
+							+ "No security '" + qline.value + "' was found.");
+				}
 				break;
 			case InvFirstLine:
 				txn.textFirstLine = qline.value;

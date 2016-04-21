@@ -68,7 +68,7 @@ class SecurityPosition {
 	public String toString() {
 		final String s = String.format( //
 				"Sec: %-20s  Bal: %10.3f  Ntran: %d", //
-				this.security.name, //
+				this.security.getName(), //
 				this.shrBalance.get(this.shrBalance.size() - 1), //
 				this.transactions.size());
 		return s;
@@ -99,7 +99,7 @@ class SecurityPosition {
 		final BigDecimal value = price.multiply(tshrbal);
 
 		System.out.println(String.format("    %-36s %10.3f %10.3f %10.3f", //
-				txn.security.name, tshrbal, price, value));
+				txn.security.getName(), tshrbal, price, value));
 
 		return value;
 	}

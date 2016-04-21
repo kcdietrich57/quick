@@ -128,7 +128,7 @@ public class QifReporter {
 
 	public static void reportPortfolio(SecurityPortfolio port) {
 		for (final SecurityPosition p : port.positions) {
-			System.out.println("Sec: " + p.security.name);
+			System.out.println("Sec: " + p.security.getName());
 
 			System.out.println(String.format( //
 					"  %-12s  %-10s  %10s  %10s", //
@@ -157,7 +157,7 @@ public class QifReporter {
 
 	public static void reportGlobalPortfolio(SecurityPortfolio port) {
 		for (final SecurityPosition p : port.positions) {
-			System.out.println("Sec: " + p.security.name);
+			System.out.println("Sec: " + p.security.getName());
 
 			System.out.println(String.format( //
 					"  %-12s  %-20s  %-10s  %10s  %10s", //

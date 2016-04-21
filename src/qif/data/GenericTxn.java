@@ -364,7 +364,7 @@ class InvestmentTxn extends GenericTxn {
 		final QifDom dom = QifDom.getDomById(domid);
 
 		this.action = other.action;
-		this.security = dom.findSecurityByName(other.security.name);
+		this.security = dom.findSecurityByName(other.security.getName());
 		this.price = other.price;
 		this.quantity = other.quantity;
 		this.textFirstLine = other.textFirstLine;
@@ -533,7 +533,7 @@ class InvestmentTxn extends GenericTxn {
 			String s = "Inconsistent " + this.action + " transaction:" + //
 					" acct=" + QifDom.getDomById(1).getAccount(this.acctid).name + //
 					" " + Common.getDateString(getDate()) + "\n" + //
-					"  sec=" + this.security.name + //
+					"  sec=" + this.security.getName() + //
 					" qty=" + this.quantity + //
 					" price=" + this.price;
 
@@ -593,7 +593,7 @@ class InvestmentTxn extends GenericTxn {
 		s += " dt=" + Common.getDateString(getDate());
 		s += " act=" + this.action;
 		if (this.security != null) {
-			s += " sec=" + this.security.name;
+			s += " sec=" + this.security.getName();
 		}
 		s += " price=" + this.price;
 		s += " qty=" + this.quantity;

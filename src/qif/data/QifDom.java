@@ -6,7 +6,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import qif.data.Account.AccountType;
 
@@ -86,7 +88,7 @@ public class QifDom {
 
 	public final short domid;
 	private final List<Category> categories;
-	private final List<Security> securities;
+	private final Map<String, Security> securities;
 
 	private final List<Account> accounts;
 	private final List<Account> accounts_bytime;
@@ -110,7 +112,7 @@ public class QifDom {
 		this.categories = new ArrayList<Category>();
 		this.accounts = new ArrayList<Account>();
 		this.accounts_bytime = new ArrayList<Account>();
-		this.securities = new ArrayList<Security>();
+		this.securities = new HashMap<String, Security>();
 
 		this.portfolio = new SecurityPortfolio();
 
@@ -127,7 +129,7 @@ public class QifDom {
 			}
 		}
 
-		for (final Security s : other.securities) {
+		for (final Security s : other.securities.values()) {
 			if (s != null) {
 				addSecurity(new Security(s));
 			}
@@ -265,17 +267,22 @@ public class QifDom {
 	}
 
 	public void addSecurity(Security sec) {
-		final Security existing = findSecurityByName(sec.name);
-
-		if (existing != null) {
-			Common.reportError("Adding duplicate security");
+		final Security existingName = findSecurityByName(sec.getName());
+		if (existingName != null) {
+			Common.reportWarning("Adding duplicate security");
 		}
 
-		while (this.securities.size() <= sec.id) {
-			this.securities.add(null);
+		if (sec.symbol == null) {
+			// TODO this should not happen
+			sec.symbol = sec.getName();
 		}
 
-		this.securities.set(sec.id, sec);
+		final Security existingSymbol = this.securities.get(sec.symbol);
+		if (existingSymbol != null) {
+			Common.reportWarning("Adding duplicate security");
+		}
+
+		this.securities.put(sec.symbol, sec);
 	}
 
 	public short findCategoryID(String s) {
@@ -293,8 +300,8 @@ public class QifDom {
 	}
 
 	public Security findSecurityByName(String name) {
-		for (final Security sec : this.securities) {
-			if (sec != null && sec.name.equals(name)) {
+		for (final Security sec : this.securities.values()) {
+			if (sec != null && sec.names.contains(name)) {
 				return sec;
 			}
 		}
@@ -303,13 +310,7 @@ public class QifDom {
 	}
 
 	public Security findSecurityBySymbol(String sym) {
-		for (final Security sec : this.securities) {
-			if (sec != null && sec.symbol.equalsIgnoreCase(sym)) {
-				return sec;
-			}
-		}
-
-		return null;
+		return this.securities.get(sym);
 	}
 
 	public Account findAccount(String name) {
@@ -356,7 +357,8 @@ public class QifDom {
 			}
 		}
 
-		System.out.println("Balance: " + netWorth);
+		System.out.println();
+		System.out.println(String.format("Balance: %15.2f", netWorth));
 	}
 
 	public String toString() {

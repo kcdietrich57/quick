@@ -6,7 +6,9 @@ import java.util.Date;
 public class Price {
 	public static final Price ZERO = new Price(new BigDecimal(0));
 
+	// TODO get rid of symbol here
 	public String symbol;
+
 	// Price at the specified date
 	public BigDecimal price;
 	// Current price adjusted for splits
@@ -24,6 +26,12 @@ public class Price {
 		this();
 
 		this.price = val;
+	}
+
+	public Price(BigDecimal val, Date date) {
+		this(val);
+
+		this.date = date;
 	}
 
 	public static Price load(QFileReader qfr) {
