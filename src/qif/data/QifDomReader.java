@@ -26,9 +26,9 @@ public class QifDomReader {
 	private QFileReader rdr = null;
 	private QifDom dom = null;
 	// private QifDom refdom = null;
-	private short nextAccountID = 1;
-	private short nextCategoryID = 1;
-	private short nextSecurityID = 1;
+	private int nextAccountID = 1;
+	private int nextCategoryID = 1;
+	private int nextSecurityID = 1;
 
 	private final List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
 
@@ -248,13 +248,17 @@ public class QifDomReader {
 			Common.reportError("File '" + filename + "' does not exist");
 		}
 
-		// this.refdom = refdom;
-
-		this.dom = (refdom != null) ? new QifDom(refdom) : new QifDom();
 		this.rdr = new QFileReader(f);
 
-		this.nextAccountID = 1;
-		this.nextCategoryID = 1;
+		if (refdom != null) {
+			this.dom = refdom;
+			this.nextAccountID = this.dom.getNextAccountID();
+			this.nextCategoryID = this.dom.getNextCategoryID();
+		} else {
+			this.dom = new QifDom();
+			this.nextAccountID = 1;
+			this.nextCategoryID = 1;
+		}
 	}
 
 	private void processFile() {
@@ -701,7 +705,7 @@ public class QifDomReader {
 			}
 		} else if ((txn.catid < 0) && //
 		// opening balance shows up as xfer to same acct
-		(-txn.catid != txn.acctid)) {
+				(-txn.catid != txn.acctid)) {
 			connectTransfers(txn, txn.getDate());
 		}
 	}
@@ -1145,6 +1149,10 @@ public class QifDomReader {
 				break;
 			}
 
+			if ("[[ignore]]".equals(txn.memo)) {
+				continue;
+			}
+
 			if ((txn.security != null) && (txn.price != null)) {
 				txn.security.addTransaction(txn);
 			}
@@ -1312,6 +1320,10 @@ public class QifDomReader {
 			final NonInvestmentTxn txn = loadNonInvestmentTransaction();
 			if (txn == null) {
 				break;
+			}
+
+			if ("[[ignore]]".equals(txn.memo)) {
+				continue;
 			}
 
 			txn.verifySplit();

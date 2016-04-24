@@ -7,7 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 public class Security {
-	public short id;
+	public int id;
 	public List<String> names;
 	public String symbol;
 	public String type;

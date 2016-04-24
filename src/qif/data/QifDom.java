@@ -38,11 +38,18 @@ import qif.data.Account.AccountType;
 // 4/2 Share balance in account positions
 // 4/2 Security positions (all accounts)
 // 4/3 Security position by account and security for any date
-// Security price history
+// 4/20 Security price history
+// 4/20 Point-in time positions (net worth)
+// 4/20 Handle investment amounts and transfers
+// 4/23 Consolidate existing data files
+//Manage security price history separately
+//Portfolio market value
+//Statements - store separately
+//Specify expected statements per account
+//Prompt for info for missing statements; persist information
 //
 // Splits
 // Dump portfolio for each month (positions)
-// Portfolio market value
 // Associate security sales with purchases (lots)
 // ShrsIn/ShrsOut - add/remove
 // Track cost basis/gain/loss
@@ -52,9 +59,6 @@ import qif.data.Account.AccountType;
 // Include vested options in portfolio
 // Optionally include non-vested options in portfolio (separately, perhaps)
 // Exclude expired options
-// Statements - store separately
-// Specify expected statements per account
-// Prompt for info for missing statements; persist information
 // Investment statement with additional info for securities
 // Persist info in extended QIF files
 //
@@ -65,8 +69,6 @@ import qif.data.Account.AccountType;
 // Synchronize data with updated qif file
 //
 //Code review/cleanup - ids for more fields?
-//Point-in time positions (net worth)
-//Handle investment amounts and transfers
 //
 // Encryption, security
 // Persistence
@@ -166,6 +168,40 @@ public class QifDom {
 		return this.categories.get(catid);
 	}
 
+	public Date getFirstTransactionDate() {
+		Date retdate = null;
+
+		for (final Account a : this.accounts) {
+			if (a == null) {
+				continue;
+			}
+
+			final Date d = a.getFirstTransactionDate();
+			if ((retdate == null) || d.compareTo(retdate) < 0) {
+				retdate = d;
+			}
+		}
+
+		return retdate;
+	}
+
+	public Date getLastTransactionDate() {
+		Date retdate = null;
+
+		for (final Account a : this.accounts) {
+			if (a == null) {
+				continue;
+			}
+
+			final Date d = a.getLastTransactionDate();
+			if ((retdate == null) || d.compareTo(retdate) > 0) {
+				retdate = d;
+			}
+		}
+
+		return retdate;
+	}
+
 	public List<GenericTxn> getAllTransactions() {
 		final List<GenericTxn> txns = new ArrayList<GenericTxn>();
 
@@ -232,10 +268,10 @@ public class QifDom {
 	}
 
 	public void updateAccount(Account oldacct, Account newacct) {
-		final String msg = "Account type mismatch: " //
-				+ oldacct.type + " vs " + newacct.type;
-
 		if (oldacct.type != newacct.type) {
+			final String msg = "Account type mismatch: " //
+					+ oldacct.type + " vs " + newacct.type;
+
 			if (oldacct.isInvestmentAccount() != newacct.isInvestmentAccount()) {
 				Common.reportError(msg);
 			}
@@ -285,13 +321,19 @@ public class QifDom {
 		this.securities.put(sec.symbol, sec);
 	}
 
-	public short findCategoryID(String s) {
+	public int findCategoryID(String s) {
 		if (s.startsWith("[")) {
 			s = s.substring(1, s.length() - 1).trim();
 
 			final Account acct = findAccount(s);
 
 			return (short) ((acct != null) ? (-acct.id) : 0);
+		}
+
+		final int slash = s.indexOf('/');
+		if (slash >= 0) {
+			// Throw away tag
+			s = s.substring(slash + 1);
 		}
 
 		final Category cat = findCategory(s);
@@ -370,5 +412,13 @@ public class QifDom {
 		s += "Securities: " + this.securities;
 
 		return s;
+	}
+
+	public int getNextAccountID() {
+		return (this.accounts.isEmpty()) ? 1 : this.accounts.size();
+	}
+
+	public int getNextCategoryID() {
+		return (this.categories.isEmpty()) ? 1 : this.categories.size();
 	}
 };

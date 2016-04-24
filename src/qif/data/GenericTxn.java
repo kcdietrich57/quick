@@ -24,17 +24,17 @@ class SimpleTxn {
 
 	public final int id;
 
-	public short domid;
-	public short acctid;
+	public int domid;
+	public int acctid;
 
 	private BigDecimal amount;
 	public String memo;
 
-	public short xacctid;
-	public short catid; // >0: CategoryID; <0 AccountID
+	public int xacctid;
+	public int catid; // >0: CategoryID; <0 AccountID
 	public SimpleTxn xtxn;
 
-	public SimpleTxn(short domid, short acctid) {
+	public SimpleTxn(int domid, int acctid) {
 		this.id = nextid++;
 
 		this.domid = domid;
@@ -47,7 +47,7 @@ class SimpleTxn {
 		this.xtxn = null;
 	}
 
-	public SimpleTxn(short domid, SimpleTxn other) {
+	public SimpleTxn(int domid, SimpleTxn other) {
 		this.id = nextid++;
 
 		this.domid = domid;
@@ -130,11 +130,11 @@ class SimpleTxn {
 class MultiSplitTxn extends SimpleTxn {
 	public List<SimpleTxn> subsplits = new ArrayList<SimpleTxn>();
 
-	public MultiSplitTxn(short domid, short acctid) {
+	public MultiSplitTxn(int domid, int acctid) {
 		super(domid, acctid);
 	}
 
-	public MultiSplitTxn(short domid, MultiSplitTxn other) {
+	public MultiSplitTxn(int domid, MultiSplitTxn other) {
 		super(domid, other);
 
 		for (final SimpleTxn st : other.subsplits) {
@@ -159,7 +159,7 @@ public abstract class GenericTxn extends SimpleTxn {
 	public Date stmtdate;
 	public BigDecimal runningTotal;
 
-	public static GenericTxn clone(short domid, GenericTxn txn) {
+	public static GenericTxn clone(int domid, GenericTxn txn) {
 		if (txn instanceof NonInvestmentTxn) {
 			return new NonInvestmentTxn(domid, (NonInvestmentTxn) txn);
 		}
@@ -170,7 +170,7 @@ public abstract class GenericTxn extends SimpleTxn {
 		return null;
 	}
 
-	public GenericTxn(short domid, short acctid) {
+	public GenericTxn(int domid, int acctid) {
 		super(domid, acctid);
 
 		this.date = null;
@@ -179,7 +179,7 @@ public abstract class GenericTxn extends SimpleTxn {
 		this.runningTotal = null;
 	}
 
-	public GenericTxn(short domid, GenericTxn other) {
+	public GenericTxn(int domid, GenericTxn other) {
 		super(domid, other);
 
 		this.date = other.date;
@@ -222,7 +222,7 @@ class NonInvestmentTxn extends GenericTxn {
 	public List<String> address;
 	public List<SimpleTxn> split;
 
-	public NonInvestmentTxn(short domid, short acctid) {
+	public NonInvestmentTxn(int domid, int acctid) {
 		super(domid, acctid);
 
 		this.chkNumber = "";
@@ -232,7 +232,7 @@ class NonInvestmentTxn extends GenericTxn {
 		this.split = new ArrayList<SimpleTxn>();
 	}
 
-	public NonInvestmentTxn(short domid, NonInvestmentTxn other) {
+	public NonInvestmentTxn(int domid, NonInvestmentTxn other) {
 		super(domid, other);
 
 		this.chkNumber = other.chkNumber;
@@ -344,7 +344,7 @@ class InvestmentTxn extends GenericTxn {
 	public BigDecimal amountTransferred;
 	public List<InvestmentTxn> xferInv;
 
-	public InvestmentTxn(short domid, short acctid) {
+	public InvestmentTxn(int domid, int acctid) {
 		super(domid, acctid);
 
 		this.action = Action.OTHER;
@@ -358,7 +358,7 @@ class InvestmentTxn extends GenericTxn {
 		this.xferInv = null;
 	}
 
-	public InvestmentTxn(short domid, InvestmentTxn other) {
+	public InvestmentTxn(int domid, InvestmentTxn other) {
 		super(domid, other);
 
 		final QifDom dom = QifDom.getDomById(domid);
@@ -531,7 +531,7 @@ class InvestmentTxn extends GenericTxn {
 			final BigDecimal newprice = tot.divide(this.quantity).abs();
 
 			String s = "Inconsistent " + this.action + " transaction:" + //
-					" acct=" + QifDom.getDomById(1).getAccount(this.acctid).name + //
+					" acct=" + QifDom.getDomById(this.domid).getAccount(this.acctid).name + //
 					" " + Common.getDateString(getDate()) + "\n" + //
 					"  sec=" + this.security.getName() + //
 					" qty=" + this.quantity + //

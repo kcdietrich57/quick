@@ -13,7 +13,7 @@ public class Statement {
 
 	public List<GenericTxn> transactions;
 
-	public Statement(short acctid) {
+	public Statement(int acctid) {
 		this.acctid = 0;
 		this.date = null;
 		this.credits = this.debits = this.balance = null;
@@ -27,7 +27,7 @@ public class Statement {
 		this.balance = other.balance;
 	}
 
-	public static Statement load(QFileReader qfr, short acctid) {
+	public static Statement load(QFileReader qfr, int acctid) {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
 		final Statement acct = new Statement(acctid);

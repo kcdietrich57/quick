@@ -10,8 +10,8 @@ public class Account {
 		Bank, CCard, Cash, Asset, Liability, Invest, InvPort, Inv401k, InvMutual;
 	}
 
-	public short domid;
-	public short id;
+	public int domid;
+	public int id;
 
 	public String name;
 	public AccountType type;
@@ -39,7 +39,7 @@ public class Account {
 		this.securities = new SecurityPortfolio();
 	}
 
-	public Account(short id, QifDom dom) {
+	public Account(int id, QifDom dom) {
 		this(dom);
 
 		this.id = id;
@@ -60,6 +60,14 @@ public class Account {
 		for (final Statement s : this.statements) {
 			this.statements.add(new Statement(s));
 		}
+	}
+
+	public Date getFirstTransactionDate() {
+		return (this.transactions.isEmpty()) ? null : this.transactions.get(0).getDate();
+	}
+
+	public Date getLastTransactionDate() {
+		return (this.transactions.isEmpty()) ? null : this.transactions.get(this.transactions.size() - 1).getDate();
 	}
 
 	public boolean isInvestmentAccount() {

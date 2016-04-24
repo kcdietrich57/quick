@@ -4,7 +4,7 @@ package qif.data;
 import java.math.BigDecimal;
 
 public class Category {
-	public short id;
+	public int id;
 
 	public String name;
 	public String description;
@@ -23,7 +23,7 @@ public class Category {
 		this.id = (short) 0;
 	}
 
-	public Category(short id) {
+	public Category(int id) {
 		this.id = id;
 	}
 
