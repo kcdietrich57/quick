@@ -633,6 +633,7 @@ public class QifDomReader {
 					break;
 
 				case BUY:
+				case WITHDRAWX:
 					// TODO take care of this in transaction instead?
 					amt = amt.negate();
 
