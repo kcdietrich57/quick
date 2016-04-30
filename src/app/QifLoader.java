@@ -8,12 +8,12 @@ import qif.data.QifDom;
 import qif.data.QifDomReader;
 
 public class QifLoader {
-//	private static QifDom loadDom(String qifFile) {
-//		final QifDomReader rdr = new QifDomReader();
-//		final QifDom dom = rdr.load(qifFile);
-//
-//		return dom;
-//	}
+	// private static QifDom loadDom(String qifFile) {
+	// final QifDomReader rdr = new QifDomReader();
+	// final QifDom dom = rdr.load(qifFile);
+	//
+	// return dom;
+	// }
 
 	private static QifDom loadDom(String[] qifFiles) {
 		final QifDomReader rdr = new QifDomReader();
