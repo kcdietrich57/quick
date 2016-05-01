@@ -56,15 +56,18 @@ public class QifDomReader {
 		cleanUpTransactions();
 		validateStatements();
 
-		final File d = new File(new File(fileName).getParentFile(), "quotes");
+		return this.dom;
+	}
+
+	public void postLoad(File dirFile) {
+		final File d = new File(dirFile, "quotes");
 		loadSecurityPriceHistory(d);
 		processSecurities();
-
-		balanceStatements();
-
 		fixPortfolios();
 
-		return this.dom;
+		final String stmtFile = new File(d.getParentFile(), "statements.qif").getAbsolutePath();
+		load(this.dom, stmtFile);
+		balanceStatements();
 	}
 
 	private void loadSecurityPriceHistory(File quoteDirectory) {
@@ -297,7 +300,12 @@ public class QifDomReader {
 
 			case Statement:
 				// System.out.println("Loading statements");
-				loadStatements();
+				loadStatements(this.rdr);
+				break;
+
+			case Statements:
+				// System.out.println("Loading statements");
+				loadStatements2(this.rdr);
 				break;
 
 			case Security:
@@ -902,6 +910,10 @@ public class QifDomReader {
 
 			BigDecimal bal = BigDecimal.ZERO;
 			for (final Statement s : a.statements) {
+				if (s.credits == null || s.debits == null) {
+					continue;
+				}
+
 				bal = bal.add(s.credits);
 				bal = bal.subtract(s.debits);
 
@@ -923,8 +935,6 @@ public class QifDomReader {
 
 			for (final Statement s : a.statements) {
 				if (!balanceStatement(a, balance, s)) {
-					System.out.println("Can't balance account: " + a);
-					System.out.println(" Stmt: " + s);
 					break;
 				}
 
@@ -942,7 +952,10 @@ public class QifDomReader {
 
 		if (diff.signum() != 0) {
 			uncleared = findSubsetTotaling(txns, diff);
-			if (uncleared.isEmpty()) {
+			if ((uncleared == null) || uncleared.isEmpty()) {
+				System.out.println("Can't balance account: " + a);
+				System.out.println(" Stmt: " + s);
+
 				return false;
 			}
 
@@ -1438,19 +1451,43 @@ public class QifDomReader {
 		}
 	}
 
-	private void loadStatements() {
+	private void loadStatements(File f) {
+		final QFileReader qfr = new QFileReader(f);
+
+		try {
+			loadStatements(qfr);
+		} catch (final Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void loadStatements(QFileReader qfr) {
 		for (;;) {
-			final String s = this.rdr.peekLine();
+			final String s = qfr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			final Statement stmt = Statement.load(this.rdr, this.dom.currAccount.id);
+			final Statement stmt = Statement.load(qfr, this.dom.currAccount.id);
 			if (stmt == null) {
 				break;
 			}
 
 			this.dom.currAccount.statements.add(stmt);
+		}
+	}
+
+	private void loadStatements2(QFileReader qfr) {
+		for (;;) {
+			final String s = qfr.peekLine();
+			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
+				break;
+			}
+
+			final List<Statement> stmts = Statement.loadStatements(qfr, this.dom.currAccount.id);
+			for (final Statement stmt : stmts) {
+				this.dom.currAccount.statements.add(stmt);
+			}
 		}
 	}
 

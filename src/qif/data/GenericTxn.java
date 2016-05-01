@@ -99,7 +99,7 @@ class SimpleTxn {
 	}
 
 	public String toString() {
-		return toStringLong();
+		return toStringShort();
 	}
 
 	public String toStringShort() {
@@ -274,9 +274,11 @@ class NonInvestmentTxn extends GenericTxn {
 	}
 
 	public String toStringShort() {
-		String s = Common.getDateString(getDate());
+		String s = (this.stmtdate != null) ? "*" : " ";
+		s += " " + Common.getDateString(getDate());
 		s += " " + this.chkNumber;
 		s += " " + getAmount();
+		s += " " + this.runningTotal;
 		s += " " + this.payee;
 
 		return s;

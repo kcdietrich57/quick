@@ -228,4 +228,14 @@ public class Common {
 
 		return loidx;
 	}
+
+	private static int MONTH_DAYS[] = { //
+			31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 //
+	};
+
+	public static Date getDateForEndOfMonth(int year, int month) {
+		final String datestr = "" + month + "/" + MONTH_DAYS[month - 1] + "/" + year;
+
+		return parseDate(datestr);
+	}
 };

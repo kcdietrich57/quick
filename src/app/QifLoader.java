@@ -1,5 +1,6 @@
 package app;
 
+import java.io.File;
 import java.util.Date;
 import java.util.Scanner;
 
@@ -23,16 +24,18 @@ public class QifLoader {
 			rdr.load(dom, fn);
 		}
 
+		rdr.postLoad(new File(qifFiles[0]).getParentFile());
+
 		return dom;
 	}
 
 	public static void main(String[] args) {
-		final String file1 = "/Users/greg/qif/75to87.qif";
-		final String file2 = "/Users/greg/qif/87ToNow.qif";
 
 		// final QifDom dom1 = loadDom(file1);
 		// final QifDom dom2 = loadDom(file2);
-		final QifDom dom = loadDom(new String[] { file1, file2 });
+		final QifDom dom = loadDom(new String[] { //
+				"/Users/greg/qif/75to87.qif", //
+				"/Users/greg/qif/87ToNow.qif" });
 
 		// QifReporter.reportDom(dom1);
 		// System.out.println(dom1);

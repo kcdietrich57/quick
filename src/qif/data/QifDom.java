@@ -268,7 +268,8 @@ public class QifDom {
 	}
 
 	public void updateAccount(Account oldacct, Account newacct) {
-		if (oldacct.type != newacct.type) {
+		if ((oldacct.type != null) && (newacct.type != null) //
+				&& (oldacct.type != newacct.type)) {
 			final String msg = "Account type mismatch: " //
 					+ oldacct.type + " vs " + newacct.type;
 
@@ -279,6 +280,10 @@ public class QifDom {
 			if (newacct.type != AccountType.Invest) {
 				Common.reportWarning(msg);
 			}
+		}
+
+		if (oldacct.type == null) {
+			oldacct.type = newacct.type;
 		}
 
 		this.currAccount = oldacct;

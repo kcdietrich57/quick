@@ -21,6 +21,9 @@ public enum FieldType {
 	// Statement
 	StmtDate, StmtCredits, StmtDebits, StmtBalance,
 
+	// Statements
+	StmtsMonthly,
+
 	// Security
 	SecName, SecSymbol, SecType, SecGoal,
 

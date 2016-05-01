@@ -27,6 +27,7 @@ import static qif.data.Headers.HdrMemorizedTransaction;
 import static qif.data.Headers.HdrPrices;
 import static qif.data.Headers.HdrSecurity;
 import static qif.data.Headers.HdrStatement;
+import static qif.data.Headers.HdrStatements;
 import static qif.data.Headers.HdrTag;
 import static qif.data.Headers.INV_AccountForTransfer;
 import static qif.data.Headers.INV_Action;
@@ -45,6 +46,7 @@ import static qif.data.Headers.SEC_GOAL;
 import static qif.data.Headers.SEC_NAME;
 import static qif.data.Headers.SEC_SYMBOL;
 import static qif.data.Headers.SEC_TYPE;
+import static qif.data.Headers.STMTS_MONTHLY;
 import static qif.data.Headers.STMT_BAL;
 import static qif.data.Headers.STMT_CR;
 import static qif.data.Headers.STMT_DATE;
@@ -73,7 +75,8 @@ public class QFileReader {
 	String nextline = null;
 
 	enum SectionType {
-		EndOfFile, Account, Statement, Bank, Cash, Category, CreditCard, Investment, //
+		EndOfFile, Account, Statement, Statements, //
+		Bank, Cash, Category, CreditCard, Investment, //
 		Asset, Liability, MemorizedTransaction, QClass, Prices, Security, Tag
 	};
 
@@ -168,6 +171,9 @@ public class QFileReader {
 		if (line.equalsIgnoreCase(HdrStatement)) {
 			return SectionType.Statement;
 		}
+		if (line.equalsIgnoreCase(HdrStatements)) {
+			return SectionType.Statements;
+		}
 		if (line.equalsIgnoreCase(HdrCash)) {
 			return SectionType.Cash;
 		}
@@ -223,6 +229,19 @@ public class QFileReader {
 		try {
 			if (nextLine(line)) {
 				line.type = statementFieldType(line.typechar);
+				return;
+			}
+		} catch (final Exception e) {
+			e.printStackTrace();
+		}
+
+		line.type = FieldType.EndOfSection;
+	}
+
+	public void nextStatementsLine(QLine line) {
+		try {
+			if (nextLine(line)) {
+				line.type = statementsFieldType(line.typechar);
 				return;
 			}
 		} catch (final Exception e) {
@@ -384,6 +403,20 @@ public class QFileReader {
 
 		default:
 			Common.reportError("Bad field type for statment: " + key);
+			return FieldType.EndOfSection;
+		}
+	}
+
+	FieldType statementsFieldType(char key) {
+		switch (key) {
+		case END:
+			return FieldType.EndOfSection;
+
+		case STMTS_MONTHLY:
+			return FieldType.StmtsMonthly;
+
+		default:
+			Common.reportError("Bad field type for statments: " + key);
 			return FieldType.EndOfSection;
 		}
 	}
