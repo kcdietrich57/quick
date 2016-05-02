@@ -74,12 +74,18 @@ public class Statement {
 			case StmtsMonthly: {
 				final StringTokenizer toker = new StringTokenizer(qline.value, " ");
 				final String datestr = toker.nextToken();
-				final int slash = datestr.indexOf('/');
+				final int slash1 = datestr.indexOf('/');
+				final int slash2 = (slash1 < 0) ? -1 : datestr.indexOf('/', slash1 + 1);
+				int day = 0; // last day of month
 				int month = 1;
 				int year = 0;
-				if (slash >= 0) {
-					month = Integer.parseInt(datestr.substring(0, slash));
-					year = Integer.parseInt(datestr.substring(slash + 1));
+				if (slash2 > 0) {
+					month = Integer.parseInt(datestr.substring(0, slash1));
+					day = Integer.parseInt(datestr.substring(slash1 + 1, slash2));
+					year = Integer.parseInt(datestr.substring(slash2 + 1));
+				} else if (slash1 >= 0) {
+					month = Integer.parseInt(datestr.substring(0, slash1));
+					year = Integer.parseInt(datestr.substring(slash1 + 1));
 				} else {
 					year = Integer.parseInt(datestr);
 				}
@@ -90,7 +96,9 @@ public class Statement {
 					}
 
 					final BigDecimal bal = new BigDecimal(toker.nextToken());
-					final Date d = Common.getDateForEndOfMonth(year, month);
+					final Date d = (day == 0) //
+							? Common.getDateForEndOfMonth(year, month) //
+							: Common.getDate(year, month, day);
 
 					final Statement stmt = new Statement(acctid);
 					stmt.date = d;

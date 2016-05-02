@@ -65,8 +65,8 @@ public class QifDomReader {
 		processSecurities();
 		fixPortfolios();
 
-		final String stmtFile = new File(d.getParentFile(), "statements.qif").getAbsolutePath();
-		load(this.dom, stmtFile);
+		final File dd = new File(dirFile, "statements");
+		loadStatements(dd);
 		balanceStatements();
 	}
 
@@ -927,7 +927,7 @@ public class QifDomReader {
 	private void balanceStatements() {
 		for (int acctid = 1; acctid <= this.dom.getNumAccounts(); ++acctid) {
 			final Account a = this.dom.getAccount(acctid);
-			if (!a.isNonInvestmentAccount()) {
+			if (!a.isNonInvestmentAccount() || a.statements.isEmpty()) {
 				continue;
 			}
 
@@ -1066,7 +1066,7 @@ public class QifDomReader {
 			return txns;
 		}
 
-		for (int ii = idx1; ii <= a.transactions.size(); ++ii) {
+		for (int ii = idx1; ii < a.transactions.size(); ++ii) {
 			final GenericTxn t = a.transactions.get(ii);
 
 			if (t.getDate().compareTo(s.date) > 0) {
@@ -1451,13 +1451,23 @@ public class QifDomReader {
 		}
 	}
 
-	private void loadStatements(File f) {
-		final QFileReader qfr = new QFileReader(f);
+	private void loadStatements(File stmtDirectory) {
+		if (!stmtDirectory.isDirectory()) {
+			return;
+		}
 
-		try {
-			loadStatements(qfr);
-		} catch (final Exception e) {
-			e.printStackTrace();
+		final File stmtFiles[] = stmtDirectory.listFiles();
+
+		for (final File f : stmtFiles) {
+			if (!f.getName().endsWith(".qif")) {
+				continue;
+			}
+
+			try {
+				load(this.dom, f.getAbsolutePath());
+			} catch (final Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

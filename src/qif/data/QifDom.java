@@ -42,9 +42,9 @@ import qif.data.Account.AccountType;
 // 4/20 Point-in time positions (net worth)
 // 4/20 Handle investment amounts and transfers
 // 4/23 Consolidate existing data files
+//Statements - store separately
 //Manage security price history separately
 //Portfolio market value
-//Statements - store separately
 //Specify expected statements per account
 //Prompt for info for missing statements; persist information
 //

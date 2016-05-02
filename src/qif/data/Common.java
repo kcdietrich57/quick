@@ -233,6 +233,12 @@ public class Common {
 			31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 //
 	};
 
+	public static Date getDate(int year, int month, int day) {
+		final String datestr = "" + month + "/" + day + "/" + year;
+
+		return parseDate(datestr);
+	}
+
 	public static Date getDateForEndOfMonth(int year, int month) {
 		final String datestr = "" + month + "/" + MONTH_DAYS[month - 1] + "/" + year;
 
