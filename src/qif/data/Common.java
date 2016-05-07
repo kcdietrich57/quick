@@ -9,6 +9,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import qif.data.Account.AccountType;
+import qif.data.SimpleTxn.Action;
+
 public class Common {
 	public static void reportWarning(String s) {
 		System.out.println("**** Warning!" + s);
@@ -126,6 +129,132 @@ public class Common {
 		denominator = 1 << denominator;
 
 		return new BigDecimal(numerator).divide(new BigDecimal(denominator));
+	}
+
+	public static AccountType parseAccountType(String s) {
+		switch (s.charAt(0)) {
+		case 'B':
+			if (s.equals("Bank")) {
+				return AccountType.Bank;
+			}
+			break;
+		case 'C':
+			if (s.equals("CCard")) {
+				return AccountType.CCard;
+			}
+			if (s.equals("Cash")) {
+				return AccountType.Cash;
+			}
+			break;
+		case 'I':
+			if (s.equals("Invst")) {
+				return AccountType.Invest;
+			}
+			break;
+		case 'M':
+			if (s.equals("Mutual")) {
+				return AccountType.InvMutual;
+			}
+			break;
+		case 'O':
+			if (s.equals("Oth A")) {
+				return AccountType.Asset;
+			}
+			if (s.equals("Oth L")) {
+				return AccountType.Liability;
+			}
+			break;
+		case 'P':
+			if (s.equals("Port")) {
+				return AccountType.InvPort;
+			}
+			break;
+		case '4':
+			if (s.equals("401(k)/403(b)")) {
+				return AccountType.Inv401k;
+			}
+			break;
+		}
+
+		Common.reportError("Unknown account type: " + s);
+		return AccountType.Bank;
+	}
+
+	public static Action parseAction(String s) {
+		if ("StkSplit".equals(s)) {
+			return Action.STOCKSPLIT;
+		}
+		if ("Cash".equals(s)) {
+			return Action.CASH;
+		}
+		if ("XIn".equals(s)) {
+			return Action.XIN;
+		}
+		if ("XOut".equals(s)) {
+			return Action.XOUT;
+		}
+		if ("Buy".equals(s)) {
+			return Action.BUY;
+		}
+		if ("BuyX".equals(s)) {
+			return Action.BUYX;
+		}
+		if ("Sell".equals(s)) {
+			return Action.SELL;
+		}
+		if ("SellX".equals(s)) {
+			return Action.SELLX;
+		}
+		if ("ShrsIn".equals(s)) {
+			return Action.SHRS_IN;
+		}
+		if ("ShrsOut".equals(s)) {
+			return Action.SHRS_OUT;
+		}
+		if ("Grant".equals(s)) {
+			return Action.GRANT;
+		}
+		if ("Vest".equals(s)) {
+			return Action.VEST;
+		}
+		if ("ExercisX".equals(s)) {
+			return Action.EXERCISEX;
+		}
+		if ("Expire".equals(s)) {
+			return Action.EXPIRE;
+		}
+		if ("WithdrwX".equals(s)) {
+			return Action.WITHDRAWX;
+		}
+		if ("IntInc".equals(s)) {
+			return Action.INT_INC;
+		}
+		if ("MiscIncX".equals(s)) {
+			return Action.MISC_INCX;
+		}
+		if ("Div".equals(s)) {
+			return Action.DIV;
+		}
+		if ("ReinvDiv".equals(s)) {
+			return Action.REINV_DIV;
+		}
+		if ("ReinvLg".equals(s)) {
+			return Action.REINV_LG;
+		}
+		if ("ReinvSh".equals(s)) {
+			return Action.REINV_SH;
+		}
+		if ("ReinvInt".equals(s)) {
+			return Action.REINV_INT;
+		}
+		if ("ContribX".equals(s)) {
+			return Action.CONTRIBX;
+		}
+		if ("Reminder".equals(s)) {
+			return Action.REMINDER;
+		}
+
+		return Action.OTHER;
 	}
 
 	public static void writeIfSet(PrintWriter pw, String tag, String value) {

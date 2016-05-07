@@ -98,8 +98,12 @@ class SecurityPosition {
 		final BigDecimal price = txn.security.getPriceForDate(d).price;
 		final BigDecimal value = price.multiply(tshrbal);
 
+		String nn = txn.security.getName();
+		if (nn.length() > 36) {
+			nn = nn.substring(0, 33) + "...";
+		}
 		System.out.println(String.format("    %-36s %10.3f %10.3f %10.3f", //
-				txn.security.getName(), tshrbal, price, value));
+				nn, value, tshrbal, price));
 
 		return value;
 	}

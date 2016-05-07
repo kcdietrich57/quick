@@ -68,7 +68,9 @@ public class Security {
 		}
 
 		this.prices.add(price);
+	}
 
+	public void sortPrices() {
 		Collections.sort(this.prices, (o1, o2) -> o1.date.compareTo(o2.date));
 	}
 

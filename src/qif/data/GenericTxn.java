@@ -8,6 +8,8 @@ import java.util.List;
 
 class SimpleTxn {
 	private static final List<SimpleTxn> NOSPLITS = new ArrayList<SimpleTxn>();
+	static int cashok = 0;
+	static int cashbad = 0;
 
 	protected static int nextid = 1;
 
@@ -124,6 +126,42 @@ class SimpleTxn {
 		}
 
 		return s;
+	}
+
+	public boolean amountIsEqual(SimpleTxn other, boolean strict) {
+		final BigDecimal amt1 = getXferAmount();
+		final BigDecimal amt2 = other.getXferAmount();
+
+		if (amt1.abs().compareTo(amt2.abs()) != 0) {
+			return false;
+		}
+
+		if (BigDecimal.ZERO.compareTo(amt1) == 0) {
+			return true;
+		}
+
+		// We know the magnitude is the same and non-zero
+		// Check whether they are equal or negative of each other
+		final boolean eq = amt1.equals(amt2);
+
+		final boolean ret = !eq || !strict;
+
+		if ((getAction() == Action.CASH) //
+				|| (other.getAction() == Action.CASH)) {
+			if (eq) {
+				++cashbad;
+			} else {
+				++cashok;
+			}
+
+			System.out.println(toString());
+			System.out.println(other.toString());
+			System.out.println("Cash ok=" + cashok + " bad=" + cashbad);
+
+			return ret;
+		}
+
+		return ret;
 	}
 };
 

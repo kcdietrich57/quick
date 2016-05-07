@@ -7,16 +7,19 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 public class Statement {
-	public short acctid;
+	public int domid;
+	public int acctid;
 	public Date date;
 	public BigDecimal credits;
 	public BigDecimal debits;
 	public BigDecimal balance;
 
 	public List<GenericTxn> transactions;
+	public List<GenericTxn> unclearedTransactions;
 
-	public Statement(int acctid) {
-		this.acctid = 0;
+	public Statement(int domid, int acctid) {
+		this.acctid = acctid;
+		this.domid = domid;
 		this.date = null;
 		this.credits = this.debits = this.balance = null;
 	}
@@ -29,10 +32,10 @@ public class Statement {
 		this.balance = other.balance;
 	}
 
-	public static Statement load(QFileReader qfr, int acctid) {
+	public static Statement load(QFileReader qfr, int domid, int acctid) {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		final Statement stmt = new Statement(acctid);
+		final Statement stmt = new Statement(domid, acctid);
 
 		for (;;) {
 			qfr.nextStatementLine(qline);
@@ -60,7 +63,7 @@ public class Statement {
 		}
 	}
 
-	public static List<Statement> loadStatements(QFileReader qfr, int acctid) {
+	public static List<Statement> loadStatements(QFileReader qfr, int domid, int acctid) {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 		final List<Statement> stmts = new ArrayList<Statement>();
 
@@ -100,7 +103,7 @@ public class Statement {
 							? Common.getDateForEndOfMonth(year, month) //
 							: Common.getDate(year, month, day);
 
-					final Statement stmt = new Statement(acctid);
+					final Statement stmt = new Statement(domid, acctid);
 					stmt.date = d;
 					stmt.balance = bal;
 
@@ -120,6 +123,42 @@ public class Statement {
 
 	public void addTransaction(GenericTxn txn) {
 		this.transactions.add(txn);
+	}
+
+	public void clearTransactions(List<GenericTxn> txns, List<GenericTxn> unclearedTxns) {
+		for (final GenericTxn t : txns) {
+			t.stmtdate = this.date;
+		}
+
+		this.transactions = txns;
+		this.unclearedTransactions = unclearedTxns;
+
+		print();
+	}
+
+	public void print() {
+		final QifDom dom = QifDom.getDomById(this.domid);
+		final Account a = dom.getAccount(this.acctid);
+
+		System.out.println();
+		System.out.println("-------------------------------------------------------");
+		System.out.println("Reconciled statement: " + a.name //
+				+ " " + Common.getDateString(this.date) //
+				+ " cr=" + this.credits + " db=" + this.debits //
+				+ " bal=" + this.balance);
+
+		for (final GenericTxn t : this.transactions) {
+			System.out.println(t.toStringShort());
+		}
+
+		System.out.println();
+		System.out.println("Uncleared transactions:");
+
+		if (this.unclearedTransactions != null) {
+			for (final GenericTxn t : this.unclearedTransactions) {
+				System.out.println(t.toString());
+			}
+		}
 	}
 
 	public String toString() {

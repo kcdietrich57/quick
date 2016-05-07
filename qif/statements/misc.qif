@@ -1,0 +1,100 @@
+!Account
+NCapCheck
+^
+!Type:Statements
+M12/18/1975 63.14
+M12/18/1976 236.51
+M12/18/1977 159.64
+M9/18/1978 1048.21 1045.21 1045.21 0.00
+^
+!Account
+NUnionNationalChecking
+^
+!Type:Statements
+M12/25/1978 59.79
+M12/25/1979 205.12
+M12/25/1980 248.44
+M12/25/1981 519.76
+M12/25/1982 1870.98
+M12/25/1983 3241.05
+M12/25/1984 4702.40
+M12/25/1985 7519.73
+M12/25/1986 9296.34
+M2/25/1987 0.00
+^
+!Account
+NUnionNationalSavings
+^
+!Type:Statements
+M12/25/1978 989.22
+M12/25/1979 1815.58
+M12/25/1980 16082.53
+M12/25/1981 4241.60
+M12/25/1982 686.53
+M9/25/1983 0.00
+M11/25/1983 0.00
+^
+!Account
+NUnionNationalCD
+^
+!Type:Statements
+M12/25/1981 1536.47
+M12/25/1982 1774.69
+M12/25/1983 2049.83
+M3/25/1984 2125.04 0.00
+^
+!Account
+NFNB Terry Dietrich-CM Consultant
+^
+!Type:Statements
+M12/14/2003 412.09
+M12/14/2004 422.20
+M12/14/2005 681.91
+M12/14/2006 100.46
+M12/14/2007 127.53
+M12/14/2008 241.14
+M12/14/2009 30.06
+M12/14/2010 130.06
+M12/14/2011 127.06
+M12/14/2012 20.06
+M12/14/2013 20.06
+M12/14/2014 20.06
+M12/14/2015 20.06
+M4/2016 20.06
+^
+!Account
+NJacksonNatlLife
+^
+!Type:Statements
+M12/1999 0.00
+^
+!Account
+NMatt Checking 0451
+^
+!Type:Statements
+M12/2015 319.61
+^
+!Account
+NMatt Savings 5916
+^
+!Type:Statements
+M12/2015 0.0
+^
+!Account
+NMidland Checking
+^
+!Type:Statements
+M4/1995 0.0
+^
+!Account
+NMidlandSavings
+^
+!Type:Statements
+M1/1995 0.0
+^
+!Account
+NTerry Cap Fed
+^
+!Type:Statements
+M1/1999 0.0
+^

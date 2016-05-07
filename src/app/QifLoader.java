@@ -1,70 +1,53 @@
 package app;
 
-import java.io.File;
 import java.util.Date;
 import java.util.Scanner;
+import java.util.StringTokenizer;
 
+import qif.data.Account;
 import qif.data.Common;
 import qif.data.QifDom;
 import qif.data.QifDomReader;
 
 public class QifLoader {
-	// private static QifDom loadDom(String qifFile) {
-	// final QifDomReader rdr = new QifDomReader();
-	// final QifDom dom = rdr.load(qifFile);
-	//
-	// return dom;
-	// }
-
-	private static QifDom loadDom(String[] qifFiles) {
-		final QifDomReader rdr = new QifDomReader();
-		final QifDom dom = new QifDom();
-
-		for (final String fn : qifFiles) {
-			rdr.load(dom, fn);
-		}
-
-		rdr.postLoad(new File(qifFiles[0]).getParentFile());
-
-		return dom;
-	}
-
 	public static void main(String[] args) {
-
-		// final QifDom dom1 = loadDom(file1);
-		// final QifDom dom2 = loadDom(file2);
-		final QifDom dom = loadDom(new String[] { //
-				"/Users/greg/qif/75to87.qif", //
-				"/Users/greg/qif/87ToNow.qif" });
-
-		// QifReporter.reportDom(dom1);
-		// System.out.println(dom1);
+		final QifDom dom = QifDomReader.loadDom(new String[] { //
+				"qif/75to87.qif", //
+				"qif/87ToNow.qif" });
 
 		final Date firstTxDate = dom.getFirstTransactionDate();
 		final Date lastTxDate = dom.getLastTransactionDate();
 		final Scanner scn = new Scanner(System.in);
+
 		for (;;) {
 			System.out.println( //
 					"First/last tx date (1): " + Common.getDateString(firstTxDate) //
 							+ " " + Common.getDateString(lastTxDate));
-			// Date firstTxDate2 = dom2.getFirstTransactionDate();
-			// Date lastTxDate2 = dom2.getLastTransactionDate();
-			// System.out.println( //
-			// "First/last tx date (2): " + Common.getDateString(firstTxDate2)
-			// //
-			// + " " + Common.getDateString(lastTxDate2));
 
 			final String s = scn.nextLine();
 
-			if (s.compareToIgnoreCase("quit") == 0) {
+			if (s.startsWith("q")) {
 				break;
 			}
 
-			final Date d = Common.parseDate(s);
-			if (d != null) {
-				// dom1.reportStatusForDate(d, true);
-				// dom2.reportStatusForDate(d, true);
-				dom.reportStatusForDate(d, true);
+			if (s.startsWith("a")) {
+				final StringTokenizer toker = new StringTokenizer(s, " ");
+				toker.nextToken();
+
+				String aname = "";
+
+				if (toker.hasMoreTokens()) {
+					aname = toker.nextToken();
+					final Account a = dom.findAccount(aname);
+					if (a != null) {
+						a.reportStatus("m");
+					}
+				}
+			} else {
+				final Date d = Common.parseDate(s);
+				if (d != null) {
+					dom.reportStatusForDate(d, true);
+				}
 			}
 		}
 
