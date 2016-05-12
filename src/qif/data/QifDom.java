@@ -86,9 +86,14 @@ import qif.data.SimpleTxn.Action;
 public class QifDom {
 	private static short nextdomid = 1;
 	private static List<QifDom> doms = new ArrayList<QifDom>();
+	private static boolean isverbose = false;
 
 	public static QifDom getDomById(int domid) {
 		return ((domid >= 0) && (doms.size() > domid)) ? doms.get(domid) : null;
+	}
+
+	public static boolean verbose() {
+		return isverbose;
 	}
 
 	public final short domid;
@@ -882,9 +887,9 @@ public class QifDom {
 		final List<InvestmentTxn> txns = new ArrayList<InvestmentTxn>(xins);
 		txns.addAll(xouts);
 		Collections.sort(txns, cpr);
-		for (final InvestmentTxn t : txns) {
-			System.out.println(t);
-		}
+		// for (final InvestmentTxn t : txns) {
+		// System.out.println(t);
+		// }
 
 		Collections.sort(xins, cpr);
 		Collections.sort(xouts, cpr);
@@ -922,23 +927,27 @@ public class QifDom {
 				}
 			}
 
-			final String s = String.format(//
-					"%-20s : %5s(%2d) %s INSH=%10.3f (%2d txns) OUTSH=%10.3f (%2d txns)", //
-					t.getAccount().name, t.security.symbol, t.security.id, //
-					Common.getDateString(t.getDate()), //
-					inshrs, ins.size(), outshrs, outs.size());
-			System.out.println(s);
+			if (QifDom.verbose()) {
+				final String s = String.format(//
+						"%-20s : %5s(%2d) %s INSH=%10.3f (%2d txns) OUTSH=%10.3f (%2d txns)", //
+						t.getAccount().name, t.security.symbol, t.security.id, //
+						Common.getDateString(t.getDate()), //
+						inshrs, ins.size(), outshrs, outs.size());
+				System.out.println(s);
+			}
 		}
 
-		for (final InvestmentTxn t : unmatched) {
-			final String pad = (t.getAction() == Action.SHRS_IN) //
-					? "" //
-					: "                          ";
+		if (QifDom.verbose()) {
+			for (final InvestmentTxn t : unmatched) {
+				final String pad = (t.getAction() == Action.SHRS_IN) //
+						? "" //
+						: "                          ";
 
-			final String s = String.format("%-20s : %5s(%2d) %s %s SHR=%10.3f", //
-					t.getAccount().name, t.security.symbol, t.security.id, //
-					Common.getDateString(t.getDate()), pad, t.quantity);
-			System.out.println(s);
+				final String s = String.format("%-20s : %5s(%2d) %s %s SHR=%10.3f", //
+						t.getAccount().name, t.security.symbol, t.security.id, //
+						Common.getDateString(t.getDate()), pad, t.quantity);
+				System.out.println(s);
+			}
 		}
 	}
 

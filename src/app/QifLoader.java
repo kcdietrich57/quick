@@ -2,7 +2,6 @@ package app;
 
 import java.util.Date;
 import java.util.Scanner;
-import java.util.StringTokenizer;
 
 import qif.data.Account;
 import qif.data.Common;
@@ -31,17 +30,11 @@ public class QifLoader {
 			}
 
 			if (s.startsWith("a")) {
-				final StringTokenizer toker = new StringTokenizer(s, " ");
-				toker.nextToken();
+				final String aname = s.substring(1).trim();
 
-				String aname = "";
-
-				if (toker.hasMoreTokens()) {
-					aname = toker.nextToken();
-					final Account a = dom.findAccount(aname);
-					if (a != null) {
-						a.reportStatus("m");
-					}
+				final Account a = dom.findAccount(aname);
+				if (a != null) {
+					a.reportStatus("m");
 				}
 			} else {
 				final Date d = Common.parseDate(s);

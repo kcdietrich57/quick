@@ -1,7 +1,7 @@
 ﻿package qif.data;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -159,6 +159,18 @@ public class Account {
 					s.date, s.transactions.size(), s.balance));
 		}
 
+		System.out.println("Uncleared transactions:");
+
+		for (final GenericTxn t : this.transactions) {
+			if (t.stmtdate != null) {
+				continue;
+			}
+
+			System.out.println(String.format("  %s  %10.2f  %s", //
+					Common.getDateString(t.getDate()), //
+					t.getAmount(), t.getPayee()));
+		}
+
 		System.out.println(String.format("Current value: %10.2f", getCurrentValue()));
 	}
 
@@ -209,7 +221,9 @@ public class Account {
 		}
 
 		acctValue = acctValue.add(this.securities.getPortfolioValueForDate(d));
-		acctValue = acctValue.round(new MathContext(2));
+
+		// acctValue = acctValue.round(new MathContext(2));
+		acctValue = acctValue.setScale(2, RoundingMode.HALF_UP);
 
 		return acctValue;
 	}
@@ -247,7 +261,7 @@ public class Account {
 		final BigDecimal diff = totaltx.add(curbal).subtract(s.balance);
 
 		if (diff.signum() != 0) {
-			listTransactions(txns);
+			// listTransactions(txns);
 
 			uncleared = findSubsetTotaling(txns, diff);
 			if ((uncleared == null) || uncleared.isEmpty()) {

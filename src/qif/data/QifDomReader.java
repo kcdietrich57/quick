@@ -20,7 +20,6 @@ import qif.data.Security.SplitInfo;
 public class QifDomReader {
 	private QFileReader rdr = null;
 	private QifDom dom = null;
-	// private QifDom refdom = null;
 	private int nextAccountID = 1;
 	private int nextCategoryID = 1;
 	private int nextSecurityID = 1;
@@ -709,7 +708,7 @@ public class QifDomReader {
 				txn.chkNumber = qline.value;
 				break;
 			case TxnPayee:
-				txn.payee = qline.value;
+				txn.setPayee(qline.value);
 				break;
 			case TxnAddress:
 				txn.address.add(qline.value);
@@ -751,8 +750,6 @@ public class QifDomReader {
 	}
 
 	private void loadPrices() {
-		Security lastsec = null;
-
 		for (;;) {
 			final String s = this.rdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
@@ -765,16 +762,7 @@ public class QifDomReader {
 			}
 
 			final Security sec = this.dom.findSecurityBySymbol(price.symbol);
-			sec.addPrice(price);
-
-			if (sec != lastsec) {
-				lastsec = sec;
-				sec.sortPrices();
-			}
-		}
-
-		if (null != lastsec) {
-			lastsec.sortPrices();
+			sec.addPrice(price, true);
 		}
 	}
 

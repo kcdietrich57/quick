@@ -133,7 +133,9 @@ public class Statement {
 		this.transactions = txns;
 		this.unclearedTransactions = unclearedTxns;
 
-		print();
+		if (QifDom.verbose()) {
+			print();
+		}
 	}
 
 	public void print() {

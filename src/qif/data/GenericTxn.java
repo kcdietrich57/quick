@@ -195,6 +195,7 @@ public abstract class GenericTxn extends SimpleTxn {
 	private Date date;
 	public String clearedStatus;
 	public Date stmtdate;
+	private String payee;
 	public BigDecimal runningTotal;
 
 	public static GenericTxn clone(int domid, GenericTxn txn) {
@@ -212,6 +213,7 @@ public abstract class GenericTxn extends SimpleTxn {
 		super(domid, acctid);
 
 		this.date = null;
+		this.payee = "";
 		this.clearedStatus = null;
 		this.stmtdate = null;
 		this.runningTotal = null;
@@ -221,6 +223,7 @@ public abstract class GenericTxn extends SimpleTxn {
 		super(domid, other);
 
 		this.date = other.date;
+		this.payee = other.payee;
 		this.clearedStatus = other.clearedStatus;
 		this.stmtdate = other.stmtdate;
 		this.runningTotal = null;
@@ -230,6 +233,14 @@ public abstract class GenericTxn extends SimpleTxn {
 		if (getAmount() == null) {
 			setAmount(BigDecimal.ZERO);
 		}
+	}
+
+	public String getPayee() {
+		return this.payee;
+	}
+
+	public void setPayee(String payee) {
+		this.payee = payee;
 	}
 
 	public boolean isCleared() {
@@ -255,7 +266,6 @@ class NonInvestmentTxn extends GenericTxn {
 	};
 
 	public String chkNumber;
-	public String payee;
 
 	public List<String> address;
 	public List<SimpleTxn> split;
@@ -264,7 +274,6 @@ class NonInvestmentTxn extends GenericTxn {
 		super(domid, acctid);
 
 		this.chkNumber = "";
-		this.payee = "";
 
 		this.address = new ArrayList<String>();
 		this.split = new ArrayList<SimpleTxn>();
@@ -274,7 +283,6 @@ class NonInvestmentTxn extends GenericTxn {
 		super(domid, other);
 
 		this.chkNumber = other.chkNumber;
-		this.payee = other.payee;
 
 		this.address = new ArrayList<String>();
 		this.split = new ArrayList<SimpleTxn>();
@@ -317,7 +325,7 @@ class NonInvestmentTxn extends GenericTxn {
 		s += " " + this.chkNumber;
 		s += " " + getAmount();
 		s += " " + this.runningTotal;
-		s += " " + this.payee;
+		s += " " + getPayee();
 
 		return s;
 	}
@@ -330,7 +338,7 @@ class NonInvestmentTxn extends GenericTxn {
 		s += " date=" + Common.getDateString(getDate());
 		s += " clr:" + this.clearedStatus;
 		s += " num=" + this.chkNumber;
-		s += " payee=" + this.payee;
+		s += " payee=" + getPayee();
 		s += " amt=" + getAmount();
 		s += " memo=" + this.memo;
 
@@ -635,6 +643,7 @@ class InvestmentTxn extends GenericTxn {
 		if (this.security != null) {
 			s += " sec=" + this.security.getName();
 		}
+		s += " payee=" + getPayee();
 		s += " price=" + this.price;
 		s += " qty=" + this.quantity;
 		s += " amt=" + getAmount();

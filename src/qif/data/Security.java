@@ -53,18 +53,32 @@ public class Security {
 
 		if ((txn.price != null) && //
 				(txn.price.compareTo(BigDecimal.ZERO) != 0)) {
-			addPrice(new Price(txn.price, txn.getDate()));
+			// The price for a transaction doesn't replace the price in the
+			// history. It is intra-day, and in the case of ESPP/options,
+			// may be discounted.
+			addPrice(new Price(txn.price, txn.getDate()), false);
 		}
 	}
 
-	public void addPrice(Price price) {
-		if ((price == null) || (price.price.compareTo(BigDecimal.ZERO) == 0)) {
+	public void addPrice(Price price, boolean replace) {
+		if (price == null) {
 			return;
 		}
 
-		final Price p = getPriceForDate(price.date);
-		if ((p != Price.ZERO) && (p.date.equals(price.date))) {
-			this.prices.remove(p);
+		final int idx = getPriceIndexForDate(price.date);
+
+		if (idx >= 0) {
+			final Price p = this.prices.get(idx);
+			final int diff = p.date.compareTo(price.date);
+
+			if ((diff == 0) && replace) {
+				// TODO compare prices and warn if different?
+				this.prices.set(idx, price);
+			} else if (diff < 0) {
+				this.prices.add(idx, price);
+			} else {
+				this.prices.add(idx + 1, price);
+			}
 		}
 
 		this.prices.add(price);
@@ -75,8 +89,18 @@ public class Security {
 	}
 
 	public Price getPriceForDate(Date d) {
-		if (this.prices.isEmpty()) {
+		final int idx = getPriceIndexForDate(d);
+
+		if (idx < 0) {
 			return Price.ZERO;
+		}
+
+		return this.prices.get(idx);
+	}
+
+	public int getPriceIndexForDate(Date d) {
+		if (this.prices.isEmpty()) {
+			return -1;
 		}
 
 		int loidx = 0;
@@ -84,10 +108,10 @@ public class Security {
 		final Date loval = this.prices.get(loidx).date;
 		final Date hival = this.prices.get(hiidx).date;
 		if (loval.compareTo(d) >= 0) {
-			return this.prices.get(0);
+			return loidx;
 		}
 		if (hival.compareTo(d) <= 0) {
-			return this.prices.get(hiidx);
+			return hiidx;
 		}
 
 		int idx = loidx;
@@ -109,7 +133,7 @@ public class Security {
 			}
 		}
 
-		return this.prices.get(idx);
+		return idx;
 	}
 
 	public BigDecimal getSplitRatioForDate(Date d) {
