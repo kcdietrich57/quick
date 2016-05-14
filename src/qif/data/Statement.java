@@ -2,6 +2,8 @@ package qif.data;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -63,7 +65,7 @@ public class Statement {
 		}
 	}
 
-	public static List<Statement> loadStatements(QFileReader qfr, int domid, int acctid) {
+	public static List<Statement> loadStatements(QFileReader qfr, QifDom dom) {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 		final List<Statement> stmts = new ArrayList<Statement>();
 
@@ -73,6 +75,17 @@ public class Statement {
 			switch (qline.type) {
 			case EndOfSection:
 				return stmts;
+
+			case StmtsAccount: {
+				String aname = qline.value;
+				Account a = dom.findAccount(aname);
+				if (a == null) {
+					Common.reportError("Can't find account: " + aname);
+				}
+
+				dom.currAccount = a;
+				break;
+			}
 
 			case StmtsMonthly: {
 				final StringTokenizer toker = new StringTokenizer(qline.value, " ");
@@ -103,7 +116,7 @@ public class Statement {
 							? Common.getDateForEndOfMonth(year, month) //
 							: Common.getDate(year, month, day);
 
-					final Statement stmt = new Statement(domid, acctid);
+					final Statement stmt = new Statement(dom.domid, dom.currAccount.id);
 					stmt.date = d;
 					stmt.balance = bal;
 
@@ -149,7 +162,34 @@ public class Statement {
 				+ " cr=" + this.credits + " db=" + this.debits //
 				+ " bal=" + this.balance);
 
+		List<NonInvestmentTxn> checks = new ArrayList<NonInvestmentTxn>();
+
 		for (final GenericTxn t : this.transactions) {
+			NonInvestmentTxn check = null;
+
+			if (t instanceof NonInvestmentTxn) {
+				check = (NonInvestmentTxn) t;
+				if ((check.chkNumber == null) //
+						|| (check.chkNumber.length() < 1) //
+						|| !Character.isDigit(check.chkNumber.charAt(0))) {
+					check = null;
+				}
+			}
+
+			if (check == null) {
+				System.out.println(t.toStringShort());
+			} else {
+				checks.add(check);
+			}
+		}
+
+		Collections.sort(checks, new Comparator<NonInvestmentTxn>() {
+			public int compare(NonInvestmentTxn o1, NonInvestmentTxn o2) {
+				return Integer.parseInt(o1.chkNumber) - Integer.parseInt(o2.chkNumber);
+			}
+		});
+
+		for (final NonInvestmentTxn t : checks) {
 			System.out.println(t.toStringShort());
 		}
 
@@ -164,12 +204,11 @@ public class Statement {
 	}
 
 	public String toString() {
-		final String s = "Statement" //
-				+ " dt=" + this.date //
-				+ " cr=" + this.credits //
-				+ " db=" + this.debits //
-				+ " bal=" + this.balance //
-				+ "\n";
+		final String s = Common.getDateString(this.date) //
+				// + " cr=" + this.credits //
+				// + " db=" + this.debits //
+				+ "  " + this.balance //
+				+ " tran=" + ((this.transactions != null) ? this.transactions.size() : null);
 
 		return s;
 	}

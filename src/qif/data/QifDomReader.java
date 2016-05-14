@@ -809,7 +809,7 @@ public class QifDomReader {
 				break;
 			}
 
-			final List<Statement> stmts = Statement.loadStatements(qfr, this.dom.domid, this.dom.currAccount.id);
+			final List<Statement> stmts = Statement.loadStatements(qfr, this.dom);
 			for (final Statement stmt : stmts) {
 				this.dom.currAccount.statements.add(stmt);
 			}

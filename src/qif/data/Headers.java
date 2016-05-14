@@ -7,8 +7,7 @@ public interface Headers {
 	// Section markers
 	// ---------------------------------------------------------
 	public static final String HdrAccount = "!Account";
-	public static final String HdrStatement = "!Type:Statement";
-	public static final String HdrStatements = "!Type:Statements";
+	public static final String HdrStatements = "!Statements";
 	public static final String HdrBank = "!Type:Bank";
 	public static final String HdrCash = "!Type:Cash";
 	public static final String HdrCategory = "!Type:Cat";
@@ -103,6 +102,7 @@ public interface Headers {
 	public static final char STMT_DB = 'E';
 	public static final char STMT_BAL = 'B';
 
+	public static final char STMTS_ACCOUNT = 'N';
 	public static final char STMTS_MONTHLY = 'M';
 
 	public static final char END = '^';

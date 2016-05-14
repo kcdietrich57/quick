@@ -222,7 +222,6 @@ public class Account {
 
 		acctValue = acctValue.add(this.securities.getPortfolioValueForDate(d));
 
-		// acctValue = acctValue.round(new MathContext(2));
 		acctValue = acctValue.setScale(2, RoundingMode.HALF_UP);
 
 		return acctValue;
@@ -260,14 +259,16 @@ public class Account {
 		final BigDecimal totaltx = sumAmounts(txns);
 		final BigDecimal diff = totaltx.add(curbal).subtract(s.balance);
 
-		if (diff.signum() != 0) {
-			// listTransactions(txns);
+		System.out.println(" Stmt: " + this.name + " - " + s);
 
+		if (diff.signum() != 0) {
 			uncleared = findSubsetTotaling(txns, diff);
 			if ((uncleared == null) || uncleared.isEmpty()) {
+				System.out.println();
 				System.out.println("Can't balance account: " + this);
-				System.out.println(" Stmt: " + s);
 
+				listTransactions(txns, 20);
+				Common.reportWarning("Statement balance failed");
 				return false;
 			}
 
@@ -276,13 +277,34 @@ public class Account {
 
 		s.clearTransactions(txns, uncleared);
 
+		if ((uncleared != null) && (uncleared.size() >= SUBSET_WARNING)) {
+			Common.reportWarning("Large number of uncommitted transactions");
+
+			System.out.println("Cleared:");
+			for (GenericTxn t : txns) {
+				System.out.println(String.format("%10.2f %s %s", //
+						t.getAmount(), Common.getDateString(t.getDate()), //
+						Common.getCheckNumString(t)));
+			}
+
+			System.out.println("Uncleared:");
+			for (GenericTxn t : uncleared) {
+				System.out.println(String.format("%10.2f %s %s", //
+						t.getAmount(), Common.getDateString(t.getDate()), //
+						Common.getCheckNumString(t)));
+			}
+
+			s.print();
+		}
+
 		return true;
 	}
 
-	void listTransactions(List<GenericTxn> txns) {
+	void listTransactions(List<GenericTxn> txns, int max) {
 		System.out.println("Transaction list");
 
-		for (final GenericTxn t : txns) {
+		for (int ii = Math.max(0, txns.size() - max); ii < txns.size(); ++ii) {
+			final GenericTxn t = txns.get(ii);
 			String cknum = "";
 			if (t instanceof NonInvestmentTxn) {
 				cknum = ((NonInvestmentTxn) t).chkNumber;
@@ -293,60 +315,74 @@ public class Account {
 		}
 	}
 
+	static int maxsubset = 0;
+	// TODO figure out a better algorithm for balancing?
+	static final int SUBSET_LIMIT = 20;
+	static final int SUBSET_WARNING = 10;
+
 	private List<GenericTxn> findSubsetTotaling(List<GenericTxn> txns, BigDecimal diff) {
-		List<List<GenericTxn>> matches = null;
+		// First try removing one transaction, then two, ...
+		// Return a list of the fewest transactions totaling the desired amount
+		// Limit how far back we go.
+		int lowlimit = Math.max(0, txns.size() - 50);
 
-		for (int nn = 1; nn <= txns.size(); ++nn) {
-			final List<List<GenericTxn>> subsets = findSubsetsTotaling(txns, diff, nn, txns.size());
+		for (int nn = 1; (nn <= txns.size()) && (nn < SUBSET_LIMIT); ++nn) {
+			final List<GenericTxn> subset = findSubsetTotaling(txns, diff, nn, lowlimit, txns.size());
 
-			if (!subsets.isEmpty()) {
-				matches = subsets;
-				break;
+			if (subset != null) {
+				int n = subset.size();
+				if (n > maxsubset) {
+					maxsubset = n;
+				}
+
+				return subset;
+			}
+
+			if (nn == SUBSET_WARNING) {
+				Common.reportWarning("Large number of uncommitted transactions");
 			}
 		}
 
-		return (matches == null) ? null : matches.get(0);
+		return null;
 	}
 
-	private List<List<GenericTxn>> findSubsetsTotaling( //
-			List<GenericTxn> txns, BigDecimal tot, int nn, int max) {
-		final List<List<GenericTxn>> ret = new ArrayList<List<GenericTxn>>();
-		if (nn > txns.size()) {
-			return ret;
+	// Try combinations of nn transactions, indexes between min and max-1.
+	// Return the first that adds up to tot.
+	private List<GenericTxn> findSubsetTotaling( //
+			List<GenericTxn> txns, BigDecimal tot, int nn, int min, int max) {
+		if (nn > (max - min)) {
+			return null;
 		}
 
-		final List<GenericTxn> txns_work = new ArrayList<>();
-		txns_work.addAll(txns);
-
-		for (int ii = max - 1; ii >= 0; --ii) {
-			final BigDecimal newtot = tot.subtract(txns.get(ii).getAmount());
-			final GenericTxn t = txns_work.remove(ii);
+		// Remove one transaction, starting with the most recent
+		for (int ii = max - 1; ii >= min; --ii) {
+			final GenericTxn t = txns.get(ii);
+			final BigDecimal newtot = tot.subtract(t.getAmount());
 
 			if ((nn == 1) && (newtot.signum() == 0)) {
-				final List<GenericTxn> l = new ArrayList<GenericTxn>();
-				l.add(t);
-				ret.add(l);
+				// We are looking for one transaction and found it
+				final List<GenericTxn> ret = new ArrayList<GenericTxn>();
+				ret.add(t);
 
 				return ret;
 			}
 
-			if (nn > 1 && nn <= ii) {
-				final List<List<GenericTxn>> subsets = findSubsetsTotaling(txns_work, newtot, nn - 1, ii);
-				txns_work.add(ii, t);
+			if ((nn > 1) && (nn <= ii)) {
+				// We need n-1 more transactions - we have already considered
+				// combinations with transactions after index ii, so start
+				// before that, looking for n-1 transactions adding up to the
+				// adjusted total.
+				final List<GenericTxn> ret = findSubsetTotaling(txns, newtot, nn - 1, min, ii);
 
-				if (!subsets.isEmpty()) {
-					for (final List<GenericTxn> l : subsets) {
-						l.add(t);
-					}
-
-					ret.addAll(subsets);
+				if (ret != null) {
+					ret.add(t);
 
 					return ret;
 				}
 			}
 		}
 
-		return ret;
+		return null;
 	}
 
 	private BigDecimal sumAmounts(List<GenericTxn> txns) {

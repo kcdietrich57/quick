@@ -26,7 +26,6 @@ import static qif.data.Headers.HdrLiability;
 import static qif.data.Headers.HdrMemorizedTransaction;
 import static qif.data.Headers.HdrPrices;
 import static qif.data.Headers.HdrSecurity;
-import static qif.data.Headers.HdrStatement;
 import static qif.data.Headers.HdrStatements;
 import static qif.data.Headers.HdrTag;
 import static qif.data.Headers.INV_AccountForTransfer;
@@ -46,6 +45,7 @@ import static qif.data.Headers.SEC_GOAL;
 import static qif.data.Headers.SEC_NAME;
 import static qif.data.Headers.SEC_SYMBOL;
 import static qif.data.Headers.SEC_TYPE;
+import static qif.data.Headers.STMTS_ACCOUNT;
 import static qif.data.Headers.STMTS_MONTHLY;
 import static qif.data.Headers.STMT_BAL;
 import static qif.data.Headers.STMT_CR;
@@ -167,9 +167,6 @@ public class QFileReader {
 		}
 		if (line.equalsIgnoreCase(HdrBank)) {
 			return SectionType.Bank;
-		}
-		if (line.equalsIgnoreCase(HdrStatement)) {
-			return SectionType.Statement;
 		}
 		if (line.equalsIgnoreCase(HdrStatements)) {
 			return SectionType.Statements;
@@ -411,6 +408,9 @@ public class QFileReader {
 		switch (key) {
 		case END:
 			return FieldType.EndOfSection;
+
+		case STMTS_ACCOUNT:
+			return FieldType.StmtsAccount;
 
 		case STMTS_MONTHLY:
 			return FieldType.StmtsMonthly;

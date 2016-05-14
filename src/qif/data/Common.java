@@ -1,5 +1,4 @@
-﻿
-package qif.data;
+﻿package qif.data;
 
 import java.io.PrintWriter;
 import java.math.BigDecimal;
@@ -85,6 +84,12 @@ public class Common {
 	public static String getDateString(Date date) {
 		final DateFormat dfmt = new SimpleDateFormat("MM/dd/yyyy");
 		return dfmt.format(date);
+	}
+
+	public static String getCheckNumString(GenericTxn t) {
+		return (t instanceof NonInvestmentTxn) //
+				? ((NonInvestmentTxn) t).chkNumber //
+				: "";
 	}
 
 	public static BigDecimal parsePrice(String pricestr) {

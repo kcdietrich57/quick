@@ -22,7 +22,7 @@ public enum FieldType {
 	StmtDate, StmtCredits, StmtDebits, StmtBalance,
 
 	// Statements
-	StmtsMonthly,
+	StmtsAccount, StmtsMonthly,
 
 	// Security
 	SecName, SecSymbol, SecType, SecGoal,
