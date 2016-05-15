@@ -156,7 +156,7 @@ public class Account {
 
 		for (final Statement s : this.statements) {
 			System.out.println(String.format("  %s  %3d tx  %10.2f", //
-					s.date, s.transactions.size(), s.balance));
+					Common.getDateString(s.date), s.transactions.size(), s.balance));
 		}
 
 		System.out.println("Uncleared transactions:");
@@ -256,7 +256,7 @@ public class Account {
 		final List<GenericTxn> txns = gatherTransactionsForStatement(s);
 		List<GenericTxn> uncleared = null;
 
-		final BigDecimal totaltx = sumAmounts(txns);
+		final BigDecimal totaltx = Common.sumAmounts(txns);
 		final BigDecimal diff = totaltx.add(curbal).subtract(s.balance);
 
 		System.out.println(" Stmt: " + this.name + " - " + s);
@@ -268,34 +268,35 @@ public class Account {
 				System.out.println("Can't balance account: " + this);
 
 				listTransactions(txns, 20);
-				Common.reportWarning("Statement balance failed");
+				Common.reportError("Statement balance failed");
 				return false;
 			}
 
 			txns.removeAll(uncleared);
 		}
 
-		s.clearTransactions(txns, uncleared);
+		s.clearTransactions(curbal, txns, uncleared);
 
 		if ((uncleared != null) && (uncleared.size() >= SUBSET_WARNING)) {
 			Common.reportWarning("Large number of uncommitted transactions");
 
 			System.out.println("Cleared:");
 			for (GenericTxn t : txns) {
-				System.out.println(String.format("%10.2f %s %s", //
+				System.out.println(String.format("%10.2f  %s  %s", //
 						t.getAmount(), Common.getDateString(t.getDate()), //
 						Common.getCheckNumString(t)));
 			}
 
+			System.out.println();
 			System.out.println("Uncleared:");
 			for (GenericTxn t : uncleared) {
-				System.out.println(String.format("%10.2f %s %s", //
+				System.out.println(String.format("%10.2f  %s  %s", //
 						t.getAmount(), Common.getDateString(t.getDate()), //
 						Common.getCheckNumString(t)));
 			}
-
-			s.print();
 		}
+
+		s.adjust();
 
 		return true;
 	}
@@ -383,15 +384,6 @@ public class Account {
 		}
 
 		return null;
-	}
-
-	private BigDecimal sumAmounts(List<GenericTxn> txns) {
-		BigDecimal totaltx = BigDecimal.ZERO;
-		for (final GenericTxn t : txns) {
-			totaltx = totaltx.add(t.getAmount());
-		}
-
-		return totaltx;
 	}
 
 	private List<GenericTxn> gatherTransactionsForStatement(Statement s) {

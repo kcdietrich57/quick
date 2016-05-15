@@ -20,6 +20,15 @@ public class Common {
 		throw new RuntimeException(s);
 	}
 
+	public static BigDecimal sumAmounts(List<GenericTxn> txns) {
+		BigDecimal totaltx = BigDecimal.ZERO;
+		for (final GenericTxn t : txns) {
+			totaltx = totaltx.add(t.getAmount());
+		}
+
+		return totaltx;
+	}
+
 	public static boolean parseBoolean(String value) {
 		return (value.length() > 0) && Boolean.parseBoolean(value);
 	}

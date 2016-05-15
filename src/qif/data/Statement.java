@@ -8,12 +8,15 @@ import java.util.Date;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import app.QifLoader;
+
 public class Statement {
 	public int domid;
 	public int acctid;
 	public Date date;
 	public BigDecimal credits;
 	public BigDecimal debits;
+	public BigDecimal openingBalance;
 	public BigDecimal balance;
 
 	public List<GenericTxn> transactions;
@@ -23,7 +26,7 @@ public class Statement {
 		this.acctid = acctid;
 		this.domid = domid;
 		this.date = null;
-		this.credits = this.debits = this.balance = null;
+		this.credits = this.debits = this.openingBalance = this.balance = null;
 	}
 
 	public Statement(Statement other) {
@@ -138,7 +141,10 @@ public class Statement {
 		this.transactions.add(txn);
 	}
 
-	public void clearTransactions(List<GenericTxn> txns, List<GenericTxn> unclearedTxns) {
+	public void clearTransactions(BigDecimal openingBalance, //
+			List<GenericTxn> txns, List<GenericTxn> unclearedTxns) {
+		this.openingBalance = openingBalance;
+
 		for (final GenericTxn t : txns) {
 			t.stmtdate = this.date;
 		}
@@ -151,56 +157,124 @@ public class Statement {
 		}
 	}
 
+	public void adjust() {
+		print();
+	}
+
 	public void print() {
 		final QifDom dom = QifDom.getDomById(this.domid);
 		final Account a = dom.getAccount(this.acctid);
 
-		System.out.println();
-		System.out.println("-------------------------------------------------------");
-		System.out.println("Reconciled statement: " + a.name //
-				+ " " + Common.getDateString(this.date) //
-				+ " cr=" + this.credits + " db=" + this.debits //
-				+ " bal=" + this.balance);
+		for (boolean done = false; !done;) {
+			System.out.println();
+			System.out.println("-------------------------------------------------------");
+			System.out.println("Reconciled statement:" //
+					+ "  " + Common.getDateString(this.date) //
+					+ " " + this.balance //
+					+ "  " + a.name);
+			System.out.println("-------------------------------------------------------");
 
-		List<NonInvestmentTxn> checks = new ArrayList<NonInvestmentTxn>();
+			List<GenericTxn> txnsForDisplay = arrangeTransactionsForDisplay();
 
-		for (final GenericTxn t : this.transactions) {
-			NonInvestmentTxn check = null;
+			for (int ii = 0; ii < txnsForDisplay.size(); ++ii) {
+				final GenericTxn t = txnsForDisplay.get(ii);
 
-			if (t instanceof NonInvestmentTxn) {
-				check = (NonInvestmentTxn) t;
-				if ((check.chkNumber == null) //
-						|| (check.chkNumber.length() < 1) //
-						|| !Character.isDigit(check.chkNumber.charAt(0))) {
-					check = null;
+				System.out.println(String.format("%3d: ", ii + 1) + t.toStringShort());
+			}
+
+			System.out.println();
+			System.out.println("Uncleared transactions:");
+
+			if (this.unclearedTransactions != null) {
+				for (int ii = 0; ii < this.unclearedTransactions.size(); ++ii) {
+					final GenericTxn t = this.unclearedTransactions.get(ii);
+
+					System.out.println(String.format("%3d: ", ii + 1) + t.toString());
 				}
 			}
 
-			if (check == null) {
-				System.out.println(t.toStringShort());
-			} else {
-				checks.add(check);
+			BigDecimal diff = checkBalance();
+			boolean ok = diff.signum() == 0;
+			String dflt = "(" + String.format("%3.2f", diff) + ")";
+
+			System.out.print("CMD" + dflt + "> ");
+
+			String s = QifLoader.scn.nextLine();
+
+			if ((s == null) || (s.length() == 0)) {
+				s = "q";
+			}
+
+			switch (s.charAt(0)) {
+			case 'q':
+				if (ok) {
+					done = true;
+				}
+				break;
+			case 'r':
+			case 'u': {
+				boolean isReconcile = s.charAt(0) == 'r';
+				List<GenericTxn> txns = new ArrayList<GenericTxn>();
+				StringTokenizer toker = new StringTokenizer(s.substring(1));
+				while (toker.hasMoreTokens()) {
+					int n = Integer.parseInt(toker.nextToken());
+					GenericTxn t = (isReconcile) //
+							? this.unclearedTransactions.get(n - 1) //
+							: this.transactions.get(n - 1);
+					txns.add(t);
+				}
+
+				if (isReconcile) {
+					clearTransactions(txns);
+				} else {
+					unclearTransactions(txns);
+				}
+				break;
+			}
 			}
 		}
+	}
 
-		Collections.sort(checks, new Comparator<NonInvestmentTxn>() {
-			public int compare(NonInvestmentTxn o1, NonInvestmentTxn o2) {
-				return Integer.parseInt(o1.chkNumber) - Integer.parseInt(o2.chkNumber);
+	private void clearTransactions(List<GenericTxn> txns) {
+		for (GenericTxn t : txns) {
+			t.stmtdate = this.date;
+		}
+
+		this.transactions.addAll(txns);
+		this.unclearedTransactions.removeAll(txns);
+	}
+
+	private void unclearTransactions(List<GenericTxn> txns) {
+		for (GenericTxn t : txns) {
+			t.stmtdate = null;
+		}
+
+		this.transactions.removeAll(txns);
+		this.unclearedTransactions.addAll(txns);
+	}
+
+	private BigDecimal checkBalance() {
+		BigDecimal txsum = Common.sumAmounts(this.transactions);
+		BigDecimal newbal = this.openingBalance.add(txsum);
+
+		return newbal.subtract(this.balance);
+	}
+
+	private List<GenericTxn> arrangeTransactionsForDisplay() {
+		List<GenericTxn> txns = new ArrayList<GenericTxn>(this.transactions);
+
+		Collections.sort(txns, new Comparator<GenericTxn>() {
+			public int compare(GenericTxn o1, GenericTxn o2) {
+				int diff = o1.getCheckNumber() - o2.getCheckNumber();
+				if (diff != 0) {
+					return diff;
+				}
+
+				return o1.getDate().compareTo(o1.getDate());
 			}
 		});
 
-		for (final NonInvestmentTxn t : checks) {
-			System.out.println(t.toStringShort());
-		}
-
-		System.out.println();
-		System.out.println("Uncleared transactions:");
-
-		if (this.unclearedTransactions != null) {
-			for (final GenericTxn t : this.unclearedTransactions) {
-				System.out.println(t.toString());
-			}
-		}
+		return txns;
 	}
 
 	public String toString() {

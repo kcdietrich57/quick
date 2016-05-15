@@ -9,14 +9,17 @@ import qif.data.QifDom;
 import qif.data.QifDomReader;
 
 public class QifLoader {
+	public static Scanner scn;
+
 	public static void main(String[] args) {
+		scn = new Scanner(System.in);
+
 		final QifDom dom = QifDomReader.loadDom(new String[] { //
 				"qif/75to87.qif", //
 				"qif/87ToNow.qif" });
 
 		final Date firstTxDate = dom.getFirstTransactionDate();
 		final Date lastTxDate = dom.getLastTransactionDate();
-		final Scanner scn = new Scanner(System.in);
 
 		for (;;) {
 			System.out.println( //

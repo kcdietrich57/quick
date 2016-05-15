@@ -229,6 +229,10 @@ public abstract class GenericTxn extends SimpleTxn {
 		this.runningTotal = null;
 	}
 
+	public int getCheckNumber() {
+		return 0;
+	}
+
 	public void repair() {
 		if (getAmount() == null) {
 			setAmount(BigDecimal.ZERO);
@@ -295,6 +299,15 @@ class NonInvestmentTxn extends GenericTxn {
 		}
 	}
 
+	public int getCheckNumber() {
+		if ((this.chkNumber == null) || (this.chkNumber.length() == 0) //
+				|| !Character.isDigit(this.chkNumber.charAt(0))) {
+			return 0;
+		}
+
+		return Integer.parseInt(this.chkNumber);
+	}
+
 	public boolean hasSplits() {
 		return !this.split.isEmpty();
 	}
@@ -320,14 +333,13 @@ class NonInvestmentTxn extends GenericTxn {
 	}
 
 	public String toStringShort() {
-		String s = (this.stmtdate != null) ? "*" : " ";
-		s += " " + Common.getDateString(getDate());
-		s += " " + this.chkNumber;
-		s += " " + getAmount();
-		s += " " + this.runningTotal;
-		s += " " + getPayee();
-
-		return s;
+		return String.format("%s %s %5s  %10.2f  %10.2f  %s", //
+				((this.stmtdate != null) ? "*" : " "), //
+				Common.getDateString(getDate()), //
+				this.chkNumber, //
+				getAmount(), //
+				this.runningTotal, //
+				getPayee());
 	}
 
 	public String toStringLong() {
