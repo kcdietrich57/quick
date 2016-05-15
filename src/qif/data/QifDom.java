@@ -461,7 +461,7 @@ public class QifDom {
 			BigDecimal balance = BigDecimal.ZERO;
 
 			for (final Statement s : a.statements) {
-				if (!a.balanceStatement(balance, s)) {
+				if (!s.balance(balance, a)) {
 					break;
 				}
 

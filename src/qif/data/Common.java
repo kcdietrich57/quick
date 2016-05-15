@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -387,4 +388,78 @@ public class Common {
 
 		return parseDate(datestr);
 	}
-};
+
+	public static void listTransactions(List<GenericTxn> txns, int max) {
+		System.out.println("Transaction list");
+
+		for (int ii = Math.max(0, txns.size() - max); ii < txns.size(); ++ii) {
+			final GenericTxn t = txns.get(ii);
+			String cknum = "";
+			if (t instanceof NonInvestmentTxn) {
+				cknum = ((NonInvestmentTxn) t).chkNumber;
+			}
+			System.out.println(String.format("%s  %5s %10.2f  %10.2f", //
+					Common.getDateString(t.getDate()), //
+					cknum, t.getAmount(), t.runningTotal));
+		}
+	}
+
+	private static final int SUBSET_LIMIT = 10;
+
+	public static List<GenericTxn> findSubsetTotaling(List<GenericTxn> txns, BigDecimal diff) {
+		// First try removing one transaction, then two, ...
+		// Return a list of the fewest transactions totaling the desired amount
+		// Limit how far back we go.
+		final int lowlimit = Math.max(0, txns.size() - 50);
+
+		for (int nn = 1; (nn <= txns.size()) && (nn < SUBSET_LIMIT); ++nn) {
+			final List<GenericTxn> subset = findSubsetTotaling(txns, diff, nn, lowlimit, txns.size());
+
+			if (!subset.isEmpty()) {
+				return subset;
+			}
+		}
+
+		return new ArrayList<GenericTxn>();
+	}
+
+	// Try combinations of nn transactions, indexes between min and max-1.
+	// Return the first that adds up to tot.
+	private static List<GenericTxn> findSubsetTotaling( //
+			List<GenericTxn> txns, BigDecimal tot, int nn, int min, int max) {
+		final List<GenericTxn> ret = new ArrayList<GenericTxn>();
+
+		if (nn > (max - min)) {
+			return ret;
+		}
+
+		// Remove one transaction, starting with the most recent
+		for (int ii = max - 1; ii >= min; --ii) {
+			final GenericTxn t = txns.get(ii);
+			final BigDecimal newtot = tot.subtract(t.getAmount());
+
+			if ((nn == 1) && (newtot.signum() == 0)) {
+				// We are looking for one transaction and found it
+				ret.add(t);
+
+				return ret;
+			}
+
+			if ((nn > 1) && (nn <= ii)) {
+				// We need n-1 more transactions - we have already considered
+				// combinations with transactions after index ii, so start
+				// before that, looking for n-1 transactions adding up to the
+				// adjusted total.
+				final List<GenericTxn> ret2 = findSubsetTotaling(txns, newtot, nn - 1, min, ii);
+
+				if (!ret.isEmpty()) {
+					ret2.add(t);
+
+					return ret2;
+				}
+			}
+		}
+
+		return ret;
+	}
+}
