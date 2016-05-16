@@ -14,11 +14,11 @@ public enum FieldType {
 	TxnDate, TxnAmount, TxnClearedStatus, TxnNumber, TxnPayee, TxnMemo, TxnCategory, //
 	TxnAddress, TxnSplitCategory, TxnSplitMemo, TxnSplitAmount,
 
-	// Generic Txn
+	// Investment Txn
 	InvDate, InvAction, InvSecurity, InvPrice, InvQuantity, InvTransactionAmt, //
 	InvClearedStatus, InvFirstLine, InvMemo, InvCommission, InvXferAcct, InvXferAmt,
 
-	// Statement
+	// TODO one kind of Statement
 	StmtDate, StmtCredits, StmtDebits, StmtBalance,
 
 	// Statements
@@ -28,16 +28,5 @@ public enum FieldType {
 	SecName, SecSymbol, SecType, SecGoal,
 
 	// Price
-	PriceSymbol, PricePrice, PriceDate,
-
-	// Memorized transaction
-	MemtxnAddress, MemtxnAmortizationCurrentLoanBalance, //
-	MemtxnAmortizationFirstPaymentDate, MemtxnAmortizationInterestRate, //
-	MemtxnAmortizationNumberOfPaymentsAlreadyMade, //
-	MemtxnAmortizationNumberOfPeriodsPerYear, MemtxnAmortizationOriginalLoanAmount, //
-	MemtxnAmortizationTotalYearsForLoan, MemtxnAmount, MemtxnCategory, //
-	MemtxnCheckTransaction, MemtxnClearedStatus, MemtxnDepositTransaction, //
-	MemtxnElectronicPayeeTransaction, MemtxnInvestmentTransaction, MemtxnMemo, //
-	MemtxnPayee, MemtxnPaymentTransaction, MemtxnSplitAmount, MemtxnSplitCategory, //
-	MemtxnSplitMemo
+	PriceSymbol, PricePrice, PriceDate
 };

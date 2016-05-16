@@ -7,7 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 public class Security {
-	public int id;
+	public int secid;
 	public List<String> names;
 	public String symbol;
 	public String type;
@@ -24,7 +24,7 @@ public class Security {
 	List<SplitInfo> splits = new ArrayList<SplitInfo>();
 
 	public Security(String symbol) {
-		this.id = 0;
+		this.secid = 0;
 		this.symbol = symbol;
 
 		this.names = new ArrayList<String>();
@@ -33,7 +33,7 @@ public class Security {
 	}
 
 	public Security(Security other) {
-		this.id = other.id;
+		this.secid = other.secid;
 		this.names = new ArrayList<String>(other.names);
 		this.symbol = other.symbol;
 		this.type = other.type;
@@ -152,7 +152,7 @@ public class Security {
 	}
 
 	public String toString() {
-		String s = "Security[" + this.id + "]: '";
+		String s = "Security[" + this.secid + "]: '";
 
 		boolean first = true;
 		for (final String n : this.names) {

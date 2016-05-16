@@ -24,7 +24,7 @@ class SimpleTxn {
 		STOCKSPLIT, REMINDER
 	};
 
-	public final int id;
+	public final int txid;
 
 	public int domid;
 	public int acctid;
@@ -37,7 +37,7 @@ class SimpleTxn {
 	public SimpleTxn xtxn;
 
 	public SimpleTxn(int domid, int acctid) {
-		this.id = nextid++;
+		this.txid = nextid++;
 
 		this.domid = domid;
 		this.acctid = acctid;
@@ -50,7 +50,7 @@ class SimpleTxn {
 	}
 
 	public SimpleTxn(int domid, SimpleTxn other) {
-		this.id = nextid++;
+		this.txid = nextid++;
 
 		this.domid = domid;
 		this.acctid = other.acctid;
@@ -112,7 +112,7 @@ class SimpleTxn {
 	public String toStringLong() {
 		final QifDom dom = QifDom.getDomById(this.domid);
 
-		String s = "Tx" + this.id + ":";
+		String s = "Tx" + this.txid + ":";
 		s += " acct=" + dom.getAccount(this.acctid).name;
 		s += " amt=" + this.amount;
 		s += " memo=" + this.memo;
@@ -345,7 +345,7 @@ class NonInvestmentTxn extends GenericTxn {
 	public String toStringLong() {
 		final QifDom dom = QifDom.getDomById(this.domid);
 
-		String s = "Tx" + this.id + ":";
+		String s = "Tx" + this.txid + ":";
 		s += " acct=" + dom.getAccount(this.acctid).name;
 		s += " date=" + Common.getDateString(getDate());
 		s += " clr:" + this.clearedStatus;

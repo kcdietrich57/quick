@@ -6,13 +6,15 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import qif.data.Statement.StatementDetails;
+
 public class Account {
 	enum AccountType { //
 		Bank, CCard, Cash, Asset, Liability, Invest, InvPort, Inv401k, InvMutual;
 	}
 
 	public int domid;
-	public int id;
+	public int acctid;
 
 	public String name;
 	public AccountType type;
@@ -27,7 +29,7 @@ public class Account {
 
 	public Account(QifDom dom) {
 		this.domid = dom.domid;
-		this.id = 0;
+		this.acctid = 0;
 
 		this.name = "";
 		this.type = null;
@@ -43,11 +45,11 @@ public class Account {
 	public Account(int id, QifDom dom) {
 		this(dom);
 
-		this.id = id;
+		this.acctid = id;
 	}
 
 	public Account(Account other, QifDom dom) {
-		this(other.id, dom);
+		this(other.acctid, dom);
 
 		this.name = other.name;
 		this.type = other.type;
@@ -61,6 +63,24 @@ public class Account {
 		for (final Statement s : this.statements) {
 			this.statements.add(new Statement(s));
 		}
+	}
+
+	public Statement getStatement(StatementDetails det) {
+		for (final Statement s : this.statements) {
+			if (s.date.compareTo(det.date) > 0) {
+				break;
+			}
+
+			if ((s.date.compareTo(det.date) == 0) //
+					&& (s.balance.compareTo(det.close) == 0)) {
+				s.details = det;
+
+				return s;
+			}
+		}
+
+		Common.reportError("Can't find statement from log");
+		return null;
 	}
 
 	public Date getFirstTransactionDate() {
@@ -238,7 +258,7 @@ public class Account {
 	}
 
 	public String toString() {
-		String s = "Account" + this.id + ": " + this.name //
+		String s = "Account" + this.acctid + ": " + this.name //
 				+ " type=" + this.type //
 				+ " clbal=" + this.clearedBalance //
 				+ " bal=" + this.balance //
@@ -271,6 +291,8 @@ public class Account {
 				txns.add(t);
 			}
 		}
+
+		Common.sortTransactionsByDate(txns);
 
 		return txns;
 	}

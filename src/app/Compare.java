@@ -11,7 +11,7 @@ public class Compare {
 		final String file1 = "/tmp/qif/75to87.qif";
 		final String file2 = "/tmp/qif/87to16.qif";
 
-		final QifDomReader rdr = new QifDomReader();
+		final QifDomReader rdr = new QifDomReader(null);
 		final QifDom dom1 = rdr.load(file1);
 		final QifDom dom2 = rdr.load(dom1, file2);
 

@@ -19,25 +19,28 @@ import qif.data.Security.SplitInfo;
 
 public class QifDomReader {
 	private QFileReader rdr = null;
+	private File qifDir = null;
+
 	private QifDom dom = null;
 	private int nextAccountID = 1;
 	private int nextCategoryID = 1;
 	private int nextSecurityID = 1;
 
 	public static QifDom loadDom(String[] qifFiles) {
-		final QifDomReader rdr = new QifDomReader();
+		final QifDomReader rdr = new QifDomReader(new File(qifFiles[0]).getParentFile());
 		final QifDom dom = new QifDom();
 
 		for (final String fn : qifFiles) {
 			rdr.load(dom, fn);
 		}
 
-		rdr.postLoad(new File(qifFiles[0]).getParentFile());
+		rdr.postLoad();
 
 		return dom;
 	}
 
-	public QifDomReader() {
+	public QifDomReader(File qifDir) {
+		this.qifDir = qifDir;
 	}
 
 	public QifDom load(String fileName) {
@@ -60,22 +63,21 @@ public class QifDomReader {
 		processFile();
 
 		this.dom.cleanUpTransactions();
-		this.dom.validateStatements();
 
 		return this.dom;
 	}
 
-	public void postLoad(File dirFile) {
-		final File d = new File(dirFile, "quotes");
+	public void postLoad() {
+		final File d = new File(this.qifDir, "quotes");
 		loadSecurityPriceHistory(d);
 
 		this.dom.processSecurities();
 		this.dom.fixPortfolios();
 
-		final File dd = new File(dirFile, "statements");
+		final File dd = new File(this.qifDir, "statements");
 		loadStatements(dd);
-
-		this.dom.balanceStatements();
+		this.dom.validateStatements(new File(this.qifDir, "statmentLog.dat"));
+		this.dom.balanceStatements(new File(this.qifDir, "statmentLog.dat"));
 	}
 
 	private void loadSecurityPriceHistory(File quoteDirectory) {
@@ -360,7 +362,7 @@ public class QifDomReader {
 			if (existing != null) {
 				// TODO verify
 			} else {
-				cat.id = this.nextCategoryID++;
+				cat.catid = this.nextCategoryID++;
 				this.dom.addCategory(cat);
 			}
 		}
@@ -427,7 +429,7 @@ public class QifDomReader {
 			if (existing != null) {
 				this.dom.updateAccount(existing, acct);
 			} else {
-				acct.id = this.nextAccountID++;
+				acct.acctid = this.nextAccountID++;
 				this.dom.addAccount(acct);
 			}
 		}
@@ -492,7 +494,7 @@ public class QifDomReader {
 					existing.names.add(sec.getName());
 				}
 			} else {
-				sec.id = this.nextSecurityID++;
+				sec.secid = this.nextSecurityID++;
 				this.dom.addSecurity(sec);
 			}
 		}
@@ -570,7 +572,7 @@ public class QifDomReader {
 	public InvestmentTxn loadInvestmentTransaction() {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		final InvestmentTxn txn = new InvestmentTxn(this.dom.domid, this.dom.currAccount.id);
+		final InvestmentTxn txn = new InvestmentTxn(this.dom.domid, this.dom.currAccount.acctid);
 
 		for (;;) {
 			this.rdr.nextInvLine(qline);
@@ -664,7 +666,7 @@ public class QifDomReader {
 	public NonInvestmentTxn loadNonInvestmentTransaction() {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		final NonInvestmentTxn txn = new NonInvestmentTxn(this.dom.domid, this.dom.currAccount.id);
+		final NonInvestmentTxn txn = new NonInvestmentTxn(this.dom.domid, this.dom.currAccount.acctid);
 		SimpleTxn cursplit = null;
 
 		for (;;) {
@@ -793,7 +795,7 @@ public class QifDomReader {
 				break;
 			}
 
-			final Statement stmt = Statement.load(qfr, this.dom.domid, this.dom.currAccount.id);
+			final Statement stmt = Statement.load(qfr, this.dom.domid, this.dom.currAccount.acctid);
 			if (stmt == null) {
 				break;
 			}

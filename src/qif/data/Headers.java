@@ -75,28 +75,6 @@ public interface Headers {
 	public static final char INV_AccountForTransfer = 'L';
 	public static final char INV_AmountTransferred = '$';
 
-	// public static final char MEMTXN_CheckTransaction = 'KC';
-	// public static final char MEMTXN_DepositTransaction = 'KD';
-	// public static final char MEMTXN_PaymentTransaction = 'KP';
-	// public static final char MEMTXN_InvestmentTransaction = 'KI';
-	// public static final char MEMTXN_ElectronicPayeeTransaction = 'KE';
-	public static final char MEMTXN_Amount = 'T';
-	public static final char MEMTXN_ClearedStatus = 'C';
-	public static final char MEMTXN_Payee = 'P';
-	public static final char MEMTXN_Memo = 'M';
-	public static final char MEMTXN_Address = 'A';
-	public static final char MEMTXN_Category = 'L';
-	public static final char MEMTXN_SplitCategory = 'S';
-	public static final char MEMTXN_SplitMemo = 'E';
-	public static final char MEMTXN_SplitAmount = '$';
-	public static final char MEMTXN_AmortizationFirstPaymentDate = '1';
-	public static final char MEMTXN_AmortizationTotalYearsForLoan = '2';
-	public static final char MEMTXN_AmortizationNumberOfPaymentsAlreadyMade = '3';
-	public static final char MEMTXN_AmortizationNumberOfPeriodsPerYear = '4';
-	public static final char MEMTXN_AmortizationInterestRate = '5';
-	public static final char MEMTXN_AmortizationCurrentLoanBalance = '6';
-	public static final char MEMTXN_AmortizationOriginalLoanAmount = '7';
-
 	public static final char STMT_DATE = 'D';
 	public static final char STMT_CR = 'C';
 	public static final char STMT_DB = 'E';

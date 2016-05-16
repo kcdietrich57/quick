@@ -1,6 +1,5 @@
 package qif.data;
 
-import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,10 +13,9 @@ public class Statement {
 	public int domid;
 	public int acctid;
 	public Date date;
-	public BigDecimal credits;
-	public BigDecimal debits;
 	public BigDecimal openingBalance;
 	public BigDecimal balance;
+	StatementDetails details;
 
 	public List<GenericTxn> transactions;
 	public List<GenericTxn> unclearedTransactions;
@@ -26,14 +24,14 @@ public class Statement {
 		this.acctid = acctid;
 		this.domid = domid;
 		this.date = null;
-		this.credits = this.debits = this.openingBalance = this.balance = null;
+		this.openingBalance = null;
+		this.balance = null;
+		this.details = null;
 	}
 
 	public Statement(Statement other) {
 		this.acctid = other.acctid;
 		this.date = other.date;
-		this.credits = other.credits;
-		this.debits = other.debits;
 		this.balance = other.balance;
 	}
 
@@ -53,10 +51,8 @@ public class Statement {
 				stmt.date = Common.parseDate(qline.value);
 				break;
 			case StmtCredits:
-				stmt.credits = Common.getDecimal(qline.value);
-				break;
 			case StmtDebits:
-				stmt.debits = Common.getDecimal(qline.value);
+				// TODO not used
 				break;
 			case StmtBalance:
 				stmt.balance = Common.getDecimal(qline.value);
@@ -119,7 +115,7 @@ public class Statement {
 							? Common.getDateForEndOfMonth(year, month) //
 							: Common.getDate(year, month, day);
 
-					final Statement stmt = new Statement(dom.domid, dom.currAccount.id);
+					final Statement stmt = new Statement(dom.domid, dom.currAccount.acctid);
 					stmt.date = d;
 					stmt.balance = bal;
 
@@ -154,7 +150,11 @@ public class Statement {
 	}
 
 	public boolean balance(BigDecimal curbal, Account a) {
-		List<GenericTxn> txns = a.gatherTransactionsForStatement(this);
+		if (getTransactionsFromDetails(a)) {
+			return true;
+		}
+
+		final List<GenericTxn> txns = a.gatherTransactionsForStatement(this);
 		List<GenericTxn> uncleared = null;
 
 		final BigDecimal totaltx = Common.sumAmounts(txns);
@@ -173,17 +173,53 @@ public class Statement {
 
 		clearTransactions(curbal, txns, uncleared);
 
-		//System.out.println(" Stmt: " + a.name + " - " + this);
-		boolean ok = (diff.signum() == 0) || adjust();
+		final boolean ok = (diff.signum() == 0) || reconcile();
 
 		if (ok) {
-			logDetails(a);
+			this.details = new StatementDetails(this);
 		}
 
 		return ok;
 	}
 
-	private boolean adjust() {
+	private boolean getTransactionsFromDetails(Account a) {
+		if (this.details == null) {
+			return false;
+		}
+
+		final List<GenericTxn> txns = a.gatherTransactionsForStatement(this);
+		this.transactions = new ArrayList<GenericTxn>();
+
+		for (final TxInfo info : this.details.transactions) {
+			for (int ii = 0; ii < txns.size(); ++ii) {
+				final GenericTxn t = txns.get(ii);
+
+				if (info.date.compareTo(t.getDate()) == 0) {
+					if ((info.cknum == t.getCheckNumber()) //
+							&& (info.amount.compareTo(t.getAmount()) == 0)) {
+						this.transactions.add(t);
+						t.stmtdate = this.date;
+
+						txns.remove(ii);
+						break;
+					}
+				}
+
+				final long infoms = info.date.getTime();
+				final long tranms = t.getDate().getTime();
+
+				if (infoms < tranms) {
+					return false;
+				}
+			}
+		}
+
+		this.unclearedTransactions = txns;
+
+		return true;
+	}
+
+	private boolean reconcile() {
 		boolean done = false;
 		boolean abort = false;
 
@@ -217,7 +253,7 @@ public class Statement {
 			case 'r':
 			case 'u': {
 				final boolean isReconcile = s.charAt(0) == 'r';
-				List<GenericTxn> lst = (isReconcile) //
+				final List<GenericTxn> lst = (isReconcile) //
 						? this.unclearedTransactions //
 						: this.transactions;
 				final List<GenericTxn> txns = new ArrayList<GenericTxn>();
@@ -230,7 +266,7 @@ public class Statement {
 							final GenericTxn t = lst.get(n - 1);
 							txns.add(t);
 						}
-					} catch (Exception e) {
+					} catch (final Exception e) {
 						// be charitable
 					}
 				}
@@ -248,20 +284,120 @@ public class Statement {
 		return done && !abort;
 	}
 
-	private void logDetails(Account a) {
-		PrintStream ps = System.out;
+	static class TxInfo {
+		Date date;
+		int cknum;
+		BigDecimal amount;
 
-		ps.print(a.name + ";");
-		ps.print(Common.getDateString(this.date) + ";");
-		ps.print(String.format("%5.2f;%5.2f;%d", //
-				this.openingBalance, this.balance, this.transactions.size()));
-
-		for (GenericTxn t : this.transactions) {
-			ps.print(";" + Common.getDateString(t.getDate()) + ";" //
-					+ String.format("%5.2f", t.getAmount()));
+		public TxInfo() {
 		}
 
-		ps.println();
+		public TxInfo(GenericTxn tx) {
+			this.date = tx.getDate();
+			this.cknum = tx.getCheckNumber();
+			this.amount = tx.getAmount();
+		}
+
+		public String toString() {
+			return String.format("%s %5d %10.2f", //
+					Common.getDateString(this.date), this.cknum, this.amount);
+		}
+	}
+
+	static class StatementDetails {
+		int domid;
+		int acctid;
+		Date date;
+		BigDecimal open;
+		BigDecimal close;
+		List<TxInfo> transactions = new ArrayList<TxInfo>();
+		boolean dirty;
+
+		// Create details from statement object
+		public StatementDetails(Statement stat) {
+			this.domid = stat.domid;
+			this.acctid = stat.acctid;
+
+			// Mark this dirty so we will save it to file later
+			this.dirty = true;
+
+			captureDetails(stat);
+		}
+
+		// Load details object from file
+		public StatementDetails(QifDom dom, String s) {
+			parseStatementDetails(dom, s);
+
+			// Since it came from file, we needn't save it later
+			this.dirty = false;
+		}
+
+		private void captureDetails(Statement stat) {
+			this.date = stat.date;
+			this.open = stat.openingBalance;
+			this.close = stat.balance;
+
+			for (final GenericTxn t : stat.transactions) {
+				final TxInfo info = new TxInfo(t);
+
+				this.transactions.add(info);
+			}
+		}
+
+		private void parseStatementDetails(QifDom dom, String s) {
+			final StringTokenizer toker = new StringTokenizer(s, ";");
+
+			final String acctname = toker.nextToken().trim();
+			final String dateStr = toker.nextToken().trim();
+			final String openStr = toker.nextToken().trim();
+			final String closeStr = toker.nextToken().trim();
+			final String txcountStr = toker.nextToken().trim();
+
+			this.domid = dom.domid;
+			this.acctid = dom.findAccount(acctname).acctid;
+			this.date = Common.parseDate(dateStr);
+			this.open = new BigDecimal(openStr);
+			this.close = new BigDecimal(closeStr);
+
+			final int txcount = Integer.parseInt(txcountStr);
+
+			for (int ii = 0; ii < txcount; ++ii) {
+				final String tdateStr = toker.nextToken().trim();
+				final String cknumStr = toker.nextToken().trim();
+				final String amtStr = toker.nextToken().trim();
+
+				final TxInfo txinfo = new TxInfo();
+
+				txinfo.date = Common.parseDate(tdateStr);
+				txinfo.cknum = Integer.parseInt(cknumStr);
+				txinfo.amount = new BigDecimal(amtStr);
+
+				this.transactions.add(txinfo);
+			}
+		}
+
+		public String formatForSave(QifDom dom, Account a) {
+			String s = String.format("%s;%s;%5.2f;%5.2f;%d", //
+					a.name, Common.getDateString(this.date), //
+					this.open, this.close, this.transactions.size());
+
+			for (final TxInfo t : this.transactions) {
+				s += String.format(";%s;%s;%5.2f", //
+						Common.getDateString(t.date), //
+						t.cknum, t.amount);
+			}
+
+			return s;
+		}
+
+		public String toString() {
+			final String s = "" + this.domid + ":" + this.acctid + " " //
+					+ Common.getDateString(this.date) //
+					+ String.format("%10.2f  %10.2f %d tx", //
+							this.open, this.close, this.transactions.size());
+
+			return s;
+		}
 	}
 
 	public void print() {

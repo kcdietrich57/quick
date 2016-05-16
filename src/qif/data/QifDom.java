@@ -1,6 +1,12 @@
 ﻿
 package qif.data;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.LineNumberReader;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -13,6 +19,7 @@ import java.util.Map;
 
 import qif.data.Account.AccountType;
 import qif.data.SimpleTxn.Action;
+import qif.data.Statement.StatementDetails;
 
 //--------------------------------------------------------------------
 //TODO
@@ -219,22 +226,18 @@ public class QifDom {
 			}
 			txns.addAll(a.transactions);
 
-			final Comparator<GenericTxn> cpr = (o1, o2) -> {
-				return o1.getDate().compareTo(o2.getDate());
-			};
-
-			Collections.sort(txns, cpr);
+			Common.sortTransactionsByDate(txns);
 		}
 
 		return txns;
 	}
 
 	public void addAccount(Account acct) {
-		while (this.accounts.size() <= acct.id) {
+		while (this.accounts.size() <= acct.acctid) {
 			this.accounts.add(null);
 		}
 
-		this.accounts.set(acct.id, acct);
+		this.accounts.set(acct.acctid, acct);
 		this.accounts_bytime.add(acct);
 
 		this.currAccount = acct;
@@ -308,11 +311,11 @@ public class QifDom {
 			Common.reportError("Adding duplicate category");
 		}
 
-		while (this.categories.size() <= cat.id) {
+		while (this.categories.size() <= cat.catid) {
 			this.categories.add(null);
 		}
 
-		this.categories.set(cat.id, cat);
+		this.categories.set(cat.catid, cat);
 	}
 
 	public void addSecurity(Security sec) {
@@ -340,7 +343,7 @@ public class QifDom {
 
 			final Account acct = findAccount(s);
 
-			return (short) ((acct != null) ? (-acct.id) : 0);
+			return (short) ((acct != null) ? (-acct.acctid) : 0);
 		}
 
 		final int slash = s.indexOf('/');
@@ -351,7 +354,7 @@ public class QifDom {
 
 		final Category cat = findCategory(s);
 
-		return (cat != null) ? (cat.id) : 0;
+		return (cat != null) ? (cat.catid) : 0;
 	}
 
 	public Security findSecurityByName(String name) {
@@ -450,11 +453,52 @@ public class QifDom {
 		return (this.categories.isEmpty()) ? 1 : this.categories.size();
 	}
 
-	public void balanceStatements() {
+	// Read statement log file, filling in statement details.
+	// We will hook up the transactions later.
+	public void validateStatements(File logFile) {
+		if (!logFile.isFile()) {
+			return;
+		}
+
+		LineNumberReader stmtLogReader = null;
+
+		try {
+			stmtLogReader = new LineNumberReader(new FileReader(logFile));
+
+			String s = stmtLogReader.readLine();
+			while (s != null) {
+				final Statement.StatementDetails details = new StatementDetails(this, s);
+				addStatementDetails(details);
+				// We add the transactions to the statement later
+
+				s = stmtLogReader.readLine();
+			}
+		} catch (final Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (stmtLogReader != null) {
+				try {
+					stmtLogReader.close();
+				} catch (final IOException e) {
+				}
+			}
+		}
+	}
+
+	// Process unreconciled statements, using info from statement log file or
+	// matching statements and transactions and logging the results.
+	public void balanceStatements(File stmtlogFile) {
+		PrintWriter pw = null;
+		try {
+			pw = new PrintWriter(new FileWriter(stmtlogFile, true));
+		} catch (final IOException e) {
+			Common.reportError("Can't open stmt log file: " + stmtlogFile.getAbsolutePath());
+			return;
+		}
+
 		for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
 			final Account a = getAccount(acctid);
-			if (// !a.isNonInvestmentAccount() ||
-			a.statements.isEmpty()) {
+			if (a.statements.isEmpty()) {
 				continue;
 			}
 
@@ -465,8 +509,21 @@ public class QifDom {
 					break;
 				}
 
+				if (s.details.dirty) {
+					final String detailsStr = s.details.formatForSave(this, a);
+					pw.println(detailsStr);
+					pw.flush();
+				}
+
 				balance = s.balance;
 			}
+		}
+
+		try {
+			if (pw != null) {
+				pw.close();
+			}
+		} catch (final Exception e) {
 		}
 	}
 
@@ -589,17 +646,7 @@ public class QifDom {
 				continue;
 			}
 
-			final Comparator<GenericTxn> cmptor = (t1, t2) -> {
-				final int diff = t1.getDate().compareTo(t2.getDate());
-
-				if (diff != 0) {
-					return diff;
-				}
-
-				return t1.id - t2.id;
-			};
-
-			Collections.sort(a.transactions, cmptor);
+			Common.sortTransactionsByDate(a.transactions);
 		}
 	}
 
@@ -887,9 +934,6 @@ public class QifDom {
 		final List<InvestmentTxn> txns = new ArrayList<InvestmentTxn>(xins);
 		txns.addAll(xouts);
 		Collections.sort(txns, cpr);
-		// for (final InvestmentTxn t : txns) {
-		// System.out.println(t);
-		// }
 
 		Collections.sort(xins, cpr);
 		Collections.sort(xouts, cpr);
@@ -930,7 +974,7 @@ public class QifDom {
 			if (QifDom.verbose()) {
 				final String s = String.format(//
 						"%-20s : %5s(%2d) %s INSH=%10.3f (%2d txns) OUTSH=%10.3f (%2d txns)", //
-						t.getAccount().name, t.security.symbol, t.security.id, //
+						t.getAccount().name, t.security.symbol, t.security.secid, //
 						Common.getDateString(t.getDate()), //
 						inshrs, ins.size(), outshrs, outs.size());
 				System.out.println(s);
@@ -944,7 +988,7 @@ public class QifDom {
 						: "                          ";
 
 				final String s = String.format("%-20s : %5s(%2d) %s %s SHR=%10.3f", //
-						t.getAccount().name, t.security.symbol, t.security.id, //
+						t.getAccount().name, t.security.symbol, t.security.secid, //
 						Common.getDateString(t.getDate()), pad, t.quantity);
 				System.out.println(s);
 			}
@@ -996,23 +1040,14 @@ public class QifDom {
 		return numshrs;
 	}
 
-	public void validateStatements() {
-		for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
-			final Account a = getAccount(acctid);
+	private void addStatementDetails(StatementDetails details) {
+		final Account a = getAccount(details.acctid);
 
-			BigDecimal bal = BigDecimal.ZERO;
-			for (final Statement s : a.statements) {
-				if (s.credits == null || s.debits == null) {
-					continue;
-				}
-
-				bal = bal.add(s.credits);
-				bal = bal.subtract(s.debits);
-
-				if (!bal.equals(s.balance)) {
-					Common.reportError("Statement check failed: " + s);
-				}
-			}
+		final Statement s = a.getStatement(details);
+		if (s == null) {
+			Common.reportError("Can't find statement for details");
 		}
+
+		s.details = details;
 	}
-};
+}

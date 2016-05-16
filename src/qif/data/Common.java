@@ -6,6 +6,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -296,6 +298,20 @@ public class Common {
 
 	public static void write(PrintWriter pw, char key, String value) {
 		pw.println("" + key + value);
+	}
+
+	public static void sortTransactionsByDate(List<GenericTxn> txns) {
+		final Comparator<GenericTxn> cmptor = (t1, t2) -> {
+			final int diff = t1.getDate().compareTo(t2.getDate());
+
+			if (diff != 0) {
+				return diff;
+			}
+
+			return t1.txid - t2.txid;
+		};
+
+		Collections.sort(txns, cmptor);
 	}
 
 	// Return the index of the first transaction on or after a given date

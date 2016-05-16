@@ -4,7 +4,7 @@ package qif.data;
 import java.math.BigDecimal;
 
 public class Category {
-	public int id;
+	public int catid;
 
 	public String name;
 	public String description;
@@ -20,15 +20,15 @@ public class Category {
 	// }
 
 	public Category() {
-		this.id = (short) 0;
+		this.catid = (short) 0;
 	}
 
 	public Category(int id) {
-		this.id = id;
+		this.catid = id;
 	}
 
 	public Category(Category other) {
-		this(other.id);
+		this(other.catid);
 
 		this.name = other.name;
 		this.description = other.description;
@@ -39,7 +39,7 @@ public class Category {
 	}
 
 	public String toString() {
-		final String s = "Category" + this.id + ": " + this.name //
+		final String s = "Category" + this.catid + ": " + this.name //
 				+ " desc=" + this.description //
 				+ " tax=" + this.taxRelated //
 				+ " inccat=" + this.incomeCategory //
