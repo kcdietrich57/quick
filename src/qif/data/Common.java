@@ -431,22 +431,21 @@ public class Common {
 		for (int nn = 1; (nn <= txns.size()) && (nn < SUBSET_LIMIT); ++nn) {
 			final List<GenericTxn> subset = findSubsetTotaling(txns, diff, nn, lowlimit, txns.size());
 
-			if (!subset.isEmpty()) {
+			if (subset != null) {
 				return subset;
 			}
 		}
 
-		return new ArrayList<GenericTxn>();
+		return null;
 	}
 
 	// Try combinations of nn transactions, indexes between min and max-1.
 	// Return the first that adds up to tot.
 	private static List<GenericTxn> findSubsetTotaling( //
 			List<GenericTxn> txns, BigDecimal tot, int nn, int min, int max) {
-		final List<GenericTxn> ret = new ArrayList<GenericTxn>();
 
 		if (nn > (max - min)) {
-			return ret;
+			return null;
 		}
 
 		// Remove one transaction, starting with the most recent
@@ -456,6 +455,7 @@ public class Common {
 
 			if ((nn == 1) && (newtot.signum() == 0)) {
 				// We are looking for one transaction and found it
+				final List<GenericTxn> ret = new ArrayList<GenericTxn>();
 				ret.add(t);
 
 				return ret;
@@ -466,16 +466,16 @@ public class Common {
 				// combinations with transactions after index ii, so start
 				// before that, looking for n-1 transactions adding up to the
 				// adjusted total.
-				final List<GenericTxn> ret2 = findSubsetTotaling(txns, newtot, nn - 1, min, ii);
+				final List<GenericTxn> ret = findSubsetTotaling(txns, newtot, nn - 1, min, ii);
 
-				if (!ret.isEmpty()) {
-					ret2.add(t);
+				if (ret != null) {
+					ret.add(t);
 
-					return ret2;
+					return ret;
 				}
 			}
 		}
 
-		return ret;
+		return null;
 	}
 }

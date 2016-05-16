@@ -150,36 +150,39 @@ public class Statement {
 	}
 
 	public boolean balance(BigDecimal curbal, Account a) {
-		if (getTransactionsFromDetails(a)) {
-			return true;
-		}
+		boolean needsReconcile = false;
 
-		final List<GenericTxn> txns = a.gatherTransactionsForStatement(this);
-		List<GenericTxn> uncleared = null;
+		if (!getTransactionsFromDetails(a)) {
+			// Didn't load stmt info, try automatic reconciliation
+			final List<GenericTxn> txns = a.gatherTransactionsForStatement(this);
+			List<GenericTxn> uncleared = null;
 
-		final BigDecimal totaltx = Common.sumAmounts(txns);
-		BigDecimal diff = totaltx.add(curbal).subtract(this.balance);
+			final BigDecimal totaltx = Common.sumAmounts(txns);
+			BigDecimal diff = totaltx.add(curbal).subtract(this.balance);
 
-		if (diff.signum() != 0) {
-			uncleared = Common.findSubsetTotaling(txns, diff);
+			if (diff.signum() != 0) {
+				uncleared = Common.findSubsetTotaling(txns, diff);
 
-			if (uncleared.isEmpty()) {
-				System.out.println("Can't balance account: " + this);
-			} else {
-				diff = BigDecimal.ZERO;
-				txns.removeAll(uncleared);
+				if (uncleared == null) {
+					System.out.println("Can't automatically balance account: " + this);
+				} else {
+					diff = BigDecimal.ZERO;
+					txns.removeAll(uncleared);
+				}
 			}
+
+			clearTransactions(curbal, txns, uncleared);
+
+			needsReconcile = (this.details == null) || (diff.signum() != 0);
 		}
 
-		clearTransactions(curbal, txns, uncleared);
+		final boolean isBalanced = review(needsReconcile);
 
-		final boolean ok = (diff.signum() == 0) || reconcile();
-
-		if (ok) {
+		if (isBalanced && (this.details == null)) {
 			this.details = new StatementDetails(this);
 		}
 
-		return ok;
+		return isBalanced;
 	}
 
 	private boolean getTransactionsFromDetails(Account a) {
@@ -219,13 +222,17 @@ public class Statement {
 		return true;
 	}
 
-	private boolean reconcile() {
+	private boolean review(boolean reconcileNeeded) {
 		boolean done = false;
 		boolean abort = false;
 
 		while (!done && !abort) {
 			arrangeTransactionsForDisplay(this.transactions);
 			print();
+
+			if (!reconcileNeeded) {
+				return true;
+			}
 
 			final BigDecimal diff = checkBalance();
 			final boolean ok = diff.signum() == 0;
