@@ -55,10 +55,25 @@ import qif.data.Statement.StatementDetails;
 // 5/7 Manage security price history separately
 // 5/7 Portfolio market value
 // 5/7 round account value to nearest cent
+// 5/16 Review/reconcile statments
+//
+// Persist info in extended QIF files
+// Synchronize data with updated qif file
 //Specify expected statements per account
 //Prompt for info for missing statements; persist information
 //
-// Splits
+// Merge/compare files (load mulitple qif data files)
+//
+// REPORTS
+// Account as of date - incl last statement
+// Net worth vs time
+// Account value vs time
+// Categories vs time
+// Cash flow
+// Investment income
+//
+// INVESTMENTS
+// Stock Splits
 // Dump portfolio for each month (positions)
 // Associate security sales with purchases (lots)
 // ShrsIn/ShrsOut - add/remove
@@ -70,20 +85,14 @@ import qif.data.Statement.StatementDetails;
 // Optionally include non-vested options in portfolio (separately, perhaps)
 // Exclude expired options
 // Investment statement with additional info for securities
-// Persist info in extended QIF files
 //
-// Assets
-// Loans
-//
-// Merge/compare files
-// Synchronize data with updated qif file
+// ASSETS
+// LOANS
 //
 //Code review/cleanup - ids for more fields?
 //
 // Encryption, security
-// Persistence
 // GUI Register
-// Reports
 // Graphs
 //
 // Look up transaction by id?

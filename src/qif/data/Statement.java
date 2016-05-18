@@ -228,6 +228,7 @@ public class Statement {
 
 		while (!done && !abort) {
 			arrangeTransactionsForDisplay(this.transactions);
+			arrangeTransactionsForDisplay(this.unclearedTransactions);
 			print();
 
 			if (!reconcileNeeded) {
@@ -464,12 +465,17 @@ public class Statement {
 
 	private void arrangeTransactionsForDisplay(List<GenericTxn> txns) {
 		Collections.sort(txns, (o1, o2) -> {
-			final int diff = o1.getCheckNumber() - o2.getCheckNumber();
+			int diff = o1.getCheckNumber() - o2.getCheckNumber();
 			if (diff != 0) {
 				return diff;
 			}
 
-			return o1.getDate().compareTo(o1.getDate());
+			diff = o1.getDate().compareTo(o1.getDate());
+			if (diff != 0) {
+				return diff;
+			}
+
+			return o1.txid - o2.txid;
 		});
 	}
 
