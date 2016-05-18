@@ -399,7 +399,7 @@ public class QFileReader {
 			return FieldType.StmtBalance;
 
 		default:
-			Common.reportError("Bad field type for statment: " + key);
+			Common.reportError("Bad field type for statement: " + key);
 			return FieldType.EndOfSection;
 		}
 	}
@@ -416,7 +416,7 @@ public class QFileReader {
 			return FieldType.StmtsMonthly;
 
 		default:
-			Common.reportError("Bad field type for statments: " + key);
+			Common.reportError("Bad field type for statements: " + key);
 			return FieldType.EndOfSection;
 		}
 	}

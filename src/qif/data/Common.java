@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -422,30 +421,29 @@ public class Common {
 
 	private static final int SUBSET_LIMIT = 10;
 
-	public static List<GenericTxn> findSubsetTotaling(List<GenericTxn> txns, BigDecimal diff) {
+	public static void findSubsetTotaling(List<GenericTxn> txns, List<GenericTxn> subset, BigDecimal diff) {
 		// First try removing one transaction, then two, ...
 		// Return a list of the fewest transactions totaling the desired amount
 		// Limit how far back we go.
 		final int lowlimit = Math.max(0, txns.size() - 50);
 
 		for (int nn = 1; (nn <= txns.size()) && (nn < SUBSET_LIMIT); ++nn) {
-			final List<GenericTxn> subset = findSubsetTotaling(txns, diff, nn, lowlimit, txns.size());
+			findSubsetTotaling(txns, subset, diff, nn, lowlimit, txns.size());
 
-			if (subset != null) {
-				return subset;
+			if (!subset.isEmpty()) {
+				return;
 			}
 		}
-
-		return null;
 	}
 
 	// Try combinations of nn transactions, indexes between min and max-1.
 	// Return the first that adds up to tot.
-	private static List<GenericTxn> findSubsetTotaling( //
-			List<GenericTxn> txns, BigDecimal tot, int nn, int min, int max) {
+	private static void findSubsetTotaling( //
+			List<GenericTxn> txns, List<GenericTxn> subset, //
+			BigDecimal tot, int nn, int min, int max) {
 
 		if (nn > (max - min)) {
-			return null;
+			return;
 		}
 
 		// Remove one transaction, starting with the most recent
@@ -455,10 +453,8 @@ public class Common {
 
 			if ((nn == 1) && (newtot.signum() == 0)) {
 				// We are looking for one transaction and found it
-				final List<GenericTxn> ret = new ArrayList<GenericTxn>();
-				ret.add(t);
-
-				return ret;
+				subset.add(t);
+				return;
 			}
 
 			if ((nn > 1) && (nn <= ii)) {
@@ -466,16 +462,13 @@ public class Common {
 				// combinations with transactions after index ii, so start
 				// before that, looking for n-1 transactions adding up to the
 				// adjusted total.
-				final List<GenericTxn> ret = findSubsetTotaling(txns, newtot, nn - 1, min, ii);
+				findSubsetTotaling(txns, subset, newtot, nn - 1, min, ii);
 
-				if (ret != null) {
-					ret.add(t);
-
-					return ret;
+				if (!subset.isEmpty()) {
+					subset.add(t);
+					return;
 				}
 			}
 		}
-
-		return null;
 	}
 }

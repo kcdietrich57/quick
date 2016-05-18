@@ -55,7 +55,7 @@ import qif.data.Statement.StatementDetails;
 // 5/7 Manage security price history separately
 // 5/7 Portfolio market value
 // 5/7 round account value to nearest cent
-// 5/16 Review/reconcile statments
+// 5/16 Review/reconcile statements
 //
 // Persist info in extended QIF files
 // Synchronize data with updated qif file

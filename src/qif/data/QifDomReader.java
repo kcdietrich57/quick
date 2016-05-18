@@ -76,8 +76,8 @@ public class QifDomReader {
 
 		final File dd = new File(this.qifDir, "statements");
 		loadStatements(dd);
-		this.dom.validateStatements(new File(this.qifDir, "statmentLog.dat"));
-		this.dom.balanceStatements(new File(this.qifDir, "statmentLog.dat"));
+		this.dom.validateStatements(new File(this.qifDir, "statementLog.dat"));
+		this.dom.balanceStatements(new File(this.qifDir, "statementLog.dat"));
 	}
 
 	private void loadSecurityPriceHistory(File quoteDirectory) {

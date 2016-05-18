@@ -155,15 +155,15 @@ public class Statement {
 		if (!getTransactionsFromDetails(a)) {
 			// Didn't load stmt info, try automatic reconciliation
 			final List<GenericTxn> txns = a.gatherTransactionsForStatement(this);
-			List<GenericTxn> uncleared = null;
+			final List<GenericTxn> uncleared = new ArrayList<GenericTxn>();
 
 			final BigDecimal totaltx = Common.sumAmounts(txns);
 			BigDecimal diff = totaltx.add(curbal).subtract(this.balance);
 
 			if (diff.signum() != 0) {
-				uncleared = Common.findSubsetTotaling(txns, diff);
+				Common.findSubsetTotaling(txns, uncleared, diff);
 
-				if (uncleared == null) {
+				if (uncleared.isEmpty()) {
 					System.out.println("Can't automatically balance account: " + this);
 				} else {
 					diff = BigDecimal.ZERO;
