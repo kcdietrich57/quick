@@ -496,7 +496,7 @@ public class QifDom {
 
 	// Process unreconciled statements, using info from statement log file or
 	// matching statements and transactions and logging the results.
-	public void balanceStatements(File stmtlogFile) {
+	public void reconcileStatements(File stmtlogFile) {
 		PrintWriter pw = null;
 		try {
 			pw = new PrintWriter(new FileWriter(stmtlogFile, true));
@@ -507,25 +507,7 @@ public class QifDom {
 
 		for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
 			final Account a = getAccount(acctid);
-			if (a.statements.isEmpty()) {
-				continue;
-			}
-
-			BigDecimal balance = BigDecimal.ZERO;
-
-			for (final Statement s : a.statements) {
-				if (!s.balance(balance, a)) {
-					break;
-				}
-
-				if (s.details.dirty) {
-					final String detailsStr = s.details.formatForSave(this, a);
-					pw.println(detailsStr);
-					pw.flush();
-				}
-
-				balance = s.balance;
-			}
+			a.reconcileStatements(pw);
 		}
 
 		try {

@@ -149,7 +149,7 @@ public class Statement {
 		this.unclearedTransactions = unclearedTxns;
 	}
 
-	public boolean balance(BigDecimal curbal, Account a) {
+	public boolean reconcile(BigDecimal curbal, Account a, String msg) {
 		boolean needsReconcile = false;
 
 		if (!getTransactionsFromDetails(a)) {
@@ -176,7 +176,7 @@ public class Statement {
 			needsReconcile = (this.details == null) || (diff.signum() != 0);
 		}
 
-		final boolean isBalanced = review(needsReconcile);
+		final boolean isBalanced = review(needsReconcile, msg);
 
 		if (isBalanced && (this.details == null)) {
 			this.details = new StatementDetails(this);
@@ -222,14 +222,14 @@ public class Statement {
 		return true;
 	}
 
-	private boolean review(boolean reconcileNeeded) {
+	private boolean review(boolean reconcileNeeded, String msg) {
 		boolean done = false;
 		boolean abort = false;
 
 		while (!done && !abort) {
 			arrangeTransactionsForDisplay(this.transactions);
 			arrangeTransactionsForDisplay(this.unclearedTransactions);
-			print();
+			print(msg);
 
 			if (!reconcileNeeded) {
 				return true;
@@ -408,14 +408,14 @@ public class Statement {
 		}
 	}
 
-	public void print() {
+	public void print(String msg) {
 		final QifDom dom = QifDom.getDomById(this.domid);
 		final Account a = dom.getAccount(this.acctid);
 
 		System.out.println();
 		System.out.println("-------------------------------------------------------");
-		System.out.println("Reconciled statement:" //
-				+ "  " + Common.getDateString(this.date) //
+		System.out.println(msg);
+		System.out.println("  " + Common.getDateString(this.date) //
 				+ " " + this.balance //
 				+ "  " + a.name);
 		System.out.println("-------------------------------------------------------");

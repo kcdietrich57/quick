@@ -1,5 +1,6 @@
 ﻿package qif.data;
 
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -168,6 +169,32 @@ public class Account {
 		}
 
 		return -1;
+	}
+
+	public void reconcileStatements(PrintWriter pw) {
+
+		if (this.statements.isEmpty()) {
+			return;
+		}
+
+		BigDecimal balance = BigDecimal.ZERO;
+
+		for (int ii = 0; ii < this.statements.size(); ++ii) {
+			final Statement s = this.statements.get(ii);
+			if (!s.reconcile(balance, this, //
+					"Reconciling statement " + (ii + 1) //
+							+ " of " + this.statements.size())) {
+				break;
+			}
+
+			if (s.details.dirty) {
+				final String detailsStr = s.details.formatForSave(QifDom.getDomById(this.domid), this);
+				pw.println(detailsStr);
+				pw.flush();
+			}
+
+			balance = s.balance;
+		}
 	}
 
 	public void reportStatus(String interval) {
