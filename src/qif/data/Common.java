@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -399,9 +400,19 @@ public class Common {
 	}
 
 	public static Date getDateForEndOfMonth(int year, int month) {
-		final String datestr = "" + month + "/" + MONTH_DAYS[month - 1] + "/" + year;
+		int mdays = MONTH_DAYS[month - 1];
 
-		return parseDate(datestr);
+		String datestr = "" + month + "/" + mdays + "/" + year;
+		Date d = parseDate(datestr);
+		Calendar c = Calendar.getInstance();
+		c.setTime(d);
+		if (c.get(Calendar.DAY_OF_MONTH) != mdays) {
+			--mdays;
+			datestr = "" + month + "/" + mdays + "/" + year;
+			d = parseDate(datestr);
+		}
+
+		return d;
 	}
 
 	public static void listTransactions(List<GenericTxn> txns, int max) {

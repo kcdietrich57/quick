@@ -260,21 +260,39 @@ public class Statement {
 
 			case 'r':
 			case 'u': {
+				if (s.startsWith("rall")) {
+					clearAllTransactions();
+					break;
+				}
+				if (s.startsWith("uall")) {
+					unclearAllTransactions();
+					break;
+				}
+
 				final boolean isReconcile = s.charAt(0) == 'r';
 				final List<GenericTxn> lst = (isReconcile) //
 						? this.unclearedTransactions //
 						: this.transactions;
 				final List<GenericTxn> txns = new ArrayList<GenericTxn>();
 				final StringTokenizer toker = new StringTokenizer(s.substring(1));
+				String token = "";
 
 				while (toker.hasMoreTokens()) {
 					try {
-						final int n = Integer.parseInt(toker.nextToken());
-						if ((n > 0) && (n <= lst.size())) {
+						int[] range = new int[2];
+
+						token = toker.nextToken();
+						parseRange(token, range);
+
+						final int begin = range[0];
+						final int end = range[1];
+
+						for (int n = begin; (n > 0) && (n <= end) && (n <= lst.size()); ++n) {
 							final GenericTxn t = lst.get(n - 1);
 							txns.add(t);
 						}
 					} catch (final Exception e) {
+						System.out.println("Bad arg: " + token);
 						// be charitable
 					}
 				}
@@ -290,6 +308,22 @@ public class Statement {
 		}
 
 		return done && !abort;
+	}
+
+	private void parseRange(String s, int[] range) {
+		range[0] = range[1] = 0;
+		int dash = s.indexOf('-');
+
+		String s1 = (dash >= 0) ? s.substring(0, dash) : s;
+		String s2 = (dash >= 0) ? s.substring(dash + 1) : s1;
+
+		if ((s1.length() == 0) || !Character.isDigit(s1.charAt(0)) || //
+				(s2.length() == 0) || !Character.isDigit(s2.charAt(0))) {
+			return;
+		}
+
+		range[0] = Integer.parseInt(s1);
+		range[1] = Integer.parseInt(s2);
 	}
 
 	static class TxInfo {
@@ -438,6 +472,14 @@ public class Statement {
 		}
 	}
 
+	private void clearAllTransactions() {
+		clearTransactions(this.unclearedTransactions);
+	}
+
+	private void unclearAllTransactions() {
+		unclearTransactions(this.transactions);
+	}
+
 	private void clearTransactions(List<GenericTxn> txns) {
 		for (final GenericTxn t : txns) {
 			t.stmtdate = this.date;
@@ -452,8 +494,8 @@ public class Statement {
 			t.stmtdate = null;
 		}
 
-		this.transactions.removeAll(txns);
 		this.unclearedTransactions.addAll(txns);
+		this.transactions.removeAll(txns);
 	}
 
 	private BigDecimal checkBalance() {
