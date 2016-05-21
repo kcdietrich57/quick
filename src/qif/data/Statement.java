@@ -246,6 +246,7 @@ public class Statement {
 			if ((s == null) || (s.length() == 0)) {
 				s = "q";
 			}
+			s = s.trim();
 
 			switch (s.charAt(0)) {
 			case 'a':
