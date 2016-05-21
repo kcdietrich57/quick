@@ -404,7 +404,7 @@ public class Common {
 
 		String datestr = "" + month + "/" + mdays + "/" + year;
 		Date d = parseDate(datestr);
-		Calendar c = Calendar.getInstance();
+		final Calendar c = Calendar.getInstance();
 		c.setTime(d);
 		if (c.get(Calendar.DAY_OF_MONTH) != mdays) {
 			--mdays;

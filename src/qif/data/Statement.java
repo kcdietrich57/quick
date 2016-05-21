@@ -225,10 +225,13 @@ public class Statement {
 	private boolean review(boolean reconcileNeeded, String msg) {
 		boolean done = false;
 		boolean abort = false;
+		boolean sort = true;
 
 		while (!done && !abort) {
-			arrangeTransactionsForDisplay(this.transactions);
-			arrangeTransactionsForDisplay(this.unclearedTransactions);
+			if (sort) {
+				arrangeTransactionsForDisplay(this.transactions);
+				arrangeTransactionsForDisplay(this.unclearedTransactions);
+			}
 			print(msg);
 
 			if (!reconcileNeeded) {
@@ -259,6 +262,18 @@ public class Statement {
 				}
 				break;
 
+			case 's':
+				if (s.startsWith("sort")) {
+					sort = true;
+				}
+				break;
+
+			case 'n':
+				if (s.startsWith("nosort")) {
+					sort = false;
+				}
+				break;
+
 			case 'r':
 			case 'u': {
 				if (s.startsWith("rall")) {
@@ -280,7 +295,7 @@ public class Statement {
 
 				while (toker.hasMoreTokens()) {
 					try {
-						int[] range = new int[2];
+						final int[] range = new int[2];
 
 						token = toker.nextToken();
 						parseRange(token, range);
@@ -313,10 +328,10 @@ public class Statement {
 
 	private void parseRange(String s, int[] range) {
 		range[0] = range[1] = 0;
-		int dash = s.indexOf('-');
+		final int dash = s.indexOf('-');
 
-		String s1 = (dash >= 0) ? s.substring(0, dash) : s;
-		String s2 = (dash >= 0) ? s.substring(dash + 1) : s1;
+		final String s1 = (dash >= 0) ? s.substring(0, dash) : s;
+		final String s2 = (dash >= 0) ? s.substring(dash + 1) : s1;
 
 		if ((s1.length() == 0) || !Character.isDigit(s1.charAt(0)) || //
 				(s2.length() == 0) || !Character.isDigit(s2.charAt(0))) {
