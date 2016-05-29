@@ -204,7 +204,7 @@ public class Account {
 			System.out.println("Statements for " + getDisplayName(36) + ": " //
 					+ this.statements.size());
 
-			int nn = Math.max(0, this.statements.size() - 12);
+			final int nn = Math.max(0, this.statements.size() - 12);
 
 			for (int ii = nn; ii < this.statements.size(); ++ii) {
 				final Statement s = this.statements.get(ii);
