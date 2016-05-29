@@ -73,7 +73,7 @@ public class Account {
 			}
 
 			if ((s.date.compareTo(det.date) == 0) //
-					&& (s.balance.compareTo(det.close) == 0)) {
+					&& (s.balance.compareTo(det.closeBalance) == 0)) {
 				s.details = det;
 
 				return s;
@@ -198,24 +198,37 @@ public class Account {
 	}
 
 	public void reportStatus(String interval) {
-		System.out.println(String.format("Statements for  %-36s:", //
-				getDisplayName(36)));
+		if (this.statements.isEmpty()) {
+			System.out.println("No statements for " + getDisplayName(36));
+		} else {
+			System.out.println("Statements for " + getDisplayName(36) + ": " //
+					+ this.statements.size());
 
-		for (final Statement s : this.statements) {
-			System.out.println(String.format("  %s  %3d tx  %10.2f", //
-					Common.getDateString(s.date), s.transactions.size(), s.balance));
-		}
+			int nn = Math.max(0, this.statements.size() - 12);
 
-		System.out.println("Uncleared transactions:");
-
-		for (final GenericTxn t : this.transactions) {
-			if (t.stmtdate != null) {
-				continue;
+			for (int ii = nn; ii < this.statements.size(); ++ii) {
+				final Statement s = this.statements.get(ii);
+				System.out.println(String.format("  %s  %3d tx  %10.2f", //
+						Common.getDateString(s.date), s.transactions.size(), s.balance));
 			}
 
-			System.out.println(String.format("  %s  %10.2f  %s", //
-					Common.getDateString(t.getDate()), //
-					t.getAmount(), t.getPayee()));
+			System.out.println("Uncleared transactions as of last statement:");
+
+			for (final GenericTxn t : this.statements.get(this.statements.size() - 1).unclearedTransactions) {
+				System.out.println(String.format("  %s  %10.2f  %s", //
+						Common.getDateString(t.getDate()), //
+						t.getAmount(), t.getPayee()));
+			}
+
+			int unclearedCount = 0;
+
+			for (final GenericTxn t : this.transactions) {
+				if (t.stmtdate == null) {
+					++unclearedCount;
+				}
+			}
+
+			System.out.println("Total uncleared transactions: " + unclearedCount);
 		}
 
 		System.out.println(String.format("Current value: %10.2f", getCurrentValue()));

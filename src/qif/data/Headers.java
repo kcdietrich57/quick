@@ -82,6 +82,7 @@ public interface Headers {
 
 	public static final char STMTS_ACCOUNT = 'N';
 	public static final char STMTS_MONTHLY = 'M';
+	public static final char STMTS_SECURITY = 'S';
 
 	public static final char END = '^';
 };

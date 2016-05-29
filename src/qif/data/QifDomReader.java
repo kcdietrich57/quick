@@ -14,6 +14,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import qif.data.Account.AccountType;
 import qif.data.QFileReader.SectionType;
 import qif.data.Security.SplitInfo;
 
@@ -445,6 +446,11 @@ public class QifDomReader {
 
 			switch (qline.type) {
 			case EndOfSection:
+				// TODO hack for bad data
+				if (acct.name.endsWith("Checking")) {
+					acct.type = AccountType.Bank;
+				}
+
 				return acct;
 
 			case AcctType:
@@ -758,13 +764,13 @@ public class QifDomReader {
 				break;
 			}
 
-			final Price price = Price.load(this.rdr);
+			final QPrice price = Price.load(this.rdr);
 			if (price == null) {
 				break;
 			}
 
 			final Security sec = this.dom.findSecurityBySymbol(price.symbol);
-			sec.addPrice(price, true);
+			sec.addPrice(price.price, true);
 		}
 	}
 

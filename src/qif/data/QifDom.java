@@ -417,15 +417,32 @@ public class QifDom {
 		BigDecimal netWorth = BigDecimal.ZERO;
 
 		final AccountType atypes[] = { //
-				AccountType.Bank, AccountType.CCard, AccountType.Cash, //
-				AccountType.Asset, AccountType.Liability, AccountType.Invest, //
-				AccountType.InvPort, AccountType.Inv401k, AccountType.InvMutual //
+				AccountType.Bank, AccountType.Cash, AccountType.Asset, //
+				AccountType.CCard, AccountType.Liability, //
+				AccountType.Invest, AccountType.InvPort, //
+				AccountType.InvMutual, AccountType.Inv401k, //
+		};
+		final AccountType sections[] = { //
+				AccountType.Bank, //
+				AccountType.CCard, //
+				AccountType.Invest, //
+				AccountType.InvMutual //
+		};
+		final String sectionName[] = { //
+				"Bank Accounts", "Credit Accounts", //
+				"Investment Accounts", "Retirement Accounts" //
 		};
 
-		for (final AccountType at : atypes) {
-			BigDecimal subtotal = BigDecimal.ZERO;
+		int snum = 0;
+		BigDecimal subtotal = BigDecimal.ZERO;
 
-			System.out.println("======== " + at + " accounts ========");
+		for (final AccountType at : atypes) {
+			if ((snum < sections.length) && (at == sections[snum])) {
+				System.out.println(String.format("Section Total: %15.2f", subtotal));
+				subtotal = BigDecimal.ZERO;
+				System.out.println("======== " + sectionName[snum] + " accounts ========");
+				++snum;
+			}
 
 			for (final Account a : this.accounts) {
 				if ((a != null) && (a.type == at)) {
@@ -435,9 +452,9 @@ public class QifDom {
 					subtotal = subtotal.add(amt);
 				}
 			}
-
-			System.out.println(String.format("Section Total: %15.2f", subtotal));
 		}
+
+		System.out.println(String.format("Section Total: %15.2f", subtotal));
 
 		System.out.println();
 		System.out.println(String.format("Balance: %15.2f", netWorth));

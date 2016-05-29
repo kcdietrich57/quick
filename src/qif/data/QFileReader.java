@@ -47,6 +47,7 @@ import static qif.data.Headers.SEC_SYMBOL;
 import static qif.data.Headers.SEC_TYPE;
 import static qif.data.Headers.STMTS_ACCOUNT;
 import static qif.data.Headers.STMTS_MONTHLY;
+import static qif.data.Headers.STMTS_SECURITY;
 import static qif.data.Headers.STMT_BAL;
 import static qif.data.Headers.STMT_CR;
 import static qif.data.Headers.STMT_DATE;
@@ -414,6 +415,9 @@ public class QFileReader {
 
 		case STMTS_MONTHLY:
 			return FieldType.StmtsMonthly;
+
+		case STMTS_SECURITY:
+			return FieldType.StmtsSecurity;
 
 		default:
 			Common.reportError("Bad field type for statements: " + key);

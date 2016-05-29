@@ -127,6 +127,9 @@ public class Statement {
 				break;
 			}
 
+			case StmtsSecurity:
+				break;
+
 			default:
 				Common.reportError("syntax error");
 			}
@@ -192,6 +195,7 @@ public class Statement {
 
 		final List<GenericTxn> txns = a.gatherTransactionsForStatement(this);
 		this.transactions = new ArrayList<GenericTxn>();
+		final List<TxInfo> badinfo = new ArrayList<TxInfo>();
 
 		for (final TxInfo info : this.details.transactions) {
 			for (int ii = 0; ii < txns.size(); ++ii) {
@@ -200,8 +204,12 @@ public class Statement {
 				if (info.date.compareTo(t.getDate()) == 0) {
 					if ((info.cknum == t.getCheckNumber()) //
 							&& (info.amount.compareTo(t.getAmount()) == 0)) {
+						if (t.stmtdate != null) {
+							Common.reportError("Reconciling transaction twice:\n" //
+									+ t.toString());
+						}
+
 						this.transactions.add(t);
-						t.stmtdate = this.date;
 
 						txns.remove(ii);
 						break;
@@ -212,12 +220,24 @@ public class Statement {
 				final long tranms = t.getDate().getTime();
 
 				if (infoms < tranms) {
-					return false;
+					badinfo.add(info);
+					break;
 				}
 			}
 		}
 
 		this.unclearedTransactions = txns;
+
+		if (!badinfo.isEmpty()) {
+			this.details.transactions.removeAll(badinfo);
+			Common.reportWarning("Can't find " + badinfo.size() + " reconciled transactions:\n" //
+					+ badinfo.toString());
+			return false;
+		}
+
+		for (final GenericTxn t : this.transactions) {
+			t.stmtdate = this.date;
+		}
 
 		return true;
 	}
@@ -271,6 +291,7 @@ public class Statement {
 			case 'n':
 				if (s.startsWith("nosort")) {
 					sort = false;
+					break;
 				}
 				break;
 
@@ -366,9 +387,10 @@ public class Statement {
 		int domid;
 		int acctid;
 		Date date;
-		BigDecimal open;
-		BigDecimal close;
+		BigDecimal openBalance;
+		BigDecimal closeBalance;
 		List<TxInfo> transactions = new ArrayList<TxInfo>();
+		List<SecurityPosition> positions = new ArrayList<SecurityPosition>();
 		boolean dirty;
 
 		// Create details from statement object
@@ -392,12 +414,11 @@ public class Statement {
 
 		private void captureDetails(Statement stat) {
 			this.date = stat.date;
-			this.open = stat.openingBalance;
-			this.close = stat.balance;
+			this.openBalance = stat.openingBalance;
+			this.closeBalance = stat.balance;
 
 			for (final GenericTxn t : stat.transactions) {
 				final TxInfo info = new TxInfo(t);
-
 				this.transactions.add(info);
 			}
 		}
@@ -414,8 +435,8 @@ public class Statement {
 			this.domid = dom.domid;
 			this.acctid = dom.findAccount(acctname).acctid;
 			this.date = Common.parseDate(dateStr);
-			this.open = new BigDecimal(openStr);
-			this.close = new BigDecimal(closeStr);
+			this.openBalance = new BigDecimal(openStr);
+			this.closeBalance = new BigDecimal(closeStr);
 
 			final int txcount = Integer.parseInt(txcountStr);
 
@@ -437,7 +458,7 @@ public class Statement {
 		public String formatForSave(QifDom dom, Account a) {
 			String s = String.format("%s;%s;%5.2f;%5.2f;%d", //
 					a.name, Common.getDateString(this.date), //
-					this.open, this.close, this.transactions.size());
+					this.openBalance, this.closeBalance, this.transactions.size());
 
 			for (final TxInfo t : this.transactions) {
 				s += String.format(";%s;%s;%5.2f", //
@@ -452,7 +473,7 @@ public class Statement {
 			final String s = "" + this.domid + ":" + this.acctid + " " //
 					+ Common.getDateString(this.date) //
 					+ String.format("%10.2f  %10.2f %d tx", //
-							this.open, this.close, this.transactions.size());
+							this.openBalance, this.closeBalance, this.transactions.size());
 
 			return s;
 		}
@@ -484,6 +505,20 @@ public class Statement {
 				final GenericTxn t = this.unclearedTransactions.get(ii);
 
 				System.out.println(String.format("%3d: ", ii + 1) + t.toString());
+			}
+		}
+
+		if ((this.details != null) && !this.details.positions.isEmpty()) {
+			System.out.println("Securities:");
+
+			for (final SecurityPosition p : this.details.positions) {
+				final String sn = p.security.getName();
+				final BigDecimal sb = p.shares;
+				// SecurityPosition spos =
+				// dom.portfolio.getPosition(p.security);
+				final BigDecimal sprice = p.security.getPriceForDate(this.date).price;
+
+				System.out.println("  " + sn + " " + sb + " shares" + " Price: " + sprice);
 			}
 		}
 	}

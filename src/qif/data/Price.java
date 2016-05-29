@@ -6,9 +6,6 @@ import java.util.Date;
 public class Price {
 	public static final Price ZERO = new Price(new BigDecimal(0));
 
-	// TODO get rid of symbol here
-	public String symbol;
-
 	// Price at the specified date
 	public BigDecimal price;
 	// Current price adjusted for splits
@@ -16,7 +13,6 @@ public class Price {
 	public Date date;
 
 	public Price() {
-		this.symbol = "";
 		this.price = null;
 		this.splitAdjustedPrice = null;
 		this.date = null;
@@ -34,7 +30,7 @@ public class Price {
 		this.date = date;
 	}
 
-	public static Price load(QFileReader qfr) {
+	public static QPrice load(QFileReader qfr) {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
 		// Ex: "FEQIX",48 3/4," 2/16' 0"
@@ -81,14 +77,14 @@ public class Price {
 		final String datestr = s.substring(1, idx);
 		final Date date = Common.parseDate(datestr);
 
-		final Price p = new Price();
+		final QPrice p = new QPrice();
 
 		p.symbol = sym;
-		p.price = price;
+		p.price.price = price;
 		// TODO figure this out if possible (or just ignore quicken's price
-		// history?Ïß)
-		p.splitAdjustedPrice = null;
-		p.date = date;
+		// history?
+		p.price.splitAdjustedPrice = null;
+		p.price.date = date;
 
 		// Ex: "FEQIX",48 3/4," 2/16' 0"
 		qfr.nextPriceLine(qline);
@@ -104,10 +100,30 @@ public class Price {
 	}
 
 	public String toString() {
-		final String s = "Price: " + this.symbol //
+		final String s = "Price: " //
 				+ " date=" + this.date //
 				+ " price=" + this.price //
 				+ " splitAdjusted=" + this.splitAdjustedPrice //
+				+ "\n";
+
+		return s;
+	}
+}
+
+class QPrice {
+	public String symbol;
+	public Price price;
+
+	public QPrice() {
+		this.price = new Price();
+		this.symbol = "";
+	}
+
+	public String toString() {
+		final String s = "Price: " + this.symbol //
+				+ " date=" + this.price.date //
+				+ " price=" + this.price.price //
+				+ " splitAdjusted=" + this.price.splitAdjustedPrice //
 				+ "\n";
 
 		return s;
