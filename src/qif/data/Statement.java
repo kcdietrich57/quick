@@ -384,19 +384,29 @@ public class Statement {
 	}
 
 	static class StatementDetails {
+		public static final int CURRENT_VERSION = 2;
+
 		int domid;
 		int acctid;
 		Date date;
 		BigDecimal openBalance;
 		BigDecimal closeBalance;
-		List<TxInfo> transactions = new ArrayList<TxInfo>();
-		List<SecurityPosition> positions = new ArrayList<SecurityPosition>();
+		List<TxInfo> transactions;
+		SecurityPortfolio holdings;
 		boolean dirty;
+
+		public StatementDetails() {
+			this.transactions = new ArrayList<TxInfo>();
+			this.holdings = new SecurityPortfolio(this.date);
+		}
 
 		// Create details from statement object
 		public StatementDetails(Statement stat) {
+			this();
+
 			this.domid = stat.domid;
 			this.acctid = stat.acctid;
+			this.date = stat.date;
 
 			// Mark this dirty so we will save it to file later
 			this.dirty = true;
@@ -405,15 +415,16 @@ public class Statement {
 		}
 
 		// Load details object from file
-		public StatementDetails(QifDom dom, String s) {
-			parseStatementDetails(dom, s);
+		public StatementDetails(QifDom dom, String s, int version) {
+			this();
+
+			parseStatementDetails(dom, s, version);
 
 			// Since it came from file, we needn't save it later
 			this.dirty = false;
 		}
 
 		private void captureDetails(Statement stat) {
-			this.date = stat.date;
 			this.openBalance = stat.openingBalance;
 			this.closeBalance = stat.balance;
 
@@ -423,7 +434,27 @@ public class Statement {
 			}
 		}
 
-		private void parseStatementDetails(QifDom dom, String s) {
+		public String formatForSave(QifDom dom, Account a) {
+			String s = String.format("%s;%s;%5.2f;%5.2f;%d;%d", //
+					a.name, //
+					Common.getDateString(this.date), //
+					this.openBalance, //
+					this.closeBalance, //
+					this.transactions.size(), //
+					this.holdings.positions.size());
+
+			for (final TxInfo t : this.transactions) {
+				s += String.format(";%s;%s;%5.2f", //
+						Common.getDateString(t.date), //
+						t.cknum, t.amount);
+			}
+
+			// TODO save security info
+
+			return s;
+		}
+
+		private void parseStatementDetails(QifDom dom, String s, int version) {
 			final StringTokenizer toker = new StringTokenizer(s, ";");
 
 			final String acctname = toker.nextToken().trim();
@@ -431,6 +462,7 @@ public class Statement {
 			final String openStr = toker.nextToken().trim();
 			final String closeStr = toker.nextToken().trim();
 			final String txcountStr = toker.nextToken().trim();
+			final String seccountStr = (version > 1) ? toker.nextToken().trim() : "0";
 
 			this.domid = dom.domid;
 			this.acctid = dom.findAccount(acctname).acctid;
@@ -439,6 +471,7 @@ public class Statement {
 			this.closeBalance = new BigDecimal(closeStr);
 
 			final int txcount = Integer.parseInt(txcountStr);
+			final int seccount = Integer.parseInt(seccountStr);
 
 			for (int ii = 0; ii < txcount; ++ii) {
 				final String tdateStr = toker.nextToken().trim();
@@ -453,20 +486,10 @@ public class Statement {
 
 				this.transactions.add(txinfo);
 			}
-		}
 
-		public String formatForSave(QifDom dom, Account a) {
-			String s = String.format("%s;%s;%5.2f;%5.2f;%d", //
-					a.name, Common.getDateString(this.date), //
-					this.openBalance, this.closeBalance, this.transactions.size());
-
-			for (final TxInfo t : this.transactions) {
-				s += String.format(";%s;%s;%5.2f", //
-						Common.getDateString(t.date), //
-						t.cknum, t.amount);
+			for (int ii = 0; ii < seccount; ++ii) {
+				// TODO load security info
 			}
-
-			return s;
 		}
 
 		public String toString() {
@@ -508,10 +531,10 @@ public class Statement {
 			}
 		}
 
-		if ((this.details != null) && !this.details.positions.isEmpty()) {
+		if ((this.details != null) && !this.details.holdings.positions.isEmpty()) {
 			System.out.println("Securities:");
 
-			for (final SecurityPosition p : this.details.positions) {
+			for (final SecurityPosition p : this.details.holdings.positions) {
 				final String sn = p.security.getName();
 				final BigDecimal sb = p.shares;
 				// SecurityPosition spos =

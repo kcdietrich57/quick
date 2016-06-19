@@ -5,12 +5,19 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-// This can be global information, or for a single account
+// This can be global information, or for a single account or statement
 class SecurityPortfolio {
 	public List<SecurityPosition> positions;
+	// Set if this represents a point in time (i.e. statement). Null otherwise.
+	public Date date;
+
+	public SecurityPortfolio(Date date) {
+		this.positions = new ArrayList<SecurityPosition>();
+		this.date = date;
+	}
 
 	public SecurityPortfolio() {
-		this.positions = new ArrayList<SecurityPosition>();
+		this(null);
 	}
 
 	public SecurityPosition getPosition(Security sec) {
@@ -53,12 +60,19 @@ class SecurityPosition {
 	public BigDecimal shares;
 	public List<InvestmentTxn> transactions;
 	public List<BigDecimal> shrBalance;
+	// Set if this represents a point in time (i.e. statement). Null otherwise.
+	public BigDecimal value;
 
-	public SecurityPosition(Security sec, BigDecimal shares) {
+	public SecurityPosition(Security sec, BigDecimal shares, BigDecimal value) {
 		this.security = sec;
 		this.shares = shares;
 		this.transactions = new ArrayList<InvestmentTxn>();
 		this.shrBalance = new ArrayList<BigDecimal>();
+		this.value = value;
+	}
+
+	public SecurityPosition(Security sec, BigDecimal shares) {
+		this(sec, shares, null);
 	}
 
 	public SecurityPosition(Security sec) {
@@ -66,11 +80,16 @@ class SecurityPosition {
 	}
 
 	public String toString() {
-		final String s = String.format( //
+		String s = String.format( //
 				"Sec: %-20s  Bal: %10.3f  Ntran: %d", //
 				this.security.getName(), //
 				this.shrBalance.get(this.shrBalance.size() - 1), //
 				this.transactions.size());
+
+		if (this.value != null) {
+			s += String.format("  Value: %10.3f", this.value);
+		}
+
 		return s;
 	}
 

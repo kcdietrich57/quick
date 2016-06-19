@@ -120,9 +120,7 @@ public class QifDom {
 	private final List<Account> accounts_bytime;
 
 	SecurityPortfolio portfolio;
-
-	// public List<QClass> classes;
-	// public List<MemorizedTxn> memorizedTxns;
+	int loadedStatementsVersion = -1;
 
 	public Account currAccount = null;
 
@@ -492,8 +490,16 @@ public class QifDom {
 			stmtLogReader = new LineNumberReader(new FileReader(logFile));
 
 			String s = stmtLogReader.readLine();
+			if (s == null) {
+				return;
+			}
+
+			this.loadedStatementsVersion = Integer.parseInt(s.trim());
+
+			s = stmtLogReader.readLine();
 			while (s != null) {
-				final Statement.StatementDetails details = new StatementDetails(this, s);
+				final Statement.StatementDetails details = //
+						new StatementDetails(this, s, this.loadedStatementsVersion);
 				addStatementDetails(details);
 				// We add the transactions to the statement later
 
@@ -509,6 +515,55 @@ public class QifDom {
 				}
 			}
 		}
+	}
+
+	// Recreate log file when we have changed the format from the previous
+	// version
+	// Save the previous file as <name>.N
+	public void rewriteStatementLogFile(File logFile) {
+		final String basename = logFile.getName();
+		final File tmpLogFile = new File(logFile.getParentFile(), basename + ".tmp");
+		PrintWriter pw = null;
+		try {
+			pw = new PrintWriter(new FileWriter(tmpLogFile));
+		} catch (final IOException e) {
+			Common.reportError("Can't open tmp stmt log file: " + logFile.getAbsolutePath());
+			return;
+		}
+
+		pw.println("" + Statement.StatementDetails.CURRENT_VERSION);
+		for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
+			final Account a = getAccount(acctid);
+
+			for (final Statement s : a.statements) {
+				pw.println(s.details.formatForSave(QifDom.getDomById(a.domid), a));
+			}
+		}
+
+		try {
+			if (pw != null) {
+				pw.close();
+			}
+		} catch (final Exception e) {
+		}
+
+		File logFileBackup = null;
+
+		for (int ii = 1;; ++ii) {
+			logFileBackup = new File(logFile.getParentFile(), basename + "." + ii);
+			if (!logFileBackup.exists()) {
+				break;
+			}
+		}
+
+		logFile.renameTo(logFileBackup);
+		if (logFileBackup.exists() && tmpLogFile.exists() && !logFile.exists()) {
+			tmpLogFile.renameTo(logFile);
+		}
+
+		assert (logFileBackup.exists() && !logFile.exists());
+
+		this.loadedStatementsVersion = Statement.StatementDetails.CURRENT_VERSION;
 	}
 
 	// Process unreconciled statements, using info from statement log file or

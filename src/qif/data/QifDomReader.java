@@ -77,8 +77,13 @@ public class QifDomReader {
 
 		final File dd = new File(this.qifDir, "statements");
 		loadStatements(dd);
-		this.dom.validateStatements(new File(this.qifDir, "statementLog.dat"));
-		this.dom.reconcileStatements(new File(this.qifDir, "statementLog.dat"));
+		final File stmtLogFile = new File(this.qifDir, "statementLog.dat");
+		this.dom.validateStatements(stmtLogFile);
+		this.dom.reconcileStatements(stmtLogFile);
+
+		if (this.dom.loadedStatementsVersion != Statement.StatementDetails.CURRENT_VERSION) {
+			this.dom.rewriteStatementLogFile(stmtLogFile);
+		}
 	}
 
 	private void loadSecurityPriceHistory(File quoteDirectory) {
@@ -770,7 +775,9 @@ public class QifDomReader {
 			}
 
 			final Security sec = this.dom.findSecurityBySymbol(price.symbol);
-			sec.addPrice(price.price, true);
+			if (sec != null) {
+				sec.addPrice(price.price, true);
+			}
 		}
 	}
 
