@@ -75,14 +75,10 @@ public interface Headers {
 	public static final char INV_AccountForTransfer = 'L';
 	public static final char INV_AmountTransferred = '$';
 
-	public static final char STMT_DATE = 'D';
-	public static final char STMT_CR = 'C';
-	public static final char STMT_DB = 'E';
-	public static final char STMT_BAL = 'B';
-
 	public static final char STMTS_ACCOUNT = 'N';
 	public static final char STMTS_MONTHLY = 'M';
 	public static final char STMTS_SECURITY = 'S';
+	public static final char STMTS_CASH = 'C';
 
 	public static final char END = '^';
 };

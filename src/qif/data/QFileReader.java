@@ -46,12 +46,9 @@ import static qif.data.Headers.SEC_NAME;
 import static qif.data.Headers.SEC_SYMBOL;
 import static qif.data.Headers.SEC_TYPE;
 import static qif.data.Headers.STMTS_ACCOUNT;
+import static qif.data.Headers.STMTS_CASH;
 import static qif.data.Headers.STMTS_MONTHLY;
 import static qif.data.Headers.STMTS_SECURITY;
-import static qif.data.Headers.STMT_BAL;
-import static qif.data.Headers.STMT_CR;
-import static qif.data.Headers.STMT_DATE;
-import static qif.data.Headers.STMT_DB;
 import static qif.data.Headers.TXN_Address;
 import static qif.data.Headers.TXN_Amount;
 import static qif.data.Headers.TXN_Amount2;
@@ -223,19 +220,6 @@ public class QFileReader {
 		line.type = FieldType.EndOfSection;
 	}
 
-	public void nextStatementLine(QLine line) {
-		try {
-			if (nextLine(line)) {
-				line.type = statementFieldType(line.typechar);
-				return;
-			}
-		} catch (final Exception e) {
-			e.printStackTrace();
-		}
-
-		line.type = FieldType.EndOfSection;
-	}
-
 	public void nextStatementsLine(QLine line) {
 		try {
 			if (nextLine(line)) {
@@ -385,26 +369,6 @@ public class QFileReader {
 		}
 	}
 
-	FieldType statementFieldType(char key) {
-		switch (key) {
-		case END:
-			return FieldType.EndOfSection;
-
-		case STMT_DATE:
-			return FieldType.StmtDate;
-		case STMT_DB:
-			return FieldType.StmtDebits;
-		case STMT_CR:
-			return FieldType.StmtCredits;
-		case STMT_BAL:
-			return FieldType.StmtBalance;
-
-		default:
-			Common.reportError("Bad field type for statement: " + key);
-			return FieldType.EndOfSection;
-		}
-	}
-
 	FieldType statementsFieldType(char key) {
 		switch (key) {
 		case END:
@@ -418,6 +382,9 @@ public class QFileReader {
 
 		case STMTS_SECURITY:
 			return FieldType.StmtsSecurity;
+
+		case STMTS_CASH:
+			return FieldType.StmtsCash;
 
 		default:
 			Common.reportError("Bad field type for statements: " + key);
@@ -482,26 +449,6 @@ public class QFileReader {
 
 		default:
 			Common.reportError("Bad field type for account: " + key);
-			return FieldType.EndOfSection;
-		}
-	}
-
-	FieldType stmtFieldType(char key) {
-		switch (key) {
-		case END:
-			return FieldType.EndOfSection;
-
-		case STMT_DATE:
-			return FieldType.InvDate;
-		case STMT_CR:
-			return FieldType.InvDate;
-		case STMT_DB:
-			return FieldType.InvDate;
-		case STMT_BAL:
-			return FieldType.InvDate;
-
-		default:
-			Common.reportError("Bad field type for statement: " + key);
 			return FieldType.EndOfSection;
 		}
 	}

@@ -81,13 +81,13 @@ class SecurityPosition {
 
 	public String toString() {
 		String s = String.format( //
-				"Sec: %-20s  Bal: %10.3f  Ntran: %d", //
+				"%-20s   %10.3f shrs  %d txns", //
 				this.security.getName(), //
-				this.shrBalance.get(this.shrBalance.size() - 1), //
+				this.shares, //
 				this.transactions.size());
 
 		if (this.value != null) {
-			s += String.format("  Value: %10.3f", this.value);
+			s += String.format("  %10.3f", this.value);
 		}
 
 		return s;

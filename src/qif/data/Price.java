@@ -81,8 +81,7 @@ public class Price {
 
 		p.symbol = sym;
 		p.price.price = price;
-		// TODO figure this out if possible (or just ignore quicken's price
-		// history?
+		// TODO figure out splitAdjustedPrice (or ignore quicken price history?)
 		p.price.splitAdjustedPrice = null;
 		p.price.date = date;
 
@@ -100,13 +99,15 @@ public class Price {
 	}
 
 	public String toString() {
-		final String s = "Price: " //
-				+ " date=" + this.date //
-				+ " price=" + this.price //
-				+ " splitAdjusted=" + this.splitAdjustedPrice //
-				+ "\n";
+		String s = String.format("Price: %s  %10.2f", //
+				Common.getDateString(this.date), //
+				this.price);
 
-		return s;
+		if (this.splitAdjustedPrice != null) {
+			s += String.format("  splitAdj(%10.2f)\n", this.splitAdjustedPrice);
+		}
+
+		return s + "\n";
 	}
 }
 

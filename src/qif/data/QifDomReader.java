@@ -314,11 +314,6 @@ public class QifDomReader {
 				loadInvestmentTransactions();
 				break;
 
-			case Statement:
-				// System.out.println("Loading statements");
-				loadStatements(this.rdr);
-				break;
-
 			case Statements:
 				// System.out.println("Loading statements");
 				loadStatements2(this.rdr);
@@ -366,7 +361,7 @@ public class QifDomReader {
 
 			final Category existing = this.dom.findCategory(cat.name);
 			if (existing != null) {
-				// TODO verify
+				// Let's just assume it is correct
 			} else {
 				cat.catid = this.nextCategoryID++;
 				this.dom.addCategory(cat);
@@ -451,7 +446,7 @@ public class QifDomReader {
 
 			switch (qline.type) {
 			case EndOfSection:
-				// TODO hack for bad data
+				// N.B. hack for bad quicken data
 				if (acct.name.endsWith("Checking")) {
 					acct.type = AccountType.Bank;
 				}
@@ -500,7 +495,7 @@ public class QifDomReader {
 					: this.dom.findSecurityByName(sec.getName());
 
 			if (existing != null) {
-				// TODO verify
+				// TODO verify security
 				if (!existing.names.contains(sec.getName())) {
 					existing.names.add(sec.getName());
 				}
@@ -798,22 +793,6 @@ public class QifDomReader {
 			} catch (final Exception e) {
 				e.printStackTrace();
 			}
-		}
-	}
-
-	private void loadStatements(QFileReader qfr) {
-		for (;;) {
-			final String s = qfr.peekLine();
-			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
-				break;
-			}
-
-			final Statement stmt = Statement.load(qfr, this.dom.domid, this.dom.currAccount.acctid);
-			if (stmt == null) {
-				break;
-			}
-
-			this.dom.currAccount.statements.add(stmt);
 		}
 	}
 

@@ -22,7 +22,7 @@ import qif.data.SimpleTxn.Action;
 import qif.data.Statement.StatementDetails;
 
 //--------------------------------------------------------------------
-//TODO
+//TO DO
 //--------------------------------------------------------------------
 // 2/9/16 Use Acct ID in transactions
 // 2/9 Use Category ID in transactions
@@ -364,6 +364,12 @@ public class QifDom {
 		return (cat != null) ? (cat.catid) : 0;
 	}
 
+	public Security findSecurity(String nameOrSymbol) {
+		final Security s = findSecurityBySymbol(nameOrSymbol);
+
+		return (s != null) ? s : findSecurityByName(nameOrSymbol);
+	}
+
 	public Security findSecurityByName(String name) {
 		for (final Security sec : this.securities.values()) {
 			if (sec != null && sec.names.contains(name)) {
@@ -659,12 +665,6 @@ public class QifDom {
 			case REINV_SH:
 			case GRANT:
 			case EXPIRE:
-				// if (txn.quantity == null) {
-				// // TODO what to do about this?
-				// System.out.println("NULL quantities: " +
-				// ++nullQuantities);
-				// break;
-				// }
 			case BUYX:
 			case REINV_INT:
 			case VEST:
@@ -726,6 +726,10 @@ public class QifDom {
 		}
 	}
 
+	// This handles the case where we have multiple splits that involve
+	// transferring from another account. The other account may have a single
+	// entry that corresponds to more than one split in the other account.
+	// N.B. Alternatively, we could merge the splits into one.
 	private void massageSplits(GenericTxn txn) {
 		if (!(txn instanceof NonInvestmentTxn)) {
 			return;
@@ -771,62 +775,15 @@ public class QifDom {
 			a.clearedBalance = a.balance = BigDecimal.ZERO;
 
 			for (final GenericTxn t : a.transactions) {
-				BigDecimal amt = t.getTotalAmount();
-				if (t instanceof InvestmentTxn) {
-					switch (t.getAction()) {
-					case BUY:
-					case SELL:
-						break;
+				final BigDecimal amt = t.getCashAmount();
 
-					case SHRS_IN:
-					case SHRS_OUT: // no xfer info?
-					case BUYX:
-					case SELLX:
-					case REINV_DIV:
-					case REINV_INT:
-					case REINV_LG:
-					case REINV_SH:
-					case GRANT:
-					case VEST:
-					case EXERCISEX:
-					case EXPIRE:
-					case STOCKSPLIT:
-						// No net cash change
-						continue;
-
-					case CASH:
-					case CONTRIBX:
-					case DIV:
-					case INT_INC:
-					case MISC_INCX:
-					case OTHER:
-					case REMINDER:
-					case WITHDRAWX:
-					case XIN:
-					case XOUT:
-						break;
-					}
-				}
-
-				switch (t.getAction()) {
-				case STOCKSPLIT:
-					break;
-
-				case BUY:
-				case WITHDRAWX:
-					// TODO take care of this in transaction instead?
-					amt = amt.negate();
-
-					// fall through
-
-				default:
+				if (!amt.equals(BigDecimal.ZERO)) {
 					a.balance = a.balance.add(amt);
 					t.runningTotal = a.balance;
 
 					if (t.isCleared()) {
 						a.clearedBalance = a.clearedBalance.add(amt);
 					}
-					break;
 				}
 			}
 		}
@@ -1106,7 +1063,7 @@ public class QifDom {
 	private void addStatementDetails(StatementDetails details) {
 		final Account a = getAccount(details.acctid);
 
-		final Statement s = a.getStatement(details);
+		final Statement s = a.getStatement(details.date, details.closeBalance);
 		if (s == null) {
 			Common.reportError("Can't find statement for details");
 		}

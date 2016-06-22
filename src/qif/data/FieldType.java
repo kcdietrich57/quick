@@ -18,11 +18,8 @@ public enum FieldType {
 	InvDate, InvAction, InvSecurity, InvPrice, InvQuantity, InvTransactionAmt, //
 	InvClearedStatus, InvFirstLine, InvMemo, InvCommission, InvXferAcct, InvXferAmt,
 
-	// TODO one kind of Statement
-	StmtDate, StmtCredits, StmtDebits, StmtBalance,
-
 	// Statements
-	StmtsAccount, StmtsMonthly, StmtsSecurity,
+	StmtsAccount, StmtsMonthly, StmtsSecurity, StmtsCash,
 
 	// Security
 	SecName, SecSymbol, SecType, SecGoal,

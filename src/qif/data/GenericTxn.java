@@ -96,7 +96,8 @@ class SimpleTxn {
 		return this.amount;
 	}
 
-	public BigDecimal getTotalAmount() {
+	// Return the impact of this transaction on the account cash position
+	public BigDecimal getCashAmount() {
 		return this.amount;
 	}
 
@@ -104,19 +105,25 @@ class SimpleTxn {
 		return toStringShort();
 	}
 
+	// This is a compact, single-line version of the transaction, such as would
+	// appear in a list for displaying and/or selecting transactions.
 	public String toStringShort() {
-		// TODO implement
-		return "";
+		// TODO implement SimpleTxn::toStringShort()
+		return "Tx" + this.txid;
 	}
 
+	// This is a more complete summary of the transaction, possibly split into
+	// multiple lines.
 	public String toStringLong() {
 		final QifDom dom = QifDom.getDomById(this.domid);
 
 		String s = "Tx" + this.txid + ":";
-		s += " acct=" + dom.getAccount(this.acctid).name;
+		s += dom.getAccount(this.acctid).name;
 		s += " amt=" + this.amount;
 		s += " memo=" + this.memo;
 
+		// TODO why have both negative cat and xacct to represent the same
+		// thing?
 		if (this.xacctid < (short) 0) {
 			s += " xacct=" + dom.getAccount(-this.xacctid).name;
 		} else if (this.catid < (short) 0) {
@@ -165,6 +172,10 @@ class SimpleTxn {
 	}
 };
 
+// This handles the case where we have multiple splits that involve
+// transferring from another account. The other account may have a single
+// entry that corresponds to more than one split in the other account.
+// N.B. Alternatively, we could merge the splits into one.
 class MultiSplitTxn extends SimpleTxn {
 	public List<SimpleTxn> subsplits = new ArrayList<SimpleTxn>();
 
@@ -180,7 +191,7 @@ class MultiSplitTxn extends SimpleTxn {
 		}
 	}
 
-	public BigDecimal getTotalAmount() {
+	public BigDecimal getCashAmount() {
 		BigDecimal total = BigDecimal.ZERO;
 
 		for (final SimpleTxn t : this.subsplits) {
@@ -333,21 +344,20 @@ class NonInvestmentTxn extends GenericTxn {
 	}
 
 	public String toStringShort() {
-		return String.format("%s %s %5s  %10.2f  %10.2f  %s", //
+		return String.format("%s %s %5s  %10.2f  %s", //
 				((this.stmtdate != null) ? "*" : " "), //
 				Common.getDateString(getDate()), //
 				this.chkNumber, //
 				getAmount(), //
-				this.runningTotal, //
 				getPayee());
 	}
 
 	public String toStringLong() {
 		final QifDom dom = QifDom.getDomById(this.domid);
 
-		String s = "Tx" + this.txid + ":";
-		s += " acct=" + dom.getAccount(this.acctid).name;
+		String s = ((this.stmtdate != null) ? "*" : " ") + "Tx" + this.txid + ":";
 		s += " date=" + Common.getDateString(getDate());
+		s += " acct=" + dom.getAccount(this.acctid).name;
 		s += " clr:" + this.clearedStatus;
 		s += " num=" + this.chkNumber;
 		s += " payee=" + getPayee();
@@ -452,7 +462,6 @@ class InvestmentTxn extends GenericTxn {
 		case GRANT:
 		case EXPIRE:
 			if (this.quantity == null) {
-				// TODO what to do about this?
 				// System.out.println("NULL quantities: " + ++nullQuantities);
 				this.quantity = BigDecimal.ZERO;
 			}
@@ -563,10 +572,7 @@ class InvestmentTxn extends GenericTxn {
 	}
 
 	private void repairBuySell() {
-		BigDecimal amt = getTotalAmount();
-		if (amt == null) {
-			amt = BigDecimal.ZERO;
-		}
+		final BigDecimal amt = getBuySellAmount();
 
 		BigDecimal tot = this.quantity.multiply(this.price);
 		if (this.commission == null) {
@@ -617,11 +623,59 @@ class InvestmentTxn extends GenericTxn {
 		return this.action;
 	}
 
-	public BigDecimal getTotalAmount() {
-		BigDecimal tot = super.getTotalAmount();
+	// Get the total amount of a buy/sell transaction.
+	// This returns the absolute value.
+	public BigDecimal getBuySellAmount() {
+		BigDecimal tot = super.getCashAmount();
 
 		if (tot == null) {
 			tot = getXferAmount();
+		}
+
+		return (tot != null) ? tot.abs() : BigDecimal.ZERO;
+	}
+
+	public BigDecimal getCashAmount() {
+		BigDecimal tot = super.getCashAmount();
+
+		if (tot == null) {
+			tot = getXferAmount();
+		}
+
+		switch (getAction()) {
+		case BUY:
+		case WITHDRAWX:
+			tot = tot.negate();
+			break;
+
+		case SHRS_IN:
+		case SHRS_OUT: // no xfer info?
+		case BUYX:
+		case SELLX:
+		case REINV_DIV:
+		case REINV_INT:
+		case REINV_LG:
+		case REINV_SH:
+		case GRANT:
+		case VEST:
+		case EXERCISEX:
+		case EXPIRE:
+		case STOCKSPLIT:
+			// No net cash change
+			tot = BigDecimal.ZERO;
+			break;
+
+		case SELL:
+		case CASH:
+		case CONTRIBX:
+		case DIV:
+		case INT_INC:
+		case MISC_INCX:
+		case OTHER:
+		case REMINDER:
+		case XIN:
+		case XOUT:
+			break;
 		}
 
 		return tot;
@@ -645,17 +699,27 @@ class InvestmentTxn extends GenericTxn {
 		return (short) -this.xacctid;
 	}
 
+	public String toStringShort() {
+		return String.format("%s %s %10s  %10.2f  %s", //
+				((this.stmtdate != null) ? "*" : " "), //
+				Common.getDateString(getDate()), //
+				this.action.toString(), //
+				getAmount(), //
+				((this.security != null) ? this.security.getName() : getPayee()));
+	}
+
 	public String toStringLong() {
 		final QifDom dom = QifDom.getDomById(this.domid);
 
-		String s = "InvTx:";
-		s += " acct=" + dom.getAccount(this.acctid).name;
+		String s = ((this.stmtdate != null) ? "*" : " ") + "InvTx" + this.txid + ":";
 		s += " dt=" + Common.getDateString(getDate());
+		s += " acct=" + dom.getAccount(this.acctid).name;
 		s += " act=" + this.action;
 		if (this.security != null) {
 			s += " sec=" + this.security.getName();
+		} else {
+			s += " payee=" + getPayee();
 		}
-		s += " payee=" + getPayee();
 		s += " price=" + this.price;
 		s += " qty=" + this.quantity;
 		s += " amt=" + getAmount();

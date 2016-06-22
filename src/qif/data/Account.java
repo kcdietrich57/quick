@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import qif.data.Statement.StatementDetails;
-
 public class Account {
 	enum AccountType { //
 		Bank, CCard, Cash, Asset, Liability, Invest, InvPort, Inv401k, InvMutual;
@@ -49,6 +47,8 @@ public class Account {
 		this.acctid = id;
 	}
 
+	// Create a copy of an account - used when creating a new Dom from an
+	// existing one.
 	public Account(Account other, QifDom dom) {
 		this(other.acctid, dom);
 
@@ -62,25 +62,23 @@ public class Account {
 		}
 
 		for (final Statement s : this.statements) {
-			this.statements.add(new Statement(s));
+			this.statements.add(new Statement(dom, s));
 		}
 	}
 
-	public Statement getStatement(StatementDetails det) {
+	public Statement getStatement(Date date, BigDecimal balance) {
 		for (final Statement s : this.statements) {
-			if (s.date.compareTo(det.date) > 0) {
+			if (s.date.compareTo(date) > 0) {
 				break;
 			}
 
-			if ((s.date.compareTo(det.date) == 0) //
-					&& (s.balance.compareTo(det.closeBalance) == 0)) {
-				s.details = det;
-
+			if ((s.date.compareTo(date) == 0) //
+					&& (s.closingBalance.compareTo(balance) == 0)) {
 				return s;
 			}
 		}
 
-		Common.reportError("Can't find statement from log");
+		Common.reportError("Can't find statement");
 		return null;
 	}
 
@@ -193,7 +191,7 @@ public class Account {
 				pw.flush();
 			}
 
-			balance = s.balance;
+			balance = s.closingBalance;
 		}
 	}
 
@@ -209,7 +207,7 @@ public class Account {
 			for (int ii = nn; ii < this.statements.size(); ++ii) {
 				final Statement s = this.statements.get(ii);
 				System.out.println(String.format("  %s  %3d tx  %10.2f", //
-						Common.getDateString(s.date), s.transactions.size(), s.balance));
+						Common.getDateString(s.date), s.transactions.size(), s.closingBalance));
 			}
 
 			System.out.println("Uncleared transactions as of last statement:");

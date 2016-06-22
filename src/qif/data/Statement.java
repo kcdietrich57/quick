@@ -13,60 +13,52 @@ public class Statement {
 	public int domid;
 	public int acctid;
 	public Date date;
+
+	// open/close balance are total balance, including cash and securities
 	public BigDecimal openingBalance;
-	public BigDecimal balance;
+	public BigDecimal closingBalance;
+
+	// Separate cash from securities
+	public BigDecimal cashBalance;
+	public SecurityPortfolio holdings;
+
+	// TODO does this need to exist once we have loaded/validated the stmt?
 	StatementDetails details;
 
 	public List<GenericTxn> transactions;
 	public List<GenericTxn> unclearedTransactions;
 
 	public Statement(int domid, int acctid) {
-		this.acctid = acctid;
 		this.domid = domid;
+		this.acctid = acctid;
 		this.date = null;
 		this.openingBalance = null;
-		this.balance = null;
+		this.closingBalance = null;
+		this.cashBalance = null;
+		this.holdings = new SecurityPortfolio();
 		this.details = null;
 	}
 
-	public Statement(Statement other) {
+	// Create a copy of a statement - used when creating a new Dom from an
+	// existing one.
+	public Statement(QifDom dom, Statement other) {
+		this.domid = dom.domid;
 		this.acctid = other.acctid;
 		this.date = other.date;
-		this.balance = other.balance;
-	}
+		this.openingBalance = other.closingBalance;
+		this.closingBalance = other.closingBalance;
+		this.cashBalance = other.cashBalance;
 
-	public static Statement load(QFileReader qfr, int domid, int acctid) {
-		final QFileReader.QLine qline = new QFileReader.QLine();
-
-		final Statement stmt = new Statement(domid, acctid);
-
-		for (;;) {
-			qfr.nextStatementLine(qline);
-
-			switch (qline.type) {
-			case EndOfSection:
-				return stmt;
-
-			case StmtDate:
-				stmt.date = Common.parseDate(qline.value);
-				break;
-			case StmtCredits:
-			case StmtDebits:
-				// TODO not used
-				break;
-			case StmtBalance:
-				stmt.balance = Common.getDecimal(qline.value);
-				break;
-
-			default:
-				Common.reportError("syntax error");
-			}
-		}
+		// TODO copy holdings
+		// TODO copy details?
+		this.holdings = new SecurityPortfolio();
 	}
 
 	public static List<Statement> loadStatements(QFileReader qfr, QifDom dom) {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 		final List<Statement> stmts = new ArrayList<Statement>();
+
+		Statement currstmt = null;
 
 		for (;;) {
 			qfr.nextStatementsLine(qline);
@@ -83,11 +75,13 @@ public class Statement {
 				}
 
 				dom.currAccount = a;
+				currstmt = null;
 				break;
 			}
 
 			case StmtsMonthly: {
 				final StringTokenizer toker = new StringTokenizer(qline.value, " ");
+
 				final String datestr = toker.nextToken();
 				final int slash1 = datestr.indexOf('/');
 				final int slash2 = (slash1 < 0) ? -1 : datestr.indexOf('/', slash1 + 1);
@@ -115,11 +109,11 @@ public class Statement {
 							? Common.getDateForEndOfMonth(year, month) //
 							: Common.getDate(year, month, day);
 
-					final Statement stmt = new Statement(dom.domid, dom.currAccount.acctid);
-					stmt.date = d;
-					stmt.balance = bal;
+					currstmt = new Statement(dom.domid, dom.currAccount.acctid);
+					currstmt.date = d;
+					currstmt.closingBalance = bal;
 
-					stmts.add(stmt);
+					stmts.add(currstmt);
 
 					++month;
 				}
@@ -127,8 +121,30 @@ public class Statement {
 				break;
 			}
 
-			case StmtsSecurity:
+			case StmtsCash:
+				currstmt.cashBalance = new BigDecimal(qline.value);
 				break;
+
+			case StmtsSecurity: {
+				final StringTokenizer toker = new StringTokenizer(qline.value, ";");
+
+				final String secStr = toker.nextToken();
+				final String qtyStr = toker.nextToken();
+				final String valStr = toker.nextToken();
+
+				final Security sec = dom.findSecurity(secStr);
+				if (sec == null) {
+					Common.reportError("Unknown security: " + secStr);
+				}
+
+				final SecurityPortfolio h = currstmt.holdings;
+				final SecurityPosition p = new SecurityPosition(sec);
+				p.shares = new BigDecimal(qtyStr);
+				p.value = new BigDecimal(valStr);
+
+				h.positions.add(p);
+				break;
+			}
 
 			default:
 				Common.reportError("syntax error");
@@ -152,6 +168,7 @@ public class Statement {
 		this.unclearedTransactions = unclearedTxns;
 	}
 
+	// TODO this reconciles cash balance - add security info
 	public boolean reconcile(BigDecimal curbal, Account a, String msg) {
 		boolean needsReconcile = false;
 
@@ -161,7 +178,7 @@ public class Statement {
 			final List<GenericTxn> uncleared = new ArrayList<GenericTxn>();
 
 			final BigDecimal totaltx = Common.sumAmounts(txns);
-			BigDecimal diff = totaltx.add(curbal).subtract(this.balance);
+			BigDecimal diff = totaltx.add(curbal).subtract(this.closingBalance);
 
 			if (diff.signum() != 0) {
 				Common.findSubsetTotaling(txns, uncleared, diff);
@@ -363,6 +380,8 @@ public class Statement {
 		range[1] = Integer.parseInt(s2);
 	}
 
+	// This represents the information stored in the statementLog file for each
+	// transaction that is part of a statement.
 	static class TxInfo {
 		Date date;
 		int cknum;
@@ -392,11 +411,13 @@ public class Statement {
 		BigDecimal openBalance;
 		BigDecimal closeBalance;
 		List<TxInfo> transactions;
+		BigDecimal cashBalance;
 		SecurityPortfolio holdings;
 		boolean dirty;
 
-		public StatementDetails() {
+		private StatementDetails() {
 			this.transactions = new ArrayList<TxInfo>();
+			this.cashBalance = BigDecimal.ZERO;
 			this.holdings = new SecurityPortfolio(this.date);
 		}
 
@@ -426,7 +447,7 @@ public class Statement {
 
 		private void captureDetails(Statement stat) {
 			this.openBalance = stat.openingBalance;
-			this.closeBalance = stat.balance;
+			this.closeBalance = stat.closingBalance;
 
 			for (final GenericTxn t : stat.transactions) {
 				final TxInfo info = new TxInfo(t);
@@ -510,7 +531,7 @@ public class Statement {
 		System.out.println("-------------------------------------------------------");
 		System.out.println(msg);
 		System.out.println("  " + Common.getDateString(this.date) //
-				+ " " + this.balance //
+				+ " " + this.closingBalance //
 				+ "  " + a.name);
 		System.out.println("-------------------------------------------------------");
 
@@ -531,10 +552,10 @@ public class Statement {
 			}
 		}
 
-		if ((this.details != null) && !this.details.holdings.positions.isEmpty()) {
+		if (!this.holdings.positions.isEmpty()) {
 			System.out.println("Securities:");
 
-			for (final SecurityPosition p : this.details.holdings.positions) {
+			for (final SecurityPosition p : this.holdings.positions) {
 				final String sn = p.security.getName();
 				final BigDecimal sb = p.shares;
 				// SecurityPosition spos =
@@ -576,7 +597,7 @@ public class Statement {
 		final BigDecimal txsum = Common.sumAmounts(this.transactions);
 		final BigDecimal newbal = this.openingBalance.add(txsum);
 
-		return newbal.subtract(this.balance);
+		return newbal.subtract(this.closingBalance);
 	}
 
 	private void arrangeTransactionsForDisplay(List<GenericTxn> txns) {
@@ -597,7 +618,7 @@ public class Statement {
 
 	public String toString() {
 		final String s = Common.getDateString(this.date) //
-				+ "  " + this.balance //
+				+ "  " + this.closingBalance //
 				+ " tran=" + ((this.transactions != null) ? this.transactions.size() : null);
 
 		return s;
