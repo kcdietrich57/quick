@@ -18,14 +18,17 @@ public class Statement {
 	public BigDecimal openingBalance;
 	public BigDecimal closingBalance;
 
-	// Separate cash from securities
+	// Separate closing balance for cash and securities
 	public BigDecimal cashBalance;
 	public SecurityPortfolio holdings;
 
-	// TODO does this need to exist once we have loaded/validated the stmt?
+	// TODO this doesn't need to exist once we have loaded/validated the stmt?
 	StatementDetails details;
 
+	// Transactions included in this statement
 	public List<GenericTxn> transactions;
+
+	// Transactions that as of the closing date are not cleared
 	public List<GenericTxn> unclearedTransactions;
 
 	public Statement(int domid, int acctid) {
@@ -111,7 +114,7 @@ public class Statement {
 
 					currstmt = new Statement(dom.domid, dom.currAccount.acctid);
 					currstmt.date = d;
-					currstmt.closingBalance = bal;
+					currstmt.closingBalance = currstmt.cashBalance = bal;
 
 					stmts.add(currstmt);
 
@@ -168,7 +171,6 @@ public class Statement {
 		this.unclearedTransactions = unclearedTxns;
 	}
 
-	// TODO this reconciles cash balance - add security info
 	public boolean reconcile(BigDecimal curbal, Account a, String msg) {
 		boolean needsReconcile = false;
 
@@ -177,8 +179,44 @@ public class Statement {
 			final List<GenericTxn> txns = a.gatherTransactionsForStatement(this);
 			final List<GenericTxn> uncleared = new ArrayList<GenericTxn>();
 
-			final BigDecimal totaltx = Common.sumAmounts(txns);
-			BigDecimal diff = totaltx.add(curbal).subtract(this.closingBalance);
+			final BigDecimal cashTotal = Common.sumCashAmounts(txns);
+			BigDecimal cashDiff = cashTotal.add(curbal).subtract(this.cashBalance);
+
+			// TODO put together security transactions' effects
+			// TODO compare statement position to reconciled position
+
+			if (cashDiff.signum() != 0) {
+				Common.findSubsetTotaling(txns, uncleared, cashDiff);
+
+				if (uncleared.isEmpty()) {
+					System.out.println("Can't automatically balance account: " + this);
+				} else {
+					cashDiff = BigDecimal.ZERO;
+					txns.removeAll(uncleared);
+				}
+			}
+
+			clearTransactions(curbal, txns, uncleared);
+
+			needsReconcile = (this.details == null) || (cashDiff.signum() != 0);
+		}
+
+		final boolean b = needsReconcile; // reconcileCash(curbal, a, msg);
+
+		return b;
+	}
+
+	// TODO this reconciles cash balance - add security info
+	public boolean reconcileCash(BigDecimal curbal, Account a, String msg) {
+		boolean needsReconcile = false;
+
+		if (!getTransactionsFromDetails(a)) {
+			// Didn't load stmt info, try automatic reconciliation
+			final List<GenericTxn> txns = a.gatherTransactionsForStatement(this);
+			final List<GenericTxn> uncleared = new ArrayList<GenericTxn>();
+
+			final BigDecimal cashTotal = Common.sumCashAmounts(txns);
+			BigDecimal diff = cashTotal.add(curbal).subtract(this.cashBalance);
 
 			if (diff.signum() != 0) {
 				Common.findSubsetTotaling(txns, uncleared, diff);
@@ -205,6 +243,10 @@ public class Statement {
 		return isBalanced;
 	}
 
+	public boolean reconcileSecurities(BigDecimal curbal, Account a, String msg) {
+		return true;
+	}
+
 	private boolean getTransactionsFromDetails(Account a) {
 		if (this.details == null) {
 			return false;
@@ -215,31 +257,38 @@ public class Statement {
 		final List<TxInfo> badinfo = new ArrayList<TxInfo>();
 
 		for (final TxInfo info : this.details.transactions) {
+			boolean found = false;
+
 			for (int ii = 0; ii < txns.size(); ++ii) {
 				final GenericTxn t = txns.get(ii);
 
 				if (info.date.compareTo(t.getDate()) == 0) {
 					if ((info.cknum == t.getCheckNumber()) //
-							&& (info.amount.compareTo(t.getAmount()) == 0)) {
+							&& (info.cashAmount.compareTo(t.getCashAmount()) == 0)) {
 						if (t.stmtdate != null) {
 							Common.reportError("Reconciling transaction twice:\n" //
 									+ t.toString());
 						}
 
 						this.transactions.add(t);
-
 						txns.remove(ii);
+						found = true;
+
 						break;
 					}
 				}
 
-				final long infoms = info.date.getTime();
-				final long tranms = t.getDate().getTime();
+				// TODO txinfos are not sorted by date - should they be?
+				// final long infoms = info.date.getTime();
+				// final long tranms = t.getDate().getTime();
+				//
+				// if (infoms < tranms) {
+				// break;
+				// }
+			}
 
-				if (infoms < tranms) {
-					badinfo.add(info);
-					break;
-				}
+			if (!found) {
+				badinfo.add(info);
 			}
 		}
 
@@ -385,40 +434,78 @@ public class Statement {
 	static class TxInfo {
 		Date date;
 		int cknum;
-		BigDecimal amount;
+		BigDecimal cashAmount;
+		Security security;
+		BigDecimal shares;
 
-		public TxInfo() {
+		public static TxInfo factory(GenericTxn tx) {
+			if (tx instanceof NonInvestmentTxn) {
+				return new TxInfo((NonInvestmentTxn) tx);
+			}
+
+			if (tx instanceof InvestmentTxn) {
+				return new TxInfo((InvestmentTxn) tx);
+			}
+
+			return null;
 		}
 
-		public TxInfo(GenericTxn tx) {
+		public TxInfo() {
+			this.cknum = 0;
+			this.security = null;
+			this.shares = null;
+		}
+
+		public TxInfo(NonInvestmentTxn tx) {
 			this.date = tx.getDate();
 			this.cknum = tx.getCheckNumber();
-			this.amount = tx.getAmount();
+			this.cashAmount = tx.getCashAmount();
+		}
+
+		public TxInfo(InvestmentTxn tx) {
+			this.date = tx.getDate();
+			this.cashAmount = tx.getCashAmount();
+			if (tx.security != null) {
+				this.security = tx.security;
+				this.shares = tx.quantity;
+			}
 		}
 
 		public String toString() {
 			return String.format("%s %5d %10.2f", //
-					Common.getDateString(this.date), this.cknum, this.amount);
+					Common.getDateString(this.date), this.cknum, this.cashAmount);
 		}
 	}
 
+	// StatementDetails represents a reconciled statement as stored in the
+	// statements log file.
 	static class StatementDetails {
 		public static final int CURRENT_VERSION = 2;
 
 		int domid;
 		int acctid;
 		Date date;
-		BigDecimal openBalance;
-		BigDecimal closeBalance;
-		List<TxInfo> transactions;
-		BigDecimal cashBalance;
+
+		// TODO probably not necessary
+		BigDecimal openingBalance;
+		// This is the cumulative account value
+		BigDecimal closingBalance;
+
+		// This is the net cash change
+		BigDecimal netCashChange;
+		// This is the change to security positions (and closing price)
 		SecurityPortfolio holdings;
+
+		List<TxInfo> transactions;
+		List<TxInfo> unclearedTransactions;
+
 		boolean dirty;
 
 		private StatementDetails() {
-			this.transactions = new ArrayList<TxInfo>();
-			this.cashBalance = BigDecimal.ZERO;
+			this.netCashChange = BigDecimal.ZERO;
 			this.holdings = new SecurityPortfolio(this.date);
+			this.transactions = new ArrayList<TxInfo>();
+			this.unclearedTransactions = new ArrayList<TxInfo>();
 		}
 
 		// Create details from statement object
@@ -446,12 +533,19 @@ public class Statement {
 		}
 
 		private void captureDetails(Statement stat) {
-			this.openBalance = stat.openingBalance;
-			this.closeBalance = stat.closingBalance;
+			this.openingBalance = stat.openingBalance;
+			this.closingBalance = stat.closingBalance;
 
+			this.netCashChange = BigDecimal.ZERO;
 			for (final GenericTxn t : stat.transactions) {
-				final TxInfo info = new TxInfo(t);
+				final TxInfo info = TxInfo.factory(t);
 				this.transactions.add(info);
+				this.netCashChange = this.netCashChange.add(t.getCashAmount());
+			}
+
+			final BigDecimal expectedCashChange = this.closingBalance.subtract(this.openingBalance);
+			if (!expectedCashChange.equals(this.netCashChange)) {
+				Common.reportWarning("Incorrect net cash change");
 			}
 		}
 
@@ -459,15 +553,15 @@ public class Statement {
 			String s = String.format("%s;%s;%5.2f;%5.2f;%d;%d", //
 					a.name, //
 					Common.getDateString(this.date), //
-					this.openBalance, //
-					this.closeBalance, //
+					this.openingBalance, //
+					this.closingBalance, //
 					this.transactions.size(), //
 					this.holdings.positions.size());
 
 			for (final TxInfo t : this.transactions) {
 				s += String.format(";%s;%s;%5.2f", //
 						Common.getDateString(t.date), //
-						t.cknum, t.amount);
+						t.cknum, t.cashAmount);
 			}
 
 			// TODO save security info
@@ -488,8 +582,8 @@ public class Statement {
 			this.domid = dom.domid;
 			this.acctid = dom.findAccount(acctname).acctid;
 			this.date = Common.parseDate(dateStr);
-			this.openBalance = new BigDecimal(openStr);
-			this.closeBalance = new BigDecimal(closeStr);
+			this.openingBalance = new BigDecimal(openStr);
+			this.closingBalance = new BigDecimal(closeStr);
 
 			final int txcount = Integer.parseInt(txcountStr);
 			final int seccount = Integer.parseInt(seccountStr);
@@ -503,7 +597,7 @@ public class Statement {
 
 				txinfo.date = Common.parseDate(tdateStr);
 				txinfo.cknum = Integer.parseInt(cknumStr);
-				txinfo.amount = new BigDecimal(amtStr);
+				txinfo.cashAmount = new BigDecimal(amtStr);
 
 				this.transactions.add(txinfo);
 			}
@@ -517,7 +611,7 @@ public class Statement {
 			final String s = "" + this.domid + ":" + this.acctid + " " //
 					+ Common.getDateString(this.date) //
 					+ String.format("%10.2f  %10.2f %d tx", //
-							this.openBalance, this.closeBalance, this.transactions.size());
+							this.openingBalance, this.closingBalance, this.transactions.size());
 
 			return s;
 		}

@@ -170,7 +170,6 @@ public class Account {
 	}
 
 	public void reconcileStatements(PrintWriter pw) {
-
 		if (this.statements.isEmpty()) {
 			return;
 		}

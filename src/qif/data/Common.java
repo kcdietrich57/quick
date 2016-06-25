@@ -32,6 +32,15 @@ public class Common {
 		return totaltx;
 	}
 
+	public static BigDecimal sumCashAmounts(List<GenericTxn> txns) {
+		BigDecimal totaltx = BigDecimal.ZERO;
+		for (final GenericTxn t : txns) {
+			totaltx = totaltx.add(t.getCashAmount());
+		}
+
+		return totaltx;
+	}
+
 	public static boolean parseBoolean(String value) {
 		return (value.length() > 0) && Boolean.parseBoolean(value);
 	}
@@ -460,7 +469,7 @@ public class Common {
 		// Remove one transaction, starting with the most recent
 		for (int ii = max - 1; ii >= min; --ii) {
 			final GenericTxn t = txns.get(ii);
-			final BigDecimal newtot = tot.subtract(t.getAmount());
+			final BigDecimal newtot = tot.subtract(t.getCashAmount());
 
 			if ((nn == 1) && (newtot.signum() == 0)) {
 				// We are looking for one transaction and found it

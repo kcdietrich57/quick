@@ -1063,7 +1063,7 @@ public class QifDom {
 	private void addStatementDetails(StatementDetails details) {
 		final Account a = getAccount(details.acctid);
 
-		final Statement s = a.getStatement(details.date, details.closeBalance);
+		final Statement s = a.getStatement(details.date, details.closingBalance);
 		if (s == null) {
 			Common.reportError("Can't find statement for details");
 		}
