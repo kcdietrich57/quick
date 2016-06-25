@@ -174,11 +174,9 @@ public class Account {
 			return;
 		}
 
-		BigDecimal balance = BigDecimal.ZERO;
-
 		for (int ii = 0; ii < this.statements.size(); ++ii) {
 			final Statement s = this.statements.get(ii);
-			if (!s.reconcile(balance, this, //
+			if (!s.reconcile(this, //
 					"Reconciling statement " + (ii + 1) //
 							+ " of " + this.statements.size())) {
 				break;
@@ -190,7 +188,7 @@ public class Account {
 				pw.flush();
 			}
 
-			balance = s.closingBalance;
+			this.balance = s.closingBalance;
 		}
 	}
 

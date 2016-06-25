@@ -596,6 +596,23 @@ public class QifDom {
 		}
 	}
 
+	/**
+	 * Find a statement in this dom that corresponds to a statement in another
+	 * dom. Used when copying/cloning a dom.
+	 *
+	 * @param stmt
+	 *            The statement in another dom
+	 * @return The same statement in this dom
+	 */
+	public Statement findStatement(Statement stmt) {
+		final Account a = getAccount(stmt.acctid);
+		if (a == null) {
+			Common.reportError("Can't find statement");
+		}
+
+		return a.getStatement(stmt.date, stmt.closingBalance);
+	}
+
 	public void fixPortfolios() {
 		fixPortfolio(this.portfolio);
 
