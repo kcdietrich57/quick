@@ -113,9 +113,14 @@ public class Statement {
 							? Common.getDateForEndOfMonth(year, month) //
 							: Common.getDate(year, month, day);
 
+					final Statement prevstmt = (stmts.isEmpty() ? null : stmts.get(stmts.size() - 1));
+
 					currstmt = new Statement(dom.domid, dom.currAccount.acctid);
 					currstmt.date = d;
 					currstmt.closingBalance = currstmt.cashBalance = bal;
+					if ((prevstmt != null) && (prevstmt.acctid == currstmt.acctid)) {
+						currstmt.prevStatement = prevstmt;
+					}
 
 					stmts.add(currstmt);
 
@@ -541,6 +546,11 @@ public class Statement {
 		private void captureDetails(Statement stat) {
 			this.closingBalance = stat.closingBalance;
 			this.closingCashBalance = stat.cashBalance;
+
+			for (final GenericTxn t : stat.transactions) {
+				final TxInfo info = TxInfo.factory(t);
+				this.transactions.add(info);
+			}
 		}
 
 		public String formatForSave(QifDom dom, Account a) {
