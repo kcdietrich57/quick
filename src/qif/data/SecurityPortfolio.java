@@ -2,6 +2,7 @@ package qif.data;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -11,26 +12,87 @@ class SecurityPortfolio {
 	// Set if this represents a point in time (i.e. statement). Null otherwise.
 	public Date date;
 
+	public SecurityPortfolio() {
+		this((Date) null);
+	}
+
+	public SecurityPortfolio(SecurityPortfolio other) {
+		this(other.date);
+
+		for (final SecurityPosition p : other.positions) {
+			this.positions.add(new SecurityPosition(p));
+		}
+	}
+
 	public SecurityPortfolio(Date date) {
 		this.positions = new ArrayList<SecurityPosition>();
 		this.date = date;
 	}
 
-	public SecurityPortfolio() {
-		this(null);
+	public void addTransaction(InvestmentTxn itx) {
+		if (itx.security == null) {
+			return;
+		}
+
+		final SecurityPosition p = getPosition(itx.security);
+		p.shares = p.shares.add(itx.quantity);
+		p.transactions.add(itx);
+		p.shrBalance.add(p.shares);
 	}
 
-	public SecurityPosition getPosition(Security sec) {
+	/**
+	 * Build state from transactions
+	 *
+	 * @param stat
+	 *            Statement containing my transactions
+	 */
+	public void captureTransactions(Statement stat) {
+		final SecurityPortfolio dport = stat.getPortfolioDelta();
+		final SecurityPortfolio prevPort = (stat.prevStatement != null) //
+				? stat.prevStatement.holdings //
+				: new SecurityPortfolio();
+
+		for (final SecurityPosition pos : this.positions) {
+			final SecurityPosition dpos = dport.findPosition(pos.security);
+
+			final BigDecimal prevbal = prevPort.getPosition(pos.security).shares;
+			pos.setTransactions(dpos.transactions, prevbal);
+		}
+	}
+
+	/**
+	 * Find a position for a security, if it exists
+	 *
+	 * @param sec
+	 *            The security
+	 * @return The position, null if nonexistent
+	 */
+	public SecurityPosition findPosition(Security sec) {
 		for (final SecurityPosition pos : this.positions) {
 			if (pos.security == sec) {
 				return pos;
 			}
 		}
 
-		final SecurityPosition newpos = new SecurityPosition(sec);
-		this.positions.add(newpos);
+		return null;
+	}
 
-		return newpos;
+	/**
+	 * Find a position for a security. Create it if it does not exist.
+	 *
+	 * @param sec
+	 *            The security
+	 * @return The position
+	 */
+	public SecurityPosition getPosition(Security sec) {
+		SecurityPosition pos = findPosition(sec);
+
+		if (pos == null) {
+			pos = new SecurityPosition(sec);
+			this.positions.add(pos);
+		}
+
+		return pos;
 	}
 
 	public BigDecimal getPortfolioValueForDate(Date d) {
@@ -58,9 +120,12 @@ class SecurityPortfolio {
 class SecurityPosition {
 	public Security security;
 	public BigDecimal shares;
+
 	public List<InvestmentTxn> transactions;
+	/** Running share balance per transaction */
 	public List<BigDecimal> shrBalance;
-	// Set if this represents a point in time (i.e. statement). Null otherwise.
+
+	/** Set if this represents a PIT (i.e. statement). Null otherwise. */
 	public BigDecimal value;
 
 	public SecurityPosition(Security sec, BigDecimal shares, BigDecimal value) {
@@ -77,6 +142,28 @@ class SecurityPosition {
 
 	public SecurityPosition(Security sec) {
 		this(sec, BigDecimal.ZERO);
+	}
+
+	/**
+	 * Copy constructor - does not copy transaction information
+	 *
+	 * @param other
+	 */
+	public SecurityPosition(SecurityPosition other) {
+		this(other.security, other.shares);
+	}
+
+	public void setTransactions(List<InvestmentTxn> txns, BigDecimal startBal) {
+		Collections.sort(txns, (t1, t2) -> t1.getDate().compareTo(t2.getDate()));
+
+		this.transactions.clear();
+		this.transactions.addAll(txns);
+		this.shrBalance.clear();
+
+		for (final InvestmentTxn t : this.transactions) {
+			startBal = startBal.add(t.quantity);
+			this.shrBalance.add(startBal);
+		}
 	}
 
 	public String toString() {

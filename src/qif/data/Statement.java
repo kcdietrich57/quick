@@ -190,21 +190,22 @@ public class Statement {
 	}
 
 	public boolean reconcile(Account a, String msg) {
-		boolean needsReconcile = false;
+		boolean cashDifferent = false;
+		boolean holdingsDifferent = false;
 
 		if (!getTransactionsFromDetails(a)) {
 			// Didn't load stmt info, try automatic reconciliation
 			final List<GenericTxn> txns = a.gatherTransactionsForStatement(this);
 			final List<GenericTxn> uncleared = new ArrayList<GenericTxn>();
 
-			final BigDecimal cashTotal = Common.sumCashAmounts(txns);
-			final BigDecimal cashExpected = this.cashBalance.subtract(getOpeningCashBalance());
-			BigDecimal cashDiff = cashExpected.subtract(cashTotal);
+			BigDecimal cashDiff = checkCashBalance(txns);
 
-			// TODO put together security transactions' effects
-			// TODO compare statement position to reconciled position
+			final SecurityPortfolio newHoldings = getPortfolioDelta(txns);
+			holdingsDifferent = !checkHoldings(newHoldings);
 
 			if (cashDiff.signum() != 0) {
+				cashDifferent = true;
+
 				Common.findSubsetTotaling(txns, uncleared, cashDiff);
 
 				if (uncleared.isEmpty()) {
@@ -216,41 +217,25 @@ public class Statement {
 			}
 
 			clearTransactions(txns, uncleared);
-
-			needsReconcile = (this.details == null) || (cashDiff.signum() != 0);
 		}
 
 		boolean isBalanced = true;
 
-		if (needsReconcile) {
-			isBalanced = reconcileCash(a, msg);
+		if ((this.details == null) //
+				|| cashDifferent //
+				|| holdingsDifferent) {
+			isBalanced = review(msg, true);
+
+			if (isBalanced && (this.details == null)) {
+				// TODO we don't need details in the statement after it's
+				// reconciled
+				this.details = new StatementDetails(this);
+
+				this.holdings.captureTransactions(this);
+			}
 		}
 
 		return isBalanced;
-	}
-
-	/**
-	 * Reconcile cash for this statement
-	 *
-	 * @param a
-	 *            Account
-	 * @param msg
-	 *            Display current activity
-	 * @return True if we have reconciled the balance
-	 */
-	public boolean reconcileCash(Account a, String msg) {
-		// TODO separate review cash vs securities
-		final boolean isBalanced = review(true, msg);
-
-		if (isBalanced && (this.details == null)) {
-			this.details = new StatementDetails(this);
-		}
-
-		return isBalanced;
-	}
-
-	public boolean reconcileSecurities(BigDecimal curbal, Account a, String msg) {
-		return true;
 	}
 
 	/**
@@ -321,7 +306,11 @@ public class Statement {
 		return true;
 	}
 
-	private boolean review(boolean reconcileNeeded, String msg) {
+	public boolean review(String msg) {
+		return review(msg, false);
+	}
+
+	private boolean review(String msg, boolean reconcileNeeded) {
 		boolean done = false;
 		boolean abort = false;
 		boolean sort = true;
@@ -331,17 +320,19 @@ public class Statement {
 				arrangeTransactionsForDisplay(this.transactions);
 				arrangeTransactionsForDisplay(this.unclearedTransactions);
 			}
-			print(msg);
+			displayReviewStatus(msg);
 
 			if (!reconcileNeeded) {
 				return true;
 			}
 
-			final BigDecimal diff = checkCashBalance();
-			final boolean ok = diff.signum() == 0;
-			final String dflt = "(" + String.format("%3.2f", diff) + ")";
+			final boolean cashDifferent = checkCashBalance().signum() != 0;
+			final SecurityPortfolio newHoldings = getPortfolioDelta();
+			final boolean holdingsDifferent = !checkHoldings(newHoldings);
 
-			System.out.print("CMD" + dflt + "> ");
+			final boolean ok = !(cashDifferent || holdingsDifferent);
+
+			System.out.print("CMD> ");
 
 			String s = QifLoader.scn.nextLine();
 
@@ -628,16 +619,13 @@ public class Statement {
 		}
 	}
 
-	public void print(String msg) {
-		final QifDom dom = QifDom.getDomById(this.domid);
-		final Account a = dom.getAccount(this.acctid);
-
+	private void displayReviewStatus(String msg) {
 		System.out.println();
 		System.out.println("-------------------------------------------------------");
 		System.out.println(msg);
-		System.out.println("  " + Common.getDateString(this.date) //
-				+ " " + this.closingBalance //
-				+ "  " + a.name);
+		System.out.println("-------------------------------------------------------");
+		System.out.println(toString());
+		displayHoldingsComparison();
 		System.out.println("-------------------------------------------------------");
 
 		for (int ii = 0; ii < this.transactions.size(); ++ii) {
@@ -656,18 +644,39 @@ public class Statement {
 				System.out.println(String.format("%3d: ", ii + 1) + t.toString());
 			}
 		}
+	}
 
-		if (!this.holdings.positions.isEmpty()) {
-			System.out.println("Securities:");
+	private void displayHoldingsComparison() {
+		String s = String.format("\n  %-25s %10.2f", //
+				"Cash", Common.sumCashAmounts(this.transactions));
+		final BigDecimal cashDiff = checkCashBalance();
+		if (cashDiff.signum() != 0) {
+			s += " [" + cashDiff + "] *************";
+		}
+		System.out.println(s);
 
-			for (final SecurityPosition p : this.holdings.positions) {
-				final String sn = p.security.getName();
-				final BigDecimal sb = p.shares;
-				// SecurityPosition spos =
-				// dom.portfolio.getPosition(p.security);
-				final BigDecimal sprice = p.security.getPriceForDate(this.date).price;
+		final SecurityPortfolio newHoldings = getPortfolioDelta();
 
-				System.out.println("  " + sn + " " + sb + " shares" + " Price: " + sprice);
+		for (final SecurityPosition p : this.holdings.positions) {
+			s = String.format("  %-25s %10.2f", p.security.getName(), p.shares);
+
+			final SecurityPosition op = newHoldings.getPosition(p.security);
+			if (!p.shares.equals(op.shares)) {
+				s += " [" + op.shares.subtract(p.shares) + "] *************";
+			}
+
+			System.out.println(s);
+		}
+
+		boolean first = true;
+		for (final SecurityPosition p : this.holdings.positions) {
+			if (null == this.holdings.findPosition(p.security)) {
+				if (first) {
+					first = false;
+					System.out.println("  Unexpected securities:");
+				}
+
+				System.out.println(String.format("  %s %10.2f", p.security.getName(), p.shares));
 			}
 		}
 	}
@@ -704,10 +713,83 @@ public class Statement {
 	 * @return Difference from expected value
 	 */
 	private BigDecimal checkCashBalance() {
-		final BigDecimal txsum = Common.sumCashAmounts(this.transactions);
-		final BigDecimal newbal = getOpeningCashBalance().add(txsum);
+		return checkCashBalance(this.transactions);
+	}
 
-		return newbal.subtract(this.cashBalance);
+	/**
+	 * Check list of transactions against expected cash balance
+	 *
+	 * @param txns
+	 *            The transactions to check
+	 * @return Difference from expected balance
+	 */
+	private BigDecimal checkCashBalance(List<GenericTxn> txns) {
+		final BigDecimal cashTotal = Common.sumCashAmounts(txns);
+		final BigDecimal cashExpected = this.cashBalance.subtract(getOpeningCashBalance());
+		final BigDecimal cashDiff = cashTotal.subtract(cashExpected);
+
+		return cashDiff;
+	}
+
+	/**
+	 * Check cleared transactions against expected security holdings
+	 *
+	 * @return True if they match
+	 */
+	private boolean checkHoldings(SecurityPortfolio delta) {
+		if (this.holdings.positions.isEmpty()) {
+			return true;
+		}
+
+		if (this.holdings.positions.size() != delta.positions.size()) {
+			return false;
+		}
+
+		for (final SecurityPosition p : this.holdings.positions) {
+			final SecurityPosition op = delta.getPosition(p.security);
+			if (!p.shares.equals(op.shares)) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Build a Portfolio position from transactions
+	 *
+	 * @param txns
+	 *            The transactions
+	 * @return Portfolio with holdings
+	 */
+	private SecurityPortfolio getPortfolioDelta(List<GenericTxn> txns) {
+		final SecurityPortfolio clearedPositions = (this.prevStatement != null) //
+				? new SecurityPortfolio(this.prevStatement.holdings) //
+				: new SecurityPortfolio();
+
+		for (final GenericTxn t : txns) {
+			if (!(t instanceof InvestmentTxn)) {
+				continue;
+			}
+
+			final InvestmentTxn itx = (InvestmentTxn) t;
+			if (itx.security == null) {
+				continue;
+			}
+
+			clearedPositions.addTransaction(itx);
+		}
+
+		return clearedPositions;
+	}
+
+	/**
+	 * Build a Portfolio position from the current transactions
+	 *
+	 * @return Portfolio with holdings
+	 */
+	public SecurityPortfolio getPortfolioDelta() {
+		return getPortfolioDelta(this.transactions);
 	}
 
 	private void arrangeTransactionsForDisplay(List<GenericTxn> txns) {
