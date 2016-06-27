@@ -273,6 +273,14 @@ public abstract class GenericTxn extends SimpleTxn {
 	public Date getDate() {
 		return this.date;
 	}
+
+	public String formatForSave() {
+		final String s = String.format("T;%s;%d;%5.2f", //
+				Common.getDateString(getDate()), //
+				getCheckNumber(), //
+				getCashAmount());
+		return s;
+	}
 };
 
 class NonInvestmentTxn extends GenericTxn {
@@ -697,6 +705,23 @@ class InvestmentTxn extends GenericTxn {
 
 	public short getXferAcctid() {
 		return (short) -this.xacctid;
+	}
+
+	public String formatForSave() {
+		String secString = ";";
+		if (this.security != null) {
+			secString = this.security.getSymbol() + ";";
+			if (this.quantity != null) {
+				secString += String.format("%5.2f", this.quantity);
+			}
+		}
+
+		final String s = String.format("I;%s;%s;%s;%5.2f", //
+				Common.getDateString(getDate()), //
+				getAction().toString(), //
+				secString, //
+				getCashAmount());
+		return s;
 	}
 
 	public String toStringShort() {

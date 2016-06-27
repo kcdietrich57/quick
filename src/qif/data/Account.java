@@ -183,7 +183,7 @@ public class Account {
 			}
 
 			if (s.details.dirty) {
-				final String detailsStr = s.details.formatForSave(QifDom.getDomById(this.domid), this);
+				final String detailsStr = s.formatForSave();
 				pw.println(detailsStr);
 				pw.flush();
 			}

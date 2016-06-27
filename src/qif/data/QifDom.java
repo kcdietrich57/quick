@@ -104,6 +104,9 @@ public class QifDom {
 	private static List<QifDom> doms = new ArrayList<QifDom>();
 	private static boolean isverbose = false;
 
+	private static int totalXfers = 0;
+	private static int failedXfers = 0;
+
 	public static QifDom getDomById(int domid) {
 		return ((domid >= 0) && (doms.size() > domid)) ? doms.get(domid) : null;
 	}
@@ -123,6 +126,8 @@ public class QifDom {
 	int loadedStatementsVersion = -1;
 
 	public Account currAccount = null;
+
+	private final List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
 
 	public QifDom() {
 		this.domid = nextdomid++;
@@ -542,7 +547,7 @@ public class QifDom {
 			final Account a = getAccount(acctid);
 
 			for (final Statement s : a.statements) {
-				pw.println(s.details.formatForSave(QifDom.getDomById(a.domid), a));
+				pw.println(s.formatForSave());
 			}
 		}
 
@@ -830,10 +835,6 @@ public class QifDom {
 			connectTransfers(txn, txn.getDate());
 		}
 	}
-
-	private final List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
-	private static int totalXfers = 0;
-	private static int failedXfers = 0;
 
 	private void connectTransfers(SimpleTxn txn, Date date) {
 		// Opening balance appears as a transfer to the same acct

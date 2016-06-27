@@ -40,6 +40,10 @@ public class Security {
 		this.goal = other.goal;
 	}
 
+	public Object getSymbol() {
+		return (this.symbol != null) ? this.symbol : getName();
+	}
+
 	public String getName() {
 		if (this.names.isEmpty()) {
 			return "";

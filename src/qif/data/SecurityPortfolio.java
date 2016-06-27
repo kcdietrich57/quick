@@ -9,7 +9,8 @@ import java.util.List;
 // This can be global information, or for a single account or statement
 class SecurityPortfolio {
 	public List<SecurityPosition> positions;
-	// Set if this represents a point in time (i.e. statement). Null otherwise.
+
+	/** Set if this represents a PIT (i.e. statement). Null otherwise. */
 	public Date date;
 
 	public SecurityPortfolio() {
@@ -226,5 +227,21 @@ class SecurityPosition {
 		}
 
 		return idx;
+	}
+
+	public String formatForSave(Statement stat) {
+		final int numtx = this.transactions.size();
+		String s = this.security.getName() + ";" + numtx;
+
+		for (int ii = 0; ii < numtx; ++ii) {
+			final InvestmentTxn t = this.transactions.get(ii);
+			final int txidx = stat.transactions.indexOf(t);
+			assert txidx >= 0;
+			final BigDecimal bal = this.shrBalance.get(ii);
+
+			s += String.format(";%d;%f", txidx, bal);
+		}
+
+		return s;
 	}
 }

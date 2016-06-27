@@ -189,6 +189,29 @@ public class Statement {
 		this.unclearedTransactions = unclearedTxns;
 	}
 
+	// name;date;stmtBal;cashBal;numTx;numPos;[cashTx;][sec;numTx[txIdx;shareBal;]]
+	public String formatForSave() {
+		final Account a = QifDom.getDomById(this.domid).getAccount(this.acctid);
+
+		String s = String.format("%s;%s;%5.2f;%5.2f;%d;%d", //
+				a.name, //
+				Common.getDateString(this.date), //
+				this.closingBalance, //
+				this.cashBalance, //
+				this.transactions.size(), //
+				this.holdings.positions.size());
+
+		for (final GenericTxn t : this.transactions) {
+			s += ";" + t.formatForSave();
+		}
+
+		for (final SecurityPosition p : this.holdings.positions) {
+			s += ";" + p.formatForSave(this);
+		}
+
+		return s;
+	}
+
 	public boolean reconcile(Account a, String msg) {
 		boolean cashDifferent = false;
 		boolean holdingsDifferent = false;
@@ -227,11 +250,11 @@ public class Statement {
 			isBalanced = review(msg, true);
 
 			if (isBalanced && (this.details == null)) {
+				this.holdings.captureTransactions(this);
+
 				// TODO we don't need details in the statement after it's
 				// reconciled
 				this.details = new StatementDetails(this);
-
-				this.holdings.captureTransactions(this);
 			}
 		}
 
@@ -542,27 +565,8 @@ public class Statement {
 				final TxInfo info = TxInfo.factory(t);
 				this.transactions.add(info);
 			}
-		}
 
-		public String formatForSave(QifDom dom, Account a) {
-			String s = String.format("%s;%s;%5.2f;%5.2f;%d;%d", //
-					a.name, //
-					Common.getDateString(this.date), //
-					this.closingBalance, //
-					this.closingCashBalance, //
-					// TODO closing security value
-					this.transactions.size(), //
-					this.holdings.positions.size());
-
-			for (final TxInfo t : this.transactions) {
-				s += String.format(";%s;%s;%5.2f", //
-						Common.getDateString(t.date), //
-						t.cknum, t.cashAmount);
-			}
-
-			// TODO save security info
-
-			return s;
+			this.holdings = stat.holdings;
 		}
 
 		private void parseStatementDetails(QifDom dom, String s, int version) {
@@ -773,9 +777,7 @@ public class Statement {
 			}
 
 			final InvestmentTxn itx = (InvestmentTxn) t;
-			if (itx.security == null) {
-				continue;
-			}
+			// this.transactions.add(itx);
 
 			clearedPositions.addTransaction(itx);
 		}
