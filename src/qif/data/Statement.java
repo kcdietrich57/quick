@@ -16,6 +16,8 @@ public class Statement {
 
 	public Statement prevStatement;
 
+	public boolean isBalanced;
+
 	// open/close balance are total balance, including cash and securities
 	public BigDecimal closingBalance;
 
@@ -33,6 +35,7 @@ public class Statement {
 	public List<GenericTxn> unclearedTransactions;
 
 	public Statement(int domid, int acctid) {
+		this.isBalanced = false;
 		this.domid = domid;
 		this.acctid = acctid;
 		this.date = null;
@@ -46,8 +49,8 @@ public class Statement {
 	// Create a copy of a statement - used when creating a new Dom from an
 	// existing one.
 	public Statement(QifDom dom, Statement other) {
-		this.domid = dom.domid;
-		this.acctid = other.acctid;
+		this(dom.domid, other.acctid);
+
 		this.date = other.date;
 		this.prevStatement = dom.findStatement(other.prevStatement);
 		this.closingBalance = other.closingBalance;
@@ -55,7 +58,6 @@ public class Statement {
 
 		// TODO copy holdings
 		// TODO copy details?
-		this.holdings = new SecurityPortfolio();
 	}
 
 	public static List<Statement> loadStatements(QFileReader qfr, QifDom dom) {
@@ -216,7 +218,9 @@ public class Statement {
 		boolean cashDifferent = false;
 		boolean holdingsDifferent = false;
 
-		if (!getTransactionsFromDetails(a)) {
+		this.isBalanced = getTransactionsFromDetails(a);
+
+		if (!this.isBalanced) {
 			// Didn't load stmt info, try automatic reconciliation
 			final List<GenericTxn> txns = a.gatherTransactionsForStatement(this);
 			final List<GenericTxn> uncleared = new ArrayList<GenericTxn>();
@@ -242,14 +246,12 @@ public class Statement {
 			clearTransactions(txns, uncleared);
 		}
 
-		boolean isBalanced = true;
-
 		if ((this.details == null) //
 				|| cashDifferent //
 				|| holdingsDifferent) {
-			isBalanced = review(msg, true);
+			review(msg, true);
 
-			if (isBalanced && (this.details == null)) {
+			if (this.isBalanced && (this.details == null)) {
 				this.holdings.captureTransactions(this);
 
 				// TODO we don't need details in the statement after it's
@@ -258,7 +260,7 @@ public class Statement {
 			}
 		}
 
-		return isBalanced;
+		return this.isBalanced;
 	}
 
 	/**
@@ -329,11 +331,11 @@ public class Statement {
 		return true;
 	}
 
-	public boolean review(String msg) {
-		return review(msg, false);
+	public void review(String msg) {
+		review(msg, false);
 	}
 
-	private boolean review(String msg, boolean reconcileNeeded) {
+	private void review(String msg, boolean reconcileNeeded) {
 		boolean done = false;
 		boolean abort = false;
 		boolean sort = true;
@@ -343,10 +345,11 @@ public class Statement {
 				arrangeTransactionsForDisplay(this.transactions);
 				arrangeTransactionsForDisplay(this.unclearedTransactions);
 			}
+
 			displayReviewStatus(msg);
 
 			if (!reconcileNeeded) {
-				return true;
+				return;
 			}
 
 			final boolean cashDifferent = checkCashBalance().signum() != 0;
@@ -437,7 +440,7 @@ public class Statement {
 			}
 		}
 
-		return done && !abort;
+		this.isBalanced = done && !abort;
 	}
 
 	private void parseRange(String s, int[] range) {

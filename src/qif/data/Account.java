@@ -176,15 +176,18 @@ public class Account {
 
 		for (int ii = 0; ii < this.statements.size(); ++ii) {
 			final Statement s = this.statements.get(ii);
-			if (!s.reconcile(this, //
-					"Reconciling " + this.name + " statement " + (ii + 1) //
-							+ " of " + this.statements.size())) {
+
+			final String msg = "Reconciling " + this.name + " statement " + (ii + 1) //
+					+ " of " + this.statements.size();
+
+			s.reconcile(this, msg);
+			if (!s.isBalanced) {
 				break;
 			}
 
 			if (s.details.dirty) {
-				final String detailsStr = s.formatForSave();
-				pw.println(detailsStr);
+				final String logStr = s.formatForSave();
+				pw.println(logStr);
 				pw.flush();
 			}
 
