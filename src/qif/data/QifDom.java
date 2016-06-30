@@ -489,13 +489,13 @@ public class QifDom {
 	}
 
 	// Read statement log file, filling in statement details.
-	// We will hook up the transactions later.
-	public void validateStatements(File logFile) {
+	public void processStatementLog(File logFile) {
 		if (!logFile.isFile()) {
 			return;
 		}
 
 		LineNumberReader stmtLogReader = null;
+		final List<StatementDetails> details = new ArrayList<StatementDetails>();
 
 		try {
 			stmtLogReader = new LineNumberReader(new FileReader(logFile));
@@ -509,13 +509,15 @@ public class QifDom {
 
 			s = stmtLogReader.readLine();
 			while (s != null) {
-				final Statement.StatementDetails details = //
+				final Statement.StatementDetails d = //
 						new StatementDetails(this, s, this.loadedStatementsVersion);
-				addStatementDetails(details);
-				// We add the transactions to the statement later
+
+				details.add(d);
 
 				s = stmtLogReader.readLine();
 			}
+
+			processStatementDetails(details);
 		} catch (final Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -577,27 +579,24 @@ public class QifDom {
 		this.loadedStatementsVersion = Statement.StatementDetails.CURRENT_VERSION;
 	}
 
-	// Process unreconciled statements, using info from statement log file or
-	// matching statements and transactions and logging the results.
+	// Process unreconciled statements for each account, matching statements
+	// with transactions and logging the results.
 	public void reconcileStatements(File stmtlogFile) {
 		PrintWriter pw = null;
+
 		try {
 			pw = new PrintWriter(new FileWriter(stmtlogFile, true));
-		} catch (final IOException e) {
-			Common.reportError("Can't open stmt log file: " + stmtlogFile.getAbsolutePath());
-			return;
-		}
 
-		for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
-			final Account a = getAccount(acctid);
-			a.reconcileStatements(pw);
-		}
-
-		try {
+			for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
+				final Account a = getAccount(acctid);
+				a.reconcileStatements(pw);
+			}
+		} catch (final Exception e) {
+			e.printStackTrace();
+		} finally {
 			if (pw != null) {
 				pw.close();
 			}
-		} catch (final Exception e) {
 		}
 	}
 
@@ -1078,14 +1077,29 @@ public class QifDom {
 		return numshrs;
 	}
 
-	private void addStatementDetails(StatementDetails details) {
-		final Account a = getAccount(details.acctid);
+	/**
+	 * Update statements with their reconciliation information
+	 *
+	 * @param details
+	 *            List of reconciliation info for statements
+	 */
+	private void processStatementDetails(List<StatementDetails> details) {
+		for (final StatementDetails d : details) {
+			final Account a = getAccount(d.acctid);
 
-		final Statement s = a.getStatement(details.date, details.closingBalance);
-		if (s == null) {
-			Common.reportError("Can't find statement for details");
+			final Statement s = a.getStatement(d.date, d.closingBalance);
+			if (s == null) {
+				Common.reportError("Can't find statement for details: " //
+						+ a.name //
+						+ "  " + Common.getDateString(d.date) //
+						+ "  " + d.closingBalance);
+			}
+
+			s.getTransactionsFromDetails(a, d);
+
+			if (!s.isBalanced) {
+				Common.reportError("Can't reconcile statement from log.");
+			}
 		}
-
-		s.details = details;
 	}
 }

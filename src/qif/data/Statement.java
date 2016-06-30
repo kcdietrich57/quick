@@ -25,14 +25,14 @@ public class Statement {
 	public BigDecimal cashBalance;
 	public SecurityPortfolio holdings;
 
-	// TODO this doesn't need to exist once we have loaded/validated the stmt?
-	StatementDetails details;
-
 	// Transactions included in this statement
 	public List<GenericTxn> transactions;
 
 	// Transactions that as of the closing date are not cleared
 	public List<GenericTxn> unclearedTransactions;
+
+	/** Whether this statement has been saved to the reconcile log file */
+	boolean dirty = false;
 
 	public Statement(int domid, int acctid) {
 		this.isBalanced = false;
@@ -43,7 +43,6 @@ public class Statement {
 		this.closingBalance = null;
 		this.cashBalance = null;
 		this.holdings = new SecurityPortfolio();
-		this.details = null;
 	}
 
 	// Create a copy of a statement - used when creating a new Dom from an
@@ -217,8 +216,7 @@ public class Statement {
 	public boolean reconcile(Account a, String msg) {
 		boolean cashDifferent = false;
 		boolean holdingsDifferent = false;
-
-		this.isBalanced = getTransactionsFromDetails(a);
+		boolean needsReview = false;
 
 		if (!this.isBalanced) {
 			// Didn't load stmt info, try automatic reconciliation
@@ -244,19 +242,18 @@ public class Statement {
 			}
 
 			clearTransactions(txns, uncleared);
+
+			this.isBalanced = !(cashDifferent || holdingsDifferent);
+			this.dirty = true;
+			needsReview = true;
 		}
 
-		if ((this.details == null) //
-				|| cashDifferent //
-				|| holdingsDifferent) {
+		if (!this.isBalanced || needsReview) {
 			review(msg, true);
 
-			if (this.isBalanced && (this.details == null)) {
+			if (this.isBalanced) {
 				this.holdings.captureTransactions(this);
-
-				// TODO we don't need details in the statement after it's
-				// reconciled
-				this.details = new StatementDetails(this);
+				this.dirty = true;
 			}
 		}
 
@@ -270,16 +267,16 @@ public class Statement {
 	 *            Account
 	 * @return True if all transactions are found
 	 */
-	private boolean getTransactionsFromDetails(Account a) {
-		if (this.details == null) {
-			return false;
+	public void getTransactionsFromDetails(Account a, StatementDetails d) {
+		if (this.isBalanced) {
+			return;
 		}
 
 		final List<GenericTxn> txns = a.gatherTransactionsForStatement(this);
 		this.transactions = new ArrayList<GenericTxn>();
 		final List<TxInfo> badinfo = new ArrayList<TxInfo>();
 
-		for (final TxInfo info : this.details.transactions) {
+		for (final TxInfo info : d.transactions) {
 			boolean found = false;
 
 			for (int ii = 0; ii < txns.size(); ++ii) {
@@ -318,17 +315,18 @@ public class Statement {
 		this.unclearedTransactions = txns;
 
 		if (!badinfo.isEmpty()) {
-			this.details.transactions.removeAll(badinfo);
-			Common.reportWarning("Can't find " + badinfo.size() + " reconciled transactions:\n" //
-					+ badinfo.toString());
-			return false;
+			// d.transactions.removeAll(badinfo);
+			Common.reportWarning( //
+					"Can't find " + badinfo.size() + " reconciled transactions:\n" //
+							+ badinfo.toString());
+			return;
 		}
 
 		for (final GenericTxn t : this.transactions) {
 			t.stmtdate = this.date;
 		}
 
-		return true;
+		this.isBalanced = true;
 	}
 
 	public void review(String msg) {
@@ -443,7 +441,7 @@ public class Statement {
 		this.isBalanced = done && !abort;
 	}
 
-	private void parseRange(String s, int[] range) {
+	private static void parseRange(String s, int[] range) {
 		range[0] = range[1] = 0;
 		final int dash = s.indexOf('-');
 
@@ -527,8 +525,6 @@ public class Statement {
 		List<TxInfo> transactions;
 		List<TxInfo> unclearedTransactions;
 
-		boolean dirty;
-
 		private StatementDetails() {
 			this.closingCashBalance = BigDecimal.ZERO;
 			this.holdings = new SecurityPortfolio(this.date);
@@ -544,9 +540,6 @@ public class Statement {
 			this.acctid = stat.acctid;
 			this.date = stat.date;
 
-			// Mark this dirty so we will save it to file later
-			this.dirty = true;
-
 			captureDetails(stat);
 		}
 
@@ -555,9 +548,6 @@ public class Statement {
 			this();
 
 			parseStatementDetails(dom, s, version);
-
-			// Since it came from file, we needn't save it later
-			this.dirty = false;
 		}
 
 		private void captureDetails(Statement stat) {

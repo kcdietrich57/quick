@@ -31,10 +31,12 @@ public class QifDomReader {
 		final QifDomReader rdr = new QifDomReader(new File(qifFiles[0]).getParentFile());
 		final QifDom dom = new QifDom();
 
+		// Process all the QIF files
 		for (final String fn : qifFiles) {
 			rdr.load(dom, fn);
 		}
 
+		// Additional processing once the data is loaded (quotes, stmts, etc)
 		rdr.postLoad();
 
 		return dom;
@@ -76,11 +78,17 @@ public class QifDomReader {
 		this.dom.fixPortfolios();
 
 		final File dd = new File(this.qifDir, "statements");
-		loadStatements(dd);
+		loadStatementBalances(dd);
+
 		final File stmtLogFile = new File(this.qifDir, "statementLog.dat");
-		this.dom.validateStatements(stmtLogFile);
+
+		// Process saved statement reconciliation information
+		this.dom.processStatementLog(stmtLogFile);
+
+		// Process statements that have not yet been reconciled
 		this.dom.reconcileStatements(stmtLogFile);
 
+		// Update statement reconciliation file if format has changed
 		if (this.dom.loadedStatementsVersion != Statement.StatementDetails.CURRENT_VERSION) {
 			this.dom.rewriteStatementLogFile(stmtLogFile);
 		}
@@ -776,7 +784,7 @@ public class QifDomReader {
 		}
 	}
 
-	private void loadStatements(File stmtDirectory) {
+	private void loadStatementBalances(File stmtDirectory) {
 		if (!stmtDirectory.isDirectory()) {
 			return;
 		}
