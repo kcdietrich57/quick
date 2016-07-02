@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import qif.data.Account.AccountType;
 import qif.data.QFileReader.SectionType;
@@ -173,11 +172,12 @@ public class QifDomReader {
 					dateprice = false;
 					isHeader = true;
 				} else if (line.startsWith("split")) {
-					final StringTokenizer toker = new StringTokenizer(line, " ");
-					toker.nextToken();
-					final String newshrStr = toker.nextToken();
-					final String oldshrStr = toker.nextToken();
-					final String dateStr = toker.nextToken();
+					final String[] ss = line.split(" ");
+					int ssx = 1;
+
+					final String newshrStr = ss[ssx++];
+					final String oldshrStr = ss[ssx++];
+					final String dateStr = ss[ssx++];
 
 					final BigDecimal splitAdjust = new BigDecimal(newshrStr).divide(new BigDecimal(oldshrStr));
 					splitDate = Common.parseDate(dateStr);
@@ -197,29 +197,30 @@ public class QifDomReader {
 					continue;
 				}
 
-				final StringTokenizer toker = new StringTokenizer(line, ",");
+				final String[] ss = line.split(",");
+				int ssx = 0;
 
 				String pricestr;
 				String datestr;
 
 				if (chlvd) {
-					pricestr = toker.nextToken();
-					toker.nextToken();
-					toker.nextToken();
-					toker.nextToken();
-					datestr = toker.nextToken();
+					pricestr = ss[ssx++];
+					++ssx;
+					++ssx;
+					++ssx;
+					datestr = ss[ssx++];
 				} else if (dohlcv) {
-					datestr = toker.nextToken();
-					toker.nextToken();
-					toker.nextToken();
-					toker.nextToken();
-					pricestr = toker.nextToken();
+					datestr = ss[ssx++];
+					++ssx;
+					++ssx;
+					++ssx;
+					pricestr = ss[ssx++];
 				} else if (dateprice) {
-					datestr = toker.nextToken();
-					pricestr = toker.nextToken();
+					datestr = ss[ssx++];
+					pricestr = ss[ssx++];
 				} else {
-					pricestr = toker.nextToken();
-					datestr = toker.nextToken();
+					pricestr = ss[ssx++];
+					datestr = ss[ssx++];
 				}
 
 				Date date = Common.parseDate(datestr);

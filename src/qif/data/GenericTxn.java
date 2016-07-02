@@ -725,12 +725,14 @@ class InvestmentTxn extends GenericTxn {
 	}
 
 	public String toStringShort() {
-		return String.format("%s %s %10s  %10.2f  %s", //
+		return String.format("%s %s %10s %10.2f %10.2f %10.2f %s", //
 				((this.stmtdate != null) ? "*" : " "), //
 				Common.getDateString(getDate()), //
 				this.action.toString(), //
 				getAmount(), //
-				((this.security != null) ? this.security.getName() : getPayee()));
+				getCashAmount(), //
+				this.runningTotal, //
+				((this.security != null) ? this.security.getSymbol() : getPayee()));
 	}
 
 	public String toStringLong() {

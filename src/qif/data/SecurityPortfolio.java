@@ -229,6 +229,7 @@ class SecurityPosition {
 		return idx;
 	}
 
+	// name;numtx[;txid;shrbal]
 	public String formatForSave(Statement stat) {
 		final int numtx = this.transactions.size();
 		String s = this.security.getName() + ";" + numtx;
