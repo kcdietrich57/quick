@@ -524,6 +524,9 @@ class InvestmentTxn extends GenericTxn {
 		case CONTRIBX: // amt/xamt
 		case WITHDRAWX: // + amt/xamt
 		case DIV: // amt
+			if (this.security != null) {
+				this.security = null;
+			}
 			break;
 
 		case XOUT: { // + amt/xamt
