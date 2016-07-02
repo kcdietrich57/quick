@@ -137,14 +137,14 @@ public class QifReporter {
 			for (int ii = 0; ii < p.transactions.size(); ++ii) {
 				final InvestmentTxn t = p.transactions.get(ii);
 
-				if (t.quantity != null) {
+				if (t.getShares() != null) {
 					final BigDecimal shrbal = p.shrBalance.get(ii);
 
 					System.out.println(String.format( //
 							"  %-12s  %-10s  %10.3f  %10.3f", //
 							Common.getDateString(t.getDate()), //
 							t.action.toString(), //
-							t.quantity, //
+							t.getShares(), //
 							shrbal));
 				}
 			}
@@ -166,7 +166,7 @@ public class QifReporter {
 			for (int ii = 0; ii < p.transactions.size(); ++ii) {
 				final InvestmentTxn t = p.transactions.get(ii);
 
-				if (t.quantity != null) {
+				if (t.getShares() != null) {
 					final BigDecimal shrbal = p.shrBalance.get(ii);
 
 					System.out.println(String.format( //
@@ -174,7 +174,7 @@ public class QifReporter {
 							Common.getDateString(t.getDate()), //
 							QifDom.getDomById(t.domid).getAccount(t.acctid).name, //
 							t.action.toString(), //
-							t.quantity, //
+							t.getShares(), //
 							shrbal));
 				}
 			}

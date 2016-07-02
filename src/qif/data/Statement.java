@@ -303,8 +303,6 @@ public class Statement {
 	}
 
 	public boolean reconcile(Account a, String msg) {
-		boolean cashDifferent = false;
-		boolean holdingsDifferent = false;
 		boolean needsReview = false;
 
 		if (!this.isBalanced) {
@@ -312,27 +310,21 @@ public class Statement {
 			final List<GenericTxn> txns = a.gatherTransactionsForStatement(this);
 			final List<GenericTxn> uncleared = new ArrayList<GenericTxn>();
 
-			BigDecimal cashDiff = checkCashBalance(txns);
+			if (!cashMatches(txns)) {
+				this.isBalanced = false;
 
-			final SecurityPortfolio newHoldings = getPortfolioDelta(txns);
-			holdingsDifferent = !checkHoldings(newHoldings);
-
-			if (cashDiff.signum() != 0) {
-				cashDifferent = true;
-
-				Common.findSubsetTotaling(txns, uncleared, cashDiff);
+				Common.findSubsetTotaling(txns, uncleared, getCashDifference(txns));
 
 				if (uncleared.isEmpty()) {
-					System.out.println("Can't automatically balance account: " + this);
+					Common.reportWarning("Can't automatically balance account: " + this);
 				} else {
-					cashDiff = BigDecimal.ZERO;
 					txns.removeAll(uncleared);
 				}
 			}
 
 			clearTransactions(txns, uncleared);
 
-			this.isBalanced = !(cashDifferent || holdingsDifferent);
+			this.isBalanced &= holdingsMatch();
 			this.dirty = true;
 			needsReview = true;
 		}
@@ -418,7 +410,7 @@ public class Statement {
 		this.isBalanced = true;
 	}
 
-	public void review(String msg) {
+	private void review(String msg) {
 		review(msg, false);
 	}
 
@@ -439,12 +431,6 @@ public class Statement {
 				return;
 			}
 
-			final boolean cashDifferent = checkCashBalance().signum() != 0;
-			final SecurityPortfolio newHoldings = getPortfolioDelta();
-			final boolean holdingsDifferent = !checkHoldings(newHoldings);
-
-			final boolean ok = !(cashDifferent || holdingsDifferent);
-
 			System.out.print("CMD> ");
 
 			String s = QifLoader.scn.nextLine();
@@ -460,7 +446,7 @@ public class Statement {
 				break;
 
 			case 'q':
-				if (ok) {
+				if (cashMatches() && holdingsMatch()) {
 					done = true;
 				}
 				break;
@@ -502,7 +488,7 @@ public class Statement {
 					try {
 						final int[] range = new int[2];
 
-						token = ss[ssx++];
+						token = ss[ssx++].trim();
 						parseRange(token, range);
 
 						final int begin = range[0];
@@ -595,7 +581,7 @@ public class Statement {
 
 			if (tx.security != null) {
 				this.security = tx.security;
-				this.shares = tx.quantity;
+				this.shares = tx.getShares();
 			}
 		}
 
@@ -781,22 +767,26 @@ public class Statement {
 	}
 
 	private void displayHoldingsComparison() {
+		final BigDecimal newCash = getCashDelta();
+
 		String s = String.format("\n  %-25s %10.2f", //
-				"Cash", Common.sumCashAmounts(this.transactions));
-		final BigDecimal cashDiff = checkCashBalance();
-		if (cashDiff.signum() != 0) {
-			s += " [" + cashDiff + "] *************";
+				"Cash", newCash);
+		if (!cashMatches()) {
+			s += " [" + getCashDifference() + "] *************";
 		}
 		System.out.println(s);
 
 		final SecurityPortfolio newHoldings = getPortfolioDelta();
 
-		for (final SecurityPosition p : this.holdings.positions) {
-			s = String.format("  %-25s %10.2f", p.security.getName(), p.shares);
+		for (final SecurityPosition p : newHoldings.positions) {
+			s = String.format("  %-25s %10.2f", //
+					p.security.getName(), p.shares);
 
-			final SecurityPosition op = newHoldings.getPosition(p.security);
-			if (!p.shares.equals(op.shares)) {
-				s += " [" + op.shares.subtract(p.shares) + "] *************";
+			final SecurityPosition op = this.holdings.getPosition(p.security);
+			final BigDecimal opShares = (op != null) ? op.shares : BigDecimal.ZERO;
+
+			if (!Common.isEffectivelyEqual(p.shares, opShares)) {
+				s += " [" + opShares.subtract(p.shares) + "] *************";
 			}
 
 			System.out.println(s);
@@ -844,10 +834,30 @@ public class Statement {
 	/**
 	 * Check cleared transactions against expected cash balance
 	 *
+	 * @return True if balance matches
+	 */
+	private boolean cashMatches() {
+		return cashMatches(this.transactions);
+	}
+
+	/**
+	 * Check cleared transactions against expected cash balance
+	 *
+	 * @param txns
+	 *            The transactions to check
+	 * @return True if balance matches
+	 */
+	private boolean cashMatches(List<GenericTxn> txns) {
+		return getCashDifference(txns).signum() == 0;
+	}
+
+	/**
+	 * Check list of transactions against expected cash balance
+	 *
 	 * @return Difference from expected value
 	 */
-	private BigDecimal checkCashBalance() {
-		return checkCashBalance(this.transactions);
+	private BigDecimal getCashDifference() {
+		return getCashDifference(this.transactions);
 	}
 
 	/**
@@ -857,12 +867,37 @@ public class Statement {
 	 *            The transactions to check
 	 * @return Difference from expected balance
 	 */
-	private BigDecimal checkCashBalance(List<GenericTxn> txns) {
+	private BigDecimal getCashDifference(List<GenericTxn> txns) {
 		final BigDecimal cashTotal = Common.sumCashAmounts(txns);
 		final BigDecimal cashExpected = this.cashBalance.subtract(getOpeningCashBalance());
-		final BigDecimal cashDiff = cashTotal.subtract(cashExpected);
+		BigDecimal cashDiff = cashTotal.subtract(cashExpected);
+
+		final BigDecimal newbal = getCashDelta(txns);
+		cashDiff = this.cashBalance.subtract(newbal);
 
 		return cashDiff;
+	}
+
+	/**
+	 * Calculate the resulting cash position from the previous balance and a
+	 * list of transactions
+	 *
+	 * @param txns
+	 *            The transactions
+	 * @return The new cash balance
+	 */
+	public BigDecimal getCashDelta(List<GenericTxn> txns) {
+		return getOpeningCashBalance().add(Common.sumCashAmounts(txns));
+	}
+
+	/**
+	 * Calculate the resulting cash position from the previous balance and
+	 * cleared transactions
+	 *
+	 * @return The new cash balance
+	 */
+	public BigDecimal getCashDelta() {
+		return getCashDelta(this.transactions);
 	}
 
 	/**
@@ -870,31 +905,37 @@ public class Statement {
 	 *
 	 * @return True if they match
 	 */
-	private boolean checkHoldings(SecurityPortfolio delta) {
+	private boolean holdingsMatch() {
 		if (this.holdings.positions.isEmpty()) {
 			return true;
 		}
 
-		if (this.holdings.positions.size() != delta.positions.size()) {
-			return false;
-		}
+		final SecurityPortfolio delta = getPortfolioDelta();
 
 		for (final SecurityPosition p : this.holdings.positions) {
 			final SecurityPosition op = delta.getPosition(p.security);
-			if (!p.shares.equals(op.shares)) {
-				return false;
-			}
+
+			return Common.isEffectivelyEqual(p.shares, //
+					(op != null) ? op.shares : BigDecimal.ZERO);
+		}
+
+		for (final SecurityPosition p : delta.positions) {
+			final SecurityPosition op = this.holdings.getPosition(p.security);
+
+			return Common.isEffectivelyEqual(p.shares, //
+					(op != null) ? op.shares : BigDecimal.ZERO);
 		}
 
 		return true;
 	}
 
 	/**
-	 * Build a Portfolio position from transactions
+	 * Build a Portfolio position from the previous holdings and a list of
+	 * transactions
 	 *
 	 * @param txns
 	 *            The transactions
-	 * @return Portfolio with holdings
+	 * @return new portfolio holdings
 	 */
 	private SecurityPortfolio getPortfolioDelta(List<GenericTxn> txns) {
 		final SecurityPortfolio clearedPositions = (this.prevStatement != null) //
@@ -907,7 +948,6 @@ public class Statement {
 			}
 
 			final InvestmentTxn itx = (InvestmentTxn) t;
-			// this.transactions.add(itx);
 
 			clearedPositions.addTransaction(itx);
 		}
@@ -916,7 +956,8 @@ public class Statement {
 	}
 
 	/**
-	 * Build a Portfolio position from the current transactions
+	 * Build a Portfolio position from the previous holdings and the current
+	 * transactions
 	 *
 	 * @return Portfolio with holdings
 	 */

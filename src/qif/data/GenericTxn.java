@@ -415,7 +415,7 @@ class InvestmentTxn extends GenericTxn {
 	public Action action;
 	public Security security;
 	public BigDecimal price;
-	public BigDecimal quantity;
+	private BigDecimal quantity;
 	public String textFirstLine;
 	public BigDecimal commission;
 	public String accountForTransfer;
@@ -451,6 +451,26 @@ class InvestmentTxn extends GenericTxn {
 		this.amountTransferred = other.amountTransferred;
 
 		this.xferInv = null;
+	}
+
+	public void setQuantity(BigDecimal qty) {
+		this.quantity = qty;
+	}
+
+	public BigDecimal getShares() {
+		if ((this.quantity == null) || (getAction() == Action.STOCKSPLIT)) {
+			return BigDecimal.ZERO;
+		}
+
+		return this.quantity;
+	}
+
+	public BigDecimal getSplitRatio() {
+		if ((this.quantity == null) || (getAction() != Action.STOCKSPLIT)) {
+			return BigDecimal.ONE;
+		}
+
+		return this.quantity.divide(BigDecimal.TEN);
 	}
 
 	public void repair() {
@@ -729,9 +749,9 @@ class InvestmentTxn extends GenericTxn {
 				((this.stmtdate != null) ? "*" : " "), //
 				Common.getDateString(getDate()), //
 				this.action.toString(), //
+				getShares(), //
 				getAmount(), //
 				getCashAmount(), //
-				this.runningTotal, //
 				((this.security != null) ? this.security.getSymbol() : getPayee()));
 	}
 

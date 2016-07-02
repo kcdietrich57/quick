@@ -641,10 +641,10 @@ public class QifDom {
 
 		for (final InvestmentTxn t : p.transactions) {
 			if (t.getAction() == Action.STOCKSPLIT) {
-				shrbal = shrbal.multiply(t.quantity);
+				shrbal = shrbal.multiply(t.getShares());
 				shrbal = shrbal.divide(BigDecimal.TEN);
-			} else if (t.quantity != null) {
-				shrbal = shrbal.add(t.quantity);
+			} else if (t.getShares() != null) {
+				shrbal = shrbal.add(t.getShares());
 			}
 
 			p.shrBalance.add(shrbal);
@@ -693,13 +693,13 @@ public class QifDom {
 			case SELL:
 			case SELLX:
 			case EXERCISEX:
-				pos.shares = pos.shares.add(txn.quantity);
+				pos.shares = pos.shares.add(txn.getShares());
 				break;
 			// pos.shares = pos.shares.subtract(txn.quantity);
 			// break;
 
 			case STOCKSPLIT:
-				pos.shares = pos.shares.multiply(txn.quantity);
+				pos.shares = pos.shares.multiply(txn.getShares());
 				pos.shares = pos.shares.divide(BigDecimal.TEN);
 				break;
 
@@ -1026,7 +1026,7 @@ public class QifDom {
 
 				final String s = String.format("%-20s : %5s(%2d) %s %s SHR=%10.3f", //
 						t.getAccount().name, t.security.symbol, t.security.secid, //
-						Common.getDateString(t.getDate()), pad, t.quantity);
+						Common.getDateString(t.getDate()), pad, t.getShares());
 				System.out.println(s);
 			}
 		}
@@ -1065,7 +1065,7 @@ public class QifDom {
 			}
 
 			rettxns.add(t);
-			numshrs = numshrs.add(t.quantity);
+			numshrs = numshrs.add(t.getShares());
 
 			if (srctxns.isEmpty()) {
 				break;

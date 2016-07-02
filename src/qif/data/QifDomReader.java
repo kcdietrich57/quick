@@ -629,7 +629,7 @@ public class QifDomReader {
 				txn.price = Common.getDecimal(qline.value);
 				break;
 			case InvQuantity:
-				txn.quantity = Common.getDecimal(qline.value);
+				txn.setQuantity(Common.getDecimal(qline.value));
 				break;
 			case InvSecurity:
 				txn.security = this.dom.findSecurityByName(qline.value);

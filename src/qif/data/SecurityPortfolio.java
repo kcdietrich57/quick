@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import qif.data.SimpleTxn.Action;
+
 // This can be global information, or for a single account or statement
 class SecurityPortfolio {
 	public List<SecurityPosition> positions;
@@ -36,7 +38,11 @@ class SecurityPortfolio {
 		}
 
 		final SecurityPosition p = getPosition(itx.security);
-		p.shares = p.shares.add(itx.quantity);
+		if (itx.getAction() == Action.STOCKSPLIT) {
+			p.shares = p.shares.multiply(itx.getSplitRatio());
+		} else {
+			p.shares = p.shares.add(itx.getShares());
+		}
 		p.transactions.add(itx);
 		p.shrBalance.add(p.shares);
 	}
@@ -162,7 +168,7 @@ class SecurityPosition {
 		this.shrBalance.clear();
 
 		for (final InvestmentTxn t : this.transactions) {
-			startBal = startBal.add(t.quantity);
+			startBal = startBal.add(t.getShares());
 			this.shrBalance.add(startBal);
 		}
 	}
