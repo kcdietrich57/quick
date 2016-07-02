@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import qif.data.SimpleTxn.Action;
@@ -100,6 +101,16 @@ class SecurityPortfolio {
 		}
 
 		return pos;
+	}
+
+	public void purgeEmptyPositions() {
+		for (final Iterator<SecurityPosition> iter = this.positions.iterator(); iter.hasNext();) {
+			final SecurityPosition p = iter.next();
+
+			if (Common.isEffectivelyEqual(p.shares, BigDecimal.ZERO)) {
+				iter.remove();
+			}
+		}
 	}
 
 	public BigDecimal getPortfolioValueForDate(Date d) {

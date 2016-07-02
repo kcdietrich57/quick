@@ -338,6 +338,10 @@ public class Statement {
 			}
 		}
 
+		if (this.dirty && this.isBalanced) {
+			this.holdings.purgeEmptyPositions();
+		}
+
 		return this.isBalanced;
 	}
 
