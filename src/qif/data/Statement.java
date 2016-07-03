@@ -613,7 +613,7 @@ public class Statement {
 	// StatementDetails represents a reconciled statement as stored in the
 	// statements log file.
 	static class StatementDetails {
-		public static final int CURRENT_VERSION = 3;
+		public static final int CURRENT_VERSION = 4;
 
 		int domid;
 		int acctid;
@@ -688,7 +688,9 @@ public class Statement {
 					secStr = ss[ssx++].trim();
 					shrStr = ss[ssx++].trim();
 				} else {
-					tdateStr = txtypeStr;
+					tdateStr = (txtypeStr.equals("T")) //
+							? shrStr = ss[ssx++].trim() //
+							: txtypeStr;
 					cknumStr = ss[ssx++].trim();
 				}
 				final String amtStr = ss[ssx++].trim();
