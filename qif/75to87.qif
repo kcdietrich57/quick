@@ -725,6 +725,12 @@ PKSUnion
 LMisc
 ^
 D9/19/75
+U0.00
+T0.00
+P==== Statement ==== CR400.00 DB-296.03
+M103.97
+^
+D9/19/75
 U-23.16
 T-23.16
 N107
@@ -765,6 +771,12 @@ T-10.00
 N113
 PKSUnion cash
 LCash
+^
+D10/18/75
+U0.00
+T0.00
+P==== Statement ==== CR350.00 DB-72.36
+M381.61
 ^
 D10/18/75
 U-3.00
@@ -833,6 +845,12 @@ Pblakers photo
 LRecreation
 ^
 D11/19/75
+U0.00
+T0.00
+P==== Statement ==== CR175.00 DB-390.31
+M166.30
+^
+D11/19/75
 U-3.00
 T-3.00
 Pservice charge
@@ -884,6 +902,12 @@ N128
 PKSUnion cash
 LCash
 ^
+D12/19/75
+U0.00
+T0.00
+P==== Statement ==== CR0.00 DB-103.16
+M63.14
+^
 D1/ 6/76
 U250.00
 T250.00
@@ -895,6 +919,12 @@ U-143.00
 T-143.00
 N129
 Pdorm rent
+^
+D1/17/76
+U0.00
+T0.00
+P==== Statement ==== CR250.00 DB-156.00
+M157.14
 ^
 D1/17/76
 U-3.00
@@ -940,6 +970,12 @@ U200.00
 T200.00
 Pdeposit
 LMisc
+^
+D2/19/76
+U0.00
+T0.00
+P==== Statement ==== CR200.00 DB-83.31
+M273.83
 ^
 D2/19/76
 U-3.00
@@ -991,6 +1027,12 @@ U-50.00
 T-50.00
 Pcheck-cash
 LCash
+^
+D3/19/76
+U0.00
+T0.00
+P==== Statement ==== CR200.00 DB-384.00
+M89.83
 ^
 D3/19/76
 U-3.00
@@ -1057,6 +1099,12 @@ PKSUnion cash
 LCash
 ^
 D4/17/76
+U0.00
+T0.00
+P==== Statement ==== CR350.00 DB-389.00
+M50.83
+^
+D4/17/76
 U-3.00
 T-3.00
 Pservice charge
@@ -1108,6 +1156,12 @@ Pdeposit
 LMisc
 ^
 D5/19/76
+U0.00
+T0.00
+P==== Statement ==== CR125.00 DB-80.33
+M95.50
+^
+D5/19/76
 U-3.00
 T-3.00
 Pservice charge
@@ -1135,6 +1189,12 @@ Pcash
 LCash
 ^
 D6/19/76
+U0.00
+T0.00
+P==== Statement ==== CR0.00 DB-39.81
+M55.69
+^
+D6/19/76
 U-3.00
 T-3.00
 Pservice charge
@@ -1159,6 +1219,12 @@ T-15.00
 N158
 Pcash
 LCash
+^
+D7/17/76
+U0.00
+T0.00
+P==== Statement ==== CR139.41 DB-38.00
+M157.10
 ^
 D7/17/76
 U-3.00
@@ -1202,6 +1268,12 @@ U-129.26
 T-129.26
 N306
 Pguitar
+^
+D8/19/76
+U0.00
+T0.00
+P==== Statement ==== CR153.55 DB-277.71
+M32.94
 ^
 D8/19/76
 U-3.00
@@ -1269,6 +1341,12 @@ Pdeposit
 LMisc
 ^
 D9/18/76
+U0.00
+T0.00
+P==== Statement ==== CR635.00 DB-594.93
+M73.01
+^
+D9/18/76
 U-3.00
 T-3.00
 Pservice charge
@@ -1292,6 +1370,12 @@ U200.00
 T200.00
 Pdeposit
 LMisc
+^
+D10/19/76
+U0.00
+T0.00
+P==== Statement ==== CR200.00 DB-33.00
+M240.01
 ^
 D10/19/76
 U-3.00
@@ -1347,6 +1431,12 @@ PKSUnion cash
 LCash
 ^
 D11/19/76
+U0.00
+T0.00
+P==== Statement ==== CR200.00 DB-225.00
+M215.01
+^
+D11/19/76
 U-3.00
 T-3.00
 Pservice charge
@@ -1379,6 +1469,12 @@ Pdeposit
 LMisc
 ^
 D12/18/76
+U0.00
+T0.00
+P==== Statement ==== CR200.00 DB-178.50
+M236.51
+^
+D12/18/76
 U-3.00
 T-3.00
 Pservice charge
@@ -1400,6 +1496,12 @@ U-3.62
 T-3.62
 N327
 Pbible supply station
+^
+D1/19/77
+U0.00
+T0.00
+P==== Statement ==== CR0.00 DB-157.62
+M78.89
 ^
 D1/19/77
 U-3.00
@@ -1445,6 +1547,12 @@ N333
 Pdorm rent
 ^
 D2/19/77
+U0.00
+T0.00
+P==== Statement ==== CR500.00 DB-495.47
+M83.42
+^
+D2/19/77
 U-3.00
 T-3.00
 Pservice charge
@@ -1478,6 +1586,12 @@ Pdeposit
 LMisc
 ^
 D3/19/77
+U0.00
+T0.00
+P==== Statement ==== CR500.00 DB-201.00
+M382.42
+^
+D3/19/77
 U-3.00
 T-3.00
 Pservice charge
@@ -1509,6 +1623,12 @@ PKSUnion cash
 LCash
 ^
 D4/19/77
+U0.00
+T0.00
+P==== Statement ==== CR126.92 DB-68.00
+M441.34
+^
+D4/19/77
 U-3.00
 T-3.00
 Pservice charge
@@ -1533,6 +1653,12 @@ T-10.00
 N342
 PKSUnion cash
 LCash
+^
+D5/19/77
+U0.00
+T0.00
+P==== Statement ==== CR0.00 DB-309.00
+M132.34
 ^
 D5/19/77
 U-3.00
@@ -1568,6 +1694,12 @@ U-3.00
 T-3.00
 Pservice charge
 ^
+D6/19/77
+U0.00
+T0.00
+P==== Statement ==== CR419.12 DB-9.00
+M542.46
+^
 D7/ 9/77
 U310.51
 T310.51
@@ -1585,6 +1717,12 @@ U77.03
 T77.03
 Pdeposit
 LMisc
+^
+D7/19/77
+U0.00
+T0.00
+P==== Statement ==== CR387.54 DB-6.83
+M923.17
 ^
 D7/19/77
 U-3.00
@@ -1661,6 +1799,12 @@ T-5.98
 N350
 Pkmart
 LMisc
+^
+D8/19/77
+U0.00
+T0.00
+P==== Statement ==== CR373.87 DB-65.28
+M1231.76
 ^
 D8/19/77
 U-3.00
@@ -1749,6 +1893,12 @@ Pdeposit
 LMisc
 ^
 D9/17/77
+U0.00
+T0.00
+P==== Statement ==== CR257.44 DB-561.87
+M927.33
+^
+D9/17/77
 U-3.00
 T-3.00
 Pservice charge
@@ -1804,6 +1954,12 @@ U-10.00
 T-10.00
 Pcheck cash
 LCash
+^
+D10/19/77
+U0.00
+T0.00
+P==== Statement ==== CR300.00 DB-704.58
+M522.75
 ^
 D10/19/77
 U-3.00
@@ -1870,6 +2026,12 @@ U200.00
 T200.00
 Pdeposit
 LMisc
+^
+D11/19/77
+U0.00
+T0.00
+P==== Statement ==== CR200.00 DB-303.48
+M419.27
 ^
 D11/19/77
 U-3.00
@@ -1949,6 +2111,12 @@ T-8.54
 N382
 Pkmart
 LMisc
+^
+D12/17/77
+U0.00
+T0.00
+P==== Statement ==== CR0.00 DB-259.63
+M159.64
 ^
 D12/17/77
 U-3.00
@@ -2508,12 +2676,17 @@ T1,500.00
 PDeposit
 L[UnionNationalChecking]
 ^
-D12/18/81
-U36.47
-T36.47
+D11/25/81
+U18.13
+T18.13
+PInterest
+LInterest Inc
+^
+D12/25/81
+U18.34
+T18.34
 NIntInc
-PMissing Interest
-Mfix me
+PInterest
 LInterest Inc
 ^
 D1/20/82
@@ -2570,11 +2743,23 @@ T20.44
 NIntInc
 Pinterest
 ^
+D9/26/82
+U0.00
+T0.00
+P==== Statement ==== CR20.44 DB0.00
+M1711.87
+^
 D10/20/82
 U20.69
 T20.69
 NIntInc
 Pinterest
+^
+D10/26/82
+U0.00
+T0.00
+P==== Statement ==== CR20.69 DB0.00
+M1732.56
 ^
 D11/20/82
 U20.94
@@ -2582,11 +2767,23 @@ T20.94
 NIntInc
 Pinterest
 ^
+D11/26/82
+U0.00
+T0.00
+P==== Statement ==== CR20.94 DB0.00
+M1753.50
+^
 D12/21/82
 U21.19
 T21.19
 NIntInc
 Pinterest
+^
+D12/26/82
+U0.00
+T0.00
+P==== Statement ==== CR21.19 DB0.00
+M1774.69
 ^
 D1/20/83
 U21.44
@@ -2594,11 +2791,23 @@ T21.44
 NIntInc
 Pinterest
 ^
+D1/26/83
+U0.00
+T0.00
+P==== Statement ==== CR21.44 DB0.00
+M1796.13
+^
 D2/23/83
 U21.70
 T21.70
 NIntInc
 Pinterest
+^
+D2/26/83
+U0.00
+T0.00
+P==== Statement ==== CR21.70 DB0.00
+M1817.83
 ^
 D3/22/83
 U21.97
@@ -2606,11 +2815,23 @@ T21.97
 NIntInc
 Pinterest
 ^
-D4/26/83
+D3/26/83
+U0.00
+T0.00
+P==== Statement ==== CR21.97 DB0.00
+M1839.80
+^
+D4/25/83
 U22.23
 T22.23
 NIntInc
 Pinterest
+^
+D4/26/83
+U0.00
+T0.00
+P==== Statement ==== CR22.23 DB0.00
+M1862.03
 ^
 D5/20/83
 U22.50
@@ -2714,6 +2935,12 @@ N101
 PKSUnion cash
 LCash
 ^
+D9/26/78
+U0.00
+T0.00
+Pdeposit
+M47.98
+^
 D9/28/78
 U-3.25
 T-3.25
@@ -2751,7 +2978,7 @@ N104
 PKSUnion cash
 LCash
 ^
-D10/26/78
+D10/25/78
 U-0.79
 T-0.79
 Pservice charge
@@ -2881,7 +3108,7 @@ N129
 PKSU tuition
 LEducation
 ^
-D1/26/79
+D1/25/79
 U-1.63
 T-1.63
 Pservice charge
@@ -2951,7 +3178,7 @@ T-120.00
 N113
 Pelishua rent
 ^
-D4/26/79
+D4/25/79
 U-0.47
 T-0.47
 Pservice charge
@@ -2988,7 +3215,7 @@ N116
 Pathletes way
 LClothing
 ^
-D5/26/79
+D5/25/79
 U-0.55
 T-0.55
 Pservice charge
@@ -3006,7 +3233,7 @@ T-80.00
 N118
 Pelishua rent
 ^
-D6/26/79
+D6/25/79
 U-0.89
 T-0.89
 Pservice charge
@@ -3052,7 +3279,7 @@ N123
 Pvista
 LDining
 ^
-D7/26/79
+D7/25/79
 U-1.13
 T-1.13
 Pservice charge
@@ -3162,7 +3389,7 @@ N138
 Pschaeffers suit
 LClothing
 ^
-D9/26/79
+D9/25/79
 U-0.87
 T-0.87
 Pservice charge
@@ -3213,7 +3440,7 @@ N144
 PKSUnion cash
 LCash
 ^
-D10/26/79
+D10/25/79
 U-1.13
 T-1.13
 Pservice charge
@@ -3346,7 +3573,7 @@ T-100.00
 Pcash from deposit
 LCash
 ^
-D1/26/80
+D1/25/80
 U-0.81
 T-0.81
 Pservice charge
@@ -3726,7 +3953,7 @@ N208
 PKSUnion cash
 LCash
 ^
-D9/26/80
+D9/25/80
 U-2.11
 T-2.11
 Pservice charge
@@ -3894,16 +4121,16 @@ N223
 Pkey datsun
 LAuto:Fuel
 ^
+D11/25/80
+U-0.99
+T-0.99
+Pservice charge
+^
 D11/26/80
 U250.00
 T250.00
 Pxfer from savings
 L[UnionNationalSavings]
-^
-D11/26/80
-U-0.99
-T-0.99
-Pservice charge
 ^
 D11/26/80
 U-50.00
@@ -4189,7 +4416,7 @@ T-20.14
 N250
 Pcross ref
 ^
-D2/26/81
+D2/25/81
 U2.20
 T2.20
 Pinterest
@@ -4274,7 +4501,7 @@ N256
 Pbsu
 LRecreation
 ^
-D3/26/81
+D3/25/81
 U1.58
 T1.58
 Pinterest
@@ -4524,7 +4751,7 @@ T-100.00
 N277
 Pjeff p rent
 ^
-D6/26/81
+D6/25/81
 U1.09
 T1.09
 Pinterest
@@ -4761,7 +4988,7 @@ T-14.31
 N299
 Pcross ref
 ^
-D8/26/81
+D8/25/81
 U1.41
 T1.41
 Pinterest
@@ -4875,7 +5102,7 @@ N307
 PSWBell
 LUtilities
 ^
-D9/26/81
+D9/25/81
 U2.03
 T2.03
 Pinterest
@@ -5100,10 +5327,17 @@ N333
 Pfood4less
 LDining
 ^
-D11/26/81
+D11/25/81
 U2.66
 T2.66
 Pinterest
+^
+D11/25/81
+U-40.00
+T-40.00
+N335
+Pcash
+LCash
 ^
 D11/26/81
 U-2.45
@@ -5112,13 +5346,6 @@ N334
 PSWBell
 M11/20/81
 LUtilities
-^
-D11/26/81
-U-40.00
-T-40.00
-N335
-Pcash
-LCash
 ^
 D12/ 2/81
 U-5.90
@@ -5310,7 +5537,7 @@ T-100.00
 Pcash from deposit
 LCash
 ^
-D1/26/82
+D1/25/82
 U2.70
 T2.70
 Pinterest
@@ -5433,7 +5660,7 @@ N375
 Pfood4less
 LDining
 ^
-D2/26/82
+D2/25/82
 U3.10
 T3.10
 Pinterest
@@ -5516,7 +5743,7 @@ N383
 PKPL
 LUtilities
 ^
-D3/26/82
+D3/25/82
 U1.82
 T1.82
 Pinterest
@@ -5932,18 +6159,18 @@ Pvalentinos
 LDining
 ^
 D6/25/82
+U4.11
+T4.11
+Pinterest
+^
+D6/25/82
 U-11.29
 T-11.29
 N431
 PKSUnion
 LMisc
 ^
-D6/26/82
-U4.11
-T4.11
-Pinterest
-^
-D7/26/82
+D7/25/82
 U-280.99
 T-280.99
 Pmissing statement
@@ -6068,7 +6295,7 @@ N458
 Pfood4less
 LDining
 ^
-D8/26/82
+D8/25/82
 U3.92
 T3.92
 Pinterest
@@ -6278,7 +6505,7 @@ N474
 Pfood4less
 LDining
 ^
-D10/26/82
+D10/25/82
 U-10.00
 T-10.00
 Pservice charge
@@ -7403,6 +7630,13 @@ N639
 Pcash
 LCash
 ^
+D1/ 1/84
+U0.00
+T0.00
+P=========== Missing 1983 Data? ======================
+Mfix me 1437.47
+LMisc
+^
 D1/ 2/84
 U455.81
 T455.81
@@ -7449,7 +7683,7 @@ N643
 Pcash
 LCash
 ^
-D1/26/84
+D1/25/84
 U14.94
 T14.94
 Pinterest
@@ -7535,7 +7769,7 @@ N658
 PKSUnion cash
 LCash
 ^
-D2/26/84
+D2/25/84
 U15.11
 T15.11
 Pinterest
@@ -7603,7 +7837,7 @@ N664
 Pcash
 LCash
 ^
-D3/26/84
+D3/25/84
 U14.37
 T14.37
 Pinterest
@@ -7704,10 +7938,17 @@ N673
 Pdeanne jones
 LMisc
 ^
-D4/26/84
+D4/25/84
 U17.69
 T17.69
 Pinterest
+^
+D4/25/84
+U-50.00
+T-50.00
+N675
+Pcash
+LCash
 ^
 D4/26/84
 U-23.35
@@ -7723,13 +7964,6 @@ N674
 Pmom (car property tax?)
 M4/24/84
 LAuto:Fuel
-^
-D4/26/84
-U-50.00
-T-50.00
-N675
-Pcash
-LCash
 ^
 D5/ 2/84
 U455.81
@@ -7806,7 +8040,7 @@ N684
 Pcash
 LCash
 ^
-D5/26/84
+D5/25/84
 U24.18
 T24.18
 Pinterest
@@ -7879,7 +8113,7 @@ N691
 Pcash
 LCash
 ^
-D6/26/84
+D6/25/84
 U25.42
 T25.42
 Pinterest
@@ -7947,7 +8181,7 @@ N697
 Pcash
 LCash
 ^
-D7/26/84
+D7/25/84
 U24.78
 T24.78
 Pinterest
@@ -8015,7 +8249,7 @@ N702
 Pmary wise
 LMisc
 ^
-D8/26/84
+D8/25/84
 U22.53
 T22.53
 Pinterest
@@ -8129,10 +8363,17 @@ N718
 Pbluemont bike club
 LRecreation
 ^
-D9/26/84
+D9/25/84
 U19.69
 T19.69
 Pinterest
+^
+D9/25/84
+U-50.00
+T-50.00
+N719
+Pcash
+LCash
 ^
 D9/26/84
 U555.71
@@ -8150,13 +8391,6 @@ $-64.94
 S
 Eks tax
 $-12.17
-^
-D9/26/84
-U-50.00
-T-50.00
-N719
-Pcash
-LCash
 ^
 D10/ 2/84
 U631.11
@@ -8222,7 +8456,7 @@ N726
 Pcash
 LCash
 ^
-D10/26/84
+D10/25/84
 U20.86
 T20.86
 Pinterest
@@ -8310,7 +8544,7 @@ T-6.50
 Pdavid walker check returned
 LMisc
 ^
-D11/26/84
+D11/25/84
 U21.50
 T21.50
 Pinterest
@@ -8407,7 +8641,7 @@ N745
 Ptown crier
 LMisc
 ^
-D12/26/84
+D12/25/84
 U20.63
 T20.63
 Pinterest
@@ -8482,7 +8716,7 @@ N751
 Ppathfinder
 LRecreation
 ^
-D1/26/85
+D1/25/85
 U21.91
 T21.91
 Pinterest
@@ -8571,7 +8805,7 @@ N761
 Pcash
 LCash
 ^
-D2/26/85
+D2/25/85
 U22.51
 T22.51
 Pinterest
@@ -8675,7 +8909,7 @@ N772
 Pcash
 LCash
 ^
-D3/26/85
+D3/25/85
 U22.12
 T22.12
 Pinterest
@@ -8799,7 +9033,7 @@ N788
 Pcash
 LCash
 ^
-D4/26/85
+D4/25/85
 U26.50
 T26.50
 Pinterest
@@ -8904,7 +9138,7 @@ T-6.00
 N798
 Phaircut
 ^
-D5/26/85
+D5/25/85
 U27.53
 T27.53
 Pinterest
@@ -9107,25 +9341,25 @@ Pstandard oil
 LAuto:Fuel
 ^
 D6/25/85
-U-50.00
-T-50.00
-N823
-Pcash
-LCash
-^
-D6/26/85
 U32.30
 T32.30
 Pinterest
 ^
-D6/26/85
+D6/25/85
 U-50.00
 T-50.00
 N799
 Pcash
 LCash
 ^
-D6/26/85
+D6/25/85
+U-50.00
+T-50.00
+N823
+Pcash
+LCash
+^
+D6/25/85
 U-24.01
 T-24.01
 N824
@@ -9266,7 +9500,7 @@ T-50.00
 Pwd
 LCash
 ^
-D7/26/85
+D7/25/85
 U30.71
 T30.71
 Pinterest
@@ -9410,7 +9644,7 @@ T-50.00
 Pwd
 LCash
 ^
-D8/26/85
+D8/25/85
 U32.18
 T32.18
 Pinterest
@@ -9544,7 +9778,7 @@ N870
 Pimport car parts
 LAuto:Fuel
 ^
-D9/26/85
+D9/25/85
 U29.91
 T29.91
 Pinterest
@@ -9696,7 +9930,7 @@ T-50.00
 Pwd
 LCash
 ^
-D10/26/85
+D10/25/85
 U32.41
 T32.41
 Pinterest
@@ -9825,7 +10059,7 @@ T-50.00
 Pwd
 LCash
 ^
-D11/26/85
+D11/25/85
 U34.67
 T34.67
 Pinterest
@@ -9985,15 +10219,15 @@ Pwd
 LCash
 ^
 D12/25/85
+U32.85
+T32.85
+Pinterest
+^
+D12/25/85
 U-215.00
 T-215.00
 N920
 Psnyder rent
-^
-D12/26/85
-U32.85
-T32.85
-Pinterest
 ^
 D12/28/85
 U-3.81
@@ -10134,7 +10368,7 @@ T-50.00
 Pwd
 LCash
 ^
-D1/26/86
+D1/25/86
 U32.46
 T32.46
 Pinterest
@@ -10243,7 +10477,7 @@ N945
 Pdillons
 LDining
 ^
-D2/26/86
+D2/25/86
 U31.34
 T31.34
 Pinterest
@@ -10349,12 +10583,12 @@ T-50.00
 Pwd
 LCash
 ^
-D3/26/86
+D3/25/86
 U26.32
 T26.32
 Pinterest
 ^
-D3/26/86
+D3/25/86
 U-16.93
 T-16.93
 N954
@@ -10476,7 +10710,7 @@ T-50.00
 Pwd
 LCash
 ^
-D4/26/86
+D4/25/86
 U28.72
 T28.72
 Pinterest
@@ -10614,7 +10848,7 @@ N973
 Pdillons
 LDining
 ^
-D5/26/86
+D5/25/86
 U29.86
 T29.86
 Pinterest
@@ -10751,7 +10985,7 @@ N984
 Pdillons
 LDining
 ^
-D6/26/86
+D6/25/86
 U33.27
 T33.27
 Pinterest
@@ -10864,15 +11098,15 @@ T21.12
 Pdeposit
 ^
 D7/25/86
+U32.45
+T32.45
+Pinterest
+^
+D7/25/86
 U-50.00
 T-50.00
 Pwd
 LCash
-^
-D7/26/86
-U32.45
-T32.45
-Pinterest
 ^
 D7/26/86
 U-50.00
@@ -10952,7 +11186,7 @@ T-50.00
 Pwd
 LCash
 ^
-D8/26/86
+D8/25/86
 U34.35
 T34.35
 Pinterest
@@ -11049,7 +11283,7 @@ N1013
 Pcash
 LCash
 ^
-D9/26/86
+D9/25/86
 U35.06
 T35.06
 Pinterest
@@ -11085,7 +11319,7 @@ N1015
 Pwalmart
 LMisc
 ^
-D10/ 6/86
+D10/25/86
 U11.52
 T11.52
 Pinterest
@@ -11236,7 +11470,7 @@ N1026
 Pcash
 LCash
 ^
-D11/26/86
+D11/25/86
 U66.53
 T66.53
 Pinterest
@@ -11350,16 +11584,16 @@ Pwestron wynde
 LMisc
 ^
 D12/25/86
+U42.02
+T42.02
+Pinterest
+^
+D12/25/86
 U-9.76
 T-9.76
 N1037
 Ptown crier
 LMisc
-^
-D12/26/86
-U42.02
-T42.02
-Pinterest
 ^
 D12/26/86
 U-50.00
