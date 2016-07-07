@@ -313,7 +313,7 @@ public class Statement {
 			if (!cashMatches(txns)) {
 				this.isBalanced = false;
 
-				Common.findSubsetTotaling(txns, uncleared, getCashDifference(txns));
+//				Common.findSubsetTotaling(txns, uncleared, getCashDifference(txns));
 
 				if (uncleared.isEmpty()) {
 					Common.reportWarning("Can't automatically balance account: " + this);
@@ -484,7 +484,7 @@ public class Statement {
 						? this.unclearedTransactions //
 						: this.transactions;
 				final List<GenericTxn> txns = new ArrayList<GenericTxn>();
-				final String[] ss = s.substring(1).split(";");
+				final String[] ss = s.substring(1).trim().split(" ");
 				int ssx = 0;
 				String token = "";
 
