@@ -106,7 +106,9 @@ public class Statement {
 
 				while (ssx < ss.length) {
 					if (month > 12) {
-						Common.reportError("Statements month wrapped to next year");
+						Common.reportError( //
+								"Statements month wrapped to next year:\n" //
+										+ qline.value);
 					}
 
 					final BigDecimal bal = new BigDecimal(ss[ssx++]);
@@ -313,7 +315,8 @@ public class Statement {
 			if (!cashMatches(txns)) {
 				this.isBalanced = false;
 
-//				Common.findSubsetTotaling(txns, uncleared, getCashDifference(txns));
+				// Common.findSubsetTotaling(txns, uncleared,
+				// getCashDifference(txns));
 
 				if (uncleared.isEmpty()) {
 					Common.reportWarning("Can't automatically balance account: " + this);
