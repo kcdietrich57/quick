@@ -757,21 +757,62 @@ public class Statement {
 		displayHoldingsComparison();
 		System.out.println("-------------------------------------------------------");
 
-		for (int ii = 0; ii < this.transactions.size(); ++ii) {
-			final GenericTxn t = this.transactions.get(ii);
+		final int columns = 4;
+		int rows = (this.transactions.size() + columns - 1) / columns;
 
-			System.out.println(String.format("%3d: ", ii + 1) + t.toStringShort());
+		final int maxlength = 20;
+
+		for (int ii = 0; ii < rows; ++ii) {
+			for (int jj = 0; jj < columns; ++jj) {
+				final int idx = jj * rows + ii;
+				if (idx >= this.transactions.size()) {
+					break;
+				}
+
+				final GenericTxn t = this.transactions.get(idx);
+
+				String s = t.toStringShort(true);
+				if (s.length() > maxlength) {
+					s = s.substring(0, maxlength);
+				}
+
+				if (jj > 0) {
+					System.out.print("   ");
+				}
+
+				System.out.print(String.format("%3d %-20s", idx + 1, s));
+			}
+
+			System.out.println();
 		}
 
 		System.out.println();
 		System.out.println("Uncleared transactions:");
 
-		if (this.unclearedTransactions != null) {
-			for (int ii = 0; ii < this.unclearedTransactions.size(); ++ii) {
-				final GenericTxn t = this.unclearedTransactions.get(ii);
+		rows = (this.unclearedTransactions.size() + columns - 1) / columns;
 
-				System.out.println(String.format("%3d: ", ii + 1) + t.toString());
+		for (int ii = 0; ii < rows; ++ii) {
+			for (int jj = 0; jj < columns; ++jj) {
+				final int idx = jj * rows + ii;
+				if (idx >= this.unclearedTransactions.size()) {
+					break;
+				}
+
+				final GenericTxn t = this.unclearedTransactions.get(idx);
+
+				String s = t.toStringShort(true);
+				if (s.length() > maxlength) {
+					s = s.substring(0, maxlength);
+				}
+
+				if (jj > 0) {
+					System.out.print("   ");
+				}
+
+				System.out.print(String.format("%3d %-20s", idx + 1, s));
 			}
+
+			System.out.println();
 		}
 	}
 

@@ -105,7 +105,12 @@ public class Common {
 	}
 
 	public static String getDateString(Date date) {
-		final DateFormat dfmt = new SimpleDateFormat("MM/dd/yyyy");
+		final DateFormat dfmt = new SimpleDateFormat("MM/dd/yy");
+		return dfmt.format(date);
+	}
+
+	public static String getShortDateString(Date date) {
+		final DateFormat dfmt = new SimpleDateFormat("MM/dd");
 		return dfmt.format(date);
 	}
 

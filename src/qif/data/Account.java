@@ -78,7 +78,10 @@ public class Account {
 			}
 		}
 
-		Common.reportError("Can't find statement");
+		Common.reportError("Can't find statement: " //
+				+ this.name //
+				+ Common.getDateString(date) //
+				+ " " + String.format("%10.2f", balance));
 		return null;
 	}
 

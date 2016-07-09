@@ -102,12 +102,12 @@ class SimpleTxn {
 	}
 
 	public String toString() {
-		return toStringShort();
+		return toStringShort(false);
 	}
 
 	// This is a compact, single-line version of the transaction, such as would
 	// appear in a list for displaying and/or selecting transactions.
-	public String toStringShort() {
+	public String toStringShort(boolean veryshort) {
 		// TODO implement SimpleTxn::toStringShort()
 		return "Tx" + this.txid;
 	}
@@ -351,13 +351,19 @@ class NonInvestmentTxn extends GenericTxn {
 		}
 	}
 
-	public String toStringShort() {
-		return String.format("%s %s %5s  %10.2f  %s", //
-				((this.stmtdate != null) ? "*" : " "), //
-				Common.getDateString(getDate()), //
-				this.chkNumber, //
-				getAmount(), //
-				getPayee());
+	public String toStringShort(boolean veryshort) {
+
+		return (veryshort)
+				? String.format("%s %8.2f %s", //
+						Common.getShortDateString(getDate()), //
+						getAmount(), //
+						getPayee())
+				: String.format("%s %s %5s %8.2f %s", //
+						((this.stmtdate != null) ? "*" : " "), //
+						Common.getDateString(getDate()), //
+						this.chkNumber, //
+						getAmount(), //
+						getPayee());
 	}
 
 	public String toStringLong() {
@@ -747,8 +753,8 @@ class InvestmentTxn extends GenericTxn {
 		return s;
 	}
 
-	public String toStringShort() {
-		return String.format("%s %s %10s %10.2f %10.2f %10.2f %s", //
+	public String toStringShort(boolean veryshort) {
+		return String.format("%s %s %s %8.2f %8.2f %8.2f %s", //
 				((this.stmtdate != null) ? "*" : " "), //
 				Common.getDateString(getDate()), //
 				this.action.toString(), //
