@@ -449,7 +449,16 @@ public class Statement {
 
 			switch (s.charAt(0)) {
 			case 'a':
-				abort = true;
+				if (s.startsWith("auto")) {
+					final List<GenericTxn> subset = new ArrayList<GenericTxn>();
+					Common.findSubsetTotaling(this.unclearedTransactions, subset, getCashDifference());
+					if (!subset.isEmpty()) {
+						System.out.println("success");
+					}
+
+				} else {
+					abort = true;
+				}
 				break;
 
 			case 'q':

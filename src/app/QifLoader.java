@@ -39,6 +39,8 @@ public class QifLoader {
 				if (a != null) {
 					a.reportStatus("m");
 				}
+			} else if (s.startsWith("s")) {
+				dom.showStatistics();
 			} else {
 				final Date d = Common.parseDate(s);
 				if (d != null) {

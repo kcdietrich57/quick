@@ -220,6 +220,11 @@ public abstract class GenericTxn extends SimpleTxn {
 		return null;
 	}
 
+	private void addToDom(int domid) {
+		final QifDom dom = QifDom.getDomById(domid);
+		dom.addTransaction(this);
+	}
+
 	public GenericTxn(int domid, int acctid) {
 		super(domid, acctid);
 
@@ -228,6 +233,8 @@ public abstract class GenericTxn extends SimpleTxn {
 		this.clearedStatus = null;
 		this.stmtdate = null;
 		this.runningTotal = null;
+
+		addToDom(domid);
 	}
 
 	public GenericTxn(int domid, GenericTxn other) {
@@ -238,6 +245,8 @@ public abstract class GenericTxn extends SimpleTxn {
 		this.clearedStatus = other.clearedStatus;
 		this.stmtdate = other.stmtdate;
 		this.runningTotal = null;
+
+		addToDom(domid);
 	}
 
 	public int getCheckNumber() {

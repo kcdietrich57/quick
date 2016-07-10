@@ -120,6 +120,8 @@ public class QifDom {
 	private final List<Account> accounts;
 	private final List<Account> accounts_bytime;
 
+	private final List<GenericTxn> allTransactions;
+
 	SecurityPortfolio portfolio;
 	int loadedStatementsVersion = -1;
 
@@ -140,6 +142,8 @@ public class QifDom {
 		this.accounts = new ArrayList<Account>();
 		this.accounts_bytime = new ArrayList<Account>();
 		this.securities = new HashMap<String, Security>();
+
+		this.allTransactions = new ArrayList<GenericTxn>();
 
 		this.portfolio = new SecurityPortfolio();
 
@@ -191,6 +195,14 @@ public class QifDom {
 
 	public Category getCategory(int catid) {
 		return this.categories.get(catid);
+	}
+
+	public void addTransaction(GenericTxn txn) {
+		while (this.allTransactions.size() < txn.txid + 1) {
+			this.allTransactions.add(null);
+		}
+
+		this.allTransactions.set(txn.txid, txn);
 	}
 
 	public Date getFirstTransactionDate() {
@@ -465,6 +477,21 @@ public class QifDom {
 
 		System.out.println();
 		System.out.println(String.format("Balance: %15.2f", netWorth));
+	}
+
+	public void showStatistics() {
+		System.out.println("Total txns: " + (this.allTransactions.size() - 1));
+
+		int reconciled = 0;
+		for (int ii = 1; ii < this.allTransactions.size(); ++ii) {
+			final GenericTxn t = this.allTransactions.get(ii);
+
+			if ((t != null) && (t.stmtdate != null)) {
+				++reconciled;
+			}
+		}
+
+		System.out.println("Reconciled txns: " + reconciled);
 	}
 
 	public String toString() {
