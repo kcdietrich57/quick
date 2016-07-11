@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 import app.QifLoader;
+import qif.ui.ReviewDialog;
 
 public class Statement {
 	public int domid;
@@ -187,6 +188,9 @@ public class Statement {
 			List<GenericTxn> txns, List<GenericTxn> unclearedTxns) {
 		for (final GenericTxn t : txns) {
 			t.stmtdate = this.date;
+		}
+		for (final GenericTxn t : unclearedTxns) {
+			t.stmtdate = null;
 		}
 
 		this.transactions = txns;
@@ -448,6 +452,12 @@ public class Statement {
 			s = s.trim();
 
 			switch (s.charAt(0)) {
+			case 'd': {
+				final ReviewDialog dlg = new ReviewDialog(this);
+				dlg.setVisible(true);
+			}
+				break;
+
 			case 'a':
 				if (s.startsWith("auto")) {
 					final List<GenericTxn> subset = new ArrayList<GenericTxn>();
