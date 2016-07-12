@@ -431,6 +431,8 @@ public class Statement {
 		boolean sort = true;
 
 		while (!done && !abort) {
+			ReviewDialog.review(this);
+
 			if (sort) {
 				arrangeTransactionsForDisplay(this.transactions);
 				arrangeTransactionsForDisplay(this.unclearedTransactions);
@@ -774,7 +776,7 @@ public class Statement {
 		displayHoldingsComparison();
 		System.out.println("-------------------------------------------------------");
 
-		final int columns = 4;
+		final int columns = 3;
 		int rows = (this.transactions.size() + columns - 1) / columns;
 
 		final int maxlength = 20;

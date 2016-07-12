@@ -363,7 +363,7 @@ class NonInvestmentTxn extends GenericTxn {
 	public String toStringShort(boolean veryshort) {
 
 		return (veryshort)
-				? String.format("%s %8.2f %s", //
+				? String.format("%s %10.2f  %s", //
 						Common.getShortDateString(getDate()), //
 						getAmount(), //
 						getPayee())
