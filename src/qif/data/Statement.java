@@ -452,10 +452,8 @@ public class Statement {
 			s = s.trim();
 
 			switch (s.charAt(0)) {
-			case 'd': {
-				final ReviewDialog dlg = new ReviewDialog(this);
-				dlg.setVisible(true);
-			}
+			case 'd':
+				ReviewDialog.review(this);
 				break;
 
 			case 'a':
