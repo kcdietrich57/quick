@@ -141,6 +141,8 @@ public class ReviewDialog extends JFrame {
 			final int[] sel1 = this.txlist.getSelectedIndices();
 			final String statusMsg1 = buildStatusString(this.stmt, sel1);
 
+			// this.stmt.clearTransactions(this.cleared, this.uncleared);
+
 			this.status.setText(statusMsg1);
 		});
 
