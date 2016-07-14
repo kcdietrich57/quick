@@ -85,6 +85,18 @@ public class Account {
 		return null;
 	}
 
+	public int getUnclearedTransactionCount() {
+		int count = 0;
+
+		for (final GenericTxn t : this.transactions) {
+			if ((t != null) && (t.stmtdate == null)) {
+				++count;
+			}
+		}
+
+		return count;
+	}
+
 	public Date getFirstTransactionDate() {
 		return (this.transactions.isEmpty()) ? null : this.transactions.get(0).getDate();
 	}
@@ -205,16 +217,29 @@ public class Account {
 		if (this.statements.isEmpty()) {
 			System.out.println("No statements for " + getDisplayName(36));
 		} else {
-			System.out.println("Statements for " + getDisplayName(36) + ": " //
-					+ this.statements.size());
+			System.out.println();
+			System.out.println("-------------------------------------\n" //
+					+ getDisplayName(36));
+			System.out.println(String.format("%d Statements, %d Transactions", //
+					this.statements.size(), this.transactions.size()));
+			System.out.println("-------------------------------------");
 
 			final int nn = Math.max(0, this.statements.size() - 12);
+			int ct = 0;
 
 			for (int ii = nn; ii < this.statements.size(); ++ii) {
 				final Statement s = this.statements.get(ii);
-				System.out.println(String.format("  %s  %3d tx  %10.2f", //
+
+				if (ct++ == 3) {
+					ct = 1;
+					System.out.println();
+				}
+
+				System.out.print(String.format("   %s  %3d tx  %10.2f", //
 						Common.getDateString(s.date), s.transactions.size(), s.closingBalance));
 			}
+
+			System.out.println();
 
 			System.out.println("Uncleared transactions as of last statement:");
 
@@ -236,6 +261,8 @@ public class Account {
 		}
 
 		System.out.println(String.format("Current value: %10.2f", getCurrentValue()));
+
+		System.out.println();
 	}
 
 	public BigDecimal reportStatusForDate(Date d) {

@@ -479,11 +479,60 @@ public class QifDom {
 		System.out.println(String.format("Balance: %15.2f", netWorth));
 	}
 
+	public void reportStatistics() {
+		final List<Account> ranking = new ArrayList<Account>();
+
+		for (final Account a : this.accounts) {
+			if (a != null) {
+				ranking.add(a);
+			}
+		}
+
+		Collections.sort(ranking, //
+				(o1, o2) -> o2.getUnclearedTransactionCount() - o1.getUnclearedTransactionCount());
+
+		System.out.println();
+		System.out.println("Overall");
+		System.out.println();
+
+		for (int ii = 0; ii < 5; ++ii) {
+			final Account a = ranking.get(ii);
+
+			System.out.println(String.format("   %-25s: %5d/%5d", //
+					a.getDisplayName(25), //
+					a.getUnclearedTransactionCount(), //
+					a.transactions.size()));
+		}
+
+		System.out.println();
+		System.out.println("Banking");
+		System.out.println();
+
+		int ii = 0;
+		for (final Account a : ranking) {
+
+			if (!a.isInvestmentAccount()) {
+				++ii;
+
+				System.out.println(String.format("   %-25s: %5d/%5d", //
+						a.getDisplayName(25), //
+						a.getUnclearedTransactionCount(), //
+						a.transactions.size()));
+			}
+
+			if (ii >= 5) {
+				break;
+			}
+		}
+
+		System.out.println();
+	}
+
 	public void showStatistics() {
-		System.out.println("Total txns: " + (this.allTransactions.size() - 1));
+		final int total = this.allTransactions.size() - 1;
 
 		int reconciled = 0;
-		for (int ii = 1; ii < this.allTransactions.size(); ++ii) {
+		for (int ii = 1; ii <= total; ++ii) {
 			final GenericTxn t = this.allTransactions.get(ii);
 
 			if ((t != null) && (t.stmtdate != null)) {
@@ -491,7 +540,9 @@ public class QifDom {
 			}
 		}
 
-		System.out.println("Reconciled txns: " + reconciled);
+		final double pct = 100.0 * (reconciled) / total;
+		System.out.println(String.format("%d of %d txns reconciled (%5.2f) ", //
+				reconciled, total, pct));
 	}
 
 	public String toString() {
@@ -1123,6 +1174,7 @@ public class QifDom {
 			s.getTransactionsFromDetails(a, d);
 
 			if (!s.isBalanced) {
+				s.getTransactionsFromDetails(a, d);
 				Common.reportError("Can't reconcile statement from log.");
 			}
 		}

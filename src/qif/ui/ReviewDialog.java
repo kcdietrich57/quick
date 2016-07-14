@@ -162,7 +162,8 @@ public class ReviewDialog extends JFrame {
 		if (this.stmt != null) {
 			BigDecimal clearedBalance = stmt.getOpeningCashBalance();
 			for (final int idx : sel) {
-				final GenericTxn t = stmt.transactions.get(idx);
+
+				final GenericTxn t = this.txns.get(idx);
 				clearedBalance = clearedBalance.add(t.getCashAmount());
 
 				this.uncleared.remove(t);

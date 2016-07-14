@@ -725,12 +725,6 @@ PKSUnion
 LMisc
 ^
 D9/19/75
-U0.00
-T0.00
-P==== Statement ==== CR400.00 DB-296.03
-M103.97
-^
-D9/19/75
 U-23.16
 T-23.16
 N107
@@ -771,12 +765,6 @@ T-10.00
 N113
 PKSUnion cash
 LCash
-^
-D10/18/75
-U0.00
-T0.00
-P==== Statement ==== CR350.00 DB-72.36
-M381.61
 ^
 D10/18/75
 U-3.00
@@ -845,12 +833,6 @@ Pblakers photo
 LRecreation
 ^
 D11/19/75
-U0.00
-T0.00
-P==== Statement ==== CR175.00 DB-390.31
-M166.30
-^
-D11/19/75
 U-3.00
 T-3.00
 Pservice charge
@@ -902,12 +884,6 @@ N128
 PKSUnion cash
 LCash
 ^
-D12/19/75
-U0.00
-T0.00
-P==== Statement ==== CR0.00 DB-103.16
-M63.14
-^
 D1/ 6/76
 U250.00
 T250.00
@@ -919,12 +895,6 @@ U-143.00
 T-143.00
 N129
 Pdorm rent
-^
-D1/17/76
-U0.00
-T0.00
-P==== Statement ==== CR250.00 DB-156.00
-M157.14
 ^
 D1/17/76
 U-3.00
@@ -970,12 +940,6 @@ U200.00
 T200.00
 Pdeposit
 LMisc
-^
-D2/19/76
-U0.00
-T0.00
-P==== Statement ==== CR200.00 DB-83.31
-M273.83
 ^
 D2/19/76
 U-3.00
@@ -1027,12 +991,6 @@ U-50.00
 T-50.00
 Pcheck-cash
 LCash
-^
-D3/19/76
-U0.00
-T0.00
-P==== Statement ==== CR200.00 DB-384.00
-M89.83
 ^
 D3/19/76
 U-3.00
@@ -1099,12 +1057,6 @@ PKSUnion cash
 LCash
 ^
 D4/17/76
-U0.00
-T0.00
-P==== Statement ==== CR350.00 DB-389.00
-M50.83
-^
-D4/17/76
 U-3.00
 T-3.00
 Pservice charge
@@ -1156,12 +1108,6 @@ Pdeposit
 LMisc
 ^
 D5/19/76
-U0.00
-T0.00
-P==== Statement ==== CR125.00 DB-80.33
-M95.50
-^
-D5/19/76
 U-3.00
 T-3.00
 Pservice charge
@@ -1189,12 +1135,6 @@ Pcash
 LCash
 ^
 D6/19/76
-U0.00
-T0.00
-P==== Statement ==== CR0.00 DB-39.81
-M55.69
-^
-D6/19/76
 U-3.00
 T-3.00
 Pservice charge
@@ -1219,12 +1159,6 @@ T-15.00
 N158
 Pcash
 LCash
-^
-D7/17/76
-U0.00
-T0.00
-P==== Statement ==== CR139.41 DB-38.00
-M157.10
 ^
 D7/17/76
 U-3.00
@@ -1268,12 +1202,6 @@ U-129.26
 T-129.26
 N306
 Pguitar
-^
-D8/19/76
-U0.00
-T0.00
-P==== Statement ==== CR153.55 DB-277.71
-M32.94
 ^
 D8/19/76
 U-3.00
@@ -1341,12 +1269,6 @@ Pdeposit
 LMisc
 ^
 D9/18/76
-U0.00
-T0.00
-P==== Statement ==== CR635.00 DB-594.93
-M73.01
-^
-D9/18/76
 U-3.00
 T-3.00
 Pservice charge
@@ -1370,12 +1292,6 @@ U200.00
 T200.00
 Pdeposit
 LMisc
-^
-D10/19/76
-U0.00
-T0.00
-P==== Statement ==== CR200.00 DB-33.00
-M240.01
 ^
 D10/19/76
 U-3.00
@@ -1431,12 +1347,6 @@ PKSUnion cash
 LCash
 ^
 D11/19/76
-U0.00
-T0.00
-P==== Statement ==== CR200.00 DB-225.00
-M215.01
-^
-D11/19/76
 U-3.00
 T-3.00
 Pservice charge
@@ -1469,12 +1379,6 @@ Pdeposit
 LMisc
 ^
 D12/18/76
-U0.00
-T0.00
-P==== Statement ==== CR200.00 DB-178.50
-M236.51
-^
-D12/18/76
 U-3.00
 T-3.00
 Pservice charge
@@ -1496,12 +1400,6 @@ U-3.62
 T-3.62
 N327
 Pbible supply station
-^
-D1/19/77
-U0.00
-T0.00
-P==== Statement ==== CR0.00 DB-157.62
-M78.89
 ^
 D1/19/77
 U-3.00
@@ -1547,12 +1445,6 @@ N333
 Pdorm rent
 ^
 D2/19/77
-U0.00
-T0.00
-P==== Statement ==== CR500.00 DB-495.47
-M83.42
-^
-D2/19/77
 U-3.00
 T-3.00
 Pservice charge
@@ -1586,12 +1478,6 @@ Pdeposit
 LMisc
 ^
 D3/19/77
-U0.00
-T0.00
-P==== Statement ==== CR500.00 DB-201.00
-M382.42
-^
-D3/19/77
 U-3.00
 T-3.00
 Pservice charge
@@ -1623,12 +1509,6 @@ PKSUnion cash
 LCash
 ^
 D4/19/77
-U0.00
-T0.00
-P==== Statement ==== CR126.92 DB-68.00
-M441.34
-^
-D4/19/77
 U-3.00
 T-3.00
 Pservice charge
@@ -1653,12 +1533,6 @@ T-10.00
 N342
 PKSUnion cash
 LCash
-^
-D5/19/77
-U0.00
-T0.00
-P==== Statement ==== CR0.00 DB-309.00
-M132.34
 ^
 D5/19/77
 U-3.00
@@ -1694,12 +1568,6 @@ U-3.00
 T-3.00
 Pservice charge
 ^
-D6/19/77
-U0.00
-T0.00
-P==== Statement ==== CR419.12 DB-9.00
-M542.46
-^
 D7/ 9/77
 U310.51
 T310.51
@@ -1717,12 +1585,6 @@ U77.03
 T77.03
 Pdeposit
 LMisc
-^
-D7/19/77
-U0.00
-T0.00
-P==== Statement ==== CR387.54 DB-6.83
-M923.17
 ^
 D7/19/77
 U-3.00
@@ -1799,12 +1661,6 @@ T-5.98
 N350
 Pkmart
 LMisc
-^
-D8/19/77
-U0.00
-T0.00
-P==== Statement ==== CR373.87 DB-65.28
-M1231.76
 ^
 D8/19/77
 U-3.00
@@ -1893,12 +1749,6 @@ Pdeposit
 LMisc
 ^
 D9/17/77
-U0.00
-T0.00
-P==== Statement ==== CR257.44 DB-561.87
-M927.33
-^
-D9/17/77
 U-3.00
 T-3.00
 Pservice charge
@@ -1954,12 +1804,6 @@ U-10.00
 T-10.00
 Pcheck cash
 LCash
-^
-D10/19/77
-U0.00
-T0.00
-P==== Statement ==== CR300.00 DB-704.58
-M522.75
 ^
 D10/19/77
 U-3.00
@@ -2026,12 +1870,6 @@ U200.00
 T200.00
 Pdeposit
 LMisc
-^
-D11/19/77
-U0.00
-T0.00
-P==== Statement ==== CR200.00 DB-303.48
-M419.27
 ^
 D11/19/77
 U-3.00
@@ -2111,12 +1949,6 @@ T-8.54
 N382
 Pkmart
 LMisc
-^
-D12/17/77
-U0.00
-T0.00
-P==== Statement ==== CR0.00 DB-259.63
-M159.64
 ^
 D12/17/77
 U-3.00
@@ -2743,23 +2575,11 @@ T20.44
 NIntInc
 Pinterest
 ^
-D9/26/82
-U0.00
-T0.00
-P==== Statement ==== CR20.44 DB0.00
-M1711.87
-^
 D10/20/82
 U20.69
 T20.69
 NIntInc
 Pinterest
-^
-D10/26/82
-U0.00
-T0.00
-P==== Statement ==== CR20.69 DB0.00
-M1732.56
 ^
 D11/20/82
 U20.94
@@ -2767,23 +2587,11 @@ T20.94
 NIntInc
 Pinterest
 ^
-D11/26/82
-U0.00
-T0.00
-P==== Statement ==== CR20.94 DB0.00
-M1753.50
-^
 D12/21/82
 U21.19
 T21.19
 NIntInc
 Pinterest
-^
-D12/26/82
-U0.00
-T0.00
-P==== Statement ==== CR21.19 DB0.00
-M1774.69
 ^
 D1/20/83
 U21.44
@@ -2791,23 +2599,11 @@ T21.44
 NIntInc
 Pinterest
 ^
-D1/26/83
-U0.00
-T0.00
-P==== Statement ==== CR21.44 DB0.00
-M1796.13
-^
 D2/23/83
 U21.70
 T21.70
 NIntInc
 Pinterest
-^
-D2/26/83
-U0.00
-T0.00
-P==== Statement ==== CR21.70 DB0.00
-M1817.83
 ^
 D3/22/83
 U21.97
@@ -2815,23 +2611,11 @@ T21.97
 NIntInc
 Pinterest
 ^
-D3/26/83
-U0.00
-T0.00
-P==== Statement ==== CR21.97 DB0.00
-M1839.80
-^
 D4/25/83
 U22.23
 T22.23
 NIntInc
 Pinterest
-^
-D4/26/83
-U0.00
-T0.00
-P==== Statement ==== CR22.23 DB0.00
-M1862.03
 ^
 D5/20/83
 U22.50
@@ -7629,13 +7413,6 @@ T-50.00
 N639
 Pcash
 LCash
-^
-D1/ 1/84
-U0.00
-T0.00
-P=========== Missing 1983 Data? ======================
-Mfix me 1437.47
-LMisc
 ^
 D1/ 2/84
 U455.81

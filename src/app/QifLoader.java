@@ -26,6 +26,8 @@ public class QifLoader {
 					"First/last tx date (1): " + Common.getDateString(firstTxDate) //
 							+ " " + Common.getDateString(lastTxDate));
 
+			dom.showStatistics();
+
 			final String s = scn.nextLine();
 
 			if (s.startsWith("q")) {
@@ -40,7 +42,7 @@ public class QifLoader {
 					a.reportStatus("m");
 				}
 			} else if (s.startsWith("s")) {
-				dom.showStatistics();
+				dom.reportStatistics();
 			} else {
 				final Date d = Common.parseDate(s);
 				if (d != null) {
