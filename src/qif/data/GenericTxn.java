@@ -285,7 +285,7 @@ public abstract class GenericTxn extends SimpleTxn {
 
 	public String formatForSave() {
 		final String s = String.format("T;%s;%d;%5.2f", //
-				Common.getDateString(getDate()), //
+				Common.formatDate(getDate()), //
 				getCheckNumber(), //
 				getCashAmount());
 		return s;
@@ -364,12 +364,12 @@ class NonInvestmentTxn extends GenericTxn {
 
 		return (veryshort)
 				? String.format("%s %10.2f  %s", //
-						Common.getShortDateString(getDate()), //
+						Common.formatDateShort(getDate()), //
 						getAmount(), //
 						getPayee())
 				: String.format("%s %s %5s %8.2f %s", //
 						((this.stmtdate != null) ? "*" : " "), //
-						Common.getDateString(getDate()), //
+						Common.formatDate(getDate()), //
 						this.chkNumber, //
 						getAmount(), //
 						getPayee());
@@ -379,7 +379,7 @@ class NonInvestmentTxn extends GenericTxn {
 		final QifDom dom = QifDom.getDomById(this.domid);
 
 		String s = ((this.stmtdate != null) ? "*" : " ") + "Tx" + this.txid + ":";
-		s += " date=" + Common.getDateString(getDate());
+		s += " date=" + Common.formatDate(getDate());
 		s += " acct=" + dom.getAccount(this.acctid).name;
 		s += " clr:" + this.clearedStatus;
 		s += " num=" + this.chkNumber;
@@ -644,7 +644,7 @@ class InvestmentTxn extends GenericTxn {
 
 			String s = "Inconsistent " + this.action + " transaction:" + //
 					" acct=" + QifDom.getDomById(this.domid).getAccount(this.acctid).name + //
-					" " + Common.getDateString(getDate()) + "\n" + //
+					" " + Common.formatDate(getDate()) + "\n" + //
 					"  sec=" + this.security.getName() + //
 					" qty=" + this.quantity + //
 					" price=" + this.price;
@@ -755,7 +755,7 @@ class InvestmentTxn extends GenericTxn {
 		}
 
 		final String s = String.format("I;%s;%s;%s;%5.2f", //
-				Common.getDateString(getDate()), //
+				Common.formatDate(getDate()), //
 				getAction().toString(), //
 				secString, //
 				getCashAmount());
@@ -765,7 +765,7 @@ class InvestmentTxn extends GenericTxn {
 	public String toStringShort(boolean veryshort) {
 		return String.format("%s %s %s %8.2f %8.2f %8.2f %s", //
 				((this.stmtdate != null) ? "*" : " "), //
-				Common.getDateString(getDate()), //
+				Common.formatDate(getDate()), //
 				this.action.toString(), //
 				getShares(), //
 				getAmount(), //
@@ -777,7 +777,7 @@ class InvestmentTxn extends GenericTxn {
 		final QifDom dom = QifDom.getDomById(this.domid);
 
 		String s = ((this.stmtdate != null) ? "*" : " ") + "InvTx" + this.txid + ":";
-		s += " dt=" + Common.getDateString(getDate());
+		s += " dt=" + Common.formatDate(getDate());
 		s += " acct=" + dom.getAccount(this.acctid).name;
 		s += " act=" + this.action;
 		if (this.security != null) {

@@ -63,8 +63,8 @@ public class QifReporter {
 			final GenericTxn lt = a.transactions.get(ntran - 1);
 
 			System.out.println("    Date range: " //
-					+ Common.getDateString(ft.getDate()) //
-					+ " - " + Common.getDateString(lt.getDate()));
+					+ Common.formatDate(ft.getDate()) //
+					+ " - " + Common.formatDate(lt.getDate()));
 			if (includePseudoStatements) {
 				System.out.println("----------------------------");
 			}
@@ -82,7 +82,7 @@ public class QifReporter {
 				if (includePseudoStatements) {
 					if ((cal.get(Calendar.YEAR) != curYear) //
 							|| (cal.get(Calendar.MONTH) != curMonth)) {
-						System.out.println(Common.getDateString(t.getDate()) //
+						System.out.println(Common.formatDate(t.getDate()) //
 								+ ": " + bal //
 								+ " " + curNumTxn + " transactions");
 
@@ -118,8 +118,8 @@ public class QifReporter {
 			final GenericTxn lt = a.transactions.get(ntran - 1);
 
 			System.out.println("Date range: " //
-					+ Common.getDateString(ft.getDate()) //
-					+ " - " + Common.getDateString(lt.getDate()));
+					+ Common.formatDate(ft.getDate()) //
+					+ " - " + Common.formatDate(lt.getDate()));
 			System.out.println("----------------------------");
 		}
 
@@ -142,7 +142,7 @@ public class QifReporter {
 
 					System.out.println(String.format( //
 							"  %-12s  %-10s  %10.3f  %10.3f", //
-							Common.getDateString(t.getDate()), //
+							Common.formatDate(t.getDate()), //
 							t.action.toString(), //
 							t.getShares(), //
 							shrbal));
@@ -171,7 +171,7 @@ public class QifReporter {
 
 					System.out.println(String.format( //
 							"  %-12s  %-20s  %-10s  %10.3f  %10.3f", //
-							Common.getDateString(t.getDate()), //
+							Common.formatDate(t.getDate()), //
 							QifDom.getDomById(t.domid).getAccount(t.acctid).name, //
 							t.action.toString(), //
 							t.getShares(), //

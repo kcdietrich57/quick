@@ -1,6 +1,7 @@
 package qif.data;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -145,6 +146,10 @@ public class Statement {
 				final String secStr = ss[ssx++];
 				final String qtyStr = ss[ssx++];
 				final String valStr = ss[ssx++];
+				String priceStr = "";
+				if (qtyStr.equals("x")) {
+					priceStr = ss[ssx++];
+				}
 
 				final Security sec = dom.findSecurity(secStr);
 				if (sec == null) {
@@ -153,8 +158,12 @@ public class Statement {
 
 				final SecurityPortfolio h = currstmt.holdings;
 				final SecurityPosition p = new SecurityPosition(sec);
-				p.shares = new BigDecimal(qtyStr);
 				p.value = new BigDecimal(valStr);
+				if (qtyStr.equals("x")) {
+					p.shares = p.value.divide(new BigDecimal(priceStr), RoundingMode.HALF_UP);
+				} else {
+					p.shares = new BigDecimal(qtyStr);
+				}
 
 				h.positions.add(p);
 				break;
@@ -203,7 +212,7 @@ public class Statement {
 
 		String s = String.format("%s;%s;%5.2f;%5.2f;%d;%d", //
 				a.name, //
-				Common.getDateString(this.date), //
+				Common.formatDate(this.date), //
 				this.closingBalance, //
 				this.cashBalance, //
 				this.transactions.size(), //
@@ -613,7 +622,7 @@ public class Statement {
 
 		public String toString() {
 			return String.format("%s %5d %10.2f", //
-					Common.getDateString(this.date), this.cknum, this.cashAmount);
+					Common.formatDate(this.date), this.cknum, this.cashAmount);
 		}
 	}
 
@@ -757,7 +766,7 @@ public class Statement {
 
 		public String toString() {
 			final String s = "" + this.domid + ":" + this.acctid + " " //
-					+ Common.getDateString(this.date) //
+					+ Common.formatDate(this.date) //
 					+ String.format("%10.2f  %10.2f %d tx", //
 							this.closingBalance, //
 							this.closingCashBalance, //
@@ -1051,7 +1060,7 @@ public class Statement {
 	}
 
 	public String toString() {
-		final String s = Common.getDateString(this.date) //
+		final String s = Common.formatDate(this.date) //
 				+ "  " + this.closingBalance //
 				+ " tran=" + ((this.transactions != null) ? this.transactions.size() : null);
 

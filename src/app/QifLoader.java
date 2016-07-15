@@ -23,8 +23,8 @@ public class QifLoader {
 
 		for (;;) {
 			System.out.println( //
-					"First/last tx date (1): " + Common.getDateString(firstTxDate) //
-							+ " " + Common.getDateString(lastTxDate));
+					"First/last tx date (1): " + Common.formatDate(firstTxDate) //
+							+ " " + Common.formatDate(lastTxDate));
 
 			dom.showStatistics();
 
@@ -40,6 +40,13 @@ public class QifLoader {
 				final Account a = dom.findAccount(aname);
 				if (a != null) {
 					a.reportStatus("m");
+				}
+			} else if (s.startsWith("g")) {
+				final String aname = s.substring(1).trim();
+
+				final Account a = dom.findAccount(aname);
+				if (a != null) {
+					a.generateMonthlyStatements();
 				}
 			} else if (s.startsWith("s")) {
 				dom.reportStatistics();

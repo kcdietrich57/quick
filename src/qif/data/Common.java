@@ -104,13 +104,18 @@ public class Common {
 		return null;
 	}
 
-	public static String getDateString(Date date) {
+	public static String formatDate(Date date) {
 		final DateFormat dfmt = new SimpleDateFormat("MM/dd/yy");
 		return dfmt.format(date);
 	}
 
-	public static String getShortDateString(Date date) {
+	public static String formatDateShort(Date date) {
 		final DateFormat dfmt = new SimpleDateFormat("MM/dd");
+		return dfmt.format(date);
+	}
+
+	public static String formatDateMonthYear(Date date) {
+		final DateFormat dfmt = new SimpleDateFormat("MM/yyyy");
 		return dfmt.format(date);
 	}
 
@@ -441,7 +446,7 @@ public class Common {
 				cknum = ((NonInvestmentTxn) t).chkNumber;
 			}
 			System.out.println(String.format("%s  %5s %10.2f  %10.2f", //
-					Common.getDateString(t.getDate()), //
+					Common.formatDate(t.getDate()), //
 					cknum, t.getAmount(), t.runningTotal));
 		}
 	}

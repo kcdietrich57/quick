@@ -105,7 +105,7 @@ public class LoadSecurityHistory {
 
 			mergedPrices.add(pricesForDate);
 
-			String s = Common.getDateString(fd);
+			String s = Common.formatDate(fd);
 
 			for (int ii = 1; ii < pricesForDate.size(); ++ii) {
 				final Price p = pricesForDate.get(ii);

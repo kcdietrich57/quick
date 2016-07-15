@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -80,7 +81,7 @@ public class Account {
 
 		Common.reportError("Can't find statement: " //
 				+ this.name //
-				+ Common.getDateString(date) //
+				+ Common.formatDate(date) //
 				+ " " + String.format("%10.2f", balance));
 		return null;
 	}
@@ -213,6 +214,49 @@ public class Account {
 		}
 	}
 
+	public void generateMonthlyStatements() {
+		int lastyear = -1;
+		int lastmonth = -1;
+		GenericTxn lasttx = null;
+		boolean first = true;
+
+		System.out.println("\n!Account");
+		System.out.println("N" + this.name);
+		System.out.println("^");
+		System.out.println("!Statements");
+
+		for (final GenericTxn t : this.transactions) {
+			final Calendar cal = Calendar.getInstance();
+			cal.setTime(t.getDate());
+
+			final int thisyear = cal.get(Calendar.YEAR);
+			final int thismonth = cal.get(Calendar.MONTH);
+
+			if ((lastyear != thisyear) || (lastmonth != thismonth)) {
+				if (!first) {
+					System.out.print(String.format(" %4.2f", lasttx.runningTotal));
+				}
+
+				if ((lastyear != thisyear) || (lastmonth + 1 != thismonth)) {
+					if (!first) {
+						System.out.println();
+					}
+
+					System.out.print("M" + Common.formatDateMonthYear(t.getDate()));
+				}
+
+				lastyear = thisyear;
+				lastmonth = thismonth;
+			}
+
+			first = false;
+			lasttx = t;
+		}
+
+		System.out.println();
+		System.out.println("^");
+	}
+
 	public void reportStatus(String interval) {
 		if (this.statements.isEmpty()) {
 			System.out.println("No statements for " + getDisplayName(36));
@@ -236,7 +280,7 @@ public class Account {
 				}
 
 				System.out.print(String.format("   %s  %3d tx  %10.2f", //
-						Common.getDateString(s.date), s.transactions.size(), s.closingBalance));
+						Common.formatDate(s.date), s.transactions.size(), s.closingBalance));
 			}
 
 			System.out.println();
@@ -245,7 +289,7 @@ public class Account {
 
 			for (final GenericTxn t : this.statements.get(this.statements.size() - 1).unclearedTransactions) {
 				System.out.println(String.format("  %s  %10.2f  %s", //
-						Common.getDateString(t.getDate()), //
+						Common.formatDate(t.getDate()), //
 						t.getAmount(), t.getPayee()));
 			}
 

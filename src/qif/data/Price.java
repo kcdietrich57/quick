@@ -100,7 +100,7 @@ public class Price {
 
 	public String toString() {
 		String s = String.format("Price: %s  %10.2f", //
-				Common.getDateString(this.date), //
+				Common.formatDate(this.date), //
 				this.price);
 
 		if (this.splitAdjustedPrice != null) {

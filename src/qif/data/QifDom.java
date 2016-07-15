@@ -429,7 +429,7 @@ public class QifDom {
 
 	public void reportStatusForDate(Date d, boolean itemizeAccounts) {
 		System.out.println();
-		System.out.println("Global status for date: " + Common.getDateString(d));
+		System.out.println("Global status for date: " + Common.formatDate(d));
 		System.out.println("----------------------------------");
 		System.out.println(String.format("  %-36s : %10s", "Account", "Balance"));
 
@@ -495,7 +495,7 @@ public class QifDom {
 		System.out.println("Overall");
 		System.out.println();
 
-		for (int ii = 0; ii < 5; ++ii) {
+		for (int ii = 0; ii < 10; ++ii) {
 			final Account a = ranking.get(ii);
 
 			System.out.println(String.format("   %-25s: %5d/%5d", //
@@ -520,7 +520,7 @@ public class QifDom {
 						a.transactions.size()));
 			}
 
-			if (ii >= 5) {
+			if (ii >= 10) {
 				break;
 			}
 		}
@@ -1088,7 +1088,7 @@ public class QifDom {
 				final String s = String.format(//
 						"%-20s : %5s(%2d) %s INSH=%10.3f (%2d txns) OUTSH=%10.3f (%2d txns)", //
 						t.getAccount().name, t.security.symbol, t.security.secid, //
-						Common.getDateString(t.getDate()), //
+						Common.formatDate(t.getDate()), //
 						inshrs, ins.size(), outshrs, outs.size());
 				System.out.println(s);
 			}
@@ -1102,7 +1102,7 @@ public class QifDom {
 
 				final String s = String.format("%-20s : %5s(%2d) %s %s SHR=%10.3f", //
 						t.getAccount().name, t.security.symbol, t.security.secid, //
-						Common.getDateString(t.getDate()), pad, t.getShares());
+						Common.formatDate(t.getDate()), pad, t.getShares());
 				System.out.println(s);
 			}
 		}
@@ -1167,7 +1167,7 @@ public class QifDom {
 			if (s == null) {
 				Common.reportError("Can't find statement for details: " //
 						+ a.name //
-						+ "  " + Common.getDateString(d.date) //
+						+ "  " + Common.formatDate(d.date) //
 						+ "  " + d.closingBalance);
 			}
 
