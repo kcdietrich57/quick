@@ -1175,7 +1175,7 @@ public class QifDom {
 
 			if (!s.isBalanced) {
 				s.getTransactionsFromDetails(a, d);
-				Common.reportError("Can't reconcile statement from log.");
+				Common.reportError("Can't reconcile statement from log.\n" + s.toString());
 			}
 		}
 	}

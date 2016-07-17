@@ -419,7 +419,7 @@ public class Statement {
 			// d.transactions.removeAll(badinfo);
 			Common.reportWarning( //
 					"Can't find " + badinfo.size() + " reconciled transactions:\n" //
-							+ badinfo.toString());
+							+ badinfo.toString() + "\n" + toString());
 			return;
 		}
 
@@ -447,7 +447,7 @@ public class Statement {
 				arrangeTransactionsForDisplay(this.unclearedTransactions);
 			}
 
-			displayReviewStatus(msg);
+			displayReviewStatus(msg, 1);
 
 			if (!reconcileNeeded) {
 				return;
@@ -481,7 +481,9 @@ public class Statement {
 				break;
 
 			case 'q':
-				if (cashMatches() && holdingsMatch()) {
+				if (cashMatches() //
+				// TODO && holdingsMatch()
+				) {
 					done = true;
 				}
 				break;
@@ -776,7 +778,7 @@ public class Statement {
 		}
 	}
 
-	private void displayReviewStatus(String msg) {
+	private void displayReviewStatus(String msg, int columns) {
 		System.out.println();
 		System.out.println("-------------------------------------------------------");
 		System.out.println(msg);
@@ -785,11 +787,11 @@ public class Statement {
 		displayHoldingsComparison();
 		System.out.println("-------------------------------------------------------");
 
-		final int columns = 3;
 		int rows = (this.transactions.size() + columns - 1) / columns;
 
-		final int maxlength = 20;
+		final int maxlength = 80 / columns;
 
+		BigDecimal cashtot = BigDecimal.ZERO;
 		for (int ii = 0; ii < rows; ++ii) {
 			for (int jj = 0; jj < columns; ++jj) {
 				final int idx = jj * rows + ii;
@@ -799,7 +801,9 @@ public class Statement {
 
 				final GenericTxn t = this.transactions.get(idx);
 
-				String s = t.toStringShort(true);
+				String s = (columns > 1) ? t.toStringShort(true) : t.toStringShort(false);
+				s = String.format("(%4.2f) ", t.getCashAmount()) + s;
+				cashtot = cashtot.add(t.getCashAmount());
 				if (s.length() > maxlength) {
 					s = s.substring(0, maxlength);
 				}
@@ -808,12 +812,17 @@ public class Statement {
 					System.out.print("   ");
 				}
 
+				while ((columns > 1) && (s.length() < maxlength)) {
+					s += " ";
+				}
+
 				System.out.print(String.format("%3d %-20s", idx + 1, s));
 			}
 
 			System.out.println();
 		}
 
+		System.out.println(String.format("(%4.2f) Total cash amount", cashtot));
 		System.out.println();
 		System.out.println("Uncleared transactions:");
 
@@ -857,14 +866,19 @@ public class Statement {
 		final SecurityPortfolio newHoldings = getPortfolioDelta();
 
 		for (final SecurityPosition p : newHoldings.positions) {
-			s = String.format("  %-25s %10.2f", //
-					p.security.getName(), p.shares);
-
 			final SecurityPosition op = this.holdings.getPosition(p.security);
-			final BigDecimal opShares = (op != null) ? op.shares : BigDecimal.ZERO;
+			final BigDecimal opShares = ((op != null) && (op.shares != null)) ? op.shares : BigDecimal.ZERO;
+			final BigDecimal opValue = ((op != null) && (op.value != null)) ? op.value : BigDecimal.ZERO;
+			final BigDecimal pValue = (p.value != null) ? p.value : BigDecimal.ZERO;
 
-			if (!Common.isEffectivelyEqual(p.shares, opShares)) {
-				s += " [" + opShares.subtract(p.shares) + "] *************";
+			s = String.format("  %-25s %10.2f(%5.2f) %10.2f(%5.2f)", //
+					p.security.getName(), //
+					p.shares, opShares.subtract(p.shares), //
+					pValue, opValue.subtract(pValue));
+
+			if (!Common.isEffectivelyEqual(p.shares, opShares) //
+					|| !Common.isEffectivelyEqual(pValue, opValue)) {
+				s += " ********";
 			}
 
 			System.out.println(s);

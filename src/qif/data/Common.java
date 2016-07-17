@@ -15,7 +15,7 @@ import qif.data.Account.AccountType;
 import qif.data.SimpleTxn.Action;
 
 public class Common {
-	public static final BigDecimal CLOSE_ENOUGH_TO_ZERO = new BigDecimal(0.0005);
+	public static final BigDecimal CLOSE_ENOUGH_TO_ZERO = new BigDecimal(0.005);
 
 	public static void reportWarning(String s) {
 		System.out.println("**** Warning!" + s);
