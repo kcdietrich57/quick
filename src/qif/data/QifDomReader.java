@@ -325,7 +325,7 @@ public class QifDomReader {
 
 			case Statements:
 				// System.out.println("Loading statements");
-				loadStatements2(this.rdr);
+				loadStatements(this.rdr);
 				break;
 
 			case Security:
@@ -805,7 +805,7 @@ public class QifDomReader {
 		}
 	}
 
-	private void loadStatements2(QFileReader qfr) {
+	private void loadStatements(QFileReader qfr) {
 		for (;;) {
 			final String s = qfr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {

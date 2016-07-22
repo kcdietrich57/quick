@@ -495,14 +495,43 @@ public class QifDom {
 		System.out.println("Overall");
 		System.out.println();
 
-		for (int ii = 0; ii < 10; ++ii) {
+		int unclracct_count = 0;
+		int unclracct_utx_count = 0;
+		int unclracct_tx_count = 0;
+
+		int clracct_count = 0;
+		int clracct_tx_count = 0;
+
+		final int max = ranking.size();
+		for (int ii = 0; ii < max; ++ii) {
 			final Account a = ranking.get(ii);
 
-			System.out.println(String.format("   %-25s: %5d/%5d", //
-					a.getDisplayName(25), //
-					a.getUnclearedTransactionCount(), //
-					a.transactions.size()));
+			final int ucount = a.getUnclearedTransactionCount();
+			final int tcount = a.transactions.size();
+
+			if (ucount > 0) {
+				++unclracct_count;
+				unclracct_utx_count += ucount;
+				unclracct_tx_count += tcount;
+
+				final String nam = a.getDisplayName(25);
+				System.out.println(String.format("%3d   %-25s: %5d/%5d", //
+						unclracct_count, //
+						nam, //
+						ucount, //
+						tcount));
+			} else {
+				++clracct_count;
+				clracct_tx_count += tcount;
+			}
 		}
+
+		System.out.println(String.format("   %-25s: %5d / %5d", //
+				"" + unclracct_count + " accts: total ", //
+				unclracct_tx_count, unclracct_tx_count));
+		System.out.println(String.format("   %-25s: %5d", //
+				"" + clracct_count + " other accounts cleared", //
+				clracct_tx_count));
 
 		System.out.println();
 		System.out.println("Banking");

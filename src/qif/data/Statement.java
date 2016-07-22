@@ -65,6 +65,7 @@ public class Statement {
 		final List<Statement> stmts = new ArrayList<Statement>();
 
 		Statement currstmt = null;
+		boolean calcBalance = false;
 
 		for (;;) {
 			qfr.nextStatementsLine(qline);
@@ -82,6 +83,7 @@ public class Statement {
 
 				dom.currAccount = a;
 				currstmt = null;
+				calcBalance = false;
 				break;
 			}
 
@@ -113,7 +115,13 @@ public class Statement {
 										+ qline.value);
 					}
 
-					final BigDecimal bal = new BigDecimal(ss[ssx++]);
+					String balStr = ss[ssx++];
+					if (balStr.equals("x")) {
+						calcBalance = true;
+						balStr = "0.00";
+					}
+
+					final BigDecimal bal = new BigDecimal(balStr);
 					final Date d = (day == 0) //
 							? Common.getDateForEndOfMonth(year, month) //
 							: Common.getDate(year, month, day);
@@ -143,13 +151,23 @@ public class Statement {
 				final String[] ss = qline.value.split(";");
 				int ssx = 0;
 
+				// S<SYM>;[<order>;]QTY;VALUE;PRICE
 				final String secStr = ss[ssx++];
-				final String qtyStr = ss[ssx++];
-				final String valStr = ss[ssx++];
-				String priceStr = "";
-				if (qtyStr.equals("x")) {
-					priceStr = ss[ssx++];
+
+				String ordStr = ss[ssx];
+				if ("qpv".indexOf(ordStr.charAt(0)) < 0) {
+					ordStr = "qvp";
+				} else {
+					++ssx;
 				}
+
+				final int qidx = ordStr.indexOf('q');
+				final int vidx = ordStr.indexOf('v');
+				final int pidx = ordStr.indexOf('p');
+
+				final String qtyStr = ((qidx >= 0) && (qidx + ssx < ss.length)) ? ss[qidx + ssx] : "x";
+				final String valStr = ((vidx >= 0) && (vidx + ssx < ss.length)) ? ss[vidx + ssx] : "x";
+				final String priceStr = ((pidx >= 0) && (pidx + ssx < ss.length)) ? ss[pidx + ssx] : "x";
 
 				final Security sec = dom.findSecurity(secStr);
 				if (sec == null) {
@@ -158,11 +176,39 @@ public class Statement {
 
 				final SecurityPortfolio h = currstmt.holdings;
 				final SecurityPosition p = new SecurityPosition(sec);
-				p.value = new BigDecimal(valStr);
-				if (qtyStr.equals("x")) {
-					p.shares = p.value.divide(new BigDecimal(priceStr), RoundingMode.HALF_UP);
-				} else {
-					p.shares = new BigDecimal(qtyStr);
+
+				p.value = (valStr.equals("x")) ? null : new BigDecimal(valStr);
+				p.shares = (qtyStr.equals("x")) ? null : new BigDecimal(qtyStr);
+				BigDecimal price = (priceStr.equals("x")) ? null : new BigDecimal(priceStr);
+				final BigDecimal price4date = sec.getPriceForDate(currstmt.date).price;
+
+				// We care primarily about the number of shares. If that is not
+				// present, the other two must be set for us to calculate the
+				// number of shares. If the price is not present, we can use the
+				// price on the day of the statement.
+				// If we know two of the values, we can calculate the third.
+				if (p.shares == null) {
+					if (p.value != null) {
+						if (price == null) {
+							price = price4date;
+						}
+
+						p.shares = p.value.divide(price, RoundingMode.HALF_UP);
+					}
+				} else if (p.value == null) {
+					if (p.shares != null) {
+						if (price == null) {
+							price = price4date;
+						}
+
+						p.value = price.multiply(p.shares);
+					}
+				} else if (price == null) {
+					price = price4date;
+				}
+
+				if (p.shares == null) {
+					Common.reportError("Missing security info in stmt");
 				}
 
 				h.positions.add(p);
