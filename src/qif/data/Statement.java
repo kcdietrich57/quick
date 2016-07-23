@@ -780,7 +780,7 @@ public class Statement {
 				txinfo.cashAmount = new BigDecimal(amtStr);
 				if (secStr.length() > 0) {
 					txinfo.security = dom.findSecurity(secStr);
-					txinfo.shares = new BigDecimal(shrStr);
+					txinfo.shares = (shrStr.length() > 0) ? Common.mkDecimal(shrStr) : BigDecimal.ZERO;
 				}
 
 				this.transactions.add(txinfo);

@@ -25,6 +25,18 @@ public class Common {
 		throw new RuntimeException(s);
 	}
 
+	public static BigDecimal mkDecimal(String s) {
+		try {
+			return new BigDecimal(s);
+		} catch (Exception e) {
+			e.printStackTrace();
+
+			reportError("Bad decimal string: " + s);
+		}
+
+		return null;
+	}
+
 	public static BigDecimal sumAmounts(List<GenericTxn> txns) {
 		BigDecimal totaltx = BigDecimal.ZERO;
 		for (final GenericTxn t : txns) {
