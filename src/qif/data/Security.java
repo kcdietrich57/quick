@@ -60,32 +60,37 @@ public class Security {
 			// The price for a transaction doesn't replace the price in the
 			// history. It is intra-day, and in the case of ESPP/options,
 			// may be discounted.
-			addPrice(new Price(txn.price, txn.getDate()), false);
+			// TODO add prices from transactions after loading price history,
+			// if at all.
+			// addPrice(new Price(txn.price, txn.getDate()), false);
 		}
 	}
 
-	public void addPrice(Price price, boolean replace) {
-		if (price == null) {
+	public void addPrice(Price newPrice, boolean replace) {
+		if (newPrice == null) {
 			return;
 		}
 
-		final int idx = getPriceIndexForDate(price.date);
+		final int idx = getPriceIndexForDate(newPrice.date);
 
 		if (idx >= 0) {
 			final Price p = this.prices.get(idx);
-			final int diff = p.date.compareTo(price.date);
+			final int diff = newPrice.date.compareTo(p.date);
 
-			if ((diff == 0) && replace) {
-				// TODO compare prices and warn if different?
-				this.prices.set(idx, price);
+			if (diff == 0) {
+				if (replace) {
+					this.prices.set(idx, newPrice);
+				} else {
+					// TODO warn if different?
+				}
 			} else if (diff < 0) {
-				this.prices.add(idx, price);
+				this.prices.add(idx, newPrice);
 			} else {
-				this.prices.add(idx + 1, price);
+				this.prices.add(idx + 1, newPrice);
 			}
+		} else {
+			this.prices.add(newPrice);
 		}
-
-		this.prices.add(price);
 	}
 
 	public void sortPrices() {
@@ -99,7 +104,8 @@ public class Security {
 			return Price.ZERO;
 		}
 
-		return this.prices.get(idx);
+		final Price p = this.prices.get(idx);
+		return p;
 	}
 
 	public int getPriceIndexForDate(Date d) {

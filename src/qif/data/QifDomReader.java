@@ -77,7 +77,7 @@ public class QifDomReader {
 		this.dom.fixPortfolios();
 
 		final File dd = new File(this.qifDir, "statements");
-		loadStatementBalances(dd);
+		loadStatementFiles(dd);
 
 		final File stmtLogFile = new File(this.qifDir, "statementLog.dat");
 
@@ -785,7 +785,7 @@ public class QifDomReader {
 		}
 	}
 
-	private void loadStatementBalances(File stmtDirectory) {
+	private void loadStatementFiles(File stmtDirectory) {
 		if (!stmtDirectory.isDirectory()) {
 			return;
 		}
@@ -803,6 +803,8 @@ public class QifDomReader {
 				e.printStackTrace();
 			}
 		}
+
+		this.dom.buildStatementChains();
 	}
 
 	private void loadStatements(QFileReader qfr) {

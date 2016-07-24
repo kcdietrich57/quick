@@ -28,7 +28,7 @@ public class Common {
 	public static BigDecimal mkDecimal(String s) {
 		try {
 			return new BigDecimal(s);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 
 			reportError("Bad decimal string: " + s);

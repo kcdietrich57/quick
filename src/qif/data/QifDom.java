@@ -528,7 +528,7 @@ public class QifDom {
 
 		System.out.println(String.format("   %-25s: %5d / %5d", //
 				"" + unclracct_count + " accts: total ", //
-				unclracct_tx_count, unclracct_tx_count));
+				unclracct_utx_count, unclracct_tx_count));
 		System.out.println(String.format("   %-25s: %5d", //
 				"" + clracct_count + " other accounts cleared", //
 				clracct_tx_count));
@@ -558,20 +558,27 @@ public class QifDom {
 	}
 
 	public void showStatistics() {
-		final int total = this.allTransactions.size() - 1;
+		int total = this.allTransactions.size() - 1;
 
+		int nullt = 0;
 		int reconciled = 0;
-		for (int ii = 1; ii <= total; ++ii) {
+		int unreconciled = 0;
+		for (int ii = 0; ii <= total; ++ii) {
 			final GenericTxn t = this.allTransactions.get(ii);
 
-			if ((t != null) && (t.stmtdate != null)) {
+			if (t == null) {
+				++nullt;
+			} else if (t.stmtdate != null) {
 				++reconciled;
+			} else {
+				++unreconciled;
 			}
 		}
 
-		final double pct = 100.0 * (reconciled) / total;
-		System.out.println(String.format("%d of %d txns reconciled (%5.2f) ", //
-				reconciled, total, pct));
+		total = (reconciled + unreconciled);
+		final double pct = reconciled * 100.0 / total;
+		System.out.println(String.format("%d of %d txns reconciled (%5.2f) %d null", //
+				reconciled, total, pct, nullt));
 	}
 
 	public String toString() {
@@ -591,6 +598,21 @@ public class QifDom {
 
 	public int getNextCategoryID() {
 		return (this.categories.isEmpty()) ? 1 : this.categories.size();
+	}
+
+	public void buildStatementChains() {
+		for (final Account a : this.accounts) {
+			if (a == null) {
+				continue;
+			}
+
+			Statement last = null;
+			for (final Statement s : a.statements) {
+				assert (last == null) || (last.date.compareTo(s.date) < 0);
+				s.prevStatement = last;
+				last = s;
+			}
+		}
 	}
 
 	// Read statement log file, filling in statement details.
