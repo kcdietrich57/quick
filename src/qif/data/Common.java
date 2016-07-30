@@ -517,6 +517,7 @@ public class Common {
 	}
 
 	public static boolean isEffectivelyEqual(BigDecimal d1, BigDecimal d2) {
-		return CLOSE_ENOUGH_TO_ZERO.compareTo(d1.subtract(d2)) > 0;
+		final BigDecimal diff = d1.subtract(d2).abs();
+		return (CLOSE_ENOUGH_TO_ZERO.compareTo(diff) > 0);
 	}
 }

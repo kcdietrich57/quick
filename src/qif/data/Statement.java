@@ -27,10 +27,10 @@ public class Statement {
 	public SecurityPortfolio holdings;
 
 	// Transactions included in this statement
-	public List<GenericTxn> transactions;
+	public final List<GenericTxn> transactions;
 
 	// Transactions that as of the closing date are not cleared
-	public List<GenericTxn> unclearedTransactions;
+	public final List<GenericTxn> unclearedTransactions;
 
 	/** Whether this statement has been saved to the reconcile log file */
 	boolean dirty = false;
@@ -44,6 +44,9 @@ public class Statement {
 		this.closingBalance = null;
 		this.cashBalance = null;
 		this.holdings = new SecurityPortfolio();
+
+		this.transactions = new ArrayList<GenericTxn>();
+		this.unclearedTransactions = new ArrayList<GenericTxn>();
 	}
 
 	// Create a copy of a statement - used when creating a new Dom from an
@@ -144,7 +147,7 @@ public class Statement {
 			}
 
 			case StmtsCash:
-				currstmt.cashBalance = new BigDecimal(qline.value);
+				currstmt.cashBalance = Common.mkDecimal(qline.value);
 				break;
 
 			case StmtsSecurity: {
@@ -248,8 +251,11 @@ public class Statement {
 			t.stmtdate = null;
 		}
 
-		this.transactions = txns;
-		this.unclearedTransactions = unclearedTxns;
+		this.transactions.clear();
+		this.unclearedTransactions.clear();
+
+		this.transactions.addAll(txns);
+		this.unclearedTransactions.addAll(unclearedTxns);
 	}
 
 	// name;date;stmtBal;cashBal;numTx;numPos;[cashTx;][sec;numTx[txIdx;shareBal;]]
@@ -419,8 +425,10 @@ public class Statement {
 			return;
 		}
 
+		this.transactions.clear();
+		this.unclearedTransactions.clear();
+
 		final List<GenericTxn> txns = a.gatherTransactionsForStatement(this);
-		this.transactions = new ArrayList<GenericTxn>();
 		final List<TxInfo> badinfo = new ArrayList<TxInfo>();
 
 		for (final TxInfo info : d.transactions) {
@@ -459,7 +467,7 @@ public class Statement {
 			}
 		}
 
-		this.unclearedTransactions = txns;
+		this.unclearedTransactions.addAll(txns);
 
 		if (!badinfo.isEmpty()) {
 			// d.transactions.removeAll(badinfo);
@@ -923,7 +931,8 @@ public class Statement {
 					pValue, opValue.subtract(pValue));
 
 			if (!Common.isEffectivelyEqual(p.shares, opShares) //
-					|| !Common.isEffectivelyEqual(pValue, opValue)) {
+			// TODO || !Common.isEffectivelyEqual(pValue, opValue)
+			) {
 				s += " ********";
 			}
 

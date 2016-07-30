@@ -214,7 +214,7 @@ public class QifDom {
 			}
 
 			final Date d = a.getFirstTransactionDate();
-			if ((retdate == null) || d.compareTo(retdate) < 0) {
+			if ((d != null) && ((retdate == null) || d.compareTo(retdate) < 0)) {
 				retdate = d;
 			}
 		}
@@ -231,7 +231,7 @@ public class QifDom {
 			}
 
 			final Date d = a.getLastTransactionDate();
-			if ((retdate == null) || d.compareTo(retdate) > 0) {
+			if ((d != null) && ((retdate == null) || d.compareTo(retdate) > 0)) {
 				retdate = d;
 			}
 		}
