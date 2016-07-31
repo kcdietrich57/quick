@@ -117,6 +117,10 @@ public class Common {
 	}
 
 	public static String formatDate(Date date) {
+		if (date == null) {
+			return "null";
+		}
+
 		final DateFormat dfmt = new SimpleDateFormat("MM/dd/yy");
 		return dfmt.format(date);
 	}

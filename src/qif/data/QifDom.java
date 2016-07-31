@@ -488,8 +488,16 @@ public class QifDom {
 			}
 		}
 
-		Collections.sort(ranking, //
-				(o1, o2) -> o2.getUnclearedTransactionCount() - o1.getUnclearedTransactionCount());
+		final Comparator<Account> cmp = (o1, o2) -> {
+			if (o1.statements.isEmpty()) {
+				return (o2.statements.isEmpty()) ? 0 : -1;
+			}
+			return (o2.statements.isEmpty()) //
+					? 1 //
+					: o1.getLastStatementDate().compareTo(o2.getLastStatementDate());
+		};
+
+		Collections.sort(ranking, cmp);
 
 		System.out.println();
 		System.out.println("Overall");
@@ -515,11 +523,17 @@ public class QifDom {
 				unclracct_tx_count += tcount;
 
 				final String nam = a.getDisplayName(25);
-				System.out.println(String.format("%3d   %-25s: %5d/%5d", //
+				final Statement lStat = a.getLastStatement();
+				final Date lStatDate = (lStat != null) ? lStat.date : null;
+
+				System.out.println(String.format("%3d   %-35s : %10.2f : %5d/%5d : Last Stmt: %8s    %8s", //
 						unclracct_count, //
 						nam, //
+						a.balance, //
 						ucount, //
-						tcount));
+						tcount, //
+						Common.formatDate(lStatDate), //
+						Common.formatDate(a.getFirstUnclearedTransactionDate())));
 			} else {
 				++clracct_count;
 				clracct_tx_count += tcount;
@@ -532,27 +546,6 @@ public class QifDom {
 		System.out.println(String.format("   %-25s: %5d", //
 				"" + clracct_count + " other accounts cleared", //
 				clracct_tx_count));
-
-		System.out.println();
-		System.out.println("Banking");
-		System.out.println();
-
-		int ii = 0;
-		for (final Account a : ranking) {
-
-			if (!a.isInvestmentAccount()) {
-				++ii;
-
-				System.out.println(String.format("   %-25s: %5d/%5d", //
-						a.getDisplayName(25), //
-						a.getUnclearedTransactionCount(), //
-						a.transactions.size()));
-			}
-
-			if (ii >= 10) {
-				break;
-			}
-		}
 
 		System.out.println();
 	}

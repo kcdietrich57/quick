@@ -67,6 +67,18 @@ public class Account {
 		}
 	}
 
+	public Date getLastStatementDate() {
+		return (this.statements.isEmpty()) //
+				? null //
+				: this.statements.get(this.statements.size() - 1).date;
+	}
+
+	public Statement getLastStatement() {
+		return (this.statements.isEmpty()) //
+				? null //
+				: this.statements.get(this.statements.size() - 1);
+	}
+
 	public Statement getStatement(Date date, BigDecimal balance) {
 		for (final Statement s : this.statements) {
 			if (s.date.compareTo(date) > 0) {
@@ -104,6 +116,22 @@ public class Account {
 
 	public Date getLastTransactionDate() {
 		return (this.transactions.isEmpty()) ? null : this.transactions.get(this.transactions.size() - 1).getDate();
+	}
+
+	public Date getFirstUnclearedTransactionDate() {
+		final GenericTxn t = getFirstUnclearedTransaction();
+
+		return (t == null) ? null : t.getDate();
+	}
+
+	public GenericTxn getFirstUnclearedTransaction() {
+		for (final GenericTxn t : this.transactions) {
+			if ((t != null) && (t.stmtdate == null)) {
+				return t;
+			}
+		}
+
+		return null;
 	}
 
 	public boolean isInvestmentAccount() {
