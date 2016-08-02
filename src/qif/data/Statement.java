@@ -530,6 +530,7 @@ public class Statement {
 					}
 
 				} else {
+					unclearAllTransactions();
 					abort = true;
 				}
 				break;
