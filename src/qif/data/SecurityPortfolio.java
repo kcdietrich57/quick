@@ -107,7 +107,7 @@ class SecurityPortfolio {
 		for (final Iterator<SecurityPosition> iter = this.positions.iterator(); iter.hasNext();) {
 			final SecurityPosition p = iter.next();
 
-			if (Common.isEffectivelyEqual(p.shares, BigDecimal.ZERO)) {
+			if (Common.isEffectivelyZero(p.shares)) {
 				iter.remove();
 			}
 		}
@@ -132,6 +132,16 @@ class SecurityPortfolio {
 		}
 
 		return s;
+	}
+
+	public boolean isEmpty() {
+		for (final SecurityPosition p : this.positions) {
+			if (!Common.isEffectivelyZero(p.shares)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }
 
@@ -211,7 +221,7 @@ class SecurityPosition {
 		return price.multiply(tshrbal);
 	}
 
-	public BigDecimal reportSecurityPositionForDate(Date d) {
+	public BigDecimal reportSecurityPositionForDate(Date d, String[] s) {
 		final int idx = getTransactionIndexForDate(d);
 		if (idx < 0) {
 			return BigDecimal.ZERO;
@@ -226,8 +236,9 @@ class SecurityPosition {
 		if (nn.length() > 36) {
 			nn = nn.substring(0, 33) + "...";
 		}
-		System.out.println(String.format("    %-36s %10.3f %10.3f %10.3f", //
-				nn, value, tshrbal, price));
+
+		s[0] += String.format("    %-36s             %10.2f %10.3f %10.3f\n", //
+				nn, value, tshrbal, price);
 
 		return value;
 	}
@@ -239,11 +250,10 @@ class SecurityPosition {
 		}
 
 		final BigDecimal tshrbal = this.shrBalance.get(idx);
-		if (tshrbal.compareTo(BigDecimal.ZERO) <= 0) {
-			return -1;
-		}
 
-		return idx;
+		return (Common.isEffectivelyZero(tshrbal)) //
+				? -1 //
+				: idx;
 	}
 
 	// name;numtx[;txid;shrbal]

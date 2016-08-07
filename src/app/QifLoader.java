@@ -48,6 +48,8 @@ public class QifLoader {
 				if (a != null) {
 					a.generateMonthlyStatements();
 				}
+			} else if (s.startsWith("m")) {
+				dom.reportMonthlyNetWorth();
 			} else if (s.startsWith("s")) {
 				dom.reportStatistics();
 			} else {

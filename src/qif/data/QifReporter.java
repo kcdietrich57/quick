@@ -24,7 +24,7 @@ public class QifReporter {
 			}
 
 			if (compact) {
-				System.out.println(a.name + " " + a.type + " " + a.balance);
+				System.out.println(a.getName() + " " + a.type + " " + a.balance);
 				continue;
 			}
 
@@ -172,7 +172,7 @@ public class QifReporter {
 					System.out.println(String.format( //
 							"  %-12s  %-20s  %-10s  %10.3f  %10.3f", //
 							Common.formatDate(t.getDate()), //
-							QifDom.getDomById(t.domid).getAccount(t.acctid).name, //
+							QifDom.getDomById(t.domid).getAccount(t.acctid).getName(), //
 							t.action.toString(), //
 							t.getShares(), //
 							shrbal));

@@ -118,16 +118,16 @@ class SimpleTxn {
 		final QifDom dom = QifDom.getDomById(this.domid);
 
 		String s = "Tx" + this.txid + ":";
-		s += dom.getAccount(this.acctid).name;
+		s += dom.getAccount(this.acctid).getName();
 		s += " amt=" + this.amount;
 		s += " memo=" + this.memo;
 
 		// TODO why have both negative cat and xacct to represent the same
 		// thing?
 		if (this.xacctid < (short) 0) {
-			s += " xacct=" + dom.getAccount(-this.xacctid).name;
+			s += " xacct=" + dom.getAccount(-this.xacctid).getName();
 		} else if (this.catid < (short) 0) {
-			s += " xcat=" + dom.getAccount(-this.catid).name;
+			s += " xcat=" + dom.getAccount(-this.catid).getName();
 		} else if (this.catid > (short) 0) {
 			s += " cat=" + dom.getCategory(this.catid).name;
 		}
@@ -380,7 +380,7 @@ class NonInvestmentTxn extends GenericTxn {
 
 		String s = ((this.stmtdate != null) ? "*" : " ") + "Tx" + this.txid + ":";
 		s += " date=" + Common.formatDate(getDate());
-		s += " acct=" + dom.getAccount(this.acctid).name;
+		s += " acct=" + dom.getAccount(this.acctid).getName();
 		s += " clr:" + this.clearedStatus;
 		s += " num=" + this.chkNumber;
 		s += " payee=" + getPayee();
@@ -388,7 +388,7 @@ class NonInvestmentTxn extends GenericTxn {
 		s += " memo=" + this.memo;
 
 		if (this.catid < (short) 0) {
-			s += " xacct=[" + dom.getAccount(-this.catid).name + "]";
+			s += " xacct=[" + dom.getAccount(-this.catid).getName() + "]";
 		} else if (this.catid > (short) 0) {
 			s += " cat=" + dom.getCategory(this.catid).name;
 		}
@@ -407,7 +407,7 @@ class NonInvestmentTxn extends GenericTxn {
 
 			for (final SimpleTxn txn : this.split) {
 				if (txn.catid < (short) 0) {
-					s += " [" + dom.getAccount(-txn.catid).name + "]";
+					s += " [" + dom.getAccount(-txn.catid).getName() + "]";
 				} else if (txn.catid > (short) 0) {
 					s += " " + dom.getCategory(txn.catid).name;
 				}
@@ -610,7 +610,7 @@ class InvestmentTxn extends GenericTxn {
 
 		case OTHER:
 			Common.reportError("Transaction has unknown type: " + //
-					QifDom.getDomById(1).getAccount(this.acctid).name);
+					QifDom.getDomById(1).getAccount(this.acctid).getName());
 			break;
 		}
 
@@ -643,7 +643,7 @@ class InvestmentTxn extends GenericTxn {
 			final BigDecimal newprice = tot.divide(this.quantity).abs();
 
 			String s = "Inconsistent " + this.action + " transaction:" + //
-					" acct=" + QifDom.getDomById(this.domid).getAccount(this.acctid).name + //
+					" acct=" + QifDom.getDomById(this.domid).getAccount(this.acctid).getName() + //
 					" " + Common.formatDate(getDate()) + "\n" + //
 					"  sec=" + this.security.getName() + //
 					" qty=" + this.quantity + //
@@ -778,7 +778,7 @@ class InvestmentTxn extends GenericTxn {
 
 		String s = ((this.stmtdate != null) ? "*" : " ") + "InvTx" + this.txid + ":";
 		s += " dt=" + Common.formatDate(getDate());
-		s += " acct=" + dom.getAccount(this.acctid).name;
+		s += " acct=" + dom.getAccount(this.acctid).getName();
 		s += " act=" + this.action;
 		if (this.security != null) {
 			s += " sec=" + this.security.getName();

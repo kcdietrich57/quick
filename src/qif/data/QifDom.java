@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -296,7 +297,7 @@ public class QifDom {
 				return diff;
 			}
 
-			return (a1.name.compareTo(a2.name));
+			return (a1.getName().compareTo(a2.getName()));
 		});
 	}
 
@@ -307,7 +308,7 @@ public class QifDom {
 					+ oldacct.type + " vs " + newacct.type;
 
 			if (oldacct.isInvestmentAccount() != newacct.isInvestmentAccount()) {
-				Common.reportError(msg);
+				// Common.reportError(msg);
 			}
 
 			if (newacct.type != AccountType.Invest) {
@@ -403,13 +404,13 @@ public class QifDom {
 		name = name.toLowerCase();
 
 		for (final Account acct : this.accounts) {
-			if (acct != null && acct.name.equalsIgnoreCase(name)) {
+			if (acct != null && acct.getName().equalsIgnoreCase(name)) {
 				return acct;
 			}
 		}
 
 		for (final Account acct : this.accounts) {
-			if (acct != null && acct.name.toLowerCase().startsWith(name)) {
+			if (acct != null && acct.getName().toLowerCase().startsWith(name)) {
 				return acct;
 			}
 		}
@@ -436,36 +437,64 @@ public class QifDom {
 		BigDecimal netWorth = BigDecimal.ZERO;
 
 		final AccountType atypes[] = { //
-				AccountType.Bank, AccountType.Cash, AccountType.Asset, //
-				AccountType.CCard, AccountType.Liability, //
+				AccountType.Bank, AccountType.Cash, //
+				AccountType.Asset, //
 				AccountType.Invest, AccountType.InvPort, //
 				AccountType.InvMutual, AccountType.Inv401k, //
+				AccountType.CCard, //
+				AccountType.Liability, //
 		};
 		final AccountType sections[] = { //
 				AccountType.Bank, //
-				AccountType.CCard, //
+				AccountType.Asset, //
 				AccountType.Invest, //
-				AccountType.InvMutual //
+				AccountType.InvMutual, //
+				AccountType.CCard, //
+				AccountType.Liability //
 		};
 		final String sectionName[] = { //
-				"Bank Accounts", "Credit Accounts", //
-				"Investment Accounts", "Retirement Accounts" //
+				"Bank", //
+				"Asset", //
+				"Investment", //
+				"Retirement", //
+				"Credit Card", //
+				"Loan" //
 		};
 
 		int snum = 0;
 		BigDecimal subtotal = BigDecimal.ZERO;
+		String sectionHdrPending = null;
+		boolean sectionHasAccounts = false;
 
 		for (final AccountType at : atypes) {
 			if ((snum < sections.length) && (at == sections[snum])) {
-				System.out.println(String.format("Section Total: %15.2f", subtotal));
+				if (sectionHasAccounts) {
+					System.out.println(String.format("Section Total: %15.2f", subtotal));
+					sectionHasAccounts = false;
+				}
+
 				subtotal = BigDecimal.ZERO;
-				System.out.println("======== " + sectionName[snum] + " accounts ========");
+				sectionHdrPending = "======== " + sectionName[snum] + " accounts ========";
+
 				++snum;
 			}
 
 			for (final Account a : this.accounts) {
 				if ((a != null) && (a.type == at)) {
-					final BigDecimal amt = a.reportStatusForDate(d);
+					final String[] s = new String[1];
+					final BigDecimal amt = a.reportStatusForDate(d, s);
+
+					if (s[0] == null) {
+						continue;
+					}
+
+					if (sectionHdrPending != null) {
+						System.out.println(sectionHdrPending);
+						sectionHdrPending = null;
+					}
+
+					System.out.print(s[0]);
+					sectionHasAccounts = true;
 
 					netWorth = netWorth.add(amt);
 					subtotal = subtotal.add(amt);
@@ -477,6 +506,46 @@ public class QifDom {
 
 		System.out.println();
 		System.out.println(String.format("Balance: %15.2f", netWorth));
+	}
+
+	public void reportMonthlyNetWorth() {
+		System.out.println();
+
+		Date d = getFirstTransactionDate();
+		final Date lastTxDate = getLastTransactionDate();
+
+		final Calendar cal = Calendar.getInstance();
+		cal.setTime(d);
+		int year = cal.get(Calendar.YEAR);
+		int month = cal.get(Calendar.MONTH);
+
+		do {
+			d = Common.getDateForEndOfMonth(year, month);
+
+			System.out.println(String.format("%s  %15.2f", //
+					Common.formatDateLong(d), getNetWorthForDate(d)));
+
+			if (month == 12) {
+				++year;
+				month = 1;
+			} else {
+				++month;
+			}
+		} while (d.compareTo(lastTxDate) <= 0);
+	}
+
+	public BigDecimal getNetWorthForDate(Date d) {
+		BigDecimal netWorth = BigDecimal.ZERO;
+
+		for (final Account a : this.accounts) {
+			if (a != null) {
+				final BigDecimal amt = a.getValueForDate(d);
+
+				netWorth = netWorth.add(amt);
+			}
+		}
+
+		return netWorth;
 	}
 
 	public void reportStatistics() {
@@ -1131,7 +1200,7 @@ public class QifDom {
 			if (QifDom.verbose()) {
 				final String s = String.format(//
 						"%-20s : %5s(%2d) %s INSH=%10.3f (%2d txns) OUTSH=%10.3f (%2d txns)", //
-						t.getAccount().name, t.security.symbol, t.security.secid, //
+						t.getAccount().getName(), t.security.symbol, t.security.secid, //
 						Common.formatDate(t.getDate()), //
 						inshrs, ins.size(), outshrs, outs.size());
 				System.out.println(s);
@@ -1145,7 +1214,7 @@ public class QifDom {
 						: "                          ";
 
 				final String s = String.format("%-20s : %5s(%2d) %s %s SHR=%10.3f", //
-						t.getAccount().name, t.security.symbol, t.security.secid, //
+						t.getAccount().getName(), t.security.symbol, t.security.secid, //
 						Common.formatDate(t.getDate()), pad, t.getShares());
 				System.out.println(s);
 			}
@@ -1210,7 +1279,7 @@ public class QifDom {
 			final Statement s = a.getStatement(d.date, d.closingBalance);
 			if (s == null) {
 				Common.reportError("Can't find statement for details: " //
-						+ a.name //
+						+ a.getName() //
 						+ "  " + Common.formatDate(d.date) //
 						+ "  " + d.closingBalance);
 			}

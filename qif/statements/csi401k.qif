@@ -1,0 +1,59 @@
+!Account
+NCSI 401k
+^
+!Statements
+M9/1987 355.99
+C32.37
+SCSIG;qpv;226.59;1.00;x
+SCSIEQ;qpv;97.03;1.00;x
+^
+!Statements
+M12/1987 854.96
+C142.94
+SCSIG;qpv;502.94;1.00;x
+SCSIEQ;qpv;209.08;1.00;x
+^
+!Statements
+M3/1988 1079.66
+C164.21
+SCSIG;qpv;643.44;1.00;x
+SCSIEQ;qpv;272.01;1.00;x
+^
+!Statements
+M6/1988 1102.15
+C165.43
+SCSIG;qpv;648.22;1.00;x
+SCSIEQ;qpv;288.50;1.00;x
+^
+!Statements
+M9/1988 1111.57
+C168.21
+SCSIG;qpv;659.10;1.00;x
+SCSIEQ;qpv;284.26;1.00;x
+^
+!Statements
+M12/1988 1135.00
+C171.16
+SCSIG;qpv;670.64;1.00;x
+SCSIEQ;qpv;293.20;1.00;x
+^
+!Statements
+M3/1989 1168.52
+C174.63
+SCSIG;qpv;684.22;1.00;x
+SCSIEQ;qpv;309.67;1.00;x
+^
+!Statements
+M6/1989 1212.81
+C178.43
+SCSIG;qpv;699.12;1.00;x
+SCSIEQ;qpv;335.26;1.00;x
+^
+!Statements
+M9/1989 55.48
+C4.63
+SCSIG;qpv;18.14;1.00;x
+SCSIEQ;qpv;32.71;1.00;x
+^
+M10/1989 0.00
+^

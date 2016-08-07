@@ -125,6 +125,15 @@ public class Common {
 		return dfmt.format(date);
 	}
 
+	public static String formatDateLong(Date date) {
+		if (date == null) {
+			return "null";
+		}
+
+		final DateFormat dfmt = new SimpleDateFormat("MM/dd/yyyy");
+		return dfmt.format(date);
+	}
+
 	public static String formatDateShort(Date date) {
 		final DateFormat dfmt = new SimpleDateFormat("MM/dd");
 		return dfmt.format(date);
@@ -518,6 +527,10 @@ public class Common {
 				}
 			}
 		}
+	}
+
+	public static boolean isEffectivelyZero(BigDecimal n) {
+		return (CLOSE_ENOUGH_TO_ZERO.compareTo(n.abs()) > 0);
 	}
 
 	public static boolean isEffectivelyEqual(BigDecimal d1, BigDecimal d2) {

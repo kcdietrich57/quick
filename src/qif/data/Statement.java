@@ -263,7 +263,7 @@ public class Statement {
 		final Account a = QifDom.getDomById(this.domid).getAccount(this.acctid);
 
 		String s = String.format("%s;%s;%5.2f;%5.2f;%d;%d", //
-				a.name, //
+				a.getName(), //
 				Common.formatDate(this.date), //
 				this.closingBalance, //
 				this.cashBalance, //
@@ -1070,8 +1070,9 @@ public class Statement {
 		for (final SecurityPosition p : delta.positions) {
 			final SecurityPosition op = this.holdings.getPosition(p.security);
 
-			return Common.isEffectivelyEqual(p.shares, //
-					(op != null) ? op.shares : BigDecimal.ZERO);
+			return (op != null) //
+					? Common.isEffectivelyEqual(p.shares, op.shares) //
+					: Common.isEffectivelyZero(p.shares);
 		}
 
 		return true;

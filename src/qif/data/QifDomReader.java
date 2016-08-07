@@ -435,7 +435,7 @@ public class QifDomReader {
 				break;
 			}
 
-			final Account existing = this.dom.findAccount(acct.name);
+			final Account existing = this.dom.findAccount(acct.getName());
 			if (existing != null) {
 				this.dom.updateAccount(existing, acct);
 			} else {
@@ -456,14 +456,16 @@ public class QifDomReader {
 			switch (qline.type) {
 			case EndOfSection:
 				// N.B. hack for bad quicken data
-				if (acct.name.endsWith("Checking")) {
+				if (acct.getName().endsWith("Checking")) {
 					acct.type = AccountType.Bank;
 				}
 
 				return acct;
 
 			case AcctType:
-				acct.type = Common.parseAccountType(qline.value);
+				if (acct.type == null) {
+					acct.type = Common.parseAccountType(qline.value);
+				}
 				break;
 			case AcctCreditLimit:
 				acct.creditLimit = Common.getDecimal(qline.value);
@@ -472,7 +474,7 @@ public class QifDomReader {
 				acct.description = qline.value;
 				break;
 			case AcctName:
-				acct.name = qline.value;
+				acct.setName(qline.value);
 				break;
 			case AcctStmtDate:
 				// acct.stmtDate = Common.GetDate(qline.value);

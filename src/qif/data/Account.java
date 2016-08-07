@@ -16,7 +16,7 @@ public class Account {
 	public int domid;
 	public int acctid;
 
-	public String name;
+	private String name;
 	public AccountType type;
 	public String description;
 	public BigDecimal creditLimit;
@@ -65,6 +65,26 @@ public class Account {
 		for (final Statement s : this.statements) {
 			this.statements.add(new Statement(dom, s));
 		}
+	}
+
+	public void setName(String name) {
+		this.name = name;
+
+		if (name.equals("Waddell & Reed")) {
+			this.type = AccountType.Invest;
+		} else if (name.equals("Deferred 401k Match")) {
+			this.type = AccountType.Inv401k;
+		} else if (name.equals("GD IRA (E*Trade)") //
+				|| name.equals("GD IRA (Scottrade)") //
+				|| name.equals("TD IRA (E*Trade)") //
+				|| name.equals("TD IRA (Scottrade)") //
+				|| name.equals("IBM Pension")) {
+			this.type = AccountType.Inv401k;
+		}
+	}
+
+	public String getName() {
+		return this.name;
 	}
 
 	public Date getLastStatementDate() {
@@ -337,13 +357,15 @@ public class Account {
 		System.out.println();
 	}
 
-	public BigDecimal reportStatusForDate(Date d) {
+	public BigDecimal reportStatusForDate(Date d, String[] s) {
 		final BigDecimal acctValue = getValueForDate(d);
 
-		if (acctValue.compareTo(BigDecimal.ZERO) != 0) {
-			System.out.println(String.format("  %-36s : %10.2f", //
-					getDisplayName(36), acctValue));
-			reportPortfolioForDate(d);
+		if (!Common.isEffectivelyZero(acctValue) //
+				|| !this.securities.isEmpty()) {
+			s[0] = String.format("  %-36s : %10.2f\n", //
+					getDisplayName(36), acctValue);
+
+			reportPortfolioForDate(d, s);
 		}
 
 		return acctValue;
@@ -390,11 +412,11 @@ public class Account {
 		return acctValue;
 	}
 
-	public BigDecimal reportPortfolioForDate(Date d) {
+	public BigDecimal reportPortfolioForDate(Date d, String[] s) {
 		BigDecimal portValue = BigDecimal.ZERO;
 
 		for (final SecurityPosition pos : this.securities.positions) {
-			portValue = portValue.add(pos.reportSecurityPositionForDate(d));
+			portValue = portValue.add(pos.reportSecurityPositionForDate(d, s));
 		}
 
 		return portValue;
