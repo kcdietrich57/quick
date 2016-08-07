@@ -60,6 +60,8 @@ import qif.data.Statement.StatementDetails;
 // 7/3 Stock Splits
 // 7/3 ShrsIn/ShrsOut - add/remove
 // 7/3 Investment statement with additional info for securities
+// 8/7 Account value vs time
+// 8/7 Net worth vs time
 //
 // Command to rewrite statementLog file
 //
@@ -68,8 +70,6 @@ import qif.data.Statement.StatementDetails;
 //
 // REPORTS
 // Account as of date - incl last statement
-// Net worth vs time
-// Account value vs time
 // Categories vs time
 // Cash flow
 // Investment income
