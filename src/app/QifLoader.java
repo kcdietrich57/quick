@@ -48,14 +48,16 @@ public class QifLoader {
 				if (a != null) {
 					a.generateMonthlyStatements();
 				}
-			} else if (s.startsWith("m")) {
+			} else if (s.startsWith("mnw")) {
 				dom.reportMonthlyNetWorth();
+			} else if (s.startsWith("ys")) {
+				dom.reportYearlyStatus();
 			} else if (s.startsWith("s")) {
 				dom.reportStatistics();
 			} else {
 				final Date d = Common.parseDate(s);
 				if (d != null) {
-					dom.reportStatusForDate(d, true);
+					dom.reportStatusForDate(d);
 				}
 			}
 		}

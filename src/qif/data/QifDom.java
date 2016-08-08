@@ -62,6 +62,10 @@ import qif.data.Statement.StatementDetails;
 // 7/3 Investment statement with additional info for securities
 // 8/7 Account value vs time
 // 8/7 Net worth vs time
+// 8/7 Yearly status
+//
+// Y/Y comparison by account, acctType, asset/liability, networth
+// Detailed net worth vs time
 //
 // Command to rewrite statementLog file
 //
@@ -428,7 +432,26 @@ public class QifDom {
 		return null;
 	}
 
-	public void reportStatusForDate(Date d, boolean itemizeAccounts) {
+	public void reportYearlyStatus() {
+		System.out.println();
+
+		Date d = getFirstTransactionDate();
+		final Date lastTxDate = getLastTransactionDate();
+
+		final Calendar cal = Calendar.getInstance();
+		cal.setTime(d);
+		int year = cal.get(Calendar.YEAR);
+
+		do {
+			d = Common.getDateForEndOfMonth(year, 12);
+
+			reportStatusForDate(d);
+
+			++year;
+		} while (d.compareTo(lastTxDate) < 0);
+	}
+
+	public void reportStatusForDate(Date d) {
 		System.out.println();
 		System.out.println("Global status for date: " + Common.formatDate(d));
 		System.out.println("----------------------------------");
@@ -502,7 +525,9 @@ public class QifDom {
 			}
 		}
 
-		System.out.println(String.format("Section Total: %15.2f", subtotal));
+		if (sectionHasAccounts) {
+			System.out.println(String.format("Section Total: %15.2f", subtotal));
+		}
 
 		System.out.println();
 		System.out.println(String.format("Balance: %15.2f", netWorth));

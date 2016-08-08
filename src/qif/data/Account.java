@@ -361,7 +361,7 @@ public class Account {
 		final BigDecimal acctValue = getValueForDate(d);
 
 		if (!Common.isEffectivelyZero(acctValue) //
-				|| !this.securities.isEmpty()) {
+				|| !this.securities.isEmptyForDate(d)) {
 			s[0] = String.format("  %-36s : %10.2f\n", //
 					getDisplayName(36), acctValue);
 

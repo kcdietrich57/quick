@@ -134,9 +134,11 @@ class SecurityPortfolio {
 		return s;
 	}
 
-	public boolean isEmpty() {
+	public boolean isEmptyForDate(Date d) {
 		for (final SecurityPosition p : this.positions) {
-			if (!Common.isEffectivelyZero(p.shares)) {
+			final int ii = p.getTransactionIndexForDate(d);
+
+			if ((ii >= 0) && !Common.isEffectivelyZero(p.shrBalance.get(ii))) {
 				return false;
 			}
 		}
@@ -243,6 +245,13 @@ class SecurityPosition {
 		return value;
 	}
 
+	/**
+	 * Return the index of the last transaction within this position on or
+	 * before a given date.
+	 *
+	 * @param d
+	 * @return The index; -1 if no such transaction exists
+	 */
 	public int getTransactionIndexForDate(Date d) {
 		final int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
 		if (idx < 0) {
