@@ -4,7 +4,8 @@ public enum FieldType {
 	EndOfSection, //
 
 	// Account
-	AcctType, AcctCreditLimit, AcctDescription, AcctName, AcctStmtBal, AcctStmtDate,
+	AcctType, AcctCreditLimit, AcctDescription, AcctName, AcctStmtBal, //
+	AcctStmtDate, AcctOpenDate, AcctCloseDate,
 
 	// Category
 	CatName, CatDescription, CatTaxRelated, CatIncomeCategory, CatExpenseCategory, //

@@ -19,6 +19,8 @@ public class Account {
 	private String name;
 	public AccountType type;
 	public String description;
+	public Date openDate;
+	public Date closeDate;
 	public BigDecimal creditLimit;
 	public BigDecimal balance;
 	public BigDecimal clearedBalance;

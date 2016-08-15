@@ -54,6 +54,8 @@ public class QifLoader {
 				dom.reportYearlyStatus();
 			} else if (s.startsWith("s")) {
 				dom.reportStatistics();
+			} else if (s.startsWith("relog")) {
+				dom.rewriteStatementLogFile();
 			} else {
 				final Date d = Common.parseDate(s);
 				if (d != null) {

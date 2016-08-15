@@ -27,8 +27,9 @@ public class QifDomReader {
 	private int nextSecurityID = 1;
 
 	public static QifDom loadDom(String[] qifFiles) {
-		final QifDomReader rdr = new QifDomReader(new File(qifFiles[0]).getParentFile());
-		final QifDom dom = new QifDom();
+		final File qifDir = new File(qifFiles[0]).getParentFile();
+		final QifDomReader rdr = new QifDomReader(qifDir);
+		final QifDom dom = new QifDom(qifDir);
 
 		// Process all the QIF files
 		for (final String fn : qifFiles) {
@@ -79,17 +80,15 @@ public class QifDomReader {
 		final File dd = new File(this.qifDir, "statements");
 		loadStatementFiles(dd);
 
-		final File stmtLogFile = new File(this.qifDir, "statementLog.dat");
-
 		// Process saved statement reconciliation information
-		this.dom.processStatementLog(stmtLogFile);
+		this.dom.processStatementLog();
 
 		// Process statements that have not yet been reconciled
-		this.dom.reconcileStatements(stmtLogFile);
+		this.dom.reconcileStatements();
 
 		// Update statement reconciliation file if format has changed
 		if (this.dom.loadedStatementsVersion != Statement.StatementDetails.CURRENT_VERSION) {
-			this.dom.rewriteStatementLogFile(stmtLogFile);
+			this.dom.rewriteStatementLogFile();
 		}
 	}
 
@@ -283,7 +282,8 @@ public class QifDomReader {
 			this.nextAccountID = this.dom.getNextAccountID();
 			this.nextCategoryID = this.dom.getNextCategoryID();
 		} else {
-			this.dom = new QifDom();
+			this.dom = new QifDom(this.qifDir);
+
 			this.nextAccountID = 1;
 			this.nextCategoryID = 1;
 		}
@@ -481,6 +481,12 @@ public class QifDomReader {
 				break;
 			case AcctStmtBal:
 				// acct.stmtBalance = Common.getDecimal(qline.value);
+				break;
+			case AcctOpenDate:
+				acct.openDate = Common.parseDate(qline.value);
+				break;
+			case AcctCloseDate:
+				acct.closeDate = Common.parseDate(qline.value);
 				break;
 
 			default:

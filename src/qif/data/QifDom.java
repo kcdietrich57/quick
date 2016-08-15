@@ -64,6 +64,8 @@ import qif.data.Statement.StatementDetails;
 // 8/7 Net worth vs time
 // 8/7 Yearly status
 //
+// Account open/close dates via statements file
+// Single account history over time (statements + txns)
 // Y/Y comparison by account, acctType, asset/liability, networth
 // Detailed net worth vs time
 //
@@ -129,12 +131,13 @@ public class QifDom {
 
 	SecurityPortfolio portfolio;
 	int loadedStatementsVersion = -1;
+	File stmtLogFile;
 
 	public Account currAccount = null;
 
 	private final List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
 
-	public QifDom() {
+	public QifDom(File qifDir) {
 		this.domid = nextdomid++;
 
 		while (doms.size() < this.domid) {
@@ -149,6 +152,7 @@ public class QifDom {
 		this.securities = new HashMap<String, Security>();
 
 		this.allTransactions = new ArrayList<GenericTxn>();
+		this.stmtLogFile = new File(qifDir, "statementLog.dat");
 
 		this.portfolio = new SecurityPortfolio();
 
@@ -157,7 +161,7 @@ public class QifDom {
 	}
 
 	public QifDom(QifDom other) {
-		this();
+		this(other.stmtLogFile);
 
 		for (final Category c : other.categories) {
 			if (c != null) {
@@ -703,8 +707,8 @@ public class QifDom {
 	}
 
 	// Read statement log file, filling in statement details.
-	public void processStatementLog(File logFile) {
-		if (!logFile.isFile()) {
+	public void processStatementLog() {
+		if (!this.stmtLogFile.isFile()) {
 			return;
 		}
 
@@ -712,7 +716,7 @@ public class QifDom {
 		final List<StatementDetails> details = new ArrayList<StatementDetails>();
 
 		try {
-			stmtLogReader = new LineNumberReader(new FileReader(logFile));
+			stmtLogReader = new LineNumberReader(new FileReader(this.stmtLogFile));
 
 			String s = stmtLogReader.readLine();
 			if (s == null) {
@@ -747,14 +751,15 @@ public class QifDom {
 	// Recreate log file when we have changed the format from the previous
 	// version
 	// Save the previous file as <name>.N
-	public void rewriteStatementLogFile(File logFile) {
-		final String basename = logFile.getName();
-		final File tmpLogFile = new File(logFile.getParentFile(), basename + ".tmp");
+	public void rewriteStatementLogFile() {
+		final String basename = this.stmtLogFile.getName();
+		final File tmpLogFile = new File(this.stmtLogFile.getParentFile(), basename + ".tmp");
 		PrintWriter pw = null;
 		try {
 			pw = new PrintWriter(new FileWriter(tmpLogFile));
 		} catch (final IOException e) {
-			Common.reportError("Can't open tmp stmt log file: " + logFile.getAbsolutePath());
+			Common.reportError("Can't open tmp stmt log file: " //
+					+ this.stmtLogFile.getAbsolutePath());
 			return;
 		}
 
@@ -777,29 +782,29 @@ public class QifDom {
 		File logFileBackup = null;
 
 		for (int ii = 1;; ++ii) {
-			logFileBackup = new File(logFile.getParentFile(), basename + "." + ii);
+			logFileBackup = new File(this.stmtLogFile.getParentFile(), basename + "." + ii);
 			if (!logFileBackup.exists()) {
 				break;
 			}
 		}
 
-		logFile.renameTo(logFileBackup);
-		if (logFileBackup.exists() && tmpLogFile.exists() && !logFile.exists()) {
-			tmpLogFile.renameTo(logFile);
+		this.stmtLogFile.renameTo(logFileBackup);
+		if (logFileBackup.exists() && tmpLogFile.exists() && !this.stmtLogFile.exists()) {
+			tmpLogFile.renameTo(this.stmtLogFile);
 		}
 
-		assert (logFileBackup.exists() && !logFile.exists());
+		assert (logFileBackup.exists() && !this.stmtLogFile.exists());
 
 		this.loadedStatementsVersion = Statement.StatementDetails.CURRENT_VERSION;
 	}
 
 	// Process unreconciled statements for each account, matching statements
 	// with transactions and logging the results.
-	public void reconcileStatements(File stmtlogFile) {
+	public void reconcileStatements() {
 		PrintWriter pw = null;
 
 		try {
-			pw = new PrintWriter(new FileWriter(stmtlogFile, true));
+			pw = new PrintWriter(new FileWriter(this.stmtLogFile, true));
 
 			for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
 				final Account a = getAccount(acctid);
