@@ -921,17 +921,23 @@ public class Statement {
 		final SecurityPortfolio newHoldings = getPortfolioDelta();
 
 		for (final SecurityPosition p : newHoldings.positions) {
-			final SecurityPosition op = this.holdings.getPosition(p.security);
-			final BigDecimal opShares = ((op != null) && (op.shares != null)) ? op.shares : BigDecimal.ZERO;
-			final BigDecimal opValue = ((op != null) && (op.value != null)) ? op.value : BigDecimal.ZERO;
+			final SecurityPosition posExpected = this.holdings.getPosition(p.security);
+			final BigDecimal expectedShares = //
+					((posExpected != null) && (posExpected.shares != null)) //
+							? posExpected.shares //
+							: BigDecimal.ZERO;
+			final BigDecimal expectedValue = //
+					((posExpected != null) && (posExpected.value != null)) //
+							? posExpected.value //
+							: BigDecimal.ZERO;
 			final BigDecimal pValue = (p.value != null) ? p.value : BigDecimal.ZERO;
 
 			s = String.format("  %-25s %10.2f(%5.2f) %10.2f(%5.2f)", //
 					p.security.getName(), //
-					p.shares, opShares.subtract(p.shares), //
-					pValue, opValue.subtract(pValue));
+					p.shares, expectedShares.subtract(p.shares), //
+					pValue, expectedValue.subtract(pValue));
 
-			if (!Common.isEffectivelyEqual(p.shares, opShares) //
+			if (!Common.isEffectivelyEqual(p.shares, expectedShares) //
 			// TODO || !Common.isEffectivelyEqual(pValue, opValue)
 			) {
 				s += " ********";
