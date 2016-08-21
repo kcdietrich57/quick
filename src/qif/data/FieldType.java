@@ -5,7 +5,7 @@ public enum FieldType {
 
 	// Account
 	AcctType, AcctCreditLimit, AcctDescription, AcctName, AcctStmtBal, //
-	AcctStmtDate, AcctOpenDate, AcctCloseDate,
+	AcctStmtDate, AcctCloseDate,
 
 	// Category
 	CatName, CatDescription, CatTaxRelated, CatIncomeCategory, CatExpenseCategory, //

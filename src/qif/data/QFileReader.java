@@ -4,7 +4,6 @@ import static qif.data.Headers.ACCT_CLOSEDATE;
 import static qif.data.Headers.ACCT_CREDITLIMIT;
 import static qif.data.Headers.ACCT_DESCRIPTION;
 import static qif.data.Headers.ACCT_NAME;
-import static qif.data.Headers.ACCT_OPENDATE;
 import static qif.data.Headers.ACCT_STMTBAL;
 import static qif.data.Headers.ACCT_STMTDATE;
 import static qif.data.Headers.ACCT_TYPE;
@@ -364,8 +363,6 @@ public class QFileReader {
 			return FieldType.AcctStmtDate;
 		case ACCT_STMTBAL:
 			return FieldType.AcctStmtBal;
-		case ACCT_OPENDATE:
-			return FieldType.AcctOpenDate;
 		case ACCT_CLOSEDATE:
 			return FieldType.AcctCloseDate;
 

@@ -34,7 +34,9 @@ public class QifLoader {
 				break;
 			}
 
-			if (s.startsWith("a")) {
+			if (s.startsWith("accts")) {
+				dom.reportAllAccountStatus();
+			} else if (s.startsWith("a")) {
 				final String aname = s.substring(1).trim();
 
 				final Account a = dom.findAccount(aname);

@@ -482,9 +482,6 @@ public class QifDomReader {
 			case AcctStmtBal:
 				// acct.stmtBalance = Common.getDecimal(qline.value);
 				break;
-			case AcctOpenDate:
-				acct.openDate = Common.parseDate(qline.value);
-				break;
 			case AcctCloseDate:
 				acct.closeDate = Common.parseDate(qline.value);
 				break;

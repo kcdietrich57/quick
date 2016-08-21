@@ -19,7 +19,6 @@ public class Account {
 	private String name;
 	public AccountType type;
 	public String description;
-	public Date openDate;
 	public Date closeDate;
 	public BigDecimal creditLimit;
 	public BigDecimal balance;
@@ -67,6 +66,11 @@ public class Account {
 		for (final Statement s : this.statements) {
 			this.statements.add(new Statement(dom, s));
 		}
+	}
+
+	public boolean isClosedAsOf(Date d) {
+		return (this.closeDate == null) || (d == null) //
+				|| (this.closeDate.compareTo(d) <= 0);
 	}
 
 	public void setName(String name) {
@@ -362,15 +366,31 @@ public class Account {
 	public BigDecimal reportStatusForDate(Date d, String[] s) {
 		final BigDecimal acctValue = getValueForDate(d);
 
-		if (!Common.isEffectivelyZero(acctValue) //
+		if (!isClosedAsOf(d) //
+				|| !Common.isEffectivelyZero(acctValue) //
 				|| !this.securities.isEmptyForDate(d)) {
-			s[0] = String.format("  %-36s : %10.2f\n", //
-					getDisplayName(36), acctValue);
+			s[0] = String.format("  %-36s : %s", //
+					getDisplayName(36), getOpenCloseDateString());
+
+			s[0] += String.format("\n      %8s : %10.2f\n", //
+					"Balance", acctValue);
 
 			reportPortfolioForDate(d, s);
 		}
 
 		return acctValue;
+	}
+
+	private String getOpenCloseDateString() {
+		String openstr = (this.transactions.isEmpty()) //
+				? "??/??/????" //
+				: Common.formatDate(this.transactions.get(0).getDate());
+		openstr += "- ";
+		openstr += (this.closeDate != null) //
+				? Common.formatDate(this.closeDate) //
+				: "  /  /  ";
+
+		return openstr;
 	}
 
 	String getDisplayName(int length) {

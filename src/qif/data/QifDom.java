@@ -324,6 +324,10 @@ public class QifDom {
 			}
 		}
 
+		if (oldacct.closeDate == null) {
+			oldacct.closeDate = newacct.closeDate;
+		}
+
 		if (oldacct.type == null) {
 			oldacct.type = newacct.type;
 		}
@@ -453,6 +457,11 @@ public class QifDom {
 
 			++year;
 		} while (d.compareTo(lastTxDate) < 0);
+	}
+
+	public void reportAllAccountStatus() {
+		final Calendar cal = Calendar.getInstance();
+		reportStatusForDate(cal.getTime());
 	}
 
 	public void reportStatusForDate(Date d) {

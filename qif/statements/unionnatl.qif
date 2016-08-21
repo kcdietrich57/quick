@@ -1,5 +1,6 @@
 !Account
 NUnionNationalChecking
+C2/25/1987
 ^
 !Statements
 M9/25/1978 47.98 48.60 230.68 59.79
@@ -16,6 +17,7 @@ M1/25/1987 9387.79 0.00
 ^
 !Account
 NUnionNationalSavings
+C9/25/1983
 ^
 !Statements
 M9/25/1978 382.20 382.20 982.20 989.22
@@ -27,6 +29,7 @@ M1/25/1983 686.53 686.53 686.53 686.53 686.53 704.49 704.49 704.49 0.00
 ^
 !Account
 NUnionNationalCD
+C4/25/1984
 ^
 !Statements
 M10/25/1981 1500.00 1518.13 1536.47
