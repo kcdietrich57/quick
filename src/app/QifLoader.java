@@ -36,13 +36,12 @@ public class QifLoader {
 
 			if (s.startsWith("accts")) {
 				dom.reportAllAccountStatus();
-			} else if (s.startsWith("a")) {
-				final String aname = s.substring(1).trim();
-
-				final Account a = dom.findAccount(aname);
-				if (a != null) {
-					a.reportStatus("m");
-				}
+			} else if (s.startsWith("mnw")) {
+				dom.reportMonthlyNetWorth();
+			} else if (s.startsWith("relog")) {
+				dom.rewriteStatementLogFile();
+			} else if (s.startsWith("ys")) {
+				dom.reportYearlyStatus();
 			} else if (s.startsWith("g")) {
 				final String aname = s.substring(1).trim();
 
@@ -50,14 +49,15 @@ public class QifLoader {
 				if (a != null) {
 					a.generateMonthlyStatements();
 				}
-			} else if (s.startsWith("mnw")) {
-				dom.reportMonthlyNetWorth();
-			} else if (s.startsWith("ys")) {
-				dom.reportYearlyStatus();
+			} else if (s.startsWith("a")) {
+				final String aname = s.substring(1).trim();
+
+				final Account a = dom.findAccount(aname);
+				if (a != null) {
+					a.reportStatus("m");
+				}
 			} else if (s.startsWith("s")) {
 				dom.reportStatistics();
-			} else if (s.startsWith("relog")) {
-				dom.rewriteStatementLogFile();
 			} else {
 				final Date d = Common.parseDate(s);
 				if (d != null) {

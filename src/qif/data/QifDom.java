@@ -624,7 +624,7 @@ public class QifDom {
 			final int ucount = a.getUnclearedTransactionCount();
 			final int tcount = a.transactions.size();
 
-			if (ucount > 0) {
+			if ((ucount > 0) || !a.isClosedAsOf(null)) {
 				++unclracct_count;
 				unclracct_utx_count += ucount;
 				unclracct_tx_count += tcount;

@@ -1,4 +1,10 @@
 !Account
+N13914 Ash House (old)
+^
+!Statements
+M3/15/1996 0.00
+^
+!Account
 NJacksonNatlLife
 C12/31/1999
 ^
@@ -79,30 +85,35 @@ M7/2016 0.00
 ^
 !Account
 NDell (11)
+C10/4/2010
 ^
 !Statements
 M7/2016 0.00
 ^
 !Account
 N1990 Accord Loan
+C12/31/1990
 ^
 !Statements
 M7/2016 0.00
 ^
 !Account
 NMatt Cash2
+C12/31/2012
 ^
 !Statements
 M7/2016 0.00
 ^
 !Account
 N1987 Accord Loan
+C4/22/1988
 ^
 !Statements
 M7/2016 0.00
 ^
 !Account
 NMort FairfieldBranson1999
+C9/29/2000
 ^
 !Statements
 M7/2016 0.00
@@ -115,6 +126,7 @@ M7/2016 7000.00
 ^
 !Account
 NMort FairfieldStarIsland2004
+C6/4/2005
 ^
 !Statements
 M7/2016 0.00
@@ -132,16 +144,10 @@ N13914 Ash House
 M7/2016 270000.00
 ^
 !Account
-N13914 Ash House (old)
-^
-!Statements
-M7/2016 0.00
-^
-!Account
 N5600 W 99 Terr
 ^
 !Statements
-M7/2016 0.00
+M5/30/1996 0.00
 ^
 !Account
 N2013 Leaf
@@ -153,67 +159,67 @@ M7/2016 17000.00
 NHEC 401k Profit Sharing
 ^
 !Statements
-M12/1999 0.00
+M12/23/1999 0.00
 ^
 !Account
 NHEC Pension
 ^
 !Statements
-M12/1999 0.00
+M12/23/1999 0.00
 ^
 !Account
 NWaddell & Reed
 ^
 !Statements
-M10/2003 0.00
+M10/24/2003 0.00
 ^
 !Account
 NISI Options
 ^
 !Statements
-M6/2003 0.00
+M6/13/2003 0.00
 ^
 !Account
 NAmerUS Life Insurance
 ^
 !Statements
-M12/2005 0.00
+M12/27/2005 0.00
 ^
 !Account
 NZiegler
 ^
 !Statements
-M3/2012 0.00
+M3/10/2012 0.00
 ^
 !Account
 NSmith Barney
 ^
 !Statements
-M12/2004 0.00
+M12/20/2004 0.00
 ^
 !Account
 NISI ESPP Stock
 ^
 !Statements
-M3/2002 0.00
+M3/8/2002 0.00
 ^
 !Account
 NTerry Healthcar
 ^
 !Statements
-M12/1996 0.00
+M12/31/1996 0.00
 ^
 !Account
 NPenneys
 ^
 !Statements
-M11/2005 0.00
+M11/29/2005 0.00
 ^
 !Account
 NATT 401k
 ^
 !Statements
-M5/1994 0.00
+M5/5/1994 0.00
 ^
 !Account
 NQuarters
@@ -225,52 +231,52 @@ M7/2016 394.50
 NJones Store
 ^
 !Statements
-M2/2006 0.00
+M2/13/2006 0.00
 ^
 !Account
 NSears-old
 ^
 !Statements
-M12/1995 0.00
+M12/31/1995 0.00
 ^
 !Account
 NPier 1 Imports
+C8/21/1995
 ^
 !Statements
 M6/1996 0.00
 ^
 !Account
 NFamous Barr
+C2/1/1999
 ^
 !Statements
 M2/1999 0.00
 ^
 !Account
 NCitiVisa 9914(16)
+C10/31/2008
 ^
 !Statements
 M12/2011 0.00
 ^
 !Account
 NMontgomery Ward
+C11/2/1999
 ^
 !Statements
 M11/1999 0.00
 ^
 !Account
 NHRS - ECOWater
+C9/3/1996
 ^
 !Statements
 M9/1996 0.00
 ^
 !Account
-NAT&T MC 0444
-^
-!Statements
-M4/2008 0.00
-^
-!Account
 NHome Depot
+C3/28/1998
 ^
 !Statements
 M3/1998 0.00
@@ -282,34 +288,18 @@ NFairfield Communities
 M6/2005 0.00
 ^
 !Account
-NBarclay 5921 (10)
-^
-!Statements
-M7/2012 0.00
-^
-!Account
 NTarget
+C8/23/1998
 ^
 !Statements
 M8/1998 0.00
 ^
 !Account
-NDiscover 0956(17)
-^
-!Statements
-M9/2015 9.54
-^
-!Account
 N2010 Escrow 13914 Ash
+C3/7/2013
 ^
 !Statements
 M3/2013 0.00
-^
-!Account
-NHCS2010 Health Care Savings
-^
-!Statements
-M3/2014 0.00
 ^
 !Account
 NLoan Nissan Leaf

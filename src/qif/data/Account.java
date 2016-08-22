@@ -69,8 +69,8 @@ public class Account {
 	}
 
 	public boolean isClosedAsOf(Date d) {
-		return (this.closeDate == null) || (d == null) //
-				|| (this.closeDate.compareTo(d) <= 0);
+		return (this.closeDate != null) //
+				&& ((d == null) || (this.closeDate.compareTo(d) <= 0));
 	}
 
 	public void setName(String name) {
@@ -368,6 +368,7 @@ public class Account {
 
 		if (!isClosedAsOf(d) //
 				|| !Common.isEffectivelyZero(acctValue) //
+				|| (getFirstUnclearedTransaction() != null) //
 				|| !this.securities.isEmptyForDate(d)) {
 			s[0] = String.format("  %-36s : %s", //
 					getDisplayName(36), getOpenCloseDateString());
