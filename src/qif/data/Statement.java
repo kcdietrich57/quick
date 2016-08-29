@@ -472,7 +472,8 @@ public class Statement {
 		if (!badinfo.isEmpty()) {
 			// d.transactions.removeAll(badinfo);
 			Common.reportWarning( //
-					"Can't find " + badinfo.size() + " reconciled transactions:\n" //
+					"Can't find " + badinfo.size() + " reconciled transactions" //
+							+ " for acct " + a.getName() + ":\n" //
 							+ badinfo.toString() + "\n" + toString());
 			return;
 		}

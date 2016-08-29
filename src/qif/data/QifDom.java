@@ -920,6 +920,7 @@ public class QifDom {
 			case SHRS_OUT:
 			case SELL:
 			case SELLX:
+			case EXERCISE:
 			case EXERCISEX:
 				pos.shares = pos.shares.add(txn.getShares());
 				break;
@@ -1327,7 +1328,9 @@ public class QifDom {
 
 			if (!s.isBalanced) {
 				s.getTransactionsFromDetails(a, d);
-				Common.reportError("Can't reconcile statement from log.\n" + s.toString());
+				Common.reportError("Can't reconcile statement from log.\n" //
+						+ " a=" + a.getName() //
+						+ " s=" + s.toString());
 			}
 		}
 	}

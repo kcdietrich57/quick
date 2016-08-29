@@ -280,6 +280,9 @@ public class Common {
 		if ("Vest".equals(s)) {
 			return Action.VEST;
 		}
+		if ("Exercise".equals(s)) {
+			return Action.EXERCISE;
+		}
 		if ("ExercisX".equals(s)) {
 			return Action.EXERCISEX;
 		}

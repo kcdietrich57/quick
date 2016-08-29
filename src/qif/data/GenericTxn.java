@@ -17,7 +17,7 @@ class SimpleTxn {
 		OTHER, CASH, XIN, XOUT, WITHDRAWX, //
 		CONTRIBX, INT_INC, MISC_INCX, //
 		BUY, BUYX, SELL, SELLX, //
-		GRANT, VEST, EXERCISEX, EXPIRE, //
+		GRANT, VEST, EXERCISE, EXERCISEX, EXPIRE, //
 		SHRS_IN, SHRS_OUT, //
 		DIV, REINV_DIV, REINV_LG, REINV_SH, //
 		REINV_INT, //
@@ -522,6 +522,7 @@ class InvestmentTxn extends GenericTxn {
 		case SHRS_OUT:
 		case SELL:
 		case SELLX:
+		case EXERCISE:
 		case EXERCISEX:
 			if (this.price == null) {
 				this.price = BigDecimal.ZERO;
@@ -581,6 +582,7 @@ class InvestmentTxn extends GenericTxn {
 			// System.out.println(this);
 			break;
 
+		case EXERCISE:
 		case EXERCISEX:
 			// Connect to Grant, qty/price
 			// System.out.println(this);
@@ -711,6 +713,7 @@ class InvestmentTxn extends GenericTxn {
 			tot = BigDecimal.ZERO;
 			break;
 
+		case EXERCISE:
 		case SELL:
 		case CASH:
 		case CONTRIBX:
@@ -763,14 +766,24 @@ class InvestmentTxn extends GenericTxn {
 	}
 
 	public String toStringShort(boolean veryshort) {
-		return String.format("%s %s %s %8.2f %8.2f %8.2f %s", //
+		String s = String.format("%s %s %s", //
 				((this.stmtdate != null) ? "*" : " "), //
 				Common.formatDate(getDate()), //
-				this.action.toString(), //
-				getShares(), //
-				getAmount(), //
-				getCashAmount(), //
-				((this.security != null) ? this.security.getSymbol() : getPayee()));
+				this.action.toString());
+
+		if (this.action == Action.STOCKSPLIT) {
+			s += String.format(" %5.2f", //
+					getSplitRatio());
+		} else {
+			s += String.format(" %8.2f %8.2f %8.2f", //
+					getShares(), //
+					getAmount(), //
+					getCashAmount());
+		}
+
+		s += " " + ((this.security != null) ? this.security.getSymbol() : getPayee());
+
+		return s;
 	}
 
 	public String toStringLong() {
