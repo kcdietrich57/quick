@@ -127,6 +127,7 @@ M7/2016 0.00
 ^
 !Account
 N1990 Accord
+C9/30/2008
 ^
 !Statements
 M7/2016 0.00
@@ -309,10 +310,4 @@ C3/31/2013
 ^
 !Statements
 M3/2013 0.00
-^
-!Account
-NLoan Nissan Leaf
-^
-!Statements
-M7/28/2016 -16418.57
 ^

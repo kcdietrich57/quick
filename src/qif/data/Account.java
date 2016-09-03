@@ -68,6 +68,21 @@ public class Account {
 		}
 	}
 
+	public Date getOpenDate() {
+		if (this.transactions != null) {
+			return this.transactions.get(0).getDate();
+		}
+
+		return null;
+	}
+
+	public boolean isOpenAsOf(Date d) {
+		final Date openDate = getOpenDate();
+
+		return (openDate == null) //
+				|| ((d == null) || (openDate.compareTo(d) <= 0));
+	}
+
 	public boolean isClosedAsOf(Date d) {
 		return (this.closeDate != null) //
 				&& ((d == null) || (this.closeDate.compareTo(d) <= 0));
@@ -179,6 +194,29 @@ public class Account {
 			Common.reportError("unknown acct type: " + this.type);
 			return false;
 		}
+	}
+
+	public boolean isLiability() {
+		return !isAsset();
+	}
+
+	public boolean isAsset() {
+		switch (this.type) {
+		case Bank:
+		case Cash:
+		case Asset:
+		case InvMutual:
+		case InvPort:
+		case Invest:
+		case Inv401k:
+			return true;
+
+		case CCard:
+		case Liability:
+			return false;
+		}
+
+		return false;
 	}
 
 	public boolean isCashAccount() {
@@ -366,15 +404,13 @@ public class Account {
 	public BigDecimal reportStatusForDate(Date d, String[] s) {
 		final BigDecimal acctValue = getValueForDate(d);
 
-		if (!isClosedAsOf(d) //
+		if ((isOpenAsOf(d) && !isClosedAsOf(d)) //
 				|| !Common.isEffectivelyZero(acctValue) //
 				|| (getFirstUnclearedTransaction() != null) //
 				|| !this.securities.isEmptyForDate(d)) {
-			s[0] = String.format("  %-36s : %s", //
-					getDisplayName(36), getOpenCloseDateString());
-
-			s[0] += String.format("\n      %8s : %10.2f\n", //
-					"Balance", acctValue);
+			s[0] = String.format("  %-36s: %10.2f\n", //
+					getDisplayName(36), acctValue);
+			// , getOpenCloseDateString());
 
 			reportPortfolioForDate(d, s);
 		}
@@ -437,10 +473,21 @@ public class Account {
 
 	public BigDecimal reportPortfolioForDate(Date d, String[] s) {
 		BigDecimal portValue = BigDecimal.ZERO;
+		final String[] ps = { "" };
 
 		for (final SecurityPosition pos : this.securities.positions) {
-			portValue = portValue.add(pos.reportSecurityPositionForDate(d, s));
+			portValue = portValue.add(pos.reportSecurityPositionForDate(d, ps));
 		}
+
+		if (!Common.isEffectivelyZero(portValue)) {
+			final BigDecimal cashPosition = getValueForDate(d).subtract(portValue);
+
+			if (!Common.isEffectivelyZero(cashPosition)) {
+				SecurityPosition.reportCashPosition(cashPosition, s);
+			}
+		}
+
+		s[0] += ps[0];
 
 		return portValue;
 	}

@@ -467,7 +467,7 @@ public class QifDom {
 	public void reportStatusForDate(Date d) {
 		System.out.println();
 		System.out.println("Global status for date: " + Common.formatDate(d));
-		System.out.println("----------------------------------");
+		System.out.println("--------------------------------------------------------");
 		System.out.println(String.format("  %-36s : %10s", "Account", "Balance"));
 
 		BigDecimal netWorth = BigDecimal.ZERO;
@@ -505,18 +505,21 @@ public class QifDom {
 		for (final AccountType at : atypes) {
 			if ((snum < sections.length) && (at == sections[snum])) {
 				if (sectionHasAccounts) {
-					System.out.println(String.format("Section Total: %15.2f", subtotal));
+					System.out.println(String.format("Section Total: - - - - - - - - - - - %15.2f", subtotal));
 					sectionHasAccounts = false;
 				}
 
 				subtotal = BigDecimal.ZERO;
-				sectionHdrPending = "======== " + sectionName[snum] + " accounts ========";
+				sectionHdrPending = String.format( //
+						"======== %-25s accounts ===========================", //
+						sectionName[snum]);
 
 				++snum;
 			}
 
 			for (final Account a : this.accounts) {
-				if ((a != null) && (a.type == at)) {
+				if ((a != null) && (a.type == at) //
+						&& a.isOpenAsOf(d) && !a.isClosedAsOf(d)) {
 					final String[] s = new String[1];
 					final BigDecimal amt = a.reportStatusForDate(d, s);
 
@@ -539,7 +542,7 @@ public class QifDom {
 		}
 
 		if (sectionHasAccounts) {
-			System.out.println(String.format("Section Total: %15.2f", subtotal));
+			System.out.println(String.format("Section Total: - - - - - - - - - - - %15.2f", subtotal));
 		}
 
 		System.out.println();
@@ -559,9 +562,11 @@ public class QifDom {
 
 		do {
 			d = Common.getDateForEndOfMonth(year, month);
+			final Balances b = getNetWorthForDate(d);
 
-			System.out.println(String.format("%s  %15.2f", //
-					Common.formatDateLong(d), getNetWorthForDate(d)));
+			System.out.println(String.format("%s,%15.2f,%15.2f,%15.2f", //
+					Common.formatDateLong(d), //
+					b.netWorth, b.assets, b.liabilities));
 
 			if (month == 12) {
 				++year;
@@ -572,18 +577,30 @@ public class QifDom {
 		} while (d.compareTo(lastTxDate) <= 0);
 	}
 
-	public BigDecimal getNetWorthForDate(Date d) {
+	public static class Balances {
 		BigDecimal netWorth = BigDecimal.ZERO;
+		BigDecimal assets = BigDecimal.ZERO;
+		BigDecimal liabilities = BigDecimal.ZERO;
+	}
+
+	public Balances getNetWorthForDate(Date d) {
+		final Balances b = new Balances();
 
 		for (final Account a : this.accounts) {
 			if (a != null) {
 				final BigDecimal amt = a.getValueForDate(d);
 
-				netWorth = netWorth.add(amt);
+				b.netWorth = b.netWorth.add(amt);
+
+				if (a.isAsset()) {
+					b.assets = b.assets.add(amt);
+				} else if (a.isLiability()) {
+					b.liabilities = b.liabilities.add(amt);
+				}
 			}
 		}
 
-		return netWorth;
+		return b;
 	}
 
 	public void reportStatistics() {
@@ -869,8 +886,7 @@ public class QifDom {
 
 		for (final InvestmentTxn t : p.transactions) {
 			if (t.getAction() == Action.STOCKSPLIT) {
-				shrbal = shrbal.multiply(t.getShares());
-				shrbal = shrbal.divide(BigDecimal.TEN);
+				shrbal = shrbal.multiply(t.getSplitRatio());
 			} else if (t.getShares() != null) {
 				shrbal = shrbal.add(t.getShares());
 			}

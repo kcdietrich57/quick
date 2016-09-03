@@ -191,6 +191,7 @@ class SecurityPosition {
 		this.shrBalance.clear();
 
 		for (final InvestmentTxn t : this.transactions) {
+			final Account a = QifDom.getDomById(1).getAccount(t.acctid);
 			startBal = startBal.add(t.getShares());
 			this.shrBalance.add(startBal);
 		}
@@ -235,14 +236,19 @@ class SecurityPosition {
 		final BigDecimal value = price.multiply(tshrbal);
 
 		String nn = txn.security.getName();
-		if (nn.length() > 36) {
-			nn = nn.substring(0, 33) + "...";
+		if (nn.length() > 34) {
+			nn = nn.substring(0, 31) + "...";
 		}
 
-		s[0] += String.format("    %-36s             %10.2f %10.3f %10.3f\n", //
+		s[0] += String.format("    %-34s: ..%10.2f %10.3f %10.3f\n", //
 				nn, value, tshrbal, price);
 
 		return value;
+	}
+
+	public static void reportCashPosition(BigDecimal bal, String[] s) {
+		s[0] += String.format("    %-34s: ..%10.2f\n", //
+				"Cash", bal);
 	}
 
 	/**
