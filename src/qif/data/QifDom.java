@@ -634,9 +634,53 @@ public class QifDom {
 		int clracct_count = 0;
 		int clracct_tx_count = 0;
 
+		final Calendar cal = Calendar.getInstance();
+		final Date today = cal.getTime();
+
+		final long dayms = 1000L * 24 * 60 * 60;
+		final long msCurrent = today.getTime();
+		final Date minus30 = new Date(msCurrent - 30 * dayms);
+		final Date minus60 = new Date(msCurrent - 60 * dayms);
+		final Date minus90 = new Date(msCurrent - 90 * dayms);
+
+		boolean nostat = false;
+		boolean stat90 = false;
+		boolean stat60 = false;
+		boolean stat30 = false;
+		boolean statcurrent = false;
+
 		final int max = ranking.size();
 		for (int ii = 0; ii < max; ++ii) {
 			final Account a = ranking.get(ii);
+			final Date laststatement = a.getLastStatementDate();
+
+			if (laststatement == null) {
+				if (!nostat) {
+					System.out.println("### No statements");
+					nostat = true;
+				}
+			} else if (laststatement.compareTo(minus90) < 0) {
+				if (!stat90) {
+					System.out.println("\n### More than 90 days");
+					stat90 = true;
+				}
+			} else if (laststatement.compareTo(minus60) < 0) {
+				if (!stat60) {
+					System.out.println("\n### 60-90 days");
+					stat60 = true;
+				}
+			} else if ((minus30 != null) //
+					&& (laststatement.compareTo(minus30) < 0)) {
+				if (!stat30) {
+					System.out.println("\n### 30-60 days");
+					stat30 = true;
+				}
+			} else {
+				if (!statcurrent) {
+					System.out.println("\n### Less than 30 days");
+					statcurrent = true;
+				}
+			}
 
 			final int ucount = a.getUnclearedTransactionCount();
 			final int tcount = a.transactions.size();
@@ -650,13 +694,13 @@ public class QifDom {
 				final Statement lStat = a.getLastStatement();
 				final Date lStatDate = (lStat != null) ? lStat.date : null;
 
-				System.out.println(String.format("%3d   %-35s : %10.2f : %5d/%5d : Last Stmt: %8s    %8s", //
+				System.out.println(String.format("%3d   %-35s : %8s  %10.2f : %5d/%5d :    %8s", //
 						unclracct_count, //
 						nam, //
+						Common.formatDate(lStatDate), //
 						a.balance, //
 						ucount, //
 						tcount, //
-						Common.formatDate(lStatDate), //
 						Common.formatDate(a.getFirstUnclearedTransactionDate())));
 			} else {
 				++clracct_count;
