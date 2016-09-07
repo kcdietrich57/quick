@@ -464,6 +464,47 @@ public class QifDom {
 		reportStatusForDate(cal.getTime());
 	}
 
+	static class SectionInfo {
+		static AccountType[] allAcctTypes = { //
+				AccountType.Bank, AccountType.Cash, AccountType.Asset, //
+				AccountType.Invest, AccountType.InvPort, //
+				AccountType.InvMutual, AccountType.Inv401k, //
+				AccountType.CCard, AccountType.Liability };
+
+		AccountType[] atypes;
+		String label;
+		boolean isAsset;
+
+		public SectionInfo(String label, AccountType[] atypes, boolean isAsset) {
+			this.label = label;
+			this.atypes = atypes;
+			this.isAsset = isAsset;
+		}
+
+		public static AccountType[] getAccountTypes() {
+			return allAcctTypes;
+		}
+
+		public boolean contains(AccountType at) {
+			for (final AccountType myat : this.atypes) {
+				if (myat == at) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+	};
+
+	final static SectionInfo[] sectionInfo = {
+			new SectionInfo("Bank", new AccountType[] { AccountType.Bank, AccountType.Cash }, true), //
+			new SectionInfo("Asset", new AccountType[] { AccountType.Asset }, true), //
+			new SectionInfo("Investment", new AccountType[] { AccountType.Invest, AccountType.InvPort }, true), //
+			new SectionInfo("Retirement", new AccountType[] { AccountType.InvMutual, AccountType.Inv401k }, true), //
+			new SectionInfo("Credit Card", new AccountType[] { AccountType.CCard }, false), //
+			new SectionInfo("Loan", new AccountType[] { AccountType.Liability }, false) //
+	};
+
 	public void reportStatusForDate(Date d) {
 		System.out.println();
 		System.out.println("Global status for date: " + Common.formatDate(d));
@@ -472,49 +513,34 @@ public class QifDom {
 
 		BigDecimal netWorth = BigDecimal.ZERO;
 
-		final AccountType atypes[] = { //
-				AccountType.Bank, AccountType.Cash, //
-				AccountType.Asset, //
-				AccountType.Invest, AccountType.InvPort, //
-				AccountType.InvMutual, AccountType.Inv401k, //
-				AccountType.CCard, //
-				AccountType.Liability, //
-		};
-		final AccountType sections[] = { //
-				AccountType.Bank, //
-				AccountType.Asset, //
-				AccountType.Invest, //
-				AccountType.InvMutual, //
-				AccountType.CCard, //
-				AccountType.Liability //
-		};
-		final String sectionName[] = { //
-				"Bank", //
-				"Asset", //
-				"Investment", //
-				"Retirement", //
-				"Credit Card", //
-				"Loan" //
-		};
-
 		int snum = 0;
+		SectionInfo currentSection = sectionInfo[0];
+
 		BigDecimal subtotal = BigDecimal.ZERO;
+		BigDecimal assets = BigDecimal.ZERO;
+		BigDecimal liabilities = BigDecimal.ZERO;
 		String sectionHdrPending = null;
 		boolean sectionHasAccounts = false;
 
-		for (final AccountType at : atypes) {
-			if ((snum < sections.length) && (at == sections[snum])) {
+		for (final AccountType at : SectionInfo.getAccountTypes()) {
+			if ((currentSection != null) && !currentSection.contains(at)) {
 				if (sectionHasAccounts) {
 					System.out.println(String.format("Section Total: - - - - - - - - - - - %15.2f", subtotal));
-					sectionHasAccounts = false;
 				}
 
 				subtotal = BigDecimal.ZERO;
-				sectionHdrPending = String.format( //
-						"======== %-25s accounts ===========================", //
-						sectionName[snum]);
-
+				sectionHasAccounts = false;
 				++snum;
+
+				if (snum < sectionInfo.length) {
+					currentSection = sectionInfo[snum];
+					sectionHdrPending = String.format( //
+							"======== %-25s accounts ===========================", //
+							currentSection.label);
+				} else {
+					currentSection = null;
+					sectionHdrPending = "";
+				}
 			}
 
 			for (final Account a : this.accounts) {
@@ -537,6 +563,12 @@ public class QifDom {
 
 					netWorth = netWorth.add(amt);
 					subtotal = subtotal.add(amt);
+
+					if ((currentSection != null) && currentSection.isAsset) {
+						assets = assets.add(amt);
+					} else {
+						liabilities = liabilities.add(amt);
+					}
 				}
 			}
 		}
@@ -546,7 +578,10 @@ public class QifDom {
 		}
 
 		System.out.println();
-		System.out.println(String.format("Balance: %15.2f", netWorth));
+		System.out.println(String.format("Assets:      %15.2f", assets));
+		System.out.println(String.format("Liabilities: %15.2f", liabilities));
+		System.out.println(String.format("Balance:     %15.2f", netWorth));
+		System.out.println();
 	}
 
 	public void reportMonthlyNetWorth() {
