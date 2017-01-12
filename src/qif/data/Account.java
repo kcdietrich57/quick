@@ -451,24 +451,24 @@ public class Account {
 	}
 
 	BigDecimal getValueForDate(Date d) {
-		BigDecimal acctValue = BigDecimal.ZERO;
+		BigDecimal cashBal = null;
 
-		final int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
-		if (idx >= 0) {
+		int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
+		while ((cashBal == null) && (idx >= 0)) {
 			final GenericTxn tx = this.transactions.get(idx);
+			--idx;
 
-			final BigDecimal cashBal = tx.runningTotal;
-
-			if (cashBal != null) {
-				acctValue = cashBal;
-			}
+			cashBal = tx.runningTotal;
 		}
+
+		BigDecimal acctValue = (cashBal != null) ? cashBal : BigDecimal.ZERO;
 
 		acctValue = acctValue.add(this.securities.getPortfolioValueForDate(d));
 
 		acctValue = acctValue.setScale(2, RoundingMode.HALF_UP);
 
 		return acctValue;
+
 	}
 
 	public BigDecimal reportPortfolioForDate(Date d, String[] s) {
