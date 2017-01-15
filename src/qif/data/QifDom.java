@@ -513,8 +513,8 @@ public class QifDom {
 
 		BigDecimal netWorth = BigDecimal.ZERO;
 
-		int snum = 0;
-		SectionInfo currentSection = sectionInfo[0];
+		int snum = -1;
+		SectionInfo currentSection = null;
 
 		BigDecimal subtotal = BigDecimal.ZERO;
 		BigDecimal assets = BigDecimal.ZERO;
@@ -523,7 +523,7 @@ public class QifDom {
 		boolean sectionHasAccounts = false;
 
 		for (final AccountType at : SectionInfo.getAccountTypes()) {
-			if ((currentSection != null) && !currentSection.contains(at)) {
+			if ((currentSection == null) || !currentSection.contains(at)) {
 				if (sectionHasAccounts) {
 					System.out.println(String.format("Section Total: - - - - - - - - - - - %15.2f", subtotal));
 				}
