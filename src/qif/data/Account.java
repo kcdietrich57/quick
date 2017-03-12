@@ -289,8 +289,7 @@ public class Account {
 					"Reconciling " + this.name + " statement " + (ii + 1) //
 							+ " of " + this.statements.size();
 
-			s.reconcile(this, msg);
-			if (!s.isBalanced) {
+			if (!s.reconcile(this, msg)) {
 				break;
 			}
 
@@ -471,7 +470,7 @@ public class Account {
 
 	}
 
-	public BigDecimal reportPortfolioForDate(Date d, String[] s) {
+	public void reportPortfolioForDate(Date d, String[] s) {
 		BigDecimal portValue = BigDecimal.ZERO;
 		final String[] ps = { "" };
 
@@ -488,8 +487,6 @@ public class Account {
 		}
 
 		s[0] += ps[0];
-
-		return portValue;
 	}
 
 	public String toString() {

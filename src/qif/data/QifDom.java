@@ -160,28 +160,6 @@ public class QifDom {
 		// this.memorizedTxns = new ArrayList<MemorizedTxn>();
 	}
 
-	public QifDom(QifDom other) {
-		this(other.stmtLogFile);
-
-		for (final Category c : other.categories) {
-			if (c != null) {
-				addCategory(new Category(c));
-			}
-		}
-
-		for (final Security s : other.securities.values()) {
-			if (s != null) {
-				addSecurity(new Security(s));
-			}
-		}
-
-		for (final Account a : other.accounts) {
-			if (a != null) {
-				addAccount(new Account(a, this));
-			}
-		}
-	}
-
 	public int getNumAccounts() {
 		return this.accounts.size() - 1;
 	}
@@ -704,8 +682,7 @@ public class QifDom {
 					System.out.println("\n### 60-90 days");
 					stat60 = true;
 				}
-			} else if ((minus30 != null) //
-					&& (laststatement.compareTo(minus30) < 0)) {
+			} else if (laststatement.compareTo(minus30) < 0) {
 				if (!stat30) {
 					System.out.println("\n### 30-60 days");
 					stat30 = true;

@@ -18,7 +18,7 @@ import qif.data.QFileReader.SectionType;
 import qif.data.Security.SplitInfo;
 
 public class QifDomReader {
-	private QFileReader rdr = null;
+	private QFileReader filerdr = null;
 	private File qifDir = null;
 
 	private QifDom dom = null;
@@ -44,10 +44,6 @@ public class QifDomReader {
 
 	public QifDomReader(File qifDir) {
 		this.qifDir = qifDir;
-	}
-
-	public QifDom load(String fileName) {
-		return load(null, fileName);
 	}
 
 	public QifDom load(QifDom refdom, String fileName) {
@@ -78,7 +74,7 @@ public class QifDomReader {
 		this.dom.fixPortfolios();
 
 		final File dd = new File(this.qifDir, "statements");
-		loadStatementFiles(dd);
+		processStatementFiles(dd);
 
 		// Process saved statement reconciliation information
 		this.dom.processStatementLog();
@@ -275,26 +271,23 @@ public class QifDomReader {
 			Common.reportError("File '" + filename + "' does not exist");
 		}
 
-		this.rdr = new QFileReader(f);
+		this.filerdr = new QFileReader(f);
 
 		if (refdom != null) {
 			this.dom = refdom;
 			this.nextAccountID = this.dom.getNextAccountID();
 			this.nextCategoryID = this.dom.getNextCategoryID();
 		} else {
-			this.dom = new QifDom(this.qifDir);
-
-			this.nextAccountID = 1;
-			this.nextCategoryID = 1;
+			Common.reportError("Can't have null refdom");
 		}
 	}
 
 	private void processFile() {
-		this.rdr.reset();
+		this.filerdr.reset();
 
-		for (SectionType sectype = this.rdr.findFirstSection(); //
+		for (SectionType sectype = this.filerdr.findFirstSection(); //
 		sectype != SectionType.EndOfFile; //
-		sectype = this.rdr.nextSection()) {
+		sectype = this.filerdr.nextSection()) {
 			switch (sectype) {
 			case Tag:
 			case Category:
@@ -325,7 +318,7 @@ public class QifDomReader {
 
 			case Statements:
 				// System.out.println("Loading statements");
-				loadStatements(this.rdr);
+				loadStatements(this.filerdr);
 				break;
 
 			case Security:
@@ -358,7 +351,7 @@ public class QifDomReader {
 
 	private void loadCategories() {
 		for (;;) {
-			final String s = this.rdr.peekLine();
+			final String s = this.filerdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
@@ -376,12 +369,6 @@ public class QifDomReader {
 				this.dom.addCategory(cat);
 			}
 		}
-
-		if (null == this.dom.findCategory("Fix Me")) {
-			final Category cat = new Category(this.nextCategoryID++);
-			cat.name = "Fix Me";
-			this.dom.addCategory(cat);
-		}
 	}
 
 	public Category loadCategory() {
@@ -390,7 +377,7 @@ public class QifDomReader {
 		final Category cat = new Category();
 
 		for (;;) {
-			this.rdr.nextCategoryLine(qline);
+			this.filerdr.nextCategoryLine(qline);
 
 			switch (qline.type) {
 			case EndOfSection:
@@ -425,7 +412,7 @@ public class QifDomReader {
 
 	private void loadAccounts() {
 		for (;;) {
-			final String s = this.rdr.peekLine();
+			final String s = this.filerdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
@@ -451,7 +438,7 @@ public class QifDomReader {
 		final Account acct = new Account(this.dom);
 
 		for (;;) {
-			this.rdr.nextAccountLine(qline);
+			this.filerdr.nextAccountLine(qline);
 
 			switch (qline.type) {
 			case EndOfSection:
@@ -494,7 +481,7 @@ public class QifDomReader {
 
 	private void loadSecurities() {
 		for (;;) {
-			final String s = this.rdr.peekLine();
+			final String s = this.filerdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
@@ -529,7 +516,7 @@ public class QifDomReader {
 		String goal = null;
 
 		loop: for (;;) {
-			this.rdr.nextSecurityLine(qline);
+			this.filerdr.nextSecurityLine(qline);
 
 			switch (qline.type) {
 			case EndOfSection:
@@ -567,7 +554,7 @@ public class QifDomReader {
 
 	private void loadInvestmentTransactions() {
 		for (;;) {
-			final String s = this.rdr.peekLine();
+			final String s = this.filerdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
@@ -595,7 +582,7 @@ public class QifDomReader {
 		final InvestmentTxn txn = new InvestmentTxn(this.dom.domid, this.dom.currAccount.acctid);
 
 		for (;;) {
-			this.rdr.nextInvLine(qline);
+			this.filerdr.nextInvLine(qline);
 
 			switch (qline.type) {
 			case EndOfSection:
@@ -652,6 +639,7 @@ public class QifDomReader {
 				break;
 			case InvXferAcct:
 				txn.accountForTransfer = qline.value;
+				// TODO fixme - this is never meaningfully used
 				txn.xacctid = this.dom.findCategoryID(qline.value);
 				break;
 
@@ -663,7 +651,7 @@ public class QifDomReader {
 
 	private void loadNonInvestmentTransactions() {
 		for (;;) {
-			final String s = this.rdr.peekLine();
+			final String s = this.filerdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
@@ -690,7 +678,7 @@ public class QifDomReader {
 		SimpleTxn cursplit = null;
 
 		for (;;) {
-			this.rdr.nextTxnLine(qline);
+			this.filerdr.nextTxnLine(qline);
 
 			switch (qline.type) {
 			case EndOfSection:
@@ -773,12 +761,12 @@ public class QifDomReader {
 
 	private void loadPrices() {
 		for (;;) {
-			final String s = this.rdr.peekLine();
+			final String s = this.filerdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			final QPrice price = Price.load(this.rdr);
+			final QPrice price = Price.load(this.filerdr);
 			if (price == null) {
 				break;
 			}
@@ -790,7 +778,7 @@ public class QifDomReader {
 		}
 	}
 
-	private void loadStatementFiles(File stmtDirectory) {
+	private void processStatementFiles(File stmtDirectory) {
 		if (!stmtDirectory.isDirectory()) {
 			return;
 		}

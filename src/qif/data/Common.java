@@ -328,7 +328,7 @@ public class Common {
 	}
 
 	public static void writeln(PrintWriter pw, String tag) {
-		pw.println("" + tag);
+		pw.println(tag);
 	}
 
 	public static void write(PrintWriter pw, char key) {

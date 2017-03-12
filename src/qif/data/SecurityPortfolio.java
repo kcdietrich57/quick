@@ -191,7 +191,6 @@ class SecurityPosition {
 		this.shrBalance.clear();
 
 		for (final InvestmentTxn t : this.transactions) {
-			final Account a = QifDom.getDomById(1).getAccount(t.acctid);
 			startBal = startBal.add(t.getShares());
 			this.shrBalance.add(startBal);
 		}

@@ -68,7 +68,6 @@ public class Statement {
 		final List<Statement> stmts = new ArrayList<Statement>();
 
 		Statement currstmt = null;
-		boolean calcBalance = false;
 
 		for (;;) {
 			qfr.nextStatementsLine(qline);
@@ -86,7 +85,6 @@ public class Statement {
 
 				dom.currAccount = a;
 				currstmt = null;
-				calcBalance = false;
 				break;
 			}
 
@@ -120,7 +118,6 @@ public class Statement {
 
 					String balStr = ss[ssx++];
 					if (balStr.equals("x")) {
-						calcBalance = true;
 						balStr = "0.00";
 					}
 
@@ -485,10 +482,6 @@ public class Statement {
 		this.isBalanced = true;
 	}
 
-	private void review(String msg) {
-		review(msg, false);
-	}
-
 	private void review(String msg, boolean reconcileNeeded) {
 		boolean done = false;
 		boolean abort = false;
@@ -777,6 +770,7 @@ public class Statement {
 					secStr = ss[ssx++].trim();
 					shrStr = ss[ssx++].trim();
 				} else {
+					// TODO this makes no sense? It is always "T"
 					tdateStr = (txtypeStr.equals("T")) //
 							? shrStr = ss[ssx++].trim() //
 							: txtypeStr;

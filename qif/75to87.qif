@@ -4070,7 +4070,7 @@ $375.00
 STax:Fed
 Efed tax
 $-26.55
-S
+STax:State
 Eks tax
 $-2.55
 ^
@@ -4157,7 +4157,7 @@ $375.00
 STax:Fed
 Efed tax
 $-26.55
-S
+STax:State
 Eks tax
 $-2.55
 ^
@@ -4244,7 +4244,7 @@ $375.00
 STax:Fed
 Efed tax
 $-26.55
-S
+STax:State
 Eks tax
 $-2.55
 ^
@@ -4327,7 +4327,7 @@ $375.00
 STax:Fed
 Efed tax
 $-26.55
-S
+STax:State
 Eks tax
 $-2.55
 ^
@@ -4392,7 +4392,7 @@ $375.00
 STax:Fed
 Efed tax
 $-26.55
-S
+STax:State
 Eks tax
 $-2.55
 ^
@@ -4486,7 +4486,7 @@ $375.00
 STax:Fed
 Efed tax
 $-26.55
-S
+STax:State
 Eks tax
 $-2.55
 ^
@@ -4577,7 +4577,7 @@ $-24.94
 STax:Fed
 Efed tax
 $-26.55
-S
+STax:State
 Eks tax
 $-2.55
 ^
@@ -4690,7 +4690,7 @@ $-24.94
 STax:Fed
 Efed tax
 $-26.55
-S
+STax:State
 Eks tax
 $-2.55
 ^
@@ -4806,7 +4806,7 @@ $-24.94
 STax:Fed
 Efed tax
 $-26.55
-S
+STax:State
 Eks tax
 $-2.55
 ^
@@ -4921,7 +4921,7 @@ $600.00
 STax:Fed
 Efed tax
 $-62.14
-S
+STax:State
 Eks tax
 $-9.14
 ^
@@ -5046,7 +5046,7 @@ $409.09
 STax:Fed
 Efed tax
 $-29.09
-S
+STax:State
 Eks tax
 $-3.19
 ^
@@ -5490,7 +5490,7 @@ $-30.15
 STax:Fed
 Efed tax
 $-35.63
-S
+STax:State
 Eks tax
 $-4.31
 ^
@@ -5589,7 +5589,7 @@ $-30.15
 STax:Fed
 Efed tax
 $-35.63
-S
+STax:State
 Eks tax
 $-4.31
 ^
@@ -5719,7 +5719,7 @@ $-30.15
 STax:Fed
 Efed tax
 $-35.63
-S
+STax:State
 Eks tax
 $-4.31
 ^
@@ -5885,7 +5885,7 @@ $-30.15
 STax:Fed
 Efed tax
 $-35.63
-S
+STax:State
 Eks tax
 $-4.31
 ^
@@ -6190,10 +6190,10 @@ Ppay
 LSalary
 SSalary
 $500.00
-S
+STax:State
 Eks tax
 $-41.95
-S
+STax:State
 Eks tax
 $-5.95
 ^
@@ -6349,7 +6349,7 @@ $500.00
 STax:Fed
 Efed tax
 $-41.95
-S
+STax:State
 Eks tax
 $-5.95
 ^
@@ -6503,7 +6503,7 @@ $500.00
 STax:Fed
 Efed tax
 $-41.95
-S
+STax:State
 Eks tax
 $-5.95
 ^
@@ -7424,7 +7424,7 @@ $500.00
 STax:Fed
 Efed tax
 $-38.20
-S
+STax:State
 Eks tax
 $-5.99
 ^
@@ -7490,7 +7490,7 @@ $500.00
 STax:Fed
 Efed tax
 $-38.20
-S
+STax:State
 Eks tax
 $-5.99
 ^
@@ -7576,7 +7576,7 @@ $500.00
 STax:Fed
 Efed tax
 $-38.20
-S
+STax:State
 Eks tax
 $-5.99
 ^
@@ -7658,7 +7658,7 @@ $500.00
 STax:Fed
 Efed tax
 $-38.20
-S
+STax:State
 Eks tax
 $-5.99
 ^
@@ -7752,7 +7752,7 @@ $500.00
 STax:Fed
 Efed tax
 $-38.20
-S
+STax:State
 Eks tax
 $-5.99
 ^
@@ -7846,7 +7846,7 @@ $500.00
 STax:Fed
 Efed tax
 $-38.20
-S
+STax:State
 Eks tax
 $-5.99
 ^
@@ -7921,7 +7921,7 @@ $-33.50
 STax:Fed
 Efed tax
 $-38.20
-S
+STax:State
 Eks tax
 $-5.99
 ^
@@ -7990,7 +7990,7 @@ $-33.50
 STax:Fed
 Efed tax
 $-38.20
-S
+STax:State
 Eks tax
 $-5.99
 ^
@@ -8165,7 +8165,7 @@ $-45.44
 STax:Fed
 Efed tax
 $-64.94
-S
+STax:State
 Eks tax
 $-12.17
 ^
@@ -8182,7 +8182,7 @@ $-52.26
 STax:Fed
 Efed tax
 $-80.20
-S
+STax:State
 Eks tax
 $-16.43
 ^
@@ -8272,7 +8272,7 @@ $-52.26
 STax:Fed
 Efed tax
 $-80.20
-S
+STax:State
 Eks tax
 $-16.43
 ^
@@ -8359,7 +8359,7 @@ $-52.26
 STax:Fed
 Efed tax
 $-80.20
-S
+STax:State
 Eks tax
 $-16.43
 ^
@@ -8443,7 +8443,7 @@ $-54.99
 STax:Fed
 Efed tax
 $-78.92
-S
+STax:State
 Eks tax
 $-16.48
 ^
@@ -8539,7 +8539,7 @@ $-54.99
 STax:Fed
 Efed tax
 $-78.92
-S
+STax:State
 Eks tax
 $-16.40
 ^
@@ -8614,7 +8614,7 @@ $-109.98
 STax:Fed
 Efed tax
 $-235.23
-S
+STax:State
 Eks tax
 $-55.40
 ^
@@ -8857,7 +8857,7 @@ $-109.98
 STax:Fed
 Efed tax
 $-235.23
-S
+STax:State
 Eks tax
 $-55.40
 ^
@@ -8981,7 +8981,7 @@ $-109.98
 STax:Fed
 Efed tax
 $-235.23
-S
+STax:State
 Eks tax
 $-55.40
 ^
@@ -9221,7 +9221,7 @@ $780.00
 STax:Fed
 Efed tax
 $-65.92
-S
+STax:State
 Eks tax
 $-12.82
 ^
@@ -9326,7 +9326,7 @@ $780.00
 STax:Fed
 Efed tax
 $-65.92
-S
+STax:State
 Eks tax
 $-12.82
 ^
@@ -9520,7 +9520,7 @@ $585.00
 STax:Fed
 Efed tax
 $-36.67
-S
+STax:State
 Eks tax
 $-6.06
 ^
@@ -9626,7 +9626,7 @@ $615.00
 STax:Fed
 Efed tax
 $-41.17
-S
+STax:State
 Eks tax
 $-7.08
 ^
@@ -9768,7 +9768,7 @@ $-43.36
 STax:Fed
 Efed tax
 $-54.17
-S
+STax:State
 Eks tax
 $-9.96
 ^
@@ -9854,7 +9854,7 @@ $-43.36
 STax:Fed
 Efed tax
 $-54.17
-S
+STax:State
 Eks tax
 $-9.96
 ^
@@ -10045,7 +10045,7 @@ $-43.97
 STax:Fed
 Efed tax
 $-52.74
-S
+STax:State
 Eks tax
 $-10.01
 ^
@@ -10278,7 +10278,7 @@ $-43.97
 STax:Fed
 Efed tax
 $-52.70
-S
+STax:State
 Eks tax
 $-10.02
 ^
@@ -10398,7 +10398,7 @@ $-43.97
 STax:Fed
 Efed tax
 $-52.70
-S
+STax:State
 Eks tax
 $-10.02
 ^
@@ -10540,7 +10540,7 @@ $-43.97
 STax:Fed
 Efed tax
 $-52.70
-S
+STax:State
 Eks tax
 $-10.02
 ^
@@ -10677,7 +10677,7 @@ $-43.97
 STax:Fed
 Efed tax
 $-52.70
-S
+STax:State
 Eks tax
 $-10.02
 ^
@@ -10807,7 +10807,7 @@ $-58.63
 STax:Fed
 Efed tax
 $-83.45
-S
+STax:State
 Eks tax
 $-18.20
 ^
@@ -11085,7 +11085,7 @@ $-58.63
 STax:Fed
 Efed tax
 $-83.45
-S
+STax:State
 Eks tax
 $-18.20
 ^
@@ -11206,7 +11206,7 @@ $-58.63
 STax:Fed
 Efed tax
 $-83.45
-S
+STax:State
 Eks tax
 $-18.20
 ^
@@ -11272,7 +11272,7 @@ $-58.63
 STax:Fed
 Efed tax
 $-83.45
-S
+STax:State
 Eks tax
 $-18.20
 ^
@@ -11405,7 +11405,7 @@ $-58.63
 STax:Fed
 Efed tax
 $-85.25
-S
+STax:State
 Eks tax
 $-18.13
 ^

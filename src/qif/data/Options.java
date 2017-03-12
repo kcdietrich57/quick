@@ -1,6 +1,7 @@
 ﻿
 package qif.data;
 
+// TODO unused?
 class Options {
 	// Import all transfers
 	public static final String TransferAll = "!Option:AllXfr";
