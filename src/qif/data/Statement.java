@@ -278,7 +278,7 @@ public class Statement {
 		return s;
 	}
 
-	public static void parseStatementDetails(StatementDetails d, QifDom dom, String s, int version) {
+/*	public static void parseStatementDetails(StatementDetails d, QifDom dom, String s, int version) {
 		final String[] ss = s.split(";");
 		int ssx = 0;
 
@@ -365,7 +365,7 @@ public class Statement {
 			}
 		}
 	}
-
+*/
 	public boolean reconcile(Account a, String msg) {
 		boolean needsReview = false;
 

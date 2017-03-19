@@ -661,7 +661,7 @@ class InvestmentTxn extends GenericTxn {
 					" diff=" + diff + "\n";
 			s += "  Corrected price: " + newprice;
 
-			Common.reportWarning(s);
+			//Common.reportWarning(s);
 
 			this.price = newprice;
 		}

@@ -541,7 +541,7 @@ public class QifDomReader {
 		}
 
 		if (symbol == null) {
-			Common.reportWarning("Security '" + name + "' does not specify a ticker symbol.");
+			//Common.reportWarning("Security '" + name + "' does not specify a ticker symbol.");
 		}
 
 		final Security security = new Security(symbol);
