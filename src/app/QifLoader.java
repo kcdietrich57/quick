@@ -15,7 +15,7 @@ public class QifLoader {
 		scn = new Scanner(System.in);
 
 		final QifDom dom = QifDomReader.loadDom(new String[] { //
-				"qif/75to87.qif", //
+				//"qif/75to87.qif", //
 				"qif/87ToNow.qif" });
 
 		final Date firstTxDate = dom.getFirstTransactionDate();

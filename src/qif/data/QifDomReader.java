@@ -390,16 +390,17 @@ public class QifDomReader {
 				cat.description = qline.value;
 				break;
 			case CatTaxRelated:
-				cat.taxRelated = Common.parseBoolean(qline.value);
+				//cat.taxRelated = Common.parseBoolean(qline.value);
 				break;
 			case CatIncomeCategory:
-				cat.incomeCategory = Common.parseBoolean(qline.value);
+				cat.expenseCategory = !Common.parseBoolean(qline.value);
+				//cat.incomeCategory = Common.parseBoolean(qline.value);
 				break;
 			case CatExpenseCategory:
 				cat.expenseCategory = Common.parseBoolean(qline.value);
 				break;
 			case CatBudgetAmount:
-				cat.budgetAmount = Common.getDecimal(qline.value);
+				//cat.budgetAmount = Common.getDecimal(qline.value);
 				break;
 			case CatTaxSchedule:
 				break;
