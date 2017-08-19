@@ -755,7 +755,12 @@ public class Statement {
 			for (int ii = 0; ii < txcount; ++ii) {
 				final TxInfo txinfo = new TxInfo();
 
-				final String txtypeStr = ss[ssx++].trim();
+				String txtypeStr = "";
+				try{
+					txtypeStr = ss[ssx++].trim();
+				} catch (Exception e) {
+					System.out.println("*** ERROR: parsing statement details");
+				}
 				final boolean isInvestmentTx = txtypeStr.equals("I");
 
 				String tdateStr;

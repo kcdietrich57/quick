@@ -662,6 +662,9 @@ public class QifDom {
 		boolean stat30 = false;
 		boolean statcurrent = false;
 
+		System.out.println(String.format("%3s   %-35s   %-8s  %-10s   %-5s %-5S      %-8s", //
+				"N", "Account", "LastStmt", "Balance", "UncTx", "TotTx", "FirstUnc"));
+
 		final int max = ranking.size();
 		for (int ii = 0; ii < max; ++ii) {
 			final Account a = ranking.get(ii);
@@ -720,12 +723,11 @@ public class QifDom {
 			}
 		}
 
-		System.out.println(String.format("   %-25s: %5d / %5d", //
-				"" + unclracct_count + " accts: total ", //
-				unclracct_utx_count, unclracct_tx_count));
-		System.out.println(String.format("   %-25s: %5d", //
-				"" + clracct_count + " other accounts cleared", //
-				clracct_tx_count));
+		System.out.println();
+		System.out.println(String.format("   %5d / %5d uncleared tx in %4d accounts", //
+				unclracct_utx_count, unclracct_tx_count, unclracct_count));
+		System.out.println(String.format("        %5d      cleared tx in %4d acounts", //
+				clracct_tx_count, clracct_count));
 
 		System.out.println();
 	}
