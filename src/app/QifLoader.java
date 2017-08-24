@@ -11,11 +11,27 @@ import qif.data.QifDomReader;
 public class QifLoader {
 	public static Scanner scn;
 
+	private static void usage() {
+		String msg = "\n" //
+				+ "<date> - Balances for date" //
+				+ "accts - Show all account balances\n" //
+				+ "a <acct> - Summarize account\n" //
+				+ "g <acct> - Generate monthly statements\n" //
+				+ "mnw - Monthly net worth\n" //
+				+ "relog - Regenerate statement log\n" //
+				+ "s - Show statistics\n" //
+				+ "u - Usage message\n" //
+				+ "ys - Yearly status" //
+				+ "";
+
+		System.out.println(msg);
+	}
+
 	public static void main(String[] args) {
 		scn = new Scanner(System.in);
 
 		final QifDom dom = QifDomReader.loadDom(new String[] { //
-				//"qif/75to87.qif", //
+				// "qif/75to87.qif", //
 				"qif/87ToNow.qif" });
 
 		final Date firstTxDate = dom.getFirstTransactionDate();
@@ -62,6 +78,8 @@ public class QifLoader {
 				}
 			} else if (s.startsWith("s")) {
 				dom.reportStatistics();
+			} else if (s.startsWith("u")) {
+				usage();
 			} else if (s.startsWith("y")) {
 				if (s.startsWith("ys")) {
 					dom.reportYearlyStatus();

@@ -573,6 +573,9 @@ public class QifDom {
 		int year = cal.get(Calendar.YEAR);
 		int month = cal.get(Calendar.MONTH);
 
+		System.out.println(String.format("  %-10s %-15s %-15s %-15s", //
+				"Date", "NetWorth", "Assets", "Liabilities"));
+
 		do {
 			d = Common.getDateForEndOfMonth(year, month);
 			final Balances b = getNetWorthForDate(d);
