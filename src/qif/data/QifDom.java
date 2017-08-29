@@ -313,10 +313,6 @@ public class QifDom {
 		this.currAccount = oldacct;
 	}
 
-	public Account getAccount(short acctid) {
-		return this.accounts.get(acctid);
-	}
-
 	public void addCategory(Category cat) {
 		final Category existing = findCategory(cat.name);
 
@@ -1409,6 +1405,25 @@ public class QifDom {
 						+ " a=" + a.getName() //
 						+ " s=" + s.toString());
 			}
+		}
+	}
+
+	class CashFlowInfo {
+		Account acct;
+		BigDecimal cashBefore;
+		BigDecimal cashAfter;
+		SecurityPortfolio portBefore;
+		SecurityPortfolio portAfter;
+	}
+
+	public void reportCashFlow(Date d1, Date d2) {
+		CashFlowInfo[] info = new CashFlowInfo[getNumAccounts()];
+
+		for (int id = 1; id <= getNumAccounts(); ++id) {
+			Account a = getAccount(id);
+			info[id - 1].acct = a;
+			
+			BigDecimal v1 = a.getCashValueForDate(d1);
 		}
 	}
 }

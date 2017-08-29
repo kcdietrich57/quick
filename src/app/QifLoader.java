@@ -16,6 +16,7 @@ public class QifLoader {
 				+ "<date> - Balances for date" //
 				+ "accts - Show all account balances\n" //
 				+ "a <acct> - Summarize account\n" //
+				+ "c [ <date> [ <date> ] ] - Cash flow\n" //
 				+ "g <acct> - Generate monthly statements\n" //
 				+ "mnw - Monthly net worth\n" //
 				+ "relog - Regenerate statement log\n" //
@@ -61,6 +62,25 @@ public class QifLoader {
 						a.reportStatus("m");
 					}
 				}
+			} else if (s.startsWith("c")) {
+				Date d1 = new Date();
+				Date d2 = null;
+
+				String ss = s.substring(1).trim();
+
+				if (ss.length() > 0) {
+					int idx = ss.indexOf(' ');
+					if (idx > 0) {
+						String ss2 = ss.substring(idx + 1).trim();
+						ss = ss.substring(0, idx);
+
+						d2 = Common.parseDate(ss2);
+					}
+
+					d1 = Common.parseDate(ss);
+				}
+
+				dom.reportCashFlow(d1, d2);
 			} else if (s.startsWith("g")) {
 				final String aname = s.substring(1).trim();
 

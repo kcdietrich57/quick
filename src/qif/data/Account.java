@@ -449,7 +449,7 @@ public class Account {
 		return getValueForDate(d);
 	}
 
-	BigDecimal getValueForDate(Date d) {
+	BigDecimal getCashValueForDate(Date d) {
 		BigDecimal cashBal = null;
 
 		int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
@@ -460,14 +460,22 @@ public class Account {
 			cashBal = tx.runningTotal;
 		}
 
-		BigDecimal acctValue = (cashBal != null) ? cashBal : BigDecimal.ZERO;
+		return (cashBal != null) ? cashBal : BigDecimal.ZERO;
+	}
 
-		acctValue = acctValue.add(this.securities.getPortfolioValueForDate(d));
+	void getPositionsForDate(Date d) {
+		this.securities.getPositionsForDate(d);
+	}
+
+	BigDecimal getValueForDate(Date d) {
+		final BigDecimal cashBal = getCashValueForDate(d);
+		final BigDecimal secBal = this.securities.getPortfolioValueForDate(d);
+
+		BigDecimal acctValue = cashBal.add(secBal);
 
 		acctValue = acctValue.setScale(2, RoundingMode.HALF_UP);
 
 		return acctValue;
-
 	}
 
 	public void reportPortfolioForDate(Date d, String[] s) {
