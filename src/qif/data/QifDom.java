@@ -18,8 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import qif.data.Account.AccountType;
-import qif.data.SimpleTxn.Action;
 import qif.data.Statement.StatementDetails;
 
 //--------------------------------------------------------------------
@@ -942,7 +940,7 @@ public class QifDom {
 		p.shrBalance.clear();
 
 		for (final InvestmentTxn t : p.transactions) {
-			if (t.getAction() == Action.STOCKSPLIT) {
+			if (t.getAction() == TxAction.STOCKSPLIT) {
 				shrbal = shrbal.multiply(t.getSplitRatio());
 			} else if (t.getShares() != null) {
 				shrbal = shrbal.add(t.getShares());
@@ -1242,9 +1240,9 @@ public class QifDom {
 					continue;
 				}
 
-				if ((txn.getAction() == Action.SHRS_IN)) {
+				if ((txn.getAction() == TxAction.SHRS_IN)) {
 					xins.add((InvestmentTxn) txn);
-				} else if (txn.getAction() == Action.SHRS_OUT) {
+				} else if (txn.getAction() == TxAction.SHRS_OUT) {
 					xouts.add((InvestmentTxn) txn);
 				}
 			}
@@ -1322,7 +1320,7 @@ public class QifDom {
 
 		if (QifDom.verbose()) {
 			for (final InvestmentTxn t : unmatched) {
-				final String pad = (t.getAction() == Action.SHRS_IN) //
+				final String pad = (t.getAction() == TxAction.SHRS_IN) //
 						? "" //
 						: "                          ";
 

@@ -9,10 +9,6 @@ import java.util.Date;
 import java.util.List;
 
 public class Account {
-	enum AccountType { //
-		Bank, CCard, Cash, Asset, Liability, Invest, InvPort, Inv401k, InvMutual;
-	}
-
 	public int domid;
 	public int acctid;
 

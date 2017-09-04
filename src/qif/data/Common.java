@@ -11,9 +11,6 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
-import qif.data.Account.AccountType;
-import qif.data.SimpleTxn.Action;
-
 public class Common {
 	public static final BigDecimal CLOSE_ENOUGH_TO_ZERO = new BigDecimal(0.005);
 
@@ -25,49 +22,12 @@ public class Common {
 		throw new RuntimeException(s);
 	}
 
-	public static BigDecimal mkDecimal(String s) {
-		try {
-			return new BigDecimal(s);
-		} catch (final Exception e) {
-			e.printStackTrace();
-
-			reportError("Bad decimal string: " + s);
-		}
-
-		return null;
-	}
-
-	public static BigDecimal sumAmounts(List<GenericTxn> txns) {
-		BigDecimal totaltx = BigDecimal.ZERO;
-		for (final GenericTxn t : txns) {
-			totaltx = totaltx.add(t.getAmount());
-		}
-
-		return totaltx;
-	}
-
-	public static BigDecimal sumCashAmounts(List<GenericTxn> txns) {
-		BigDecimal totaltx = BigDecimal.ZERO;
-		for (final GenericTxn t : txns) {
-			totaltx = totaltx.add(t.getCashAmount());
-		}
-
-		return totaltx;
-	}
-
-	public static boolean parseBoolean(String value) {
-		return (value.length() > 0) && Boolean.parseBoolean(value);
-	}
-
-	public static String convertQIFDateString(String qifDateString) {
-		final int i = qifDateString.indexOf("'");
-		if (i != -1) {
-			qifDateString = qifDateString.substring(0, i) + "/" + qifDateString.substring(i + 1);
-		}
-
-		return qifDateString.replace(" ", "0");
-	}
-
+	/**
+	 * Values sometimes use thousands separators ",". Delete them.
+	 * 
+	 * @param value
+	 * @return Massaged value
+	 */
 	public static BigDecimal getDecimal(String value) {
 		final StringBuilder sb = new StringBuilder(value);
 		for (;;) {
@@ -82,8 +42,52 @@ public class Common {
 		return new BigDecimal(sb.toString());
 	}
 
+	public static BigDecimal parseDecimal(String s) {
+		try {
+			return new BigDecimal(s);
+		} catch (final Exception e) {
+			e.printStackTrace();
+
+			reportError("Bad decimal string: " + s);
+		}
+
+		return null;
+	}
+
+	public static boolean isEffectivelyZero(BigDecimal n) {
+		return (CLOSE_ENOUGH_TO_ZERO.compareTo(n.abs()) > 0);
+	}
+
+	public static boolean isEffectivelyEqual(BigDecimal d1, BigDecimal d2) {
+		final BigDecimal diff = d1.subtract(d2).abs();
+		return (CLOSE_ENOUGH_TO_ZERO.compareTo(diff) > 0);
+	}
+
+	public static boolean parseBoolean(String value) {
+		return (value.length() > 0) && Boolean.parseBoolean(value);
+	}
+
+	/**
+	 * QIF dates sometimes use "'" for separator. Change to "/".
+	 * 
+	 * @param qifDateString
+	 * @return Massaged date string
+	 */
+	public static String convertQIFDateString(String qifDateString) {
+		final int i = qifDateString.indexOf("'");
+		if (i != -1) {
+			qifDateString = qifDateString.substring(0, i) + "/" + qifDateString.substring(i + 1);
+		}
+
+		return qifDateString.replace(" ", "0");
+	}
+
+	/**
+	 * Parse a date in various formats
+	 */
 	public static Date parseDate(String value) {
 		try {
+			// Format found in QIF transactions
 			final DateFormat dateFormat = new SimpleDateFormat("MM/dd/yy");
 			final String s = convertQIFDateString(value);
 
@@ -116,6 +120,32 @@ public class Common {
 		return null;
 	}
 
+	private static int MONTH_DAYS[] = { //
+			31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 //
+	};
+
+	public static Date getDate(int year, int month, int day) {
+		final String datestr = "" + month + "/" + day + "/" + year;
+
+		return parseDate(datestr);
+	}
+
+	public static Date getDateForEndOfMonth(int year, int month) {
+		int mdays = MONTH_DAYS[month - 1];
+
+		String datestr = "" + month + "/" + mdays + "/" + year;
+		Date d = parseDate(datestr);
+		final Calendar c = Calendar.getInstance();
+		c.setTime(d);
+		if (c.get(Calendar.DAY_OF_MONTH) != mdays) {
+			--mdays;
+			datestr = "" + month + "/" + mdays + "/" + year;
+			d = parseDate(datestr);
+		}
+
+		return d;
+	}
+
 	public static String formatDate(Date date) {
 		if (date == null) {
 			return "null";
@@ -142,12 +172,6 @@ public class Common {
 	public static String formatDateMonthYear(Date date) {
 		final DateFormat dfmt = new SimpleDateFormat("MM/yyyy");
 		return dfmt.format(date);
-	}
-
-	public static String getCheckNumString(GenericTxn t) {
-		return (t instanceof NonInvestmentTxn) //
-				? ((NonInvestmentTxn) t).chkNumber //
-				: "";
 	}
 
 	public static BigDecimal parsePrice(String pricestr) {
@@ -194,135 +218,6 @@ public class Common {
 		return new BigDecimal(numerator).divide(new BigDecimal(denominator));
 	}
 
-	public static AccountType parseAccountType(String s) {
-		switch (s.charAt(0)) {
-		case 'B':
-			if (s.equals("Bank")) {
-				return AccountType.Bank;
-			}
-			break;
-		case 'C':
-			if (s.equals("CCard")) {
-				return AccountType.CCard;
-			}
-			if (s.equals("Cash")) {
-				return AccountType.Cash;
-			}
-			break;
-		case 'I':
-			if (s.equals("Invst")) {
-				return AccountType.Invest;
-			}
-			break;
-		case 'M':
-			if (s.equals("Mutual")) {
-				return AccountType.InvMutual;
-			}
-			break;
-		case 'O':
-			if (s.equals("Oth A")) {
-				return AccountType.Asset;
-			}
-			if (s.equals("Oth L")) {
-				return AccountType.Liability;
-			}
-			break;
-		case 'P':
-			if (s.equals("Port")) {
-				return AccountType.InvPort;
-			}
-			break;
-		case '4':
-			if (s.equals("401(k)/403(b)")) {
-				return AccountType.Inv401k;
-			}
-			break;
-		}
-
-		Common.reportError("Unknown account type: " + s);
-		return AccountType.Bank;
-	}
-
-	public static Action parseAction(String s) {
-		if ("StkSplit".equals(s)) {
-			return Action.STOCKSPLIT;
-		}
-		if ("Cash".equals(s)) {
-			return Action.CASH;
-		}
-		if ("XIn".equals(s)) {
-			return Action.XIN;
-		}
-		if ("XOut".equals(s)) {
-			return Action.XOUT;
-		}
-		if ("Buy".equals(s)) {
-			return Action.BUY;
-		}
-		if ("BuyX".equals(s)) {
-			return Action.BUYX;
-		}
-		if ("Sell".equals(s)) {
-			return Action.SELL;
-		}
-		if ("SellX".equals(s)) {
-			return Action.SELLX;
-		}
-		if ("ShrsIn".equals(s)) {
-			return Action.SHRS_IN;
-		}
-		if ("ShrsOut".equals(s)) {
-			return Action.SHRS_OUT;
-		}
-		if ("Grant".equals(s)) {
-			return Action.GRANT;
-		}
-		if ("Vest".equals(s)) {
-			return Action.VEST;
-		}
-		if ("Exercise".equals(s)) {
-			return Action.EXERCISE;
-		}
-		if ("ExercisX".equals(s)) {
-			return Action.EXERCISEX;
-		}
-		if ("Expire".equals(s)) {
-			return Action.EXPIRE;
-		}
-		if ("WithdrwX".equals(s)) {
-			return Action.WITHDRAWX;
-		}
-		if ("IntInc".equals(s)) {
-			return Action.INT_INC;
-		}
-		if ("MiscIncX".equals(s)) {
-			return Action.MISC_INCX;
-		}
-		if ("Div".equals(s)) {
-			return Action.DIV;
-		}
-		if ("ReinvDiv".equals(s)) {
-			return Action.REINV_DIV;
-		}
-		if ("ReinvLg".equals(s)) {
-			return Action.REINV_LG;
-		}
-		if ("ReinvSh".equals(s)) {
-			return Action.REINV_SH;
-		}
-		if ("ReinvInt".equals(s)) {
-			return Action.REINV_INT;
-		}
-		if ("ContribX".equals(s)) {
-			return Action.CONTRIBX;
-		}
-		if ("Reminder".equals(s)) {
-			return Action.REMINDER;
-		}
-
-		return Action.OTHER;
-	}
-
 	public static void writeIfSet(PrintWriter pw, String tag, String value) {
 		pw.println("" + tag + value);
 	}
@@ -347,6 +242,30 @@ public class Common {
 
 	public static void write(PrintWriter pw, char key, String value) {
 		pw.println("" + key + value);
+	}
+
+	public static BigDecimal sumAmounts(List<GenericTxn> txns) {
+		BigDecimal totaltx = BigDecimal.ZERO;
+		for (final GenericTxn t : txns) {
+			totaltx = totaltx.add(t.getAmount());
+		}
+
+		return totaltx;
+	}
+
+	public static BigDecimal sumCashAmounts(List<GenericTxn> txns) {
+		BigDecimal totaltx = BigDecimal.ZERO;
+		for (final GenericTxn t : txns) {
+			totaltx = totaltx.add(t.getCashAmount());
+		}
+
+		return totaltx;
+	}
+
+	public static String getCheckNumString(GenericTxn t) {
+		return (t instanceof NonInvestmentTxn) //
+				? ((NonInvestmentTxn) t).chkNumber //
+				: "";
 	}
 
 	public static void sortTransactionsByDate(List<GenericTxn> txns) {
@@ -438,32 +357,6 @@ public class Common {
 		return loidx;
 	}
 
-	private static int MONTH_DAYS[] = { //
-			31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 //
-	};
-
-	public static Date getDate(int year, int month, int day) {
-		final String datestr = "" + month + "/" + day + "/" + year;
-
-		return parseDate(datestr);
-	}
-
-	public static Date getDateForEndOfMonth(int year, int month) {
-		int mdays = MONTH_DAYS[month - 1];
-
-		String datestr = "" + month + "/" + mdays + "/" + year;
-		Date d = parseDate(datestr);
-		final Calendar c = Calendar.getInstance();
-		c.setTime(d);
-		if (c.get(Calendar.DAY_OF_MONTH) != mdays) {
-			--mdays;
-			datestr = "" + month + "/" + mdays + "/" + year;
-			d = parseDate(datestr);
-		}
-
-		return d;
-	}
-
 	public static void listTransactions(List<GenericTxn> txns, int max) {
 		System.out.println("Transaction list");
 
@@ -530,14 +423,5 @@ public class Common {
 				}
 			}
 		}
-	}
-
-	public static boolean isEffectivelyZero(BigDecimal n) {
-		return (CLOSE_ENOUGH_TO_ZERO.compareTo(n.abs()) > 0);
-	}
-
-	public static boolean isEffectivelyEqual(BigDecimal d1, BigDecimal d2) {
-		final BigDecimal diff = d1.subtract(d2).abs();
-		return (CLOSE_ENOUGH_TO_ZERO.compareTo(diff) > 0);
 	}
 }

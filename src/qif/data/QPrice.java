@@ -3,33 +3,39 @@ package qif.data;
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class Price {
-	public static final Price ZERO = new Price(new BigDecimal(0));
+public class QPrice {
+	public static final QPrice ZERO = new QPrice(new BigDecimal(0));
 
-	// Price at the specified date
-	public BigDecimal price;
-	// Current price adjusted for splits
-	public BigDecimal splitAdjustedPrice;
 	public Date date;
+	public String symbol;
+	public BigDecimal price;
+	public BigDecimal splitAdjustedPrice;
 
-	public Price() {
+	public QPrice() {
 		this.price = null;
 		this.splitAdjustedPrice = null;
 		this.date = null;
 	}
 
-	public Price(BigDecimal val) {
+	public QPrice(BigDecimal val) {
 		this();
 
 		this.price = val;
 	}
 
-	public Price(BigDecimal val, Date date) {
+	public QPrice(BigDecimal val, Date date) {
 		this(val);
 
 		this.date = date;
 	}
 
+	/**
+	 * Read/parse QIF security price (symbol/price/date)
+	 * 
+	 * @param qfr
+	 *            File reader
+	 * @return Price object
+	 */
 	public static QPrice load(QFileReader qfr) {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
@@ -80,10 +86,10 @@ public class Price {
 		final QPrice p = new QPrice();
 
 		p.symbol = sym;
-		p.price.price = price;
+		p.price = price;
 		// TODO figure out splitAdjustedPrice (or ignore quicken price history?)
-		p.price.splitAdjustedPrice = null;
-		p.price.date = date;
+		p.splitAdjustedPrice = null;
+		p.date = date;
 
 		// Ex: "FEQIX",48 3/4," 2/16' 0"
 		qfr.nextPriceLine(qline);
@@ -109,24 +115,15 @@ public class Price {
 
 		return s + "\n";
 	}
-}
 
-class QPrice {
-	public String symbol;
-	public Price price;
-
-	public QPrice() {
-		this.price = new Price();
-		this.symbol = "";
-	}
-
-	public String toString() {
+/*	public String toString() {
 		final String s = "Price: " + this.symbol //
-				+ " date=" + this.price.date //
-				+ " price=" + this.price.price //
-				+ " splitAdjusted=" + this.price.splitAdjustedPrice //
+				+ " date=" + this.date //
+				+ " price=" + this.price //
+				+ " splitAdjusted=" + this.splitAdjustedPrice //
 				+ "\n";
 
 		return s;
 	}
+*/
 }

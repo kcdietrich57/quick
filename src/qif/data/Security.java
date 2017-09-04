@@ -14,7 +14,7 @@ public class Security {
 	public String goal;
 
 	public final List<InvestmentTxn> transactions = new ArrayList<InvestmentTxn>();
-	public final List<Price> prices = new ArrayList<Price>();
+	public final List<QPrice> prices = new ArrayList<QPrice>();
 
 	static class SplitInfo {
 		Date splitDate;
@@ -66,7 +66,7 @@ public class Security {
 		}
 	}
 
-	public void addPrice(Price newPrice, boolean replace) {
+	public void addPrice(QPrice newPrice, boolean replace) {
 		if (newPrice == null) {
 			return;
 		}
@@ -74,7 +74,7 @@ public class Security {
 		final int idx = getPriceIndexForDate(newPrice.date);
 
 		if (idx >= 0) {
-			final Price p = this.prices.get(idx);
+			final QPrice p = this.prices.get(idx);
 			final int diff = newPrice.date.compareTo(p.date);
 
 			if (diff == 0) {
@@ -97,14 +97,14 @@ public class Security {
 		Collections.sort(this.prices, (o1, o2) -> o1.date.compareTo(o2.date));
 	}
 
-	public Price getPriceForDate(Date d) {
+	public QPrice getPriceForDate(Date d) {
 		final int idx = getPriceIndexForDate(d);
 
 		if (idx < 0) {
-			return Price.ZERO;
+			return QPrice.ZERO;
 		}
 
-		final Price p = this.prices.get(idx);
+		final QPrice p = this.prices.get(idx);
 		return p;
 	}
 

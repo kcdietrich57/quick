@@ -6,30 +6,20 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import qif.data.SimpleTxn.Action;
-
 // This can be global information, or for a single account or statement
 class SecurityPortfolio {
 	public List<SecurityPosition> positions;
 
-	/** Set if this represents a PIT (i.e. date or statement). Null otherwise. */
-	public Date date;
-
 	public SecurityPortfolio() {
-		this((Date) null);
+		this.positions = new ArrayList<SecurityPosition>();
 	}
 
 	public SecurityPortfolio(SecurityPortfolio other) {
-		this(other.date);
+		this();
 
 		for (final SecurityPosition p : other.positions) {
 			this.positions.add(new SecurityPosition(p));
 		}
-	}
-
-	public SecurityPortfolio(Date date) {
-		this.positions = new ArrayList<SecurityPosition>();
-		this.date = date;
 	}
 
 	public void addTransaction(InvestmentTxn itx) {
@@ -38,11 +28,12 @@ class SecurityPortfolio {
 		}
 
 		final SecurityPosition p = getPosition(itx.security);
-		if (itx.getAction() == Action.STOCKSPLIT) {
+		if (itx.getAction() == TxAction.STOCKSPLIT) {
 			p.shares = p.shares.multiply(itx.getSplitRatio());
 		} else {
 			p.shares = p.shares.add(itx.getShares());
 		}
+
 		p.transactions.add(itx);
 		p.shrBalance.add(p.shares);
 	}

@@ -13,7 +13,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
-import qif.data.Account.AccountType;
 import qif.data.QFileReader.SectionType;
 import qif.data.Security.SplitInfo;
 
@@ -111,7 +110,7 @@ public class QifDomReader {
 			return;
 		}
 
-		final List<Price> prices = sec.prices;
+		final List<QPrice> prices = sec.prices;
 		final List<SplitInfo> splits = sec.splits;
 
 		assert prices.isEmpty() && splits.isEmpty();
@@ -226,7 +225,7 @@ public class QifDomReader {
 					e.printStackTrace();
 				}
 
-				final Price p = new Price();
+				final QPrice p = new QPrice();
 
 				if (isWeekly) {
 					final Calendar cal = new GregorianCalendar();
@@ -452,7 +451,7 @@ public class QifDomReader {
 
 			case AcctType:
 				if (acct.type == null) {
-					acct.type = Common.parseAccountType(qline.value);
+					acct.type = AccountType.parseAccountType(qline.value);
 				}
 				break;
 			case AcctCreditLimit:
@@ -604,7 +603,7 @@ public class QifDomReader {
 				break;
 			}
 			case InvAction:
-				txn.action = Common.parseAction(qline.value);
+				txn.action = TxAction.parseAction(qline.value);
 				break;
 			case InvClearedStatus:
 				txn.clearedStatus = qline.value;
@@ -767,14 +766,14 @@ public class QifDomReader {
 				break;
 			}
 
-			final QPrice price = Price.load(this.filerdr);
+			final QPrice price = QPrice.load(this.filerdr);
 			if (price == null) {
 				break;
 			}
 
 			final Security sec = this.dom.findSecurityBySymbol(price.symbol);
 			if (sec != null) {
-				sec.addPrice(price.price, true);
+				sec.addPrice(price, true);
 			}
 		}
 	}

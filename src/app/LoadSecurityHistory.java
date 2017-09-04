@@ -6,7 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 import qif.data.Common;
-import qif.data.Price;
+import qif.data.QPrice;
 import qif.data.QifDomReader;
 import qif.data.Security;
 
@@ -40,29 +40,29 @@ public class LoadSecurityHistory {
 			}
 		}
 
-		final List<List<Price>> mergedPrices = new ArrayList<List<Price>>();
+		final List<List<QPrice>> mergedPrices = new ArrayList<List<QPrice>>();
 		Date fd = getFirstDate(securities);
-		final List<Price> extraPricesForDate = new ArrayList<Price>();
+		final List<QPrice> extraPricesForDate = new ArrayList<QPrice>();
 
 		while (fd != null) {
-			final List<Price> pricesForDate = new ArrayList<Price>();
+			final List<QPrice> pricesForDate = new ArrayList<QPrice>();
 			pricesForDate.add(null);
 
 			for (int ii = 0; ii < securities.size(); ++ii) {
-				final List<Price> list = securities.get(ii).prices;
+				final List<QPrice> list = securities.get(ii).prices;
 
 				if ((list == null) || list.isEmpty()) {
 					pricesForDate.add(null);
 					continue;
 				}
 
-				final Price p = list.get(0);
+				final QPrice p = list.get(0);
 				if (p.date.compareTo(fd) == 0) {
 					list.remove(0);
 					pricesForDate.add(p);
 
 					while (!list.isEmpty()) {
-						final Price pp = list.get(0);
+						final QPrice pp = list.get(0);
 						if (pp.date.compareTo(fd) != 0) {
 							break;
 						}
@@ -82,11 +82,11 @@ public class LoadSecurityHistory {
 				}
 			}
 
-			Price pcommon = null;
+			QPrice pcommon = null;
 			boolean allmatch = true;
 
 			for (int ii = 1; ii < pricesForDate.size(); ++ii) {
-				final Price pp = pricesForDate.get(ii);
+				final QPrice pp = pricesForDate.get(ii);
 
 				if (pcommon == null) {
 					pcommon = pp;
@@ -108,13 +108,13 @@ public class LoadSecurityHistory {
 			String s = Common.formatDate(fd);
 
 			for (int ii = 1; ii < pricesForDate.size(); ++ii) {
-				final Price p = pricesForDate.get(ii);
+				final QPrice p = pricesForDate.get(ii);
 				if (p == null) {
 					pricesForDate.remove(ii);
 					--ii;
 				} else {
 					for (int jj = ii + 1; jj < pricesForDate.size(); ++jj) {
-						final Price pp = pricesForDate.get(jj);
+						final QPrice pp = pricesForDate.get(jj);
 
 						if ((pp != null) && (p.price.compareTo(pp.price) == 0)) {
 							pricesForDate.remove(jj);
@@ -124,8 +124,8 @@ public class LoadSecurityHistory {
 				}
 			}
 			for (int ii = 0; ii < extraPricesForDate.size(); ++ii) {
-				final Price p = extraPricesForDate.get(ii);
-				for (final Price pp : pricesForDate) {
+				final QPrice p = extraPricesForDate.get(ii);
+				for (final QPrice pp : pricesForDate) {
 					if ((pp != null) && (p.price.compareTo(pp.price) == 0)) {
 						extraPricesForDate.remove(ii);
 						--ii;
@@ -133,14 +133,14 @@ public class LoadSecurityHistory {
 				}
 			}
 
-			for (final Price p : pricesForDate) {
+			for (final QPrice p : pricesForDate) {
 				if (p != null) {
 					s += String.format("  %10.3f", p.price);
 				} else {
 					s += "            ";
 				}
 			}
-			for (final Price p : extraPricesForDate) {
+			for (final QPrice p : extraPricesForDate) {
 				s += String.format(" *%10.3f", p.price);
 			}
 			extraPricesForDate.clear();
@@ -157,7 +157,7 @@ public class LoadSecurityHistory {
 		Date ret = null;
 
 		for (final Security sec : securities) {
-			final List<Price> list = sec.prices;
+			final List<QPrice> list = sec.prices;
 			if (list.isEmpty()) {
 				continue;
 			}

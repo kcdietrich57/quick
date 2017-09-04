@@ -144,7 +144,7 @@ public class Statement {
 			}
 
 			case StmtsCash:
-				currstmt.cashBalance = Common.mkDecimal(qline.value);
+				currstmt.cashBalance = Common.parseDecimal(qline.value);
 				break;
 
 			case StmtsSecurity: {
@@ -789,7 +789,7 @@ public class Statement {
 				txinfo.cashAmount = new BigDecimal(amtStr);
 				if (secStr.length() > 0) {
 					txinfo.security = dom.findSecurity(secStr);
-					txinfo.shares = (shrStr.length() > 0) ? Common.mkDecimal(shrStr) : BigDecimal.ZERO;
+					txinfo.shares = (shrStr.length() > 0) ? Common.parseDecimal(shrStr) : BigDecimal.ZERO;
 				}
 
 				this.transactions.add(txinfo);
