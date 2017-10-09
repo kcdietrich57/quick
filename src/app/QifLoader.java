@@ -2,8 +2,10 @@ package app;
 
 import java.util.Date;
 import java.util.Scanner;
+import java.util.StringTokenizer;
 
 import qif.data.Account;
+import qif.data.AccountPosition;
 import qif.data.Common;
 import qif.data.QifDom;
 import qif.data.QifDomReader;
@@ -17,12 +19,15 @@ public class QifLoader {
 				+ "accts - Show all account balances\n" //
 				+ "a <acct> - Summarize account\n" //
 				+ "c [ <date> [ <date> ] ] - Cash flow\n" //
-				+ "g <acct> - Generate monthly statements\n" //
+				+ "act <date> <date> - activity for period" //
+				+ "ma [<date> [<date>]] - Monthly activity (start/end date)" //
 				+ "mnw - Monthly net worth\n" //
-				+ "relog - Regenerate statement log\n" //
 				+ "s - Show statistics\n" //
 				+ "u - Usage message\n" //
-				+ "ys - Yearly status" //
+				+ "ys - Yearly status\n" //
+				+ "\n" //
+				+ "g <acct> - Generate monthly statements\n" //
+				+ "relog - Regenerate statement log\n" //
 				+ "";
 
 		System.out.println(msg);
@@ -52,7 +57,17 @@ public class QifLoader {
 			}
 
 			if (s.startsWith("a")) {
-				if (s.startsWith("accts")) {
+				if (s.startsWith("act")) {
+					StringTokenizer toker = new StringTokenizer(s);
+					String cmd = toker.nextToken();
+					assert cmd.equals("act");
+					String d1str = (toker.hasMoreTokens()) ? toker.nextToken() : "1/1/1970";
+					String d2str = (toker.hasMoreTokens()) ? toker.nextToken() : null;
+					Date d1 = Common.parseDate(d1str);
+					Date d2 = (d2str != null) ? Common.parseDate(d2str) : new Date();
+
+//					dom.reportActivity(d1, d2);
+				} else if (s.startsWith("accts")) {
 					dom.reportAllAccountStatus();
 				} else {
 					final String aname = s.substring(1).trim();
@@ -89,7 +104,24 @@ public class QifLoader {
 					a.generateMonthlyStatements();
 				}
 			} else if (s.startsWith("m")) {
-				if (s.startsWith("mnw")) {
+				if (s.startsWith("ma")) {
+/*					StringTokenizer toker = new StringTokenizer(s);
+					String cmd = toker.nextToken();
+					assert cmd.equals("ma");
+					String d1str = (toker.hasMoreTokens()) ? toker.nextToken() : "1/1/1970";
+					String d2str = (toker.hasMoreTokens()) ? toker.nextToken() : null;
+					Date d1 = Common.parseDate(d1str);
+					Date d2 = (d2str != null) ? Common.parseDate(d2str) : new Date();
+
+					for (int id = 1; id <= dom.getNumAccounts(); ++id) {
+						Account a = dom.getAccount(id);
+						
+						AccountPosition apos1 = a.getStatus(d1);
+						AccountPosition apos2 = a.getStatus(d2);
+					}
+
+					dom.reportMonthlyActivity(d1, d2);
+*/				} else if (s.startsWith("mnw")) {
 					dom.reportMonthlyNetWorth();
 				}
 			} else if (s.startsWith("r")) {

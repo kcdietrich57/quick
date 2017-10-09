@@ -532,4 +532,24 @@ public class Account {
 
 		return txns;
 	}
+
+	class AccountPosition {
+		Account acct;
+		BigDecimal cashBefore;
+		BigDecimal cashAfter;
+		SecurityPortfolio portBefore;
+		SecurityPortfolio portAfter;
+		
+		AccountPosition(Account a) {
+			this.acct = a;
+		}
+	};
+
+	public AccountPosition getPosition(Date d1, Date d2) {
+		AccountPosition apos = new AccountPosition(this);
+
+		BigDecimal v1 = getCashValueForDate(d1);
+		
+		return apos;
+	}
 }

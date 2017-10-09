@@ -1406,16 +1406,8 @@ public class QifDom {
 		}
 	}
 
-	class CashFlowInfo {
-		Account acct;
-		BigDecimal cashBefore;
-		BigDecimal cashAfter;
-		SecurityPortfolio portBefore;
-		SecurityPortfolio portAfter;
-	}
-
 	public void reportCashFlow(Date d1, Date d2) {
-		CashFlowInfo[] info = new CashFlowInfo[getNumAccounts()];
+		AccountPosition[] info = new AccountPosition[getNumAccounts()];
 
 		for (int id = 1; id <= getNumAccounts(); ++id) {
 			Account a = getAccount(id);
@@ -1423,5 +1415,10 @@ public class QifDom {
 			
 			BigDecimal v1 = a.getCashValueForDate(d1);
 		}
+	}
+
+	public void reportActivity(Date d1, Date d2) {
+		// TODO Auto-generated method stub
+		
 	}
 }
