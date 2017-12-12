@@ -698,6 +698,10 @@ public class QifDom {
 			final int tcount = a.transactions.size();
 
 			if ((ucount > 0) || !a.isClosedAsOf(null)) {
+				if (a.isClosedAsOf(null)) {
+					System.out.println("Warning! Account " + a.getName() + " is closed!");
+				}
+
 				++unclracct_count;
 				unclracct_utx_count += ucount;
 				unclracct_tx_count += tcount;
@@ -721,9 +725,9 @@ public class QifDom {
 		}
 
 		System.out.println();
-		System.out.println(String.format("   %5d / %5d uncleared tx in %4d accounts", //
+		System.out.println(String.format("   %5d / %5d uncleared tx in %4d open accounts", //
 				unclracct_utx_count, unclracct_tx_count, unclracct_count));
-		System.out.println(String.format("        %5d      cleared tx in %4d acounts", //
+		System.out.println(String.format("        %5d      cleared tx in %4d closed accounts", //
 				clracct_tx_count, clracct_count));
 
 		System.out.println();
@@ -749,7 +753,7 @@ public class QifDom {
 
 		total = (reconciled + unreconciled);
 		final double pct = reconciled * 100.0 / total;
-		System.out.println(String.format("%d of %d txns reconciled (%5.2f) %d null", //
+		System.out.println(String.format("%d of %d txns reconciled (%5.2f) %d nulltx", //
 				reconciled, total, pct, nullt));
 	}
 
