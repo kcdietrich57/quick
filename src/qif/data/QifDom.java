@@ -753,7 +753,7 @@ public class QifDom {
 
 		total = (reconciled + unreconciled);
 		final double pct = reconciled * 100.0 / total;
-		System.out.println(String.format("%d of %d txns reconciled (%5.2f) %d nulltx", //
+		System.out.println(String.format("%d of %d txns reconciled (%5.2f) nullTX: %d", //
 				reconciled, total, pct, nullt));
 	}
 
