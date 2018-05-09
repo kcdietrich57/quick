@@ -1,4 +1,3 @@
-﻿
 package qif.data;
 
 public class Category {

@@ -1,4 +1,3 @@
-﻿
 package qif.data;
 
 import java.io.File;

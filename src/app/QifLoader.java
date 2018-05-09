@@ -36,9 +36,7 @@ public class QifLoader {
 	public static void main(String[] args) {
 		scn = new Scanner(System.in);
 
-		final QifDom dom = QifDomReader.loadDom(new String[] { //
-				// "qif/75to87.qif", //
-				"qif/87ToNow.qif" });
+		final QifDom dom = QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
 
 		final Date firstTxDate = dom.getFirstTransactionDate();
 		final Date lastTxDate = dom.getLastTransactionDate();
@@ -66,7 +64,7 @@ public class QifLoader {
 					Date d1 = Common.parseDate(d1str);
 					Date d2 = (d2str != null) ? Common.parseDate(d2str) : new Date();
 
-//					dom.reportActivity(d1, d2);
+					// dom.reportActivity(d1, d2);
 				} else if (s.startsWith("accts")) {
 					dom.reportAllAccountStatus();
 				} else {
@@ -105,23 +103,22 @@ public class QifLoader {
 				}
 			} else if (s.startsWith("m")) {
 				if (s.startsWith("ma")) {
-/*					StringTokenizer toker = new StringTokenizer(s);
-					String cmd = toker.nextToken();
-					assert cmd.equals("ma");
-					String d1str = (toker.hasMoreTokens()) ? toker.nextToken() : "1/1/1970";
-					String d2str = (toker.hasMoreTokens()) ? toker.nextToken() : null;
-					Date d1 = Common.parseDate(d1str);
-					Date d2 = (d2str != null) ? Common.parseDate(d2str) : new Date();
-
-					for (int id = 1; id <= dom.getNumAccounts(); ++id) {
-						Account a = dom.getAccount(id);
-						
-						AccountPosition apos1 = a.getStatus(d1);
-						AccountPosition apos2 = a.getStatus(d2);
-					}
-
-					dom.reportMonthlyActivity(d1, d2);
-*/				} else if (s.startsWith("mnw")) {
+					/*
+					 * StringTokenizer toker = new StringTokenizer(s); String cmd =
+					 * toker.nextToken(); assert cmd.equals("ma"); String d1str =
+					 * (toker.hasMoreTokens()) ? toker.nextToken() : "1/1/1970"; String d2str =
+					 * (toker.hasMoreTokens()) ? toker.nextToken() : null; Date d1 =
+					 * Common.parseDate(d1str); Date d2 = (d2str != null) ? Common.parseDate(d2str)
+					 * : new Date();
+					 * 
+					 * for (int id = 1; id <= dom.getNumAccounts(); ++id) { Account a =
+					 * dom.getAccount(id);
+					 * 
+					 * AccountPosition apos1 = a.getStatus(d1); AccountPosition apos2 =
+					 * a.getStatus(d2); }
+					 * 
+					 * dom.reportMonthlyActivity(d1, d2);
+					 */ } else if (s.startsWith("mnw")) {
 					dom.reportMonthlyNetWorth();
 				}
 			} else if (s.startsWith("r")) {

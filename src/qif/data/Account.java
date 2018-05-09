@@ -1,4 +1,4 @@
-﻿package qif.data;
+package qif.data;
 
 import java.io.PrintWriter;
 import java.math.BigDecimal;

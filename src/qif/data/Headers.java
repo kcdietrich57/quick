@@ -1,4 +1,3 @@
-﻿
 package qif.data;
 
 // The transaction type headers.
