@@ -235,6 +235,34 @@ public class Statement {
 		return openingBalance;
 	}
 
+	public BigDecimal getCredits() {
+		BigDecimal cr = new BigDecimal(0);
+
+		for (GenericTxn s : this.transactions) {
+			BigDecimal amt = s.getCashAmount();
+
+			if (amt.compareTo(new BigDecimal(0)) >= 0) {
+				cr = cr.add(amt);
+			}
+		}
+
+		return cr;
+	}
+
+	public BigDecimal getDebits() {
+		BigDecimal db = new BigDecimal(0);
+
+		for (GenericTxn s : this.transactions) {
+			BigDecimal amt = s.getCashAmount();
+
+			if (amt.compareTo(new BigDecimal(0)) < 0) {
+				db = db.add(amt.negate());
+			}
+		}
+
+		return db;
+	}
+
 	public void addTransaction(GenericTxn txn) {
 		this.transactions.add(txn);
 	}
@@ -278,94 +306,95 @@ public class Statement {
 		return s;
 	}
 
-/*	public static void parseStatementDetails(StatementDetails d, QifDom dom, String s, int version) {
-		final String[] ss = s.split(";");
-		int ssx = 0;
+	// public static void parseStatementDetails(StatementDetails d, QifDom dom,
+	// String s, int version) {
+	// final String[] ss = s.split(";");
+	// int ssx = 0;
+	//
+	// final String acctname = ss[ssx++].trim();
+	// final String dateStr = ss[ssx++].trim();
+	// final String closeStr = ss[ssx++].trim();
+	// final String closeCashStr = ss[ssx++].trim();
+	// final String txCountStr = ss[ssx++].trim();
+	// final String secCountStr = (version > 1) ? ss[ssx++].trim() : "0";
+	//
+	// d.domid = dom.domid;
+	// d.acctid = dom.findAccount(acctname).acctid;
+	// d.date = Common.parseDate(dateStr);
+	// if (version < 3) {
+	// d.closingBalance = d.closingCashBalance = new BigDecimal(closeCashStr);
+	// } else {
+	// d.closingBalance = new BigDecimal(closeStr);
+	// d.closingCashBalance = new BigDecimal(closeCashStr);
+	// }
+	//
+	// final int txcount = Integer.parseInt(txCountStr);
+	// final int seccount = Integer.parseInt(secCountStr);
+	//
+	// for (int ii = 0; ii < txcount; ++ii) {
+	// final TxInfo txinfo = new TxInfo();
+	//
+	// final String txtypeStr = ss[ssx++].trim();
+	// final boolean isInvestmentTx = txtypeStr.equals("I");
+	//
+	// String tdateStr;
+	// String actStr = "";
+	// String secStr = "";
+	// String shrStr = "";
+	// String cknumStr = "0";
+	// if (isInvestmentTx) {
+	// // I;12/27/1999;BUY;ETMMTD;7024.50;-7024.50;
+	// tdateStr = ss[ssx++].trim();
+	// actStr = ss[ssx++].trim();
+	// secStr = ss[ssx++].trim();
+	// shrStr = ss[ssx++].trim();
+	// } else {
+	// tdateStr = txtypeStr;
+	// cknumStr = ss[ssx++].trim();
+	// }
+	// final String amtStr = ss[ssx++].trim();
+	//
+	// try {
+	// txinfo.date = Common.parseDate(tdateStr);
+	// txinfo.action = actStr;
+	// txinfo.cknum = Integer.parseInt(cknumStr);
+	// txinfo.cashAmount = new BigDecimal(amtStr);
+	// if (secStr.length() > 0) {
+	// txinfo.security = dom.findSecurity(secStr);
+	// txinfo.shares = new BigDecimal(shrStr);
+	// }
+	// } catch (final Exception e) {
+	// e.printStackTrace();
+	// }
+	// d.transactions.add(txinfo);
+	// }
+	//
+	// // sec;numtx[;txidx;bal]
+	// for (int ii = 0; ii < seccount; ++ii) {
+	// final String symStr = ss[ssx++].trim();
+	// final String numtxStr = ss[ssx++].trim();
+	//
+	// final Security sec = dom.findSecurity(symStr);
+	//
+	// final StatementPosition spos = new StatementPosition();
+	// spos.sec = sec;
+	// d.holdings.positions.add(spos);
+	//
+	// final int numtx = Integer.parseInt(numtxStr);
+	//
+	// for (int jj = 0; jj < numtx; ++jj) {
+	// final String txidxStr = ss[ssx++].trim();
+	// final String shrbalStr = ss[ssx++].trim();
+	//
+	// final StatementPositionTx tx = new StatementPositionTx();
+	// tx.txidx = Integer.parseInt(txidxStr);
+	// tx.shrbal = new BigDecimal(shrbalStr);
+	//
+	// spos.transactions.add(tx);
+	// }
+	// }
+	// }
 
-		final String acctname = ss[ssx++].trim();
-		final String dateStr = ss[ssx++].trim();
-		final String closeStr = ss[ssx++].trim();
-		final String closeCashStr = ss[ssx++].trim();
-		final String txCountStr = ss[ssx++].trim();
-		final String secCountStr = (version > 1) ? ss[ssx++].trim() : "0";
-
-		d.domid = dom.domid;
-		d.acctid = dom.findAccount(acctname).acctid;
-		d.date = Common.parseDate(dateStr);
-		if (version < 3) {
-			d.closingBalance = d.closingCashBalance = new BigDecimal(closeCashStr);
-		} else {
-			d.closingBalance = new BigDecimal(closeStr);
-			d.closingCashBalance = new BigDecimal(closeCashStr);
-		}
-
-		final int txcount = Integer.parseInt(txCountStr);
-		final int seccount = Integer.parseInt(secCountStr);
-
-		for (int ii = 0; ii < txcount; ++ii) {
-			final TxInfo txinfo = new TxInfo();
-
-			final String txtypeStr = ss[ssx++].trim();
-			final boolean isInvestmentTx = txtypeStr.equals("I");
-
-			String tdateStr;
-			String actStr = "";
-			String secStr = "";
-			String shrStr = "";
-			String cknumStr = "0";
-			if (isInvestmentTx) {
-				// I;12/27/1999;BUY;ETMMTD;7024.50;-7024.50;
-				tdateStr = ss[ssx++].trim();
-				actStr = ss[ssx++].trim();
-				secStr = ss[ssx++].trim();
-				shrStr = ss[ssx++].trim();
-			} else {
-				tdateStr = txtypeStr;
-				cknumStr = ss[ssx++].trim();
-			}
-			final String amtStr = ss[ssx++].trim();
-
-			try {
-				txinfo.date = Common.parseDate(tdateStr);
-				txinfo.action = actStr;
-				txinfo.cknum = Integer.parseInt(cknumStr);
-				txinfo.cashAmount = new BigDecimal(amtStr);
-				if (secStr.length() > 0) {
-					txinfo.security = dom.findSecurity(secStr);
-					txinfo.shares = new BigDecimal(shrStr);
-				}
-			} catch (final Exception e) {
-				e.printStackTrace();
-			}
-			d.transactions.add(txinfo);
-		}
-
-		// sec;numtx[;txidx;bal]
-		for (int ii = 0; ii < seccount; ++ii) {
-			final String symStr = ss[ssx++].trim();
-			final String numtxStr = ss[ssx++].trim();
-
-			final Security sec = dom.findSecurity(symStr);
-
-			final StatementPosition spos = new StatementPosition();
-			spos.sec = sec;
-			d.holdings.positions.add(spos);
-
-			final int numtx = Integer.parseInt(numtxStr);
-
-			for (int jj = 0; jj < numtx; ++jj) {
-				final String txidxStr = ss[ssx++].trim();
-				final String shrbalStr = ss[ssx++].trim();
-
-				final StatementPositionTx tx = new StatementPositionTx();
-				tx.txidx = Integer.parseInt(txidxStr);
-				tx.shrbal = new BigDecimal(shrbalStr);
-
-				spos.transactions.add(tx);
-			}
-		}
-	}
-*/
 	public boolean reconcile(Account a, String msg) {
 		boolean needsReview = false;
 
@@ -756,7 +785,7 @@ public class Statement {
 				final TxInfo txinfo = new TxInfo();
 
 				String txtypeStr = "";
-				try{
+				try {
 					txtypeStr = ss[ssx++].trim();
 				} catch (Exception e) {
 					System.out.println("*** ERROR: parsing statement details");
@@ -1033,8 +1062,8 @@ public class Statement {
 	}
 
 	/**
-	 * Calculate the resulting cash position from the previous balance and a
-	 * list of transactions
+	 * Calculate the resulting cash position from the previous balance and a list of
+	 * transactions
 	 *
 	 * @param txns
 	 *            The transactions
@@ -1045,8 +1074,8 @@ public class Statement {
 	}
 
 	/**
-	 * Calculate the resulting cash position from the previous balance and
-	 * cleared transactions
+	 * Calculate the resulting cash position from the previous balance and cleared
+	 * transactions
 	 *
 	 * @return The new cash balance
 	 */

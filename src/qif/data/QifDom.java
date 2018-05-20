@@ -173,6 +173,30 @@ public class QifDom {
 		return this.accounts.get(acctid);
 	}
 
+	public List<Account> getSortedAccounts() {
+		List<Account> ret = new ArrayList<>(this.accounts);
+
+		for (int ii = ret.size() - 1; ii >= 0; --ii) {
+			if (ret.get(ii) == null) {
+				ret.remove(ii);
+			}
+		}
+
+		Collections.sort(ret, new Comparator<Account>() {
+			public int compare(Account a1, Account a2) {
+				if (a1.isOpenOn(null) != a2.isOpenOn(null)) {
+					return a1.isOpenOn(null) ? 1 : -1;
+				} else if (a1.type != a2.type) {
+					return a1.type.compareTo(a2.type);
+				}
+
+				return a1.getName().compareTo(a2.getName());
+			}
+		});
+
+		return ret;
+	}
+
 	public Account getAccountByTime(int acctid) {
 		return this.accounts_bytime.get(acctid);
 	}
@@ -904,8 +928,8 @@ public class QifDom {
 	}
 
 	/**
-	 * Find a statement in this dom that corresponds to a statement in another
-	 * dom. Used when copying/cloning a dom.
+	 * Find a statement in this dom that corresponds to a statement in another dom.
+	 * Used when copying/cloning a dom.
 	 *
 	 * @param stmt
 	 *            The statement in another dom
@@ -1415,13 +1439,13 @@ public class QifDom {
 		for (int id = 1; id <= getNumAccounts(); ++id) {
 			Account a = getAccount(id);
 			info[id - 1].acct = a;
-			
+
 			BigDecimal v1 = a.getCashValueForDate(d1);
 		}
 	}
 
 	public void reportActivity(Date d1, Date d2) {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

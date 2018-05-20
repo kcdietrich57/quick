@@ -1,6 +1,6 @@
 package qif.data;
 
-enum AccountType { //
+public enum AccountType { //
 	Bank, CCard, Cash, Asset, Liability, Invest, InvPort, Inv401k, InvMutual;
 
 	public static AccountType parseAccountType(String s) {

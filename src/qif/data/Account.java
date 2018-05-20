@@ -73,6 +73,10 @@ public class Account {
 	}
 
 	public boolean isOpenAsOf(Date d) {
+		if (d == null) {
+			d = new Date();
+		}
+
 		final Date openDate = getOpenDate();
 
 		return (openDate == null) //
@@ -80,8 +84,15 @@ public class Account {
 	}
 
 	public boolean isClosedAsOf(Date d) {
-		return (this.closeDate != null) //
-				&& ((d == null) || (this.closeDate.compareTo(d) <= 0));
+		if (d == null) {
+			d = new Date();
+		}
+
+		return (this.closeDate != null) && (this.closeDate.compareTo(d) <= 0);
+	}
+
+	public boolean isOpenOn(Date d) {
+		return isOpenAsOf(d) && !isClosedAsOf(d);
 	}
 
 	public void setName(String name) {
@@ -116,15 +127,25 @@ public class Account {
 				: this.statements.get(this.statements.size() - 1);
 	}
 
+	public Statement getStatement(Date date) {
+		return getStatement(date, null);
+	}
+
 	public Statement getStatement(Date date, BigDecimal balance) {
+		if (date == null) {
+			return null;
+		}
+
 		for (final Statement s : this.statements) {
 			if (s.date.compareTo(date) > 0) {
 				break;
 			}
 
-			if ((s.date.compareTo(date) == 0) //
-					&& (s.closingBalance.compareTo(balance) == 0)) {
-				return s;
+			if (s.date.compareTo(date) == 0) {
+				if ((balance == null) //
+						|| (s.closingBalance.compareTo(balance) == 0)) {
+					return s;
+				}
 			}
 		}
 
@@ -539,7 +560,7 @@ public class Account {
 		BigDecimal cashAfter;
 		SecurityPortfolio portBefore;
 		SecurityPortfolio portAfter;
-		
+
 		AccountPosition(Account a) {
 			this.acct = a;
 		}
@@ -549,7 +570,7 @@ public class Account {
 		AccountPosition apos = new AccountPosition(this);
 
 		BigDecimal v1 = getCashValueForDate(d1);
-		
+
 		return apos;
 	}
 }

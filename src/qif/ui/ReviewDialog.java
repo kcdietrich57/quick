@@ -22,6 +22,8 @@ import qif.data.QifDom;
 import qif.data.Statement;
 
 public class ReviewDialog extends JFrame {
+	private static final long serialVersionUID = 1L;
+
 	private static ReviewDialog dlg = null;
 
 	public static void review(Statement stmt) {
@@ -111,6 +113,8 @@ public class ReviewDialog extends JFrame {
 
 	private void addListeners() {
 		this.txlist.setSelectionModel(new DefaultListSelectionModel() {
+			private static final long serialVersionUID = 1L;
+
 			public void setSelectionInterval(int index0, int index1) {
 				if (index0 == index1) {
 					if (isSelectedIndex(index0)) {

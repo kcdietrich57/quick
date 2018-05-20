@@ -5,7 +5,6 @@ import java.util.Scanner;
 import java.util.StringTokenizer;
 
 import qif.data.Account;
-import qif.data.AccountPosition;
 import qif.data.Common;
 import qif.data.QifDom;
 import qif.data.QifDomReader;
