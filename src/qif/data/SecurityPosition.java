@@ -57,13 +57,13 @@ class SecurityPosition {
 
 	public String toString() {
 		String s = String.format( //
-				"%-20s   %10.3f shrs  %d txns", //
+				"%-20s   %s shrs  %d txns", //
 				this.security.getName(), //
-				this.shares, //
+				Common.formatAmount3(this.shares), //
 				this.transactions.size());
 
 		if (this.value != null) {
-			s += String.format("  %10.3f", this.value);
+			s += "  " + Common.formatAmount3(this.value);
 		}
 
 		return s;
@@ -102,15 +102,17 @@ class SecurityPosition {
 			nn = nn.substring(0, 31) + "...";
 		}
 
-		s[0] += String.format("    %-34s: ..%10.2f %10.3f %10.3f\n", //
-				nn, value, tshrbal, price);
+		s[0] += String.format("    %-34s: ..%s %s %s\n", //
+				nn, Common.formatAmount(value), //
+				Common.formatAmount3(tshrbal), //
+				Common.formatAmount3(price));
 
 		return value;
 	}
 
 	public static void reportCashPosition(BigDecimal bal, String[] s) {
-		s[0] += String.format("    %-34s: ..%10.2f\n", //
-				"Cash", bal);
+		s[0] += String.format("    %-34s: ..%s\n", //
+				"Cash", Common.formatAmount(bal));
 	}
 
 	/**

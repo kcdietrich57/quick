@@ -105,12 +105,13 @@ public class QPrice {
 	}
 
 	public String toString() {
-		String s = String.format("Price: %s  %10.2f", //
+		String s = String.format("Price: %s  %s", //
 				Common.formatDate(this.date), //
-				this.price);
+				Common.formatAmount(this.price));
 
 		if (this.splitAdjustedPrice != null) {
-			s += String.format("  splitAdj(%10.2f)\n", this.splitAdjustedPrice);
+			s += String.format("  splitAdj(%s)\n", //
+					Common.formatAmount(this.splitAdjustedPrice));
 		}
 
 		return s + "\n";

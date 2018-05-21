@@ -151,8 +151,8 @@ public class Account {
 
 		Common.reportError("Can't find statement: " //
 				+ this.name //
-				+ Common.formatDate(date) //
-				+ " " + String.format("%10.2f", balance));
+				+ Common.formatDate(date) + " " //
+				+ Common.formatAmount(balance));
 		return null;
 	}
 
@@ -387,8 +387,9 @@ public class Account {
 					System.out.println();
 				}
 
-				System.out.print(String.format("   %s  %3d tx  %10.2f", //
-						Common.formatDate(s.date), s.transactions.size(), s.closingBalance));
+				System.out.print(String.format("   %s  %3d tx  %s", //
+						Common.formatDate(s.date), s.transactions.size(), //
+						Common.formatAmount(s.closingBalance)));
 			}
 
 			System.out.println();
@@ -396,9 +397,10 @@ public class Account {
 			System.out.println("Uncleared transactions as of last statement:");
 
 			for (final GenericTxn t : this.statements.get(this.statements.size() - 1).unclearedTransactions) {
-				System.out.println(String.format("  %s  %10.2f  %s", //
+				System.out.println(String.format("  %s  %s  %s", //
 						Common.formatDate(t.getDate()), //
-						t.getAmount(), t.getPayee()));
+						Common.formatAmount(t.getAmount()), //
+						t.getPayee()));
 			}
 
 			int unclearedCount = 0;
@@ -412,7 +414,8 @@ public class Account {
 			System.out.println("Total uncleared transactions: " + unclearedCount);
 		}
 
-		System.out.println(String.format("Current value: %10.2f", getCurrentValue()));
+		System.out.println(String.format("Current value: %s", //
+				Common.formatAmount(getCurrentValue())));
 
 		System.out.println();
 	}
@@ -424,9 +427,8 @@ public class Account {
 				|| !Common.isEffectivelyZero(acctValue) //
 				|| (getFirstUnclearedTransaction() != null) //
 				|| !this.securities.isEmptyForDate(d)) {
-			s[0] = String.format("  %-36s: %10.2f\n", //
-					getDisplayName(36), acctValue);
-			// , getOpenCloseDateString());
+			s[0] = String.format("  %-36s: %s\n", //
+					getDisplayName(36), Common.formatAmount(acctValue));
 
 			reportPortfolioForDate(d, s);
 		}

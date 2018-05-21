@@ -141,11 +141,11 @@ public class QifReporter {
 					final BigDecimal shrbal = p.shrBalance.get(ii);
 
 					System.out.println(String.format( //
-							"  %-12s  %-10s  %10.3f  %10.3f", //
+							"  %-12s  %-10s  %s  %s", //
 							Common.formatDate(t.getDate()), //
 							t.action.toString(), //
-							t.getShares(), //
-							shrbal));
+							Common.formatAmount3(t.getShares()), //
+							Common.formatAmount3(shrbal)));
 				}
 			}
 
@@ -170,12 +170,12 @@ public class QifReporter {
 					final BigDecimal shrbal = p.shrBalance.get(ii);
 
 					System.out.println(String.format( //
-							"  %-12s  %-20s  %-10s  %10.3f  %10.3f", //
+							"  %-12s  %-20s  %-10s  %s  %s", //
 							Common.formatDate(t.getDate()), //
 							QifDom.getDomById(t.domid).getAccount(t.acctid).getName(), //
 							t.action.toString(), //
-							t.getShares(), //
-							shrbal));
+							Common.formatAmount3(t.getShares()), //
+							Common.formatAmount3(shrbal)));
 				}
 			}
 

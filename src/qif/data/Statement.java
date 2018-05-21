@@ -701,8 +701,9 @@ public class Statement {
 		}
 
 		public String toString() {
-			return String.format("%s %5d %10.2f", //
-					Common.formatDate(this.date), this.cknum, this.cashAmount);
+			return String.format("%s %5d %s", //
+					Common.formatDate(this.date), this.cknum, //
+					Common.formatAmount(this.cashAmount));
 		}
 	}
 
@@ -853,9 +854,9 @@ public class Statement {
 		public String toString() {
 			final String s = "" + this.domid + ":" + this.acctid + " " //
 					+ Common.formatDate(this.date) //
-					+ String.format("%10.2f  %10.2f %d tx", //
-							this.closingBalance, //
-							this.closingCashBalance, //
+					+ String.format("%s  %s %d tx", //
+							Common.formatAmount(this.closingBalance), //
+							Common.formatAmount(this.closingCashBalance), //
 							this.transactions.size());
 
 			return s;
@@ -940,8 +941,8 @@ public class Statement {
 	private void displayHoldingsComparison() {
 		final BigDecimal newCash = getCashDelta();
 
-		String s = String.format("\n  %-25s %10.2f", //
-				"Cash", newCash);
+		String s = String.format("\n  %-25s %s", //
+				"Cash", Common.formatAmount(newCash));
 		if (!cashMatches()) {
 			s += " [" + getCashDifference() + "] *************";
 		}
@@ -961,10 +962,12 @@ public class Statement {
 							: BigDecimal.ZERO;
 			final BigDecimal pValue = (p.value != null) ? p.value : BigDecimal.ZERO;
 
-			s = String.format("  %-25s %10.2f(%5.2f) %10.2f(%5.2f)", //
+			s = String.format("  %-25s %s(%5.2f) %s(%5.2f)", //
 					p.security.getName(), //
-					p.shares, expectedShares.subtract(p.shares), //
-					pValue, expectedValue.subtract(pValue));
+					Common.formatAmount(p.shares), //
+					expectedShares.subtract(p.shares), //
+					Common.formatAmount(pValue), //
+					expectedValue.subtract(pValue));
 
 			if (!Common.isEffectivelyEqual(p.shares, expectedShares) //
 			// TODO || !Common.isEffectivelyEqual(pValue, opValue)
@@ -983,7 +986,8 @@ public class Statement {
 					System.out.println("  Unexpected securities:");
 				}
 
-				System.out.println(String.format("  %s %10.2f", p.security.getName(), p.shares));
+				System.out.println(String.format("  %s %s", //
+						p.security.getName(), Common.formatAmount(p.shares)));
 			}
 		}
 	}

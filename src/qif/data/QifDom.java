@@ -733,11 +733,11 @@ public class QifDom {
 				final Statement lStat = a.getLastStatement();
 				final Date lStatDate = (lStat != null) ? lStat.date : null;
 
-				System.out.println(String.format("%3d   %-35s : %8s  %10.2f : %5d/%5d :    %8s", //
+				System.out.println(String.format("%3d   %-35s : %8s  %s : %5d/%5d :    %8s", //
 						unclracct_count, //
 						nam, //
 						Common.formatDate(lStatDate), //
-						a.balance, //
+						Common.formatAmount(a.balance), //
 						ucount, //
 						tcount, //
 						Common.formatDate(a.getFirstUnclearedTransactionDate())));
@@ -1337,10 +1337,11 @@ public class QifDom {
 
 			if (QifDom.verbose()) {
 				final String s = String.format(//
-						"%-20s : %5s(%2d) %s INSH=%10.3f (%2d txns) OUTSH=%10.3f (%2d txns)", //
+						"%-20s : %5s(%2d) %s INSH=%s (%2d txns) OUTSH=%s (%2d txns)", //
 						t.getAccount().getName(), t.security.symbol, t.security.secid, //
 						Common.formatDate(t.getDate()), //
-						inshrs, ins.size(), outshrs, outs.size());
+						Common.formatAmount3(inshrs), ins.size(), //
+						Common.formatAmount3(outshrs), outs.size());
 				System.out.println(s);
 			}
 		}
@@ -1351,9 +1352,10 @@ public class QifDom {
 						? "" //
 						: "                          ";
 
-				final String s = String.format("%-20s : %5s(%2d) %s %s SHR=%10.3f", //
+				final String s = String.format("%-20s : %5s(%2d) %s %s SHR=%s", //
 						t.getAccount().getName(), t.security.symbol, t.security.secid, //
-						Common.formatDate(t.getDate()), pad, t.getShares());
+						Common.formatDate(t.getDate()), pad, //
+						Common.formatAmount3(t.getShares()));
 				System.out.println(s);
 			}
 		}

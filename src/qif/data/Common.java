@@ -146,6 +146,22 @@ public class Common {
 		return d;
 	}
 
+	public static String formatAmount(BigDecimal amt) {
+		if (amt == null) {
+			return "null";
+		}
+
+		return String.format("%10.2f", amt);
+	}
+
+	public static String formatAmount3(BigDecimal amt) {
+		if (amt == null) {
+			return "null";
+		}
+
+		return String.format("%10.3f", amt);
+	}
+
 	public static String formatDate(Date date) {
 		if (date == null) {
 			return "null";
@@ -362,13 +378,17 @@ public class Common {
 
 		for (int ii = Math.max(0, txns.size() - max); ii < txns.size(); ++ii) {
 			final GenericTxn t = txns.get(ii);
+
 			String cknum = "";
 			if (t instanceof NonInvestmentTxn) {
 				cknum = ((NonInvestmentTxn) t).chkNumber;
 			}
-			System.out.println(String.format("%s  %5s %10.2f  %10.2f", //
+
+			System.out.println(String.format("%s  %5s %s  %s", //
 					Common.formatDate(t.getDate()), //
-					cknum, t.getAmount(), t.runningTotal));
+					cknum, //
+					Common.formatAmount(t.getAmount()), //
+					Common.formatAmount(t.runningTotal)));
 		}
 	}
 

@@ -145,8 +145,6 @@ public class ReviewDialog extends JFrame {
 			final int[] sel1 = this.txlist.getSelectedIndices();
 			final String statusMsg1 = buildStatusString(this.stmt, sel1);
 
-			// this.stmt.clearTransactions(this.cleared, this.uncleared);
-
 			this.status.setText(statusMsg1);
 		});
 
@@ -165,8 +163,8 @@ public class ReviewDialog extends JFrame {
 
 		if (this.stmt != null) {
 			BigDecimal clearedBalance = stmt.getOpeningCashBalance();
-			for (final int idx : sel) {
 
+			for (final int idx : sel) {
 				final GenericTxn t = this.txns.get(idx);
 				clearedBalance = clearedBalance.add(t.getCashAmount());
 
@@ -177,12 +175,15 @@ public class ReviewDialog extends JFrame {
 			final Account a = QifDom.getDomById(stmt.domid).getAccount(stmt.acctid);
 			statusMsg = a.getName() + ": " + Common.formatDate(stmt.date) + "\n";
 			statusMsg += String.format( //
-					"Opening Balance:\t%10.2f\nClosing Balance:\t%10.2f\nCleared Balance:\t%10.2f", //
-					stmt.getOpeningCashBalance(), stmt.cashBalance, clearedBalance);
+					"Opening Balance:\t%s\nClosing Balance:\t%s\nCleared Balance:\t%s", //
+					Common.formatAmount(stmt.getOpeningCashBalance()), //
+					Common.formatAmount(stmt.cashBalance), //
+					Common.formatAmount(clearedBalance));
 
 			final BigDecimal diff = clearedBalance.subtract(stmt.cashBalance);
 
-			statusMsg += String.format(" %10.2f", diff);
+			statusMsg += " " + Common.formatAmount(diff);
+
 			if (Common.isEffectivelyZero(diff)) {
 				statusMsg += " OK";
 			}

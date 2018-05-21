@@ -135,13 +135,13 @@ public class LoadSecurityHistory {
 
 			for (final QPrice p : pricesForDate) {
 				if (p != null) {
-					s += String.format("  %10.3f", p.price);
+					s += "  " + Common.formatAmount3(p.price);
 				} else {
 					s += "            ";
 				}
 			}
 			for (final QPrice p : extraPricesForDate) {
-				s += String.format(" *%10.3f", p.price);
+				s += " *" + Common.formatAmount3(p.price);
 			}
 			extraPricesForDate.clear();
 
