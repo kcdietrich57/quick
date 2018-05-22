@@ -146,6 +146,18 @@ public class Common {
 		return d;
 	}
 
+	public static String stringValue(Object o) {
+		if (o == null) {
+			return "";
+		}
+
+		if (!(o instanceof String)) {
+			return o.toString();
+		}
+
+		return (String) o;
+	}
+
 	public static String formatAmount(BigDecimal amt) {
 		if (amt == null) {
 			return "null";

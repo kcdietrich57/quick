@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
+import app.QifLoader;
 import qif.data.QFileReader.SectionType;
 import qif.data.Security.SplitInfo;
 
@@ -79,7 +80,9 @@ public class QifDomReader {
 		this.dom.processStatementLog();
 
 		// Process statements that have not yet been reconciled
-		this.dom.reconcileStatements();
+		if (QifLoader.scn != null) {
+			this.dom.reconcileStatements();
+		}
 
 		// Update statement reconciliation file if format has changed
 		if (this.dom.loadedStatementsVersion != Statement.StatementDetails.CURRENT_VERSION) {

@@ -21,7 +21,6 @@ public class TransactionTableModel extends AbstractTableModel {
 	Statement curStatement = null;
 
 	String[] columnNames = { //
-			"Clr", //
 			"Date", //
 			"Payee", //
 			"Amount", //
@@ -30,54 +29,13 @@ public class TransactionTableModel extends AbstractTableModel {
 			"Balance"//
 	};
 
-	List<Object[]> values = new ArrayList<Object[]>();
-
-	public TransactionTableModel() {
-	}
-
-	private Object[] newRow() {
-		return new Object[] { "", "", "", "", "", "", "" };
-	}
-
-	private String stringValue(Object o) {
-		if (o == null) {
-			return "";
-		}
-
-		if (!(o instanceof String)) {
-			return o.toString();
-		}
-
-		return (String) o;
-	}
+	List<GenericTxn> transations = new ArrayList<GenericTxn>();
 
 	private void setTransactions(List<GenericTxn> txns) {
-		values.clear();
+		transations.clear();
 
 		if (txns != null) {
-			int rownum = 0;
-
-			for (GenericTxn tx : txns) {
-				Object[] row = newRow();
-
-				while (values.size() <= rownum) {
-					values.add(row);
-				}
-
-				row[0] = (tx.isCleared()) ? "x" : " ";
-				row[1] = Common.formatDate(tx.getDate());
-				row[2] = stringValue(tx.getPayee());
-				row[3] = stringValue(tx.getAmount());
-				row[4] = Integer.toString(tx.catid);
-				row[5] = stringValue(tx.memo);
-				row[6] = stringValue(tx.runningTotal);
-
-				for (int ii = 0; ii < row.length; ++ii) {
-					setValueAt(row[ii], rownum, ii);
-				}
-
-				++rownum;
-			}
+			this.transations = new ArrayList<GenericTxn>(txns);
 		}
 
 		fireTableDataChanged();
@@ -135,15 +93,55 @@ public class TransactionTableModel extends AbstractTableModel {
 	}
 
 	public int getRowCount() {
-		return values.size();
+		return transations.size();
 	}
 
 	public String getColumnName(int col) {
 		return columnNames[col];
 	}
 
+	public GenericTxn getTransactionAt(int row) {
+		if (row < 0 || row >= transations.size()) {
+			return null;
+		}
+
+		return this.transations.get(row);
+	}
+
 	public Object getValueAt(int row, int col) {
-		return values.get(row)[col];
+		GenericTxn tx = getTransactionAt(row);
+
+		if (tx == null || col < 0 || col >= columnNames.length) {
+			return null;
+		}
+
+		switch (col) {
+		case 0:
+			return Common.formatDate(tx.getDate());
+		case 1:
+			return Common.stringValue(tx.getPayee());
+		case 2:
+			return Common.stringValue(tx.getAmount());
+		case 3: {
+			QifDom dom = QifDom.getDomById(1);
+
+			if (tx.catid > 0) {
+				return dom.getCategory(tx.catid).name;
+			}
+
+			if (tx.catid < 0) {
+				return "[" + dom.getAccount(-tx.catid).getName() + "]";
+			}
+
+			return "";
+		}
+		case 4:
+			return Common.stringValue(tx.memo);
+		case 5:
+			return Common.stringValue(tx.runningTotal);
+		}
+
+		return null;
 	}
 
 	// public Class getColumnClass(int c) {
@@ -151,23 +149,23 @@ public class TransactionTableModel extends AbstractTableModel {
 	// }
 
 	// Don't need to implement this method unless your table's editable.
-	public boolean isCellEditable(int row, int col) {
-		// Note that the data/cell address is constant,
-		// no matter where the cell appears onscreen.
-		if (col < 2) {
-			return false;
-		} else {
-			return true;
-		}
-	}
+	// public boolean isCellEditable(int row, int col) {
+	// // Note that the data/cell address is constant,
+	// // no matter where the cell appears onscreen.
+	// if (col < 2) {
+	// return false;
+	// } else {
+	// return true;
+	// }
+	// }
 
 	// Don't need to implement this method unless your table's editable.
-	public void setValueAt(Object value, int row, int col) {
-		while (values.size() <= row) {
-			values.add(newRow());
-		}
-
-		values.get(row)[col] = value;
-		fireTableCellUpdated(row, col);
-	}
+	// public void setValueAt(Object value, int row, int col) {
+	// while (values.size() <= row) {
+	// values.add(null);
+	// }
+	//
+	// //values.get(row)[col] = value;
+	// fireTableCellUpdated(row, col);
+	// }
 }

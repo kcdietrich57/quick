@@ -1,7 +1,14 @@
 package qif.ui;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 
 import qif.data.Common;
 import qif.data.QifDom;
@@ -22,17 +29,42 @@ public class StatementDetailsPanel extends JPanel {
 	TransactionPanel transactionPanel;
 
 	public StatementDetailsPanel() {
-		// setLayout(new GridLayout(0, 2));
+		setLayout(new BorderLayout());
 
-		add(dateLabel);
-		add(date);
-		add(acctLabel);
-		add(acct);
-		add(ntxLabel);
-		add(ntx);
+		setBorder(BorderFactory.createLineBorder(Color.RED));
 
-		transactionPanel = new TransactionPanel();
-		add(transactionPanel);
+		JPanel infoPanel = new JPanel(new GridBagLayout());
+
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.fill = GridBagConstraints.BOTH;
+		dateLabel.setBorder(BorderFactory.createRaisedBevelBorder());
+		infoPanel.add(dateLabel, gbc);
+
+		gbc.gridx = 1;
+		date.setBorder(BorderFactory.createRaisedBevelBorder());
+		infoPanel.add(date, gbc);
+
+		gbc.gridx = 0;
+		gbc.gridy = 1;
+		infoPanel.add(acctLabel, gbc);
+
+		gbc.gridx = 1;
+		infoPanel.add(acct, gbc);
+
+		gbc.gridx = 0;
+		gbc.gridy = 2;
+		infoPanel.add(ntxLabel, gbc);
+
+		gbc.gridx = 1;
+		infoPanel.add(ntx, gbc);
+
+		add(infoPanel, BorderLayout.NORTH);
+
+		transactionPanel = new TransactionPanel(false);
+
+		add(transactionPanel, BorderLayout.CENTER);
 	}
 
 	public void setStatement(Statement stmt) {
@@ -40,13 +72,13 @@ public class StatementDetailsPanel extends JPanel {
 			date.setText("");
 			acct.setText("");
 			ntx.setText("");
-			
+
 			transactionPanel.transactionTableModel.setStatement(null);
 		} else {
 			date.setText(Common.formatDate(stmt.date));
 			acct.setText(QifDom.getDomById(1).getAccount(stmt.acctid).getName());
 			ntx.setText(Integer.toString(stmt.transactions.size()));
-			
+
 			transactionPanel.transactionTableModel.setStatement(stmt);
 		}
 	}

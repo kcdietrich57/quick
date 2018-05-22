@@ -6,36 +6,25 @@ import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
 import qif.data.Account;
+import qif.data.Common;
 import qif.data.QifDom;
 
 public class AccountTableModel extends AbstractTableModel {
 	private static final long serialVersionUID = 1L;
 
 	private String[] columnNames = { "Name", "Type", "Balance" };
-	private List<Object[]> values = new ArrayList<Object[]>();
+	private List<Account> accounts = new ArrayList<Account>();
 
 	public AccountTableModel() {
 	}
 
-	public Object getValue(int row, int col) {
-		if (row < 0 || col < 0 || col >= columnNames.length || row >= values.size()) {
-			return null;
-		}
-
-		return values.get(row)[col];
-	}
-
-	// public Account getSelectedAccount() {
-	// int idx =
-	// }
-
-	public void load(QifDom dom) {
+	public void load(boolean showOpenAccounts) {
+		QifDom dom = QifDom.getDomById(1);
 		List<Account> accts = dom.getSortedAccounts();
 
 		for (Account a : accts) {
-			if (a != null && !a.isClosedAsOf(null)) {
-				Object[] row = new Object[] { a.getName(), a.type.toString(), a.balance.toString() };
-				values.add(row);
+			if (a != null && a.isClosedAsOf(null) != showOpenAccounts) {
+				accounts.add(a);
 			}
 		}
 
@@ -47,7 +36,7 @@ public class AccountTableModel extends AbstractTableModel {
 	}
 
 	public int getRowCount() {
-		return values.size();
+		return accounts.size();
 	}
 
 	public String getColumnName(int col) {
@@ -55,7 +44,25 @@ public class AccountTableModel extends AbstractTableModel {
 	}
 
 	public Object getValueAt(int row, int col) {
-		return values.get(row)[col];
+		if (row < 0 || col < 0 || col >= columnNames.length || row >= accounts.size()) {
+			return null;
+		}
+
+		Account a = this.accounts.get(row);
+		if (a == null) {
+			return "";
+		}
+
+		switch (col) {
+		case 0:
+			return a.getName();
+		case 1:
+			return a.type.toString();
+		case 2:
+			return Common.formatAmount(a.balance);
+		}
+
+		return null;
 	}
 
 	// public Class getColumnClass(int c) {

@@ -1,8 +1,10 @@
 package qif.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Button;
 import java.awt.Dimension;
 
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
@@ -49,9 +51,10 @@ class MainFrame extends JFrame {
 public class MainWindow extends JPanel {
 	private static final long serialVersionUID = 1L;
 
-	private JSplitPane vsplit;
-	private JSplitPane hsplit;
+	private JSplitPane statementViewSplit;
+	private JSplitPane accountViewSplit;
 
+	JButton dashboardPanel;
 	AccountPanel accountPanel;
 	StatementPanel statementPanel;
 	TransactionPanel transactionPanel;
@@ -60,8 +63,8 @@ public class MainWindow extends JPanel {
 	public void setSplitPosition() {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				hsplit.setDividerLocation(.3);
-				vsplit.setDividerLocation(.25);
+				accountViewSplit.setDividerLocation(.3);
+				statementViewSplit.setDividerLocation(.25);
 			}
 		});
 	}
@@ -74,23 +77,30 @@ public class MainWindow extends JPanel {
 		statementPanel = new StatementPanel();
 		this.accountPanel.statementTableModel = statementPanel.statementTableModel;
 
-		transactionPanel = new TransactionPanel();
+		transactionPanel = new TransactionPanel(true);
 		this.accountPanel.transactionTableModel = transactionPanel.transactionTableModel;
 
 		statementDetails = new StatementDetailsPanel();
 		this.statementPanel.statementDetails = statementDetails;
 		this.statementPanel.statementTableModel.detailsPanel = statementDetails;
 
-		JTabbedPane tabs = new JTabbedPane();
+		dashboardPanel = new JButton("Dashboard goes here");
 
-		vsplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, statementPanel, statementDetails);
+		JTabbedPane acctsTabs = new JTabbedPane();
 
-		tabs.addTab("Register View", transactionPanel);
-		tabs.add("Statement View", vsplit);
+		statementViewSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, statementPanel, //new Button("FOOBAR"));
+				statementDetails);
 
-		hsplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, accountPanel, tabs);
-		hsplit.setPreferredSize(new Dimension(1200, 800));
+		acctsTabs.addTab("Register View", transactionPanel);
+		acctsTabs.add("Statement View", statementViewSplit);
 
-		add(hsplit, BorderLayout.CENTER);
+		accountViewSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, accountPanel, acctsTabs);
+		accountViewSplit.setPreferredSize(new Dimension(1200, 800));
+
+		JTabbedPane topTabs = new JTabbedPane();
+		topTabs.add("Dashboard", dashboardPanel);
+		topTabs.add("Accounts", accountViewSplit);
+
+		add(topTabs, BorderLayout.CENTER);
 	}
 }

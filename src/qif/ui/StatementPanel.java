@@ -80,7 +80,7 @@ public class StatementPanel extends JScrollPane {
 		chooseStatItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				int idx = statementTable.getSelectionModel().getMinSelectionIndex();
-				Object a = statementTableModel.getValue(idx, 0);
+				Object a = statementTableModel.getValueAt(idx, 0);
 
 				JOptionPane.showMessageDialog(MainFrame.frame, //
 						"You chose statement " + a.toString());

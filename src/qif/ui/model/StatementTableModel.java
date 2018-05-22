@@ -25,34 +25,10 @@ public class StatementTableModel extends AbstractTableModel {
 			"Debits", //
 			"NumTx" };
 
-	List<Object[]> values = new ArrayList<Object[]>();
+	List<Statement> statments = new ArrayList<Statement>();
 
 	public Account getAccount() {
 		return this.curAccount;
-	}
-
-	public Object getValue(int row, int col) {
-		if (row < 0 || col < 0 || col >= columnNames.length || row >= values.size()) {
-			return null;
-		}
-
-		return values.get(row)[col];
-	}
-
-	private Object[] newRow() {
-		return new Object[] { "", "", "", "", "", "" };
-	}
-
-	private String stringValue(Object o) {
-		if (o == null) {
-			return "";
-		}
-
-		if (!(o instanceof String)) {
-			return o.toString();
-		}
-
-		return (String) o;
 	}
 
 	public void setAccount(Account acct) {
@@ -66,37 +42,13 @@ public class StatementTableModel extends AbstractTableModel {
 
 		Account a = (Account) curAccount;
 
-		values.clear();
-
-		int rownum = 0;
-
-		for (Statement s : a.statements) {
-			Object[] row = newRow();
-
-			while (values.size() <= rownum) {
-				values.add(row);
-			}
-
-			int jj = 0;
-			row[jj++] = Common.formatDate(s.date);
-			row[jj++] = stringValue(s.closingBalance);
-			row[jj++] = stringValue(s.cashBalance);
-			row[jj++] = stringValue(s.getCredits());
-			row[jj++] = stringValue(s.getDebits());
-			row[jj++] = Integer.toString(s.transactions.size());
-
-			for (int ii = 0; ii < row.length; ++ii) {
-				setValueAt(row[ii], rownum, ii);
-			}
-
-			++rownum;
-		}
+		statments = new ArrayList<Statement>(a.statements);
 
 		fireTableDataChanged();
 	}
 
 	public Date getDate(int rownum) {
-		String datestr = stringValue(getValueAt(rownum, 0));
+		String datestr = Common.stringValue(getValueAt(rownum, 0));
 
 		return (!datestr.isEmpty()) ? Common.parseDate(datestr) : null;
 	}
@@ -106,7 +58,7 @@ public class StatementTableModel extends AbstractTableModel {
 	}
 
 	public int getRowCount() {
-		return values.size();
+		return statments.size();
 	}
 
 	public String getColumnName(int col) {
@@ -114,13 +66,28 @@ public class StatementTableModel extends AbstractTableModel {
 	}
 
 	public Object getValueAt(int row, int col) {
-		if ((row < 0) || (col < 0) //
-				|| (row >= values.size()) //
-				|| (col >= columnNames.length)) {
+		if (row < 0 || col < 0 || col >= columnNames.length || row >= statments.size()) {
 			return null;
 		}
 
-		return values.get(row)[col];
+		Statement s = statments.get(row);
+
+		switch (col) {
+		case 0:
+			return Common.formatDate(s.date);
+		case 1:
+			return Common.stringValue(s.closingBalance);
+		case 2:
+			return Common.stringValue(s.cashBalance);
+		case 3:
+			return Common.stringValue(s.getCredits());
+		case 4:
+			return Common.stringValue(s.getDebits());
+		case 5:
+			return Integer.toString(s.transactions.size());
+		}
+
+		return null;
 	}
 
 	// public Class getColumnClass(int c) {
