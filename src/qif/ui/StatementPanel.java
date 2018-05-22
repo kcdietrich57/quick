@@ -45,7 +45,6 @@ public class StatementPanel extends JScrollPane {
 		statementTable.setFillsViewportHeight(true);
 		statementTableModel = (StatementTableModel) statementTable.getModel();
 
-		// Account table column widths
 		TableColumnModel statColumnModel = statementTable.getColumnModel();
 
 		int swidths[] = { 70, 90, 90, 90, 90, 50 };
@@ -120,7 +119,7 @@ public class StatementPanel extends JScrollPane {
 						statementTable.getRowCount() - 1, 0, true);
 				statementTable.scrollRectToVisible(lastRow);
 
-				int firstvrow = getFirstVisibleStatementRow();
+				// int firstvrow = getFirstVisibleStatementRow();
 				// System.out.println("fvr=" + firstvrow);
 			}
 		});
@@ -160,16 +159,10 @@ public class StatementPanel extends JScrollPane {
 		}
 
 		Date d = statementTableModel.getDate(iSelectedIndex);
-		// String dstr = (d != null) ? Common.formatDate(d) : "";
-		// transactionTableModel.setStatementDate(d);
 
 		Account a = statementTableModel.getAccount();
-		Statement s = a.getStatement(d);
+		Statement s = (a != null) ? a.getStatement(d) : null;
 
 		statementDetails.setStatement(s);
 	}
-
-	// public void setSelectedAccount(Account acct) {
-	// this.transactionTableModel.setAccount(acct);
-	// }
 }

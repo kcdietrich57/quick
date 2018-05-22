@@ -31,8 +31,6 @@ public class StatementDetailsPanel extends JPanel {
 	public StatementDetailsPanel() {
 		setLayout(new BorderLayout());
 
-		setBorder(BorderFactory.createLineBorder(Color.RED));
-
 		JPanel infoPanel = new JPanel(new GridBagLayout());
 
 		GridBagConstraints gbc = new GridBagConstraints();

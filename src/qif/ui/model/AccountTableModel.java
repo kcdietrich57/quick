@@ -22,6 +22,8 @@ public class AccountTableModel extends AbstractTableModel {
 		QifDom dom = QifDom.getDomById(1);
 		List<Account> accts = dom.getSortedAccounts();
 
+		this.accounts.clear();
+
 		for (Account a : accts) {
 			if (a != null && a.isClosedAsOf(null) != showOpenAccounts) {
 				accounts.add(a);

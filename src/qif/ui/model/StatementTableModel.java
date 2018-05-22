@@ -25,7 +25,7 @@ public class StatementTableModel extends AbstractTableModel {
 			"Debits", //
 			"NumTx" };
 
-	List<Statement> statments = new ArrayList<Statement>();
+	List<Statement> statements = new ArrayList<Statement>();
 
 	public Account getAccount() {
 		return this.curAccount;
@@ -42,7 +42,11 @@ public class StatementTableModel extends AbstractTableModel {
 
 		Account a = (Account) curAccount;
 
-		statments = new ArrayList<Statement>(a.statements);
+		if (a != null) {
+			statements = new ArrayList<Statement>(a.statements);
+		} else {
+			statements.clear();
+		}
 
 		fireTableDataChanged();
 	}
@@ -58,7 +62,7 @@ public class StatementTableModel extends AbstractTableModel {
 	}
 
 	public int getRowCount() {
-		return statments.size();
+		return statements.size();
 	}
 
 	public String getColumnName(int col) {
@@ -66,11 +70,11 @@ public class StatementTableModel extends AbstractTableModel {
 	}
 
 	public Object getValueAt(int row, int col) {
-		if (row < 0 || col < 0 || col >= columnNames.length || row >= statments.size()) {
+		if (row < 0 || col < 0 || col >= columnNames.length || row >= statements.size()) {
 			return null;
 		}
 
-		Statement s = statments.get(row);
+		Statement s = statements.get(row);
 
 		switch (col) {
 		case 0:

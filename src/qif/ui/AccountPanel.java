@@ -45,8 +45,10 @@ public class AccountPanel extends JScrollPane {
 
 	private boolean showOpenAccounts = true;
 
-	public AccountPanel() {
+	public AccountPanel(boolean showOpenAccounts) {
 		super(new JTable(new AccountTableModel()));
+
+		this.showOpenAccounts = showOpenAccounts;
 
 		accountTable = (JTable) getViewport().getView();
 		accountTable.setFillsViewportHeight(true);
@@ -71,6 +73,22 @@ public class AccountPanel extends JScrollPane {
 				});
 
 		setActions();
+	}
+
+	public void showOpenAccounts() {
+		if (!this.showOpenAccounts) {
+			this.showOpenAccounts = true;
+
+			accountTableModel.load(showOpenAccounts);
+		}
+	}
+
+	public void showClosedAccounts() {
+		if (this.showOpenAccounts) {
+			this.showOpenAccounts = false;
+
+			accountTableModel.load(showOpenAccounts);
+		}
 	}
 
 	public String getSelectedAcccountName() {
@@ -148,7 +166,7 @@ public class AccountPanel extends JScrollPane {
 		}
 
 		String acctname = (String) accountTableModel.getValueAt(iSelectedIndex, 0);
-		Account acct = QifDom.getDomById(1).findAccount(acctname);
+		Account acct = (acctname != null) ? QifDom.getDomById(1).findAccount(acctname) : null;
 
 		setSelectedAccount(acct);
 	}

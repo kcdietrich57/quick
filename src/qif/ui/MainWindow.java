@@ -1,7 +1,6 @@
 package qif.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Button;
 import java.awt.Dimension;
 
 import javax.swing.JButton;
@@ -55,7 +54,7 @@ public class MainWindow extends JPanel {
 	private JSplitPane accountViewSplit;
 
 	JButton dashboardPanel;
-	AccountPanel accountPanel;
+	AccountNavigationPanel accountNavigationPanel;
 	StatementPanel statementPanel;
 	TransactionPanel transactionPanel;
 	StatementDetailsPanel statementDetails;
@@ -72,13 +71,13 @@ public class MainWindow extends JPanel {
 	public MainWindow() {
 		super(new BorderLayout());
 
-		accountPanel = new AccountPanel();
+		accountNavigationPanel = new AccountNavigationPanel();
 
 		statementPanel = new StatementPanel();
-		this.accountPanel.statementTableModel = statementPanel.statementTableModel;
+		this.accountNavigationPanel.accountPanel.statementTableModel = statementPanel.statementTableModel;
 
 		transactionPanel = new TransactionPanel(true);
-		this.accountPanel.transactionTableModel = transactionPanel.transactionTableModel;
+		this.accountNavigationPanel.accountPanel.transactionTableModel = transactionPanel.transactionTableModel;
 
 		statementDetails = new StatementDetailsPanel();
 		this.statementPanel.statementDetails = statementDetails;
@@ -94,7 +93,7 @@ public class MainWindow extends JPanel {
 		acctsTabs.addTab("Register View", transactionPanel);
 		acctsTabs.add("Statement View", statementViewSplit);
 
-		accountViewSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, accountPanel, acctsTabs);
+		accountViewSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, accountNavigationPanel, acctsTabs);
 		accountViewSplit.setPreferredSize(new Dimension(1200, 800));
 
 		JTabbedPane topTabs = new JTabbedPane();

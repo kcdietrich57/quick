@@ -611,13 +611,17 @@ public class QifDom {
 	}
 
 	public static class Balances {
-		BigDecimal netWorth = BigDecimal.ZERO;
-		BigDecimal assets = BigDecimal.ZERO;
-		BigDecimal liabilities = BigDecimal.ZERO;
+		public BigDecimal netWorth = BigDecimal.ZERO;
+		public BigDecimal assets = BigDecimal.ZERO;
+		public BigDecimal liabilities = BigDecimal.ZERO;
 	}
 
 	public Balances getNetWorthForDate(Date d) {
 		final Balances b = new Balances();
+
+		if (d == null) {
+			d = new Date();
+		}
 
 		for (final Account a : this.accounts) {
 			if (a != null) {
