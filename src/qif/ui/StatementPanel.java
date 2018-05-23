@@ -1,5 +1,11 @@
 package qif.ui;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -8,8 +14,11 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.Date;
 
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -27,23 +36,41 @@ import javax.swing.table.TableColumnModel;
 import qif.data.Account;
 import qif.data.Statement;
 import qif.ui.model.StatementTableModel;
-import qif.ui.model.TransactionTableModel;
 
-public class StatementPanel extends JScrollPane {
+public class StatementPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
 
 	public StatementTableModel statementTableModel;
-	public TransactionTableModel transactionTableModel;
-	public JTable statementTable;
+	private JTable statementTable;
+	private JScrollPane scroller;
 
 	public StatementDetailsPanel statementDetails;
 
 	public StatementPanel() {
-		super(new JTable(new StatementTableModel()));
+		setLayout(new BorderLayout());
 
-		statementTable = (JTable) getViewport().getView();
+		JPanel titlePanel = new JPanel(new GridBagLayout());
+		titlePanel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));
+
+		JLabel title = new JLabel("Statements");
+		title.setFont(new Font("Helvetica", Font.BOLD, 14));
+		title.setForeground(Color.DARK_GRAY);
+
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.fill = GridBagConstraints.BOTH;
+		gbc.insets = new Insets(3, 3, 3, 3);
+		titlePanel.add(title, gbc);
+
+		add(titlePanel, BorderLayout.NORTH);
+
+		statementTableModel = new StatementTableModel();
+		statementTable = new JTable(statementTableModel);
+		this.scroller = new JScrollPane(this.statementTable);
 		statementTable.setFillsViewportHeight(true);
-		statementTableModel = (StatementTableModel) statementTable.getModel();
+
+		add(this.scroller, BorderLayout.CENTER);
 
 		TableColumnModel statColumnModel = statementTable.getColumnModel();
 
@@ -136,7 +163,7 @@ public class StatementPanel extends JScrollPane {
 	}
 
 	int getFirstVisibleStatementRow() {
-		JViewport viewport = getViewport();
+		JViewport viewport = this.scroller.getViewport();
 		Point p = viewport.getViewPosition();
 		int rowIndex = statementTable.rowAtPoint(p);
 

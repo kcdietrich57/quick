@@ -2,13 +2,14 @@ package qif.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSeparator;
 
 import qif.data.Common;
 import qif.data.QifDom;
@@ -31,33 +32,45 @@ public class StatementDetailsPanel extends JPanel {
 	public StatementDetailsPanel() {
 		setLayout(new BorderLayout());
 
-		JPanel infoPanel = new JPanel(new GridBagLayout());
+		JPanel infoPanel = new JPanel(new BorderLayout());
+		JPanel infoPanel2 = new JPanel(new GridBagLayout());
+		infoPanel2.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+		infoPanel.setBorder(BorderFactory.createLineBorder(new Color(16, 16, 16)));
+
+		Font bfont = new Font("Helvetica", Font.BOLD, 16);
+		Font font = new Font("Helvetica", Font.PLAIN, 16);
 
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.fill = GridBagConstraints.BOTH;
-		dateLabel.setBorder(BorderFactory.createRaisedBevelBorder());
-		infoPanel.add(dateLabel, gbc);
+		gbc.insets = new Insets(3, 5, 3, 5);
+		acctLabel.setFont(bfont);
+		infoPanel2.add(acctLabel, gbc);
 
 		gbc.gridx = 1;
-		date.setBorder(BorderFactory.createRaisedBevelBorder());
-		infoPanel.add(date, gbc);
+		acct.setFont(font);
+		infoPanel2.add(acct, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 1;
-		infoPanel.add(acctLabel, gbc);
+		dateLabel.setFont(bfont);
+		infoPanel2.add(dateLabel, gbc);
 
 		gbc.gridx = 1;
-		infoPanel.add(acct, gbc);
+		date.setFont(font);
+		infoPanel2.add(date, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 2;
-		infoPanel.add(ntxLabel, gbc);
+		ntxLabel.setFont(bfont);
+		infoPanel2.add(ntxLabel, gbc);
 
 		gbc.gridx = 1;
-		infoPanel.add(ntx, gbc);
+		ntx.setFont(font);
+		infoPanel2.add(ntx, gbc);
 
+		infoPanel.add(infoPanel2, BorderLayout.WEST);
 		add(infoPanel, BorderLayout.NORTH);
 
 		transactionPanel = new TransactionPanel(false);
