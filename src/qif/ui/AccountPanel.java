@@ -1,6 +1,7 @@
 package qif.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -26,6 +27,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import qif.data.Account;
@@ -57,10 +59,25 @@ public class AccountPanel extends JScrollPane {
 
 		TableColumnModel acctColumnModel = accountTable.getColumnModel();
 
-		int awidths[] = { 170, 35, 70 };
+		int awidths[] = { 170, 35, 50 };
 		for (int i = 0; i < awidths.length; i++) {
 			acctColumnModel.getColumn(i).setPreferredWidth(awidths[i]);
 		}
+
+		acctColumnModel.getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
+			private static final long serialVersionUID = 1L;
+
+			{
+				setHorizontalAlignment(JLabel.RIGHT);
+			}
+
+			public Component getTableCellRendererComponent(//
+					JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+				Component c = super.getTableCellRendererComponent(//
+						table, value, isSelected, hasFocus, row, col);
+				return c;
+			}
+		});
 
 		ListSelectionModel accountSelectionModel = accountTable.getSelectionModel();
 		accountSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

@@ -166,6 +166,16 @@ public class Common {
 		return String.format("%10.2f", amt);
 	}
 
+	public static String formatAmount0(BigDecimal amt) {
+		if (amt == null) {
+			return "null";
+		}
+
+		String s = String.format("%,10.0f", amt);
+		System.out.println("'" + s + "'");
+		return s;
+	}
+
 	public static String formatAmount3(BigDecimal amt) {
 		if (amt == null) {
 			return "null";

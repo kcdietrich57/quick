@@ -61,7 +61,7 @@ public class AccountTableModel extends AbstractTableModel {
 		case 1:
 			return a.type.toString();
 		case 2:
-			return Common.formatAmount(a.balance);
+			return Common.formatAmount0(a.balance);
 		}
 
 		return null;
