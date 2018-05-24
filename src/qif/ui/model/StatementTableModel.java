@@ -85,9 +85,11 @@ public class StatementTableModel extends AbstractTableModel {
 		case 2:
 			return Common.stringValue(s.cashBalance);
 		case 3:
-			return (s.holdings != null) //
-					? s.holdings.getPortfolioValueForDate(null) //
-					: null;
+			if (s.holdings != null && !s.holdings.positions.isEmpty()) {
+				return Common.formatAmount(s.holdings.getPortfolioValueForDate(s.date));
+			} else {
+				return "";
+			}
 		case 4:
 			return Common.stringValue(s.getCredits());
 		case 5:

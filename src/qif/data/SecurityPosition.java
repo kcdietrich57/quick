@@ -70,6 +70,10 @@ class SecurityPosition {
 	}
 
 	public BigDecimal getSecurityPositionValueForDate(Date d) {
+		if (this.transactions.isEmpty()) {
+			return this.shares.multiply(this.security.getPriceForDate(d).price);
+		}
+
 		final int idx = getTransactionIndexForDate(d);
 		if (idx < 0) {
 			return BigDecimal.ZERO;
