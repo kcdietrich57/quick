@@ -31,8 +31,8 @@ public class TransactionPanel extends JPanel {
 
 	boolean showCleared = false;
 
-	public TransactionPanel(boolean showCleared) {
-		this.showCleared = showCleared;
+	public TransactionPanel(boolean highlighting) {
+		this.showCleared = highlighting;
 
 		setLayout(new BorderLayout());
 
@@ -60,25 +60,25 @@ public class TransactionPanel extends JPanel {
 
 		transactionTable.setFillsViewportHeight(true);
 
-		if (this.showCleared) {
-			transactionTable.setDefaultRenderer(Object.class, new TransactionTableCellRenderer());
-		}
+		transactionTable.setDefaultRenderer(Object.class, new TransactionTableCellRenderer(highlighting));
 
 		TableColumnModel tranColumnModel = transactionTable.getColumnModel();
 
-		int twidths[] = { 70, 100, 90, 90, 110, 90 };
+		int twidths[] = { 60, 50, 100, 80, 80, 90, 90 };
+
 		for (int i = 0; i < twidths.length; i++) {
 			switch (i) {
 			case 0:
-			case 2:
-			case 5:
+			case 1:
+			case 3:
+			case 6:
 				tranColumnModel.getColumn(i).setMinWidth(twidths[i]);
 				tranColumnModel.getColumn(i).setMaxWidth(twidths[i]);
 				break;
 
-			case 1:
-			case 3:
+			case 2:
 			case 4:
+			case 5:
 				tranColumnModel.getColumn(i).setMinWidth(twidths[i]);
 				break;
 
@@ -112,6 +112,12 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 	private static Color clearedBackground = new Color(240, 240, 240);
 	private static Color unclearedBackground = Color.WHITE;
 
+	private boolean highlighting;
+
+	public TransactionTableCellRenderer(boolean highlighting) {
+		this.highlighting = highlighting;
+	}
+
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
 			int row, int col) {
 		Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
@@ -120,10 +126,10 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 		GenericTxn tx = model.getTransactionAt(row);
 
 		Date now = new Date();
-		boolean bold = (tx != null && tx.isCleared());
-		boolean future = (tx != null && tx.getDate().compareTo(now) > 0);
+		boolean cleared = (this.highlighting && tx != null && tx.isCleared());
+		boolean future = (this.highlighting && tx != null && tx.getDate().compareTo(now) > 0);
 
-		if (bold) {
+		if (cleared) {
 			c.setFont(boldFont);
 			c.setForeground(presentColor);
 			c.setBackground(clearedBackground);

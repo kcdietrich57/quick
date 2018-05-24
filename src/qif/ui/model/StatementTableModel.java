@@ -21,6 +21,7 @@ public class StatementTableModel extends AbstractTableModel {
 			"Date", //
 			"Balance", //
 			"Cash", //
+			"Securities", //
 			"Credits", //
 			"Debits", //
 			"NumTx" };
@@ -84,10 +85,14 @@ public class StatementTableModel extends AbstractTableModel {
 		case 2:
 			return Common.stringValue(s.cashBalance);
 		case 3:
-			return Common.stringValue(s.getCredits());
+			return (s.holdings != null) //
+					? s.holdings.getPortfolioValueForDate(null) //
+					: null;
 		case 4:
-			return Common.stringValue(s.getDebits());
+			return Common.stringValue(s.getCredits());
 		case 5:
+			return Common.stringValue(s.getDebits());
+		case 6:
 			return Integer.toString(s.transactions.size());
 		}
 

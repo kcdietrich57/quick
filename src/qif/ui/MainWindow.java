@@ -87,8 +87,7 @@ public class MainWindow extends JPanel {
 
 		JTabbedPane acctsTabs = new JTabbedPane();
 
-		statementViewSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, statementPanel, //new Button("FOOBAR"));
-				statementDetails);
+		statementViewSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, statementPanel, statementDetails);
 
 		acctsTabs.addTab("Register View", transactionPanel);
 		acctsTabs.add("Statement View", statementViewSplit);

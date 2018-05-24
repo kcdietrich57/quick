@@ -8,7 +8,7 @@ public class AccountPosition {
 	BigDecimal cashAfter;
 	SecurityPortfolio portBefore;
 	SecurityPortfolio portAfter;
-	
+
 	AccountPosition(Account a) {
 		this.acct = a;
 	}

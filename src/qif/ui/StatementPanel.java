@@ -74,7 +74,7 @@ public class StatementPanel extends JPanel {
 
 		TableColumnModel statColumnModel = statementTable.getColumnModel();
 
-		int swidths[] = { 70, 90, 90, 90, 90, 50 };
+		int swidths[] = { 70, 80, 80, 80, 80, 80, 40 };
 		for (int i = 0; i < swidths.length; i++) {
 			statColumnModel.getColumn(i).setMinWidth(swidths[i]);
 			statColumnModel.getColumn(i).setMaxWidth(swidths[i]);

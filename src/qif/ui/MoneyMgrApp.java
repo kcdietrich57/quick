@@ -12,7 +12,7 @@ public class MoneyMgrApp {
 	public static void main(String[] args) {
 		MoneyMgrApp.scn = new Scanner(System.in);
 		MoneyMgrApp.dom = QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
-		
+
 		MainFrame.createUI();
 	}
 }

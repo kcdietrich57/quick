@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 
 // This can be global information, or for a single account or statement
-class SecurityPortfolio {
+public class SecurityPortfolio {
 	public List<SecurityPosition> positions;
 
 	public SecurityPortfolio() {

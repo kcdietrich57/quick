@@ -74,11 +74,11 @@ class NonInvestmentTxn extends GenericTxn {
 
 	public String toStringShort(boolean veryshort) {
 
-		return (veryshort)
+		return (veryshort) //
 				? String.format("%s %s  %s", //
 						Common.formatDateShort(getDate()), //
 						Common.formatAmount(getAmount()), //
-						getPayee())
+						getPayee()) //
 				: String.format("%s %s %5s %s %s", //
 						((this.stmtdate != null) ? "*" : " "), //
 						Common.formatDate(getDate()), //

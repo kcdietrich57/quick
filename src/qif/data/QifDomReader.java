@@ -288,8 +288,8 @@ public class QifDomReader {
 		this.filerdr.reset();
 
 		for (SectionType sectype = this.filerdr.findFirstSection(); //
-		sectype != SectionType.EndOfFile; //
-		sectype = this.filerdr.nextSection()) {
+				sectype != SectionType.EndOfFile; //
+				sectype = this.filerdr.nextSection()) {
 			switch (sectype) {
 			case Tag:
 			case Category:
@@ -392,17 +392,17 @@ public class QifDomReader {
 				cat.description = qline.value;
 				break;
 			case CatTaxRelated:
-				//cat.taxRelated = Common.parseBoolean(qline.value);
+				// cat.taxRelated = Common.parseBoolean(qline.value);
 				break;
 			case CatIncomeCategory:
 				cat.expenseCategory = !Common.parseBoolean(qline.value);
-				//cat.incomeCategory = Common.parseBoolean(qline.value);
+				// cat.incomeCategory = Common.parseBoolean(qline.value);
 				break;
 			case CatExpenseCategory:
 				cat.expenseCategory = Common.parseBoolean(qline.value);
 				break;
 			case CatBudgetAmount:
-				//cat.budgetAmount = Common.getDecimal(qline.value);
+				// cat.budgetAmount = Common.getDecimal(qline.value);
 				break;
 			case CatTaxSchedule:
 				break;
@@ -544,7 +544,8 @@ public class QifDomReader {
 		}
 
 		if (symbol == null) {
-			//Common.reportWarning("Security '" + name + "' does not specify a ticker symbol.");
+			// Common.reportWarning("Security '" + name + //
+			// "' does not specify a ticker symbol.");
 		}
 
 		final Security security = new Security(symbol);

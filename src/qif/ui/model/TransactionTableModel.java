@@ -22,6 +22,7 @@ public class TransactionTableModel extends AbstractTableModel {
 
 	String[] columnNames = { //
 			"Date", //
+			"Type", //
 			"Payee", //
 			"Amount", //
 			"Category", //
@@ -119,10 +120,12 @@ public class TransactionTableModel extends AbstractTableModel {
 		case 0:
 			return Common.formatDate(tx.getDate());
 		case 1:
-			return Common.stringValue(tx.getPayee());
+			return tx.getAction().toString();
 		case 2:
+			return Common.stringValue(tx.getPayee());
+		case 3:
 			return Common.stringValue(tx.getAmount());
-		case 3: {
+		case 4: {
 			QifDom dom = QifDom.getDomById(1);
 
 			if (tx.catid > 0) {
@@ -135,9 +138,9 @@ public class TransactionTableModel extends AbstractTableModel {
 
 			return "";
 		}
-		case 4:
-			return Common.stringValue(tx.memo);
 		case 5:
+			return Common.stringValue(tx.memo);
+		case 6:
 			return Common.stringValue(tx.runningTotal);
 		}
 

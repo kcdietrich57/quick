@@ -57,7 +57,7 @@ public class AccountPanel extends JScrollPane {
 
 		TableColumnModel acctColumnModel = accountTable.getColumnModel();
 
-		int awidths[] = { 170, 40, 70 };
+		int awidths[] = { 170, 35, 70 };
 		for (int i = 0; i < awidths.length; i++) {
 			acctColumnModel.getColumn(i).setPreferredWidth(awidths[i]);
 		}

@@ -117,14 +117,13 @@ public class QPrice {
 		return s + "\n";
 	}
 
-/*	public String toString() {
-		final String s = "Price: " + this.symbol //
-				+ " date=" + this.date //
-				+ " price=" + this.price //
-				+ " splitAdjusted=" + this.splitAdjustedPrice //
-				+ "\n";
-
-		return s;
-	}
-*/
+	// public String toString() {
+	// final String s = "Price: " + this.symbol //
+	// + " date=" + this.date //
+	// + " price=" + this.price //
+	// + " splitAdjusted=" + this.splitAdjustedPrice //
+	// + "\n";
+	//
+	// return s;
+	// }
 }

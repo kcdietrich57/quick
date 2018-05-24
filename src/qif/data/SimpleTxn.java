@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-class SimpleTxn {
+public class SimpleTxn {
 	private static final List<SimpleTxn> NOSPLITS = new ArrayList<SimpleTxn>();
 	static int cashok = 0;
 	static int cashbad = 0;
@@ -56,7 +56,7 @@ class SimpleTxn {
 	}
 
 	public TxAction getAction() {
-		return TxAction.OTHER;
+		return TxAction.CASH;
 	}
 
 	public boolean hasSplits() {
