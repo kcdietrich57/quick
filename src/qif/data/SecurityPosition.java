@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-class SecurityPosition {
+public class SecurityPosition {
 	public Security security;
 	public BigDecimal shares;
 

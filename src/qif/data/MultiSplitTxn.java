@@ -8,7 +8,7 @@ import java.util.List;
 // transferring from another account. The other account may have a single
 // entry that corresponds to more than one split in the other account.
 // N.B. Alternatively, we could merge the splits into one.
-class MultiSplitTxn extends SimpleTxn {
+public class MultiSplitTxn extends SimpleTxn {
 	public List<SimpleTxn> subsplits = new ArrayList<SimpleTxn>();
 
 	public MultiSplitTxn(int domid, int acctid) {

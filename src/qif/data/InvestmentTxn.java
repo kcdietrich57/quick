@@ -3,7 +3,7 @@ package qif.data;
 import java.math.BigDecimal;
 import java.util.List;
 
-class InvestmentTxn extends GenericTxn {
+public class InvestmentTxn extends GenericTxn {
 	public TxAction action;
 	public Security security;
 	public BigDecimal price;

@@ -9,6 +9,7 @@ import javax.swing.table.AbstractTableModel;
 import qif.data.Account;
 import qif.data.Common;
 import qif.data.GenericTxn;
+import qif.data.InvestmentTxn;
 import qif.data.QifDom;
 import qif.data.Statement;
 
@@ -119,12 +120,24 @@ public class TransactionTableModel extends AbstractTableModel {
 		switch (col) {
 		case 0:
 			return Common.formatDate(tx.getDate());
+
 		case 1:
 			return tx.getAction().toString();
+
 		case 2:
+			if (tx instanceof InvestmentTxn) {
+				InvestmentTxn itx = (InvestmentTxn) tx;
+
+				if (itx.security != null) {
+					return itx.security.getName();
+				}
+			}
+
 			return Common.stringValue(tx.getPayee());
+
 		case 3:
 			return Common.stringValue(tx.getAmount());
+
 		case 4: {
 			QifDom dom = QifDom.getDomById(1);
 
@@ -132,14 +145,24 @@ public class TransactionTableModel extends AbstractTableModel {
 				return dom.getCategory(tx.catid).name;
 			}
 
+			int acctid = 0;
+
 			if (tx.catid < 0) {
-				return "[" + dom.getAccount(-tx.catid).getName() + "]";
+				acctid = -tx.catid;
+			} else if (tx instanceof InvestmentTxn) {
+				acctid = ((InvestmentTxn) tx).getXferAcctid();
+			}
+
+			if (acctid > 0) {
+				return "[" + dom.getAccount(acctid).getName() + "]";
 			}
 
 			return "";
 		}
+
 		case 5:
 			return Common.stringValue(tx.memo);
+
 		case 6:
 			return Common.stringValue(tx.runningTotal);
 		}

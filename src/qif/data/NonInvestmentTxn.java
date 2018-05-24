@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-class NonInvestmentTxn extends GenericTxn {
+public class NonInvestmentTxn extends GenericTxn {
 	public enum TransactionType {
 		Check, Deposit, Payment, Investment, ElectronicPayee
 	};
