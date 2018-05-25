@@ -143,6 +143,11 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 			c.setBackground(unclearedBackground);
 		}
 
+		if (col == 3 || col == 6) {
+			setHorizontalAlignment(JLabel.RIGHT);
+		} else {
+			setHorizontalAlignment(JLabel.LEFT);
+		}
 		return c;
 	}
 }

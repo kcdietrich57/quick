@@ -51,4 +51,27 @@ public enum AccountType { //
 		Common.reportError("Unknown account type: " + s);
 		return AccountType.Bank;
 	}
+
+	public String toString() {
+		switch (this) {
+		case Cash:
+			return "CSH";
+		case Bank:
+			return "BNK";
+		case Asset:
+			return "AST";
+		case Invest:
+		case InvPort:
+		case InvMutual:
+			return "INV";
+		case Inv401k:
+			return "RET";
+		case CCard:
+			return "CCD";
+		case Liability:
+			return "LIA";
+		default:
+			return "---";
+		}
+	}
 }

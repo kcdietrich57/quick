@@ -171,9 +171,7 @@ public class Common {
 			return "null";
 		}
 
-		String s = String.format("%,10.0f", amt);
-		System.out.println("'" + s + "'");
-		return s;
+		return String.format("%,10.0f", amt);
 	}
 
 	public static String formatAmount3(BigDecimal amt) {

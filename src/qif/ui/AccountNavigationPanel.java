@@ -28,7 +28,7 @@ public class AccountNavigationPanel extends JPanel {
 	JButton openButton = new JButton("Open Accounts");
 	JButton closedButton = new JButton("Closed Accounts");
 
-	AccountPanel accountPanel;
+	AccountListPanel accountPanel;
 
 	public AccountNavigationPanel() {
 		setLayout(new BorderLayout());
@@ -47,7 +47,7 @@ public class AccountNavigationPanel extends JPanel {
 
 		add(controlsPanel, BorderLayout.NORTH);
 
-		accountPanel = new AccountPanel(true);
+		accountPanel = new AccountListPanel(true);
 
 		add(accountPanel, BorderLayout.CENTER);
 

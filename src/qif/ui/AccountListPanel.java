@@ -36,7 +36,7 @@ import qif.ui.model.AccountTableModel;
 import qif.ui.model.StatementTableModel;
 import qif.ui.model.TransactionTableModel;
 
-public class AccountPanel extends JScrollPane {
+public class AccountListPanel extends JScrollPane {
 	private static final long serialVersionUID = 1L;
 
 	private AccountTableModel accountTableModel;
@@ -47,7 +47,7 @@ public class AccountPanel extends JScrollPane {
 
 	private boolean showOpenAccounts = true;
 
-	public AccountPanel(boolean showOpenAccounts) {
+	public AccountListPanel(boolean showOpenAccounts) {
 		super(new JTable(new AccountTableModel()));
 
 		this.showOpenAccounts = showOpenAccounts;
@@ -59,7 +59,7 @@ public class AccountPanel extends JScrollPane {
 
 		TableColumnModel acctColumnModel = accountTable.getColumnModel();
 
-		int awidths[] = { 170, 35, 50 };
+		int awidths[] = { 170, 20, 50 };
 		for (int i = 0; i < awidths.length; i++) {
 			acctColumnModel.getColumn(i).setPreferredWidth(awidths[i]);
 		}

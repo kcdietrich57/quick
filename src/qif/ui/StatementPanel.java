@@ -31,6 +31,7 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import qif.data.Account;
@@ -83,6 +84,47 @@ public class StatementPanel extends JPanel {
 		ListSelectionModel statementSelectionModel = statementTable.getSelectionModel();
 		statementSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
+		TableColumnModel stmtColumnModel = statementTable.getColumnModel();
+		stmtColumnModel.getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
+			private static final long serialVersionUID = 1L;
+
+			{
+				setHorizontalAlignment(JLabel.RIGHT);
+			}
+		});
+
+		stmtColumnModel.getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
+			private static final long serialVersionUID = 1L;
+
+			{
+				setHorizontalAlignment(JLabel.RIGHT);
+			}
+		});
+
+		stmtColumnModel.getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
+			private static final long serialVersionUID = 1L;
+
+			{
+				setHorizontalAlignment(JLabel.RIGHT);
+			}
+		});
+
+		stmtColumnModel.getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
+			private static final long serialVersionUID = 1L;
+
+			{
+				setHorizontalAlignment(JLabel.RIGHT);
+			}
+		});
+
+		stmtColumnModel.getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
+			private static final long serialVersionUID = 1L;
+
+			{
+				setHorizontalAlignment(JLabel.RIGHT);
+			}
+		});
+		
 		statementSelectionModel.addListSelectionListener( //
 				new ListSelectionListener() {
 					public void valueChanged(ListSelectionEvent e) {
