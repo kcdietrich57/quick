@@ -12,7 +12,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -38,17 +39,19 @@ import qif.data.Account;
 import qif.data.Statement;
 import qif.ui.model.StatementTableModel;
 
-public class StatementPanel extends JPanel {
+public class StatementPanel extends JPanel implements AccountSelectionListener {
 	private static final long serialVersionUID = 1L;
 
 	public StatementTableModel statementTableModel;
 	private JTable statementTable;
 	private JScrollPane scroller;
 
-	public StatementDetailsPanel statementDetails;
+	private List<StatementSelectionListener> stmtSelListeners;
 
 	public StatementPanel() {
 		setLayout(new BorderLayout());
+
+		stmtSelListeners = new ArrayList<StatementSelectionListener>();
 
 		JPanel titlePanel = new JPanel(new GridBagLayout());
 		titlePanel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));
@@ -64,13 +67,12 @@ public class StatementPanel extends JPanel {
 		gbc.insets = new Insets(3, 3, 3, 3);
 		titlePanel.add(title, gbc);
 
-		add(titlePanel, BorderLayout.NORTH);
-
 		statementTableModel = new StatementTableModel();
 		statementTable = new JTable(statementTableModel);
 		this.scroller = new JScrollPane(this.statementTable);
 		statementTable.setFillsViewportHeight(true);
 
+		add(titlePanel, BorderLayout.NORTH);
 		add(this.scroller, BorderLayout.CENTER);
 
 		TableColumnModel statColumnModel = statementTable.getColumnModel();
@@ -124,24 +126,49 @@ public class StatementPanel extends JPanel {
 				setHorizontalAlignment(JLabel.RIGHT);
 			}
 		});
-		
+
 		statementSelectionModel.addListSelectionListener( //
 				new ListSelectionListener() {
 					public void valueChanged(ListSelectionEvent e) {
-						// selectAccountHandler(e);
+						selectStatementHandler(e);
 					}
 				});
 
 		setActions();
+		addContextMenu();
+	}
+
+	public void addStatementSelectionListener(StatementSelectionListener listener) {
+		this.stmtSelListeners.add(listener);
+	}
+
+	public void accountSelected(Account account) {
+		this.statementTableModel.setAccount(account);
 	}
 
 	private void setActions() {
 		this.statementTableModel.addTableModelListener(new TableModelListener() {
 			public void tableChanged(TableModelEvent e) {
-				statementTableModel.detailsPanel.setStatement(null);
+				for (StatementSelectionListener listener : stmtSelListeners) {
+					listener.statementSelected(null);
+				}
 			}
 		});
 
+		// Scroll to display the last (most recent) transaction
+		statementTable.addComponentListener(new ComponentAdapter() {
+			public void componentResized(ComponentEvent e) {
+				Rectangle lastRow = statementTable.getCellRect( //
+						statementTable.getRowCount() - 1, 0, true);
+				statementTable.scrollRectToVisible(lastRow);
+
+				// int firstvrow = getFirstVisibleStatementRow();
+				// System.out.println("fvr=" + firstvrow);
+			}
+		});
+	}
+	
+	private void addContextMenu() {
 		final JPopupMenu statPopupMenu = new JPopupMenu();
 		JMenuItem chooseStatItem = new JMenuItem("Choose Statement");
 
@@ -180,28 +207,6 @@ public class StatementPanel extends JPanel {
 				// TODO Auto-generated method stub
 			}
 		});
-
-		// Scroll to display the last (most recent) transaction
-		statementTable.addComponentListener(new ComponentAdapter() {
-			public void componentResized(ComponentEvent e) {
-				Rectangle lastRow = statementTable.getCellRect( //
-						statementTable.getRowCount() - 1, 0, true);
-				statementTable.scrollRectToVisible(lastRow);
-
-				// int firstvrow = getFirstVisibleStatementRow();
-				// System.out.println("fvr=" + firstvrow);
-			}
-		});
-
-		ListSelectionModel statementSelectionModel = statementTable.getSelectionModel();
-		statementSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-		statementSelectionModel.addListSelectionListener( //
-				new ListSelectionListener() {
-					public void valueChanged(ListSelectionEvent e) {
-						selectStatementHandler(e);
-					}
-				});
 	}
 
 	int getFirstVisibleStatementRow() {
@@ -216,22 +221,22 @@ public class StatementPanel extends JPanel {
 		if (e.getValueIsAdjusting())
 			return;
 
-		String strSource = e.getSource().toString();
-		int start = strSource.indexOf("{") + 1;
-		int stop = strSource.length() - 1;
-		int iSelectedIndex = -1;
+		int selectedRow = -1;
 
 		try {
-			iSelectedIndex = Integer.parseInt(strSource.substring(start, stop));
+			String strSource = e.getSource().toString();
+			int start = strSource.indexOf("{") + 1;
+			int stop = strSource.length() - 1;
+
+			selectedRow = Integer.parseInt(strSource.substring(start, stop));
 		} catch (Exception e2) {
 
 		}
 
-		Date d = statementTableModel.getDate(iSelectedIndex);
+		Statement s = statementTableModel.getStatementAt(selectedRow);
 
-		Account a = statementTableModel.getAccount();
-		Statement s = (a != null) ? a.getStatement(d) : null;
-
-		statementDetails.setStatement(s);
+		for (StatementSelectionListener l : this.stmtSelListeners) {
+			l.statementSelected(s);
+		}
 	}
 }

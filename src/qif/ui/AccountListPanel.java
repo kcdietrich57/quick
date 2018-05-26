@@ -1,26 +1,18 @@
 package qif.ui;
 
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.InputMap;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
-import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
@@ -31,10 +23,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import qif.data.Account;
-import qif.data.QifDom;
 import qif.ui.model.AccountTableModel;
-import qif.ui.model.StatementTableModel;
-import qif.ui.model.TransactionTableModel;
 
 public class AccountListPanel extends JScrollPane {
 	private static final long serialVersionUID = 1L;
@@ -42,14 +31,14 @@ public class AccountListPanel extends JScrollPane {
 	private AccountTableModel accountTableModel;
 	private JTable accountTable;
 
-	public TransactionTableModel transactionTableModel;
-	public StatementTableModel statementTableModel;
-	public JButton acctInfoPanel;
-
 	private boolean showOpenAccounts = true;
+
+	private List<AccountSelectionListener> acctSelListeners;
 
 	public AccountListPanel(boolean showOpenAccounts) {
 		super(new JTable(new AccountTableModel()));
+
+		acctSelListeners = new ArrayList<AccountSelectionListener>();
 
 		this.showOpenAccounts = showOpenAccounts;
 
@@ -82,7 +71,6 @@ public class AccountListPanel extends JScrollPane {
 
 		ListSelectionModel accountSelectionModel = accountTable.getSelectionModel();
 		accountSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
 		accountSelectionModel.addListSelectionListener( //
 				new ListSelectionListener() {
 					public void valueChanged(ListSelectionEvent e) {
@@ -90,49 +78,63 @@ public class AccountListPanel extends JScrollPane {
 					}
 				});
 
-		setActions();
+		createContextMenu();
 	}
 
-	public void showOpenAccounts() {
-		if (!this.showOpenAccounts) {
-			this.showOpenAccounts = true;
+	public void addAccountSelectionListener(AccountSelectionListener listener) {
+		this.acctSelListeners.add(listener);
+	}
 
-			accountTableModel.load(showOpenAccounts);
+	public void showOpenAccounts(boolean yesno) {
+		if (this.showOpenAccounts != yesno) {
+			this.showOpenAccounts = yesno;
+
+			accountTableModel.load(this.showOpenAccounts);
 		}
 	}
 
-	public void showClosedAccounts() {
-		if (this.showOpenAccounts) {
-			this.showOpenAccounts = false;
+	protected void selectAccountHandler(ListSelectionEvent e) {
+		if (e.getValueIsAdjusting()) {
+			return;
+		}
 
-			accountTableModel.load(showOpenAccounts);
+		int selectedRow = -1;
+
+		try {
+			String strSource = e.getSource().toString();
+			int start = strSource.indexOf("{") + 1;
+			int stop = strSource.length() - 1;
+
+			selectedRow = Integer.parseInt(strSource.substring(start, stop));
+		} catch (Exception e2) {
+
+		}
+
+		Account acct = accountTableModel.getAccountAt(selectedRow);
+
+		for (AccountSelectionListener l : this.acctSelListeners) {
+			l.accountSelected(acct);
 		}
 	}
 
-	public String getSelectedAcccountName() {
-		int idx = accountTable.getSelectionModel().getMinSelectionIndex();
-		Object a = accountTableModel.getValueAt(idx, 0);
-
-		return a.toString();
-	}
-
-	private void setActions() {
+	private void createContextMenu() {
 		final JPopupMenu acctPopupMenu = new JPopupMenu();
 		JMenuItem chooseAcctItem = new JMenuItem("Choose Account");
 
 		chooseAcctItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				String aname = getSelectedAcccountName();
-				// int idx = accountTable.getSelectionModel().getMinSelectionIndex();
-				// Object a = accountTableModel.accountValues.get(idx)[0];
+				int idx = accountTable.getSelectionModel().getMinSelectionIndex();
+				Account a = accountTableModel.getAccountAt(idx);
+
+				String aname = (a != null) ? a.getName() : null;
 
 				// JOptionPane.showMessageDialog(MainFrame.frame, //
 				// "DELETE for account " + a.toString());
-
 				// JDialog dlg = new JDialog(MainFrame.frame, "Account Properties", false);
 				// dlg.setVisible(true);
 
-				ChooseAccountDialog dialog = new ChooseAccountDialog(new JFrame(), "Account Information", //
+				ChooseAccountDialog dialog = new ChooseAccountDialog(new JFrame(), //
+						"Account Information", //
 						"This is about account " + aname);
 
 				dialog.setSize(300, 150);
@@ -165,89 +167,5 @@ public class AccountListPanel extends JScrollPane {
 				// TODO Auto-generated method stub
 			}
 		});
-	}
-
-	protected void selectAccountHandler(ListSelectionEvent e) {
-		if (e.getValueIsAdjusting()) {
-			return;
-		}
-
-		String strSource = e.getSource().toString();
-		int start = strSource.indexOf("{") + 1;
-		int stop = strSource.length() - 1;
-		int iSelectedIndex = -1;
-
-		try {
-			iSelectedIndex = Integer.parseInt(strSource.substring(start, stop));
-		} catch (Exception e2) {
-
-		}
-
-		String acctname = (String) accountTableModel.getValueAt(iSelectedIndex, 0);
-		Account acct = (acctname != null) ? QifDom.dom.findAccount(acctname) : null;
-
-		setSelectedAccount(acct);
-	}
-
-	public void setSelectedAccount(Account acct) {
-		this.statementTableModel.setAccount(acct);
-		this.transactionTableModel.setAccount(acct);
-
-		this.acctInfoPanel.setText(acct.getName());
-	}
-}
-
-class ChooseAccountDialog extends JDialog {
-	private static final long serialVersionUID = 1L;
-
-	public ChooseAccountDialog(JFrame parent, String title, String message) {
-		super(parent, title);
-
-		Point p = new Point(400, 400);
-		setLocation(p.x, p.y);
-
-		JPanel messagePane = new JPanel();
-		messagePane.add(new JLabel(message));
-		getContentPane().add(messagePane);
-
-		JPanel buttonPane = new JPanel();
-		JButton button = new JButton("Close me");
-		buttonPane.add(button);
-
-		button.addActionListener(new MyActionListener());
-		getContentPane().add(buttonPane, BorderLayout.PAGE_END);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-
-		pack();
-		setVisible(true);
-	}
-
-	public JRootPane createRootPane() {
-		JRootPane rootPane = new JRootPane();
-		KeyStroke stroke = KeyStroke.getKeyStroke("ESCAPE");
-
-		Action action = new AbstractAction() {
-			private static final long serialVersionUID = 1L;
-
-			public void actionPerformed(ActionEvent e) {
-				System.out.println("escaping..");
-				setVisible(false);
-				dispose();
-			}
-		};
-
-		InputMap inputMap = rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-		inputMap.put(stroke, "ESCAPE");
-		rootPane.getActionMap().put("ESCAPE", action);
-
-		return rootPane;
-	}
-
-	class MyActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			System.out.println("disposing the window..");
-			setVisible(false);
-			dispose();
-		}
 	}
 }

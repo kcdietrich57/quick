@@ -14,15 +14,15 @@ import javax.swing.JPanel;
 import qif.data.Common;
 import qif.data.Statement;
 
-public class StatementDetailsPanel extends JPanel {
+public class StatementDetailsPanel //
+		extends JPanel //
+		implements StatementSelectionListener {
 	private static final long serialVersionUID = 1L;
 
 	Statement s;
 
-	JLabel dateLabel = new JLabel("Date:");
-	JLabel date = new JLabel("<date>");
-	JLabel ntxLabel = new JLabel("Number of transactions:");
-	JLabel ntx = new JLabel("<ntx>");
+	JLabel date;
+	JLabel ntx;
 
 	TransactionPanel transactionPanel;
 
@@ -33,6 +33,12 @@ public class StatementDetailsPanel extends JPanel {
 		JPanel infoPanel2 = new JPanel(new GridBagLayout());
 		infoPanel2.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 		infoPanel.setBorder(BorderFactory.createLineBorder(new Color(16, 16, 16)));
+
+		JLabel dateLabel = new JLabel("Date:");
+		JLabel ntxLabel = new JLabel("Number of transactions:");
+
+		date = new JLabel("<date>");
+		ntx = new JLabel("<ntx>");
 
 		Font bfont = new Font("Helvetica", Font.BOLD, 16);
 		Font font = new Font("Helvetica", Font.PLAIN, 16);
@@ -66,7 +72,11 @@ public class StatementDetailsPanel extends JPanel {
 		add(transactionPanel, BorderLayout.CENTER);
 	}
 
-	public void setStatement(Statement stmt) {
+	public void statementSelected(Statement statement) {
+		setStatement(statement);
+	}
+
+	private void setStatement(Statement stmt) {
 		if (stmt == null) {
 			date.setText("");
 			ntx.setText("");

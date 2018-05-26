@@ -12,8 +12,11 @@ import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
 import qif.data.QifDom;
 import qif.data.Statement;
+import qif.ui.AccountSelectionListener;
 
-public class TransactionTableModel extends AbstractTableModel {
+public class TransactionTableModel //
+		extends AbstractTableModel //
+		implements AccountSelectionListener {
 	private static final long serialVersionUID = 1L;
 
 	Object curObject = null;
@@ -33,14 +36,8 @@ public class TransactionTableModel extends AbstractTableModel {
 
 	List<GenericTxn> transations = new ArrayList<GenericTxn>();
 
-	private void setTransactions(List<GenericTxn> txns) {
-		transations.clear();
-
-		if (txns != null) {
-			this.transations = new ArrayList<GenericTxn>(txns);
-		}
-
-		fireTableDataChanged();
+	public void accountSelected(Account account) {
+		setAccount(account);
 	}
 
 	public void setAccount(Account acct) {
@@ -49,6 +46,16 @@ public class TransactionTableModel extends AbstractTableModel {
 
 	public void setStatement(Statement stmt) {
 		setObject(stmt);
+	}
+
+	private void setTransactions(List<GenericTxn> txns) {
+		transations.clear();
+
+		if (txns != null) {
+			this.transations = new ArrayList<GenericTxn>(txns);
+		}
+
+		fireTableDataChanged();
 	}
 
 	private void setObject(Object obj) {

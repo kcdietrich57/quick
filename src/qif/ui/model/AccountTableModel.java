@@ -15,9 +15,6 @@ public class AccountTableModel extends AbstractTableModel {
 	private String[] columnNames = { "Name", "Type", "Balance" };
 	private List<Account> accounts = new ArrayList<Account>();
 
-	public AccountTableModel() {
-	}
-
 	public void load(boolean showOpenAccounts) {
 		List<Account> accts = QifDom.dom.getSortedAccounts();
 
@@ -30,6 +27,14 @@ public class AccountTableModel extends AbstractTableModel {
 		}
 
 		fireTableDataChanged();
+	}
+
+	public Account getAccountAt(int row) {
+		if (row < 0 || row >= this.accounts.size()) {
+			return null;
+		}
+
+		return this.accounts.get(row);
 	}
 
 	public int getColumnCount() {

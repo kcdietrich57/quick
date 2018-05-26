@@ -20,10 +20,14 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
+import qif.data.Account;
 import qif.data.GenericTxn;
+import qif.data.Statement;
 import qif.ui.model.TransactionTableModel;
 
-public class TransactionPanel extends JPanel {
+public class TransactionPanel //
+		extends JPanel //
+		implements AccountSelectionListener, StatementSelectionListener {
 	private static final long serialVersionUID = 1L;
 
 	TransactionTableModel transactionTableModel;
@@ -97,6 +101,14 @@ public class TransactionPanel extends JPanel {
 			}
 		});
 	}
+
+	public void accountSelected(Account account) {
+		this.transactionTableModel.setAccount(account);
+	}
+
+	public void statementSelected(Statement statement) {
+		this.transactionTableModel.setStatement(statement);
+	}
 }
 
 class TransactionTableCellRenderer extends DefaultTableCellRenderer {
@@ -106,11 +118,13 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 	private static Font regularFont = new Font("Helvetica", Font.PLAIN, 12);
 	private static Font italicFont = new Font("Helvetica", Font.ITALIC, 12);
 
+	private static Color defaultColor = Color.BLACK;
 	private static Color presentColor = Color.BLACK;
 	private static Color futureColor = Color.GRAY;
 
-	private static Color clearedBackground = new Color(240, 240, 240);
-	private static Color unclearedBackground = Color.WHITE;
+	private static Color defaultBackground = Color.WHITE;
+	private static Color presentBackground = new Color(240, 240, 240);
+	private static Color futureBackground = Color.WHITE;
 
 	private boolean highlighting;
 
@@ -126,21 +140,25 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 		GenericTxn tx = model.getTransactionAt(row);
 
 		Date now = new Date();
-		boolean cleared = (this.highlighting && tx != null && tx.isCleared());
-		boolean future = (this.highlighting && tx != null && tx.getDate().compareTo(now) > 0);
+		boolean cleared = (tx != null && tx.isCleared());
+		boolean future = (tx != null && tx.getDate().compareTo(now) > 0);
 
-		if (cleared) {
+		if (!this.highlighting) {
+			c.setFont(regularFont);
+			c.setForeground(defaultColor);
+			c.setBackground(defaultBackground);
+		} else if (cleared) {
 			c.setFont(boldFont);
 			c.setForeground(presentColor);
-			c.setBackground(clearedBackground);
+			c.setBackground(presentBackground);
 		} else if (future) {
 			c.setFont(italicFont);
 			c.setForeground(futureColor);
-			c.setBackground(unclearedBackground);
+			c.setBackground(futureBackground);
 		} else {
 			c.setFont(regularFont);
 			c.setForeground(presentColor);
-			c.setBackground(unclearedBackground);
+			c.setBackground(presentBackground);
 		}
 
 		if (col == 3 || col == 6) {

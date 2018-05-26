@@ -37,8 +37,6 @@ public class StatementTableModel extends AbstractTableModel {
 			return;
 		}
 
-		this.detailsPanel.setStatement(null);
-
 		curAccount = acct;
 
 		Account a = (Account) curAccount;
@@ -50,6 +48,14 @@ public class StatementTableModel extends AbstractTableModel {
 		}
 
 		fireTableDataChanged();
+	}
+
+	public Statement getStatementAt(int row) {
+		if (row < 0 || row >= this.statements.size()) {
+			return null;
+		}
+
+		return this.statements.get(row);
 	}
 
 	public Date getDate(int rownum) {

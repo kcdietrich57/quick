@@ -2,7 +2,6 @@ package qif.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Font;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -48,66 +47,66 @@ class MainFrame extends JFrame {
 	}
 }
 
+class Dashboard extends JButton {
+	private static final long serialVersionUID = 1L;
+
+	public Dashboard() {
+		super("Dashboard goes here");
+	}
+}
+
 public class MainWindow extends JPanel {
 	private static final long serialVersionUID = 1L;
 
-	private JSplitPane statementViewSplit;
+	// Window contents:
+	// MainWindow
+	// - topTabs
+	// - - dashboardPanel
+	// - - accountView (Split)
+	// - - - accountNavigationPanel
+	// - - - accountPanel
+	// - - - - accountInfo
+	// - - - - accountTabs
+	// - - - - - RegisterView (Transactions)
+	// - - - - - StatementView (Split)
+	// - - - - - - Statements
+	// - - - - - - Transactions
+	private JTabbedPane topTabs;
+	private JButton dashboardPanel;
 	private JSplitPane accountViewSplit;
+	private AccountNavigationPanel accountNavigationPanel;
+	private AccountPanel accountPanel;
 
-	JButton dashboardPanel;
-	AccountNavigationPanel accountNavigationPanel;
-	StatementPanel statementPanel;
-	TransactionPanel transactionPanel;
-	StatementDetailsPanel statementDetails;
-	JButton acctInfoPanel;
+	public MainWindow() {
+		super(new BorderLayout());
+
+		dashboardPanel = new Dashboard();
+
+		accountNavigationPanel = new AccountNavigationPanel();
+		accountPanel = new AccountPanel();
+		// AccountPanel responds to selections in the AccountList
+		accountPanel.addAccountSelectionListeners(this.accountNavigationPanel.accountListPanel);
+
+		accountViewSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, accountNavigationPanel, accountPanel);
+		accountViewSplit.setPreferredSize(new Dimension(1200, 800));
+
+		topTabs = new JTabbedPane();
+		topTabs.add("Dashboard", dashboardPanel);
+		topTabs.add("Accounts", accountViewSplit);
+
+		add(topTabs, BorderLayout.CENTER);
+	}
+
+	public void addAccountSelectionListener(AccountSelectionListener listener) {
+		accountNavigationPanel.accountListPanel.addAccountSelectionListener(listener);
+	}
 
 	public void setSplitPosition() {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				accountViewSplit.setDividerLocation(.25);
-				statementViewSplit.setDividerLocation(.25);
+				accountPanel.statementViewSplit.setDividerLocation(.25);
 			}
 		});
-	}
-
-	public MainWindow() {
-		super(new BorderLayout());
-
-		accountNavigationPanel = new AccountNavigationPanel();
-
-		statementPanel = new StatementPanel();
-		this.accountNavigationPanel.accountPanel.statementTableModel = statementPanel.statementTableModel;
-
-		transactionPanel = new TransactionPanel(true);
-		this.accountNavigationPanel.accountPanel.transactionTableModel = transactionPanel.transactionTableModel;
-
-		statementDetails = new StatementDetailsPanel();
-		this.statementPanel.statementDetails = statementDetails;
-		this.statementPanel.statementTableModel.detailsPanel = statementDetails;
-
-		dashboardPanel = new JButton("Dashboard goes here");
-
-		JTabbedPane acctTabs = new JTabbedPane();
-
-		statementViewSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, statementPanel, statementDetails);
-
-		acctTabs.addTab("Register View", transactionPanel);
-		acctTabs.add("Statement View", statementViewSplit);
-
-		JPanel acctPanel = new JPanel(new BorderLayout());
-		acctInfoPanel = new JButton("---");
-		acctInfoPanel.setFont(new Font("Helvetica", Font.BOLD, 20));
-		acctPanel.add(acctInfoPanel, BorderLayout.NORTH);
-		acctPanel.add(acctTabs, BorderLayout.CENTER);
-		this.accountNavigationPanel.accountPanel.acctInfoPanel = this.acctInfoPanel;
-		
-		accountViewSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, accountNavigationPanel, acctPanel);
-		accountViewSplit.setPreferredSize(new Dimension(1200, 800));
-
-		JTabbedPane topTabs = new JTabbedPane();
-		topTabs.add("Dashboard", dashboardPanel);
-		topTabs.add("Accounts", accountViewSplit);
-
-		add(topTabs, BorderLayout.CENTER);
 	}
 }
