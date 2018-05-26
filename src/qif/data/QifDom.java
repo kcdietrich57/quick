@@ -102,22 +102,16 @@ import qif.data.Statement.StatementDetails;
 
 // Document Object Model for a QIF file.
 public class QifDom {
-	private static short nextdomid = 1;
-	private static List<QifDom> doms = new ArrayList<QifDom>();
+	public static QifDom dom = null;
 	private static boolean isverbose = false;
 
 	private static int totalXfers = 0;
 	private static int failedXfers = 0;
 
-	public static QifDom getDomById(int domid) {
-		return ((domid >= 0) && (doms.size() > domid)) ? doms.get(domid) : null;
-	}
-
 	public static boolean verbose() {
 		return isverbose;
 	}
 
-	public final short domid;
 	private final List<Category> categories;
 	private final Map<String, Security> securities;
 
@@ -135,13 +129,7 @@ public class QifDom {
 	private final List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
 
 	public QifDom(File qifDir) {
-		this.domid = nextdomid++;
-
-		while (doms.size() < this.domid) {
-			doms.add(null);
-		}
-
-		doms.add(this);
+		QifDom.dom = this;
 
 		this.categories = new ArrayList<Category>();
 		this.accounts = new ArrayList<Account>();
@@ -787,7 +775,6 @@ public class QifDom {
 	public String toString() {
 		String s = "";
 
-		s += "ID: " + this.domid;
 		s += "Categories: " + this.categories;
 		s += "Accounts: " + this.accounts_bytime;
 		s += "Securities: " + this.securities;
@@ -1102,7 +1089,7 @@ public class QifDom {
 
 				if (stxn.catid == stxn2.catid) {
 					if (mtxn == null) {
-						mtxn = new MultiSplitTxn(this.domid, txn.acctid);
+						mtxn = new MultiSplitTxn(txn.acctid);
 						nitxn.split.set(ii, mtxn);
 
 						mtxn.setAmount(stxn.getAmount());

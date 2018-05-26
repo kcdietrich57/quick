@@ -11,15 +11,15 @@ import java.util.List;
 public class MultiSplitTxn extends SimpleTxn {
 	public List<SimpleTxn> subsplits = new ArrayList<SimpleTxn>();
 
-	public MultiSplitTxn(int domid, int acctid) {
-		super(domid, acctid);
+	public MultiSplitTxn(int acctid) {
+		super(acctid);
 	}
 
-	public MultiSplitTxn(int domid, MultiSplitTxn other) {
-		super(domid, other);
+	public MultiSplitTxn(MultiSplitTxn other) {
+		super(other);
 
 		for (final SimpleTxn st : other.subsplits) {
-			this.subsplits.add(new SimpleTxn(domid, st));
+			this.subsplits.add(new SimpleTxn(st));
 		}
 	}
 

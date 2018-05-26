@@ -13,7 +13,6 @@ public class SimpleTxn {
 
 	public final int txid;
 
-	public int domid;
 	public int acctid;
 
 	private BigDecimal amount;
@@ -23,10 +22,9 @@ public class SimpleTxn {
 	public int catid; // >0: CategoryID; <0 AccountID
 	public SimpleTxn xtxn;
 
-	public SimpleTxn(int domid, int acctid) {
+	public SimpleTxn(int acctid) {
 		this.txid = nextid++;
 
-		this.domid = domid;
 		this.acctid = acctid;
 		this.amount = null;
 		this.memo = null;
@@ -36,10 +34,9 @@ public class SimpleTxn {
 		this.xtxn = null;
 	}
 
-	public SimpleTxn(int domid, SimpleTxn other) {
+	public SimpleTxn(SimpleTxn other) {
 		this.txid = nextid++;
 
-		this.domid = domid;
 		this.acctid = other.acctid;
 		this.amount = other.amount;
 		this.memo = other.memo;
@@ -50,9 +47,7 @@ public class SimpleTxn {
 	}
 
 	public Account getAccount() {
-		final QifDom dom = QifDom.getDomById(this.domid);
-
-		return dom.getAccount(this.acctid);
+		return QifDom.dom.getAccount(this.acctid);
 	}
 
 	public TxAction getAction() {
@@ -102,7 +97,7 @@ public class SimpleTxn {
 	// This is a more complete summary of the transaction, possibly split into
 	// multiple lines.
 	public String toStringLong() {
-		final QifDom dom = QifDom.getDomById(this.domid);
+		final QifDom dom = QifDom.dom;
 
 		String s = "Tx" + this.txid + ":";
 		s += dom.getAccount(this.acctid).getName();

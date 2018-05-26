@@ -51,8 +51,7 @@ public class AccountNavigationPanel extends JPanel {
 
 		add(accountPanel, BorderLayout.CENTER);
 
-		QifDom dom = QifDom.getDomById(1);
-		Balances bals = dom.getNetWorthForDate(null);
+		Balances bals = QifDom.dom.getNetWorthForDate(null);
 
 		Font bfont = new Font("Helvetica", Font.BOLD, 16);
 		Font font = new Font("Helvetica", Font.PLAIN, 16);

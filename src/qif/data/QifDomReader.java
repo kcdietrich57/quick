@@ -583,7 +583,7 @@ public class QifDomReader {
 	public InvestmentTxn loadInvestmentTransaction() {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		final InvestmentTxn txn = new InvestmentTxn(this.dom.domid, this.dom.currAccount.acctid);
+		final InvestmentTxn txn = new InvestmentTxn(this.dom.currAccount.acctid);
 
 		for (;;) {
 			this.filerdr.nextInvLine(qline);
@@ -678,7 +678,7 @@ public class QifDomReader {
 	public NonInvestmentTxn loadNonInvestmentTransaction() {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		final NonInvestmentTxn txn = new NonInvestmentTxn(this.dom.domid, this.dom.currAccount.acctid);
+		final NonInvestmentTxn txn = new NonInvestmentTxn(this.dom.currAccount.acctid);
 		SimpleTxn cursplit = null;
 
 		for (;;) {
@@ -730,7 +730,7 @@ public class QifDomReader {
 
 			case TxnSplitCategory:
 				if (cursplit == null || cursplit.catid != 0) {
-					cursplit = new SimpleTxn(this.dom.domid, txn.acctid);
+					cursplit = new SimpleTxn(txn.acctid);
 					txn.split.add(cursplit);
 				}
 
@@ -746,7 +746,7 @@ public class QifDomReader {
 			case TxnSplitAmount:
 				if (cursplit == null || cursplit.getAmount() != null) {
 					txn.split.add(cursplit);
-					cursplit = new SimpleTxn(this.dom.domid, txn.acctid);
+					cursplit = new SimpleTxn(txn.acctid);
 				}
 
 				cursplit.setAmount(Common.getDecimal(qline.value));

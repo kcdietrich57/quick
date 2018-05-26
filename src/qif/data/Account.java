@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.List;
 
 public class Account {
-	public int domid;
 	public int acctid;
 
 	private String name;
@@ -25,7 +24,6 @@ public class Account {
 	public SecurityPortfolio securities;
 
 	public Account(QifDom dom) {
-		this.domid = dom.domid;
 		this.acctid = 0;
 
 		this.name = "";
@@ -43,25 +41,6 @@ public class Account {
 		this(dom);
 
 		this.acctid = id;
-	}
-
-	// Create a copy of an account - used when creating a new Dom from an
-	// existing one.
-	public Account(Account other, QifDom dom) {
-		this(other.acctid, dom);
-
-		this.name = other.name;
-		this.type = other.type;
-		this.description = other.description;
-		this.creditLimit = other.creditLimit;
-
-		for (final GenericTxn t : other.transactions) {
-			this.transactions.add(GenericTxn.clone(dom.domid, t));
-		}
-
-		for (final Statement s : this.statements) {
-			this.statements.add(new Statement(dom, s));
-		}
 	}
 
 	public Date getOpenDate() {

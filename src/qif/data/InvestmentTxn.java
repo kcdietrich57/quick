@@ -14,8 +14,8 @@ public class InvestmentTxn extends GenericTxn {
 	public BigDecimal amountTransferred;
 	public List<InvestmentTxn> xferInv;
 
-	public InvestmentTxn(int domid, int acctid) {
-		super(domid, acctid);
+	public InvestmentTxn(int acctid) {
+		super(acctid);
 
 		this.action = TxAction.OTHER;
 		this.security = null;
@@ -28,13 +28,11 @@ public class InvestmentTxn extends GenericTxn {
 		this.xferInv = null;
 	}
 
-	public InvestmentTxn(int domid, InvestmentTxn other) {
-		super(domid, other);
-
-		final QifDom dom = QifDom.getDomById(domid);
+	public InvestmentTxn(InvestmentTxn other) {
+		super(other);
 
 		this.action = other.action;
-		this.security = dom.findSecurityByName(other.security.getName());
+		this.security = QifDom.dom.findSecurityByName(other.security.getName());
 		this.price = other.price;
 		this.quantity = other.quantity;
 		this.textFirstLine = other.textFirstLine;
@@ -189,7 +187,7 @@ public class InvestmentTxn extends GenericTxn {
 
 		case OTHER:
 			Common.reportError("Transaction has unknown type: " + //
-					QifDom.getDomById(1).getAccount(this.acctid).getName());
+					QifDom.dom.getAccount(this.acctid).getName());
 			break;
 		}
 
@@ -222,7 +220,7 @@ public class InvestmentTxn extends GenericTxn {
 			final BigDecimal newprice = tot.divide(this.quantity).abs();
 
 			String s = "Inconsistent " + this.action + " transaction:" + //
-					" acct=" + QifDom.getDomById(this.domid).getAccount(this.acctid).getName() + //
+					" acct=" + QifDom.dom.getAccount(this.acctid).getName() + //
 					" " + Common.formatDate(getDate()) + "\n" + //
 					"  sec=" + this.security.getName() + //
 					" qty=" + this.quantity + //
@@ -364,11 +362,9 @@ public class InvestmentTxn extends GenericTxn {
 	}
 
 	public String toStringLong() {
-		final QifDom dom = QifDom.getDomById(this.domid);
-
 		String s = ((this.stmtdate != null) ? "*" : " ") + "InvTx" + this.txid + ":";
 		s += " dt=" + Common.formatDate(getDate());
-		s += " acct=" + dom.getAccount(this.acctid).getName();
+		s += " acct=" + QifDom.dom.getAccount(this.acctid).getName();
 		s += " act=" + this.action;
 		if (this.security != null) {
 			s += " sec=" + this.security.getName();

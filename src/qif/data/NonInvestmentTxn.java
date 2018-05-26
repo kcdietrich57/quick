@@ -14,8 +14,8 @@ public class NonInvestmentTxn extends GenericTxn {
 	public List<String> address;
 	public List<SimpleTxn> split;
 
-	public NonInvestmentTxn(int domid, int acctid) {
-		super(domid, acctid);
+	public NonInvestmentTxn(int acctid) {
+		super(acctid);
 
 		this.chkNumber = "";
 
@@ -23,8 +23,8 @@ public class NonInvestmentTxn extends GenericTxn {
 		this.split = new ArrayList<SimpleTxn>();
 	}
 
-	public NonInvestmentTxn(int domid, NonInvestmentTxn other) {
-		super(domid, other);
+	public NonInvestmentTxn(NonInvestmentTxn other) {
+		super(other);
 
 		this.chkNumber = other.chkNumber;
 
@@ -88,7 +88,7 @@ public class NonInvestmentTxn extends GenericTxn {
 	}
 
 	public String toStringLong() {
-		final QifDom dom = QifDom.getDomById(this.domid);
+		final QifDom dom = QifDom.dom;
 
 		String s = ((this.stmtdate != null) ? "*" : " ") + "Tx" + this.txid + ":";
 		s += " date=" + Common.formatDate(getDate());

@@ -11,7 +11,6 @@ import app.QifLoader;
 import qif.ui.ReviewDialog;
 
 public class Statement {
-	public int domid;
 	public int acctid;
 	public Date date;
 
@@ -35,9 +34,8 @@ public class Statement {
 	/** Whether this statement has been saved to the reconcile log file */
 	boolean dirty = false;
 
-	public Statement(int domid, int acctid) {
+	public Statement(int acctid) {
 		this.isBalanced = false;
-		this.domid = domid;
 		this.acctid = acctid;
 		this.date = null;
 		this.prevStatement = null;
@@ -52,7 +50,7 @@ public class Statement {
 	// Create a copy of a statement - used when creating a new Dom from an
 	// existing one.
 	public Statement(QifDom dom, Statement other) {
-		this(dom.domid, other.acctid);
+		this(other.acctid);
 
 		this.date = other.date;
 		this.prevStatement = dom.findStatement(other.prevStatement);
@@ -128,7 +126,7 @@ public class Statement {
 
 					final Statement prevstmt = (stmts.isEmpty() ? null : stmts.get(stmts.size() - 1));
 
-					currstmt = new Statement(dom.domid, dom.currAccount.acctid);
+					currstmt = new Statement(dom.currAccount.acctid);
 					currstmt.date = d;
 					currstmt.closingBalance = currstmt.cashBalance = bal;
 					if ((prevstmt != null) && (prevstmt.acctid == currstmt.acctid)) {
@@ -285,7 +283,7 @@ public class Statement {
 
 	// name;date;stmtBal;cashBal;numTx;numPos;[cashTx;][sec;numTx[txIdx;shareBal;]]
 	public String formatForSave() {
-		final Account a = QifDom.getDomById(this.domid).getAccount(this.acctid);
+		final Account a = QifDom.dom.getAccount(this.acctid);
 
 		String s = String.format("%s;%s;%5.2f;%5.2f;%d;%d", //
 				a.getName(), //
@@ -318,7 +316,6 @@ public class Statement {
 	// final String txCountStr = ss[ssx++].trim();
 	// final String secCountStr = (version > 1) ? ss[ssx++].trim() : "0";
 	//
-	// d.domid = dom.domid;
 	// d.acctid = dom.findAccount(acctname).acctid;
 	// d.date = Common.parseDate(dateStr);
 	// if (version < 3) {
@@ -727,7 +724,6 @@ public class Statement {
 	static class StatementDetails {
 		public static final int CURRENT_VERSION = 4;
 
-		int domid;
 		int acctid;
 		Date date;
 
@@ -769,7 +765,6 @@ public class Statement {
 			final String txCountStr = ss[ssx++].trim();
 			final String secCountStr = (version > 1) ? ss[ssx++].trim() : "0";
 
-			this.domid = dom.domid;
 			this.acctid = dom.findAccount(acctname).acctid;
 			this.date = Common.parseDate(dateStr);
 			if (version < 3) {
@@ -852,7 +847,7 @@ public class Statement {
 		}
 
 		public String toString() {
-			final String s = "" + this.domid + ":" + this.acctid + " " //
+			final String s = "" + this.acctid + " " //
 					+ Common.formatDate(this.date) //
 					+ String.format("%s  %s %d tx", //
 							Common.formatAmount(this.closingBalance), //

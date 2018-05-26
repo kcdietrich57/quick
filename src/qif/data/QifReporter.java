@@ -172,7 +172,7 @@ public class QifReporter {
 					System.out.println(String.format( //
 							"  %-12s  %-20s  %-10s  %s  %s", //
 							Common.formatDate(t.getDate()), //
-							QifDom.getDomById(t.domid).getAccount(t.acctid).getName(), //
+							QifDom.dom.getAccount(t.acctid).getName(), //
 							t.action.toString(), //
 							Common.formatAmount3(t.getShares()), //
 							Common.formatAmount3(shrbal)));

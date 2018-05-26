@@ -2,6 +2,7 @@ package qif.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Font;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -58,11 +59,12 @@ public class MainWindow extends JPanel {
 	StatementPanel statementPanel;
 	TransactionPanel transactionPanel;
 	StatementDetailsPanel statementDetails;
+	JButton acctInfoPanel;
 
 	public void setSplitPosition() {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				accountViewSplit.setDividerLocation(.3);
+				accountViewSplit.setDividerLocation(.25);
 				statementViewSplit.setDividerLocation(.25);
 			}
 		});
@@ -85,14 +87,21 @@ public class MainWindow extends JPanel {
 
 		dashboardPanel = new JButton("Dashboard goes here");
 
-		JTabbedPane acctsTabs = new JTabbedPane();
+		JTabbedPane acctTabs = new JTabbedPane();
 
 		statementViewSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, statementPanel, statementDetails);
 
-		acctsTabs.addTab("Register View", transactionPanel);
-		acctsTabs.add("Statement View", statementViewSplit);
+		acctTabs.addTab("Register View", transactionPanel);
+		acctTabs.add("Statement View", statementViewSplit);
 
-		accountViewSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, accountNavigationPanel, acctsTabs);
+		JPanel acctPanel = new JPanel(new BorderLayout());
+		acctInfoPanel = new JButton("---");
+		acctInfoPanel.setFont(new Font("Helvetica", Font.BOLD, 20));
+		acctPanel.add(acctInfoPanel, BorderLayout.NORTH);
+		acctPanel.add(acctTabs, BorderLayout.CENTER);
+		this.accountNavigationPanel.accountPanel.acctInfoPanel = this.acctInfoPanel;
+		
+		accountViewSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, accountNavigationPanel, acctPanel);
 		accountViewSplit.setPreferredSize(new Dimension(1200, 800));
 
 		JTabbedPane topTabs = new JTabbedPane();

@@ -12,7 +12,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import qif.data.Common;
-import qif.data.QifDom;
 import qif.data.Statement;
 
 public class StatementDetailsPanel extends JPanel {
@@ -22,8 +21,6 @@ public class StatementDetailsPanel extends JPanel {
 
 	JLabel dateLabel = new JLabel("Date:");
 	JLabel date = new JLabel("<date>");
-	JLabel acctLabel = new JLabel("Account:");
-	JLabel acct = new JLabel("<acct>");
 	JLabel ntxLabel = new JLabel("Number of transactions:");
 	JLabel ntx = new JLabel("<ntx>");
 
@@ -45,15 +42,6 @@ public class StatementDetailsPanel extends JPanel {
 		gbc.gridy = 0;
 		gbc.fill = GridBagConstraints.BOTH;
 		gbc.insets = new Insets(3, 5, 3, 5);
-		acctLabel.setFont(bfont);
-		infoPanel2.add(acctLabel, gbc);
-
-		gbc.gridx = 1;
-		acct.setFont(font);
-		infoPanel2.add(acct, gbc);
-
-		gbc.gridx = 0;
-		gbc.gridy = 1;
 		dateLabel.setFont(bfont);
 		infoPanel2.add(dateLabel, gbc);
 
@@ -62,7 +50,7 @@ public class StatementDetailsPanel extends JPanel {
 		infoPanel2.add(date, gbc);
 
 		gbc.gridx = 0;
-		gbc.gridy = 2;
+		gbc.gridy = 1;
 		ntxLabel.setFont(bfont);
 		infoPanel2.add(ntxLabel, gbc);
 
@@ -81,13 +69,11 @@ public class StatementDetailsPanel extends JPanel {
 	public void setStatement(Statement stmt) {
 		if (stmt == null) {
 			date.setText("");
-			acct.setText("");
 			ntx.setText("");
 
 			transactionPanel.transactionTableModel.setStatement(null);
 		} else {
 			date.setText(Common.formatDate(stmt.date));
-			acct.setText(QifDom.getDomById(1).getAccount(stmt.acctid).getName());
 			ntx.setText(Integer.toString(stmt.transactions.size()));
 
 			transactionPanel.transactionTableModel.setStatement(stmt);

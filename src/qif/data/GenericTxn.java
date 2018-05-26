@@ -10,24 +10,12 @@ public abstract class GenericTxn extends SimpleTxn {
 	private String payee;
 	public BigDecimal runningTotal;
 
-	public static GenericTxn clone(int domid, GenericTxn txn) {
-		if (txn instanceof NonInvestmentTxn) {
-			return new NonInvestmentTxn(domid, (NonInvestmentTxn) txn);
-		}
-		if (txn instanceof InvestmentTxn) {
-			return new InvestmentTxn(domid, (InvestmentTxn) txn);
-		}
-
-		return null;
+	private void addToDom() {
+		QifDom.dom.addTransaction(this);
 	}
 
-	private void addToDom(int domid) {
-		final QifDom dom = QifDom.getDomById(domid);
-		dom.addTransaction(this);
-	}
-
-	public GenericTxn(int domid, int acctid) {
-		super(domid, acctid);
+	public GenericTxn(int acctid) {
+		super(acctid);
 
 		this.date = null;
 		this.payee = "";
@@ -35,11 +23,11 @@ public abstract class GenericTxn extends SimpleTxn {
 		this.stmtdate = null;
 		this.runningTotal = null;
 
-		addToDom(domid);
+		addToDom();
 	}
 
-	public GenericTxn(int domid, GenericTxn other) {
-		super(domid, other);
+	public GenericTxn(GenericTxn other) {
+		super(other);
 
 		this.date = other.date;
 		this.payee = other.payee;
@@ -47,7 +35,7 @@ public abstract class GenericTxn extends SimpleTxn {
 		this.stmtdate = other.stmtdate;
 		this.runningTotal = null;
 
-		addToDom(domid);
+		addToDom();
 	}
 
 	public int getCheckNumber() {

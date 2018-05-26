@@ -68,7 +68,7 @@ public class TransactionTableModel extends AbstractTableModel {
 			setTransactions(curAccount.transactions);
 		} else if (obj instanceof Statement) {
 			curStatement = (Statement) obj;
-			curAccount = QifDom.getDomById(1).getAccount(curStatement.acctid);
+			curAccount = QifDom.dom.getAccount(curStatement.acctid);
 
 			setTransactions(curStatement.transactions);
 		} else {
@@ -139,10 +139,8 @@ public class TransactionTableModel extends AbstractTableModel {
 			return Common.stringValue(tx.getAmount());
 
 		case 4: {
-			QifDom dom = QifDom.getDomById(1);
-
 			if (tx.catid > 0) {
-				return dom.getCategory(tx.catid).name;
+				return QifDom.dom.getCategory(tx.catid).name;
 			}
 
 			int acctid = 0;
@@ -154,7 +152,7 @@ public class TransactionTableModel extends AbstractTableModel {
 			}
 
 			if (acctid > 0) {
-				return "[" + dom.getAccount(acctid).getName() + "]";
+				return "[" + QifDom.dom.getAccount(acctid).getName() + "]";
 			}
 
 			return "";
