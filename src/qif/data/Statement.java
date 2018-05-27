@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 
 import app.QifLoader;
+import qif.importer.QFileReader;
 import qif.ui.ReviewDialog;
 
 public class Statement {
@@ -721,7 +722,7 @@ public class Statement {
 
 	// StatementDetails represents a reconciled statement as stored in the
 	// statements log file.
-	static class StatementDetails {
+	public static class StatementDetails {
 		public static final int CURRENT_VERSION = 4;
 
 		int acctid;

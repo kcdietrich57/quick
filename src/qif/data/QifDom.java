@@ -119,8 +119,8 @@ public class QifDom {
 
 	private final List<GenericTxn> allTransactions;
 
-	SecurityPortfolio portfolio;
-	int loadedStatementsVersion = -1;
+	public SecurityPortfolio portfolio;
+	public int loadedStatementsVersion = -1;
 	File stmtLogFile;
 
 	public Account currAccount = null;

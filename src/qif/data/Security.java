@@ -16,12 +16,12 @@ public class Security {
 	public final List<InvestmentTxn> transactions = new ArrayList<InvestmentTxn>();
 	public final List<QPrice> prices = new ArrayList<QPrice>();
 
-	static class SplitInfo {
-		Date splitDate;
-		BigDecimal splitRatio;
+	public static class SplitInfo {
+		public Date splitDate;
+		public BigDecimal splitRatio;
 	}
 
-	List<SplitInfo> splits = new ArrayList<SplitInfo>();
+	public List<SplitInfo> splits = new ArrayList<SplitInfo>();
 
 	public Security(String symbol) {
 		this.secid = 0;

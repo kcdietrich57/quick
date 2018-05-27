@@ -1,4 +1,4 @@
-package qif.data;
+package qif.report;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -8,11 +8,19 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import qif.data.Account;
+import qif.data.AccountPosition;
+import qif.data.Common;
+import qif.data.GenericTxn;
+import qif.data.InvestmentTxn;
+import qif.data.QifDom;
+import qif.data.SecurityPortfolio;
+import qif.data.SecurityPosition;
+import qif.data.Statement;
 import qif.data.QifDom.Balances;
-import qif.data.report.StatusForDateModel;
-import qif.data.report.StatusForDateModel.AccountSummary;
-import qif.data.report.StatusForDateModel.Section;
-import qif.data.report.StatusForDateModel.SecuritySummary;
+import qif.report.StatusForDateModel.AccountSummary;
+import qif.report.StatusForDateModel.Section;
+import qif.report.StatusForDateModel.SecuritySummary;
 
 public class QifReporter {
 	public static boolean compact = false;

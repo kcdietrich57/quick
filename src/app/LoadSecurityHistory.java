@@ -7,8 +7,8 @@ import java.util.List;
 
 import qif.data.Common;
 import qif.data.QPrice;
-import qif.data.QifDomReader;
 import qif.data.Security;
+import qif.importer.QifDomReader;
 
 public class LoadSecurityHistory {
 

@@ -3,13 +3,13 @@ package qif.data;
 import java.math.BigDecimal;
 
 public class AccountPosition {
-	Account acct;
-	BigDecimal cashBefore;
-	BigDecimal cashAfter;
-	SecurityPortfolio portBefore;
-	SecurityPortfolio portAfter;
+	public Account acct;
+	public BigDecimal cashBefore;
+	public BigDecimal cashAfter;
+	public SecurityPortfolio portBefore;
+	public SecurityPortfolio portAfter;
 
-	AccountPosition(Account a) {
+	public AccountPosition(Account a) {
 		this.acct = a;
 	}
 }

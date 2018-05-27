@@ -1,4 +1,4 @@
-package qif.data;
+package qif.importer;
 
 import java.io.File;
 import java.io.FileReader;
@@ -14,8 +14,20 @@ import java.util.GregorianCalendar;
 import java.util.List;
 
 import app.QifLoader;
-import qif.data.QFileReader.SectionType;
+import qif.data.Account;
+import qif.data.AccountType;
+import qif.data.Category;
+import qif.data.Common;
+import qif.data.InvestmentTxn;
+import qif.data.NonInvestmentTxn;
+import qif.data.QPrice;
+import qif.data.QifDom;
+import qif.data.Security;
 import qif.data.Security.SplitInfo;
+import qif.data.SimpleTxn;
+import qif.data.Statement;
+import qif.data.TxAction;
+import qif.importer.QFileReader.SectionType;
 
 public class QifDomReader {
 	private QFileReader filerdr = null;

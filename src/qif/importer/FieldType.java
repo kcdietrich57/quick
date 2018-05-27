@@ -1,4 +1,4 @@
-package qif.data;
+package qif.importer;
 
 public enum FieldType {
 	EndOfSection, //

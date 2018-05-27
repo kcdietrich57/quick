@@ -1,4 +1,4 @@
-package qif.data;
+package qif.importer;
 
 // The transaction type headers.
 public interface Headers {

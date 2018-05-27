@@ -1,9 +1,10 @@
-package qif.ui;
+package app;
 
 import java.util.Scanner;
 
 import qif.data.QifDom;
-import qif.data.QifDomReader;
+import qif.importer.QifDomReader;
+import qif.ui.MainFrame;
 
 public class MoneyMgrApp {
 	public static Scanner scn;

@@ -7,8 +7,8 @@ import java.util.StringTokenizer;
 import qif.data.Account;
 import qif.data.Common;
 import qif.data.QifDom;
-import qif.data.QifDomReader;
-import qif.data.QifReporter;
+import qif.importer.QifDomReader;
+import qif.report.QifReporter;
 
 public class QifLoader {
 	public static Scanner scn;

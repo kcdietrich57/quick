@@ -8,8 +8,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-import qif.data.QifReporter;
-import qif.data.report.StatusForDateModel;
+import qif.report.QifReporter;
+import qif.report.StatusForDateModel;
 
 public class Dashboard extends JPanel {
 	private static final long serialVersionUID = 1L;

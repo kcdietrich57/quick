@@ -356,7 +356,7 @@ public class Account {
 		return openstr;
 	}
 
-	String getDisplayName(int length) {
+	public String getDisplayName(int length) {
 		String nn = this.name;
 		if (nn.length() > 36) {
 			nn = nn.substring(0, 33) + "...";
@@ -365,18 +365,18 @@ public class Account {
 		return nn;
 	}
 
-	BigDecimal getCurrentValue() {
+	public BigDecimal getCurrentValue() {
 		return getValueForDate(new Date());
 	}
 
-	BigDecimal getFinalValue() {
+	public BigDecimal getFinalValue() {
 		final Date d = (this.transactions.isEmpty()) //
 				? new Date() //
 				: this.transactions.get(this.transactions.size() - 1).getDate();
 		return getValueForDate(d);
 	}
 
-	BigDecimal getCashValueForDate(Date d) {
+	public BigDecimal getCashValueForDate(Date d) {
 		BigDecimal cashBal = null;
 
 		int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
@@ -391,11 +391,11 @@ public class Account {
 	}
 
 	// TODO unused, unfinished
-	void getPositionsForDate(Date d) {
+	public void getPositionsForDate(Date d) {
 		this.securities.getPositionsForDate(d);
 	}
 
-	BigDecimal getValueForDate(Date d) {
+	public BigDecimal getValueForDate(Date d) {
 		final BigDecimal cashBal = getCashValueForDate(d);
 		final BigDecimal secBal = this.securities.getPortfolioValueForDate(d);
 
@@ -406,7 +406,7 @@ public class Account {
 		return acctValue;
 	}
 
-	BigDecimal getSecuritiesValueForDate(Date d) {
+	public BigDecimal getSecuritiesValueForDate(Date d) {
 		BigDecimal portValue = BigDecimal.ZERO;
 
 		for (final SecurityPosition pos : this.securities.positions) {

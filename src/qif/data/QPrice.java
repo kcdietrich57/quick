@@ -3,6 +3,8 @@ package qif.data;
 import java.math.BigDecimal;
 import java.util.Date;
 
+import qif.importer.QFileReader;
+
 public class QPrice {
 	public static final QPrice ZERO = new QPrice(new BigDecimal(0));
 

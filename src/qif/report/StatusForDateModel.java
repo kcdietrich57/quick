@@ -1,4 +1,4 @@
-package qif.data.report;
+package qif.report;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
