@@ -8,7 +8,9 @@ import qif.data.Account;
 import qif.data.Common;
 import qif.data.QifDom;
 import qif.importer.QifDomReader;
+import qif.report.NetWorthReporter;
 import qif.report.QifReporter;
+import qif.report.StatusReporter;
 
 public class QifLoader {
 	public static Scanner scn;
@@ -54,7 +56,11 @@ public class QifLoader {
 				break;
 			}
 
-			if (s.startsWith("a")) {
+			if (s.startsWith("u")) {
+				usage();
+			} else if (s.startsWith("s")) {
+				StatusReporter.reportStatus();
+			} else if (s.startsWith("a")) {
 				if (s.startsWith("act")) {
 					StringTokenizer toker = new StringTokenizer(s);
 					String cmd = toker.nextToken();
@@ -66,7 +72,7 @@ public class QifLoader {
 
 					// dom.reportActivity(d1, d2);
 				} else if (s.startsWith("accts")) {
-					QifReporter.reportAllAccountStatus();
+					NetWorthReporter.reportCurrentNetWorth();
 				} else {
 					final String aname = s.substring(1).trim();
 
@@ -125,10 +131,6 @@ public class QifLoader {
 				if (s.startsWith("relog")) {
 					dom.rewriteStatementLogFile();
 				}
-			} else if (s.startsWith("s")) {
-				QifReporter.reportStatistics();
-			} else if (s.startsWith("u")) {
-				usage();
 			} else if (s.startsWith("y")) {
 				if (s.startsWith("ys")) {
 					QifReporter.reportYearlyStatus();
@@ -136,7 +138,7 @@ public class QifLoader {
 			} else {
 				final Date d = Common.parseDate(s);
 				if (d != null) {
-					QifReporter.reportStatusForDate(d);
+					NetWorthReporter.reportNetWorthForDate(d);
 				}
 			}
 		}

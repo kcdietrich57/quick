@@ -1,12 +1,8 @@
 package qif.report;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.List;
 
 import qif.data.Account;
 import qif.data.AccountPosition;
@@ -18,151 +14,9 @@ import qif.data.SecurityPortfolio;
 import qif.data.SecurityPosition;
 import qif.data.Statement;
 import qif.data.QifDom.Balances;
-import qif.report.StatusForDateModel.AccountSummary;
-import qif.report.StatusForDateModel.Section;
-import qif.report.StatusForDateModel.SecuritySummary;
 
 public class QifReporter {
 	public static boolean compact = false;
-
-	// ===============================================================
-
-	public static void reportStatusForDate(Date d) {
-		StatusForDateModel model = buildReportStatusForDate(d);
-
-		String s = generateReportStatusForDate(model);
-		
-		System.out.println(s);
-	}
-
-	// ===============================================================
-
-	public static StatusForDateModel buildReportStatusForDate(Date d) {
-		StatusForDateModel model = new StatusForDateModel();
-		model.d = d;
-
-		QifDom dom = QifDom.dom;
-
-		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
-			Account a = dom.getAccount(acctid);
-			if (a == null) {
-				continue;
-			}
-
-			BigDecimal amt = a.getValueForDate(d);
-
-			if (!a.isOpenOn(d) //
-					&& Common.isEffectivelyZero(amt) //
-					&& (a.getFirstUnclearedTransaction() == null) //
-					&& a.securities.isEmptyForDate(d)) {
-				continue;
-			}
-
-			StatusForDateModel.Section modelsect = model.getSectionForAccount(a);
-
-			StatusForDateModel.AccountSummary asummary = new StatusForDateModel.AccountSummary();
-			modelsect.accounts.add(asummary);
-			modelsect.subtotal = modelsect.subtotal.add(amt);
-
-			asummary.name = a.getDisplayName(36);
-			asummary.balance = asummary.cashBalance = amt;
-
-			if (!a.securities.isEmptyForDate(d)) {
-				BigDecimal portValue = a.getSecuritiesValueForDate(d);
-
-				if (!Common.isEffectivelyZero(portValue)) {
-					asummary.cashBalance = amt.subtract(portValue);
-
-					for (SecurityPosition pos : a.securities.positions) {
-						BigDecimal posval = pos.getSecurityPositionValueForDate(d);
-
-						if (!Common.isEffectivelyZero(posval)) {
-							StatusForDateModel.SecuritySummary ssummary = new StatusForDateModel.SecuritySummary();
-							asummary.securities.add(ssummary);
-
-							String nn = pos.security.getName();
-							if (nn.length() > 34) {
-								nn = nn.substring(0, 31) + "...";
-							}
-
-							ssummary.name = nn;
-							ssummary.value = posval;
-							ssummary.price = pos.security.getPriceForDate(d).price;
-
-							int idx = pos.getTransactionIndexForDate(d);
-							if (idx >= 0) {
-								ssummary.shares = pos.shrBalance.get(idx);
-							}
-						}
-					}
-				}
-			}
-
-			modelsect.subtotal.add(amt);
-
-			if (modelsect.info.isAsset) {
-				model.assets = model.assets.add(amt);
-			} else {
-				model.liabilities = model.liabilities.add(amt);
-			}
-
-			model.netWorth = model.netWorth.add(amt);
-		}
-
-		return model;
-	}
-
-	public static String generateReportStatusForDate(StatusForDateModel model) {
-		StringBuilder sb = new StringBuilder();
-
-		sb.append("\n");
-		sb.append(String.format("Global status for date: %s\n", Common.formatDate(model.d)));
-		sb.append("--------------------------------------------------------\n");
-		sb.append(String.format("  %-36s : %10s\n", "Account", "Balance\n"));
-
-		for (Section sect : model.sections) {
-			String label = sect.info.label + " Accounts ";
-			while (label.length() < 30) {
-				label += "=";
-			}
-
-			sb.append(String.format( //
-					"======== %s===========================\n", //
-					label));
-
-			if (!sect.accounts.isEmpty()) {
-				for (AccountSummary asum : sect.accounts) {
-					sb.append(String.format("  %-36s: %s\n", //
-							asum.name, Common.formatAmount(asum.balance)));
-
-					if (!Common.isEffectivelyEqual(asum.balance, asum.cashBalance)) {
-						sb.append(String.format("    %-34s: ..%s\n", //
-								"Cash", Common.formatAmount(asum.cashBalance)));
-					}
-
-					for (SecuritySummary ssum : asum.securities) {
-						if (!Common.isEffectivelyZero(ssum.shares)) {
-							sb.append(String.format("    %-34s: ..%s %s %s\n", //
-									ssum.name, Common.formatAmount(ssum.value), //
-									Common.formatAmount3(ssum.shares), //
-									Common.formatAmount3(ssum.price)));
-						}
-					}
-				}
-
-				sb.append(String.format("Section Total: - - - - - - - - - - - %15.2f\n", sect.subtotal));
-			}
-
-			sb.append("\n");
-		}
-
-		sb.append(String.format("Assets:      %15.2f\n", model.assets));
-		sb.append(String.format("Liabilities: %15.2f\n", model.liabilities));
-		sb.append(String.format("Balance:     %15.2f\n", model.netWorth));
-		sb.append("\n");
-
-		return sb.toString();
-	}
 
 	// ===============================================================
 
@@ -221,6 +75,8 @@ public class QifReporter {
 		System.out.println();
 	}
 
+	// ===============================================================
+
 	public static void reportMonthlyNetWorth() {
 		QifDom dom = QifDom.dom;
 
@@ -254,129 +110,7 @@ public class QifReporter {
 		} while (d.compareTo(lastTxDate) <= 0);
 	}
 
-	public static void reportStatistics() {
-		QifDom dom = QifDom.dom;
-
-		final List<Account> ranking = new ArrayList<Account>();
-
-		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
-			Account a = dom.getAccount(acctid);
-
-			if (a != null) {
-				ranking.add(a);
-			}
-		}
-
-		final Comparator<Account> cmp = (o1, o2) -> {
-			if (o1.statements.isEmpty()) {
-				return (o2.statements.isEmpty()) ? 0 : -1;
-			}
-			return (o2.statements.isEmpty()) //
-					? 1 //
-					: o1.getLastStatementDate().compareTo(o2.getLastStatementDate());
-		};
-
-		Collections.sort(ranking, cmp);
-
-		System.out.println();
-		System.out.println("Overall");
-		System.out.println();
-
-		int unclracct_count = 0;
-		int unclracct_utx_count = 0;
-		int unclracct_tx_count = 0;
-
-		int clracct_count = 0;
-		int clracct_tx_count = 0;
-
-		final Calendar cal = Calendar.getInstance();
-		final Date today = cal.getTime();
-
-		final long dayms = 1000L * 24 * 60 * 60;
-		final long msCurrent = today.getTime();
-		final Date minus30 = new Date(msCurrent - 30 * dayms);
-		final Date minus60 = new Date(msCurrent - 60 * dayms);
-		final Date minus90 = new Date(msCurrent - 90 * dayms);
-
-		boolean nostat = false;
-		boolean stat90 = false;
-		boolean stat60 = false;
-		boolean stat30 = false;
-		boolean statcurrent = false;
-
-		System.out.println(String.format("%3s   %-35s   %-8s  %-10s   %-5s %-5S      %-8s", //
-				"N", "Account", "LastStmt", "Balance", "UncTx", "TotTx", "FirstUnc"));
-
-		final int max = ranking.size();
-		for (int ii = 0; ii < max; ++ii) {
-			final Account a = ranking.get(ii);
-			final Date laststatement = a.getLastStatementDate();
-
-			if (laststatement == null) {
-				if (!nostat) {
-					System.out.println("### No statements");
-					nostat = true;
-				}
-			} else if (laststatement.compareTo(minus90) < 0) {
-				if (!stat90) {
-					System.out.println("\n### More than 90 days");
-					stat90 = true;
-				}
-			} else if (laststatement.compareTo(minus60) < 0) {
-				if (!stat60) {
-					System.out.println("\n### 60-90 days");
-					stat60 = true;
-				}
-			} else if (laststatement.compareTo(minus30) < 0) {
-				if (!stat30) {
-					System.out.println("\n### 30-60 days");
-					stat30 = true;
-				}
-			} else {
-				if (!statcurrent) {
-					System.out.println("\n### Less than 30 days");
-					statcurrent = true;
-				}
-			}
-
-			final int ucount = a.getUnclearedTransactionCount();
-			final int tcount = a.transactions.size();
-
-			if ((ucount > 0) || !a.isClosedAsOf(null)) {
-				if (a.isClosedAsOf(null)) {
-					System.out.println("Warning! Account " + a.getName() + " is closed!");
-				}
-
-				++unclracct_count;
-				unclracct_utx_count += ucount;
-				unclracct_tx_count += tcount;
-
-				final String nam = a.getDisplayName(25);
-				final Statement lStat = a.getLastStatement();
-				final Date lStatDate = (lStat != null) ? lStat.date : null;
-
-				System.out.println(String.format("%3d   %-35s : %8s  %s : %5d/%5d :    %8s", //
-						unclracct_count, //
-						nam, //
-						Common.formatDate(lStatDate), //
-						Common.formatAmount(a.balance), //
-						ucount, //
-						tcount, //
-						Common.formatDate(a.getFirstUnclearedTransactionDate())));
-			} else {
-				++clracct_count;
-				clracct_tx_count += tcount;
-			}
-		}
-
-		System.out.println();
-		System.out.println(String.format("   %5d / %5d uncleared tx in %4d open accounts", //
-				unclracct_utx_count, unclracct_tx_count, unclracct_count));
-		System.out.println(String.format("        %5d      cleared tx in %4d closed accounts", //
-				clracct_tx_count, clracct_count));
-
-		System.out.println();
-	}
+	// ===============================================================
 
 	public static void reportCashFlow(Date d1, Date d2) {
 		QifDom dom = QifDom.dom;
@@ -398,6 +132,8 @@ public class QifReporter {
 		// TODO Auto-generated method stub
 	}
 
+	// ===============================================================
+
 	public static void reportYearlyStatus() {
 		QifDom dom = QifDom.dom;
 
@@ -413,16 +149,13 @@ public class QifReporter {
 		do {
 			d = Common.getDateForEndOfMonth(year, 12);
 
-			QifReporter.reportStatusForDate(d);
+			NetWorthReporter.reportNetWorthForDate(d);
 
 			++year;
 		} while (d.compareTo(lastTxDate) < 0);
 	}
 
-	public static void reportAllAccountStatus() {
-		final Calendar cal = Calendar.getInstance();
-		reportStatusForDate(cal.getTime());
-	}
+	// ===============================================================
 
 	public static void reportDom(QifDom dom) {
 		Object model = buildReportDomModel();
@@ -534,7 +267,7 @@ public class QifReporter {
 		System.out.println("----------------------------");
 	}
 
-	public static void reportInvestmentAccount(Account a) {
+	private static void reportInvestmentAccount(Account a) {
 		System.out.println("----------------------------");
 		// System.out.println(a.name + " " + a.type + " " + a.description);
 		System.out.println(a.toString());
@@ -555,7 +288,7 @@ public class QifReporter {
 		reportPortfolio(a.securities);
 	}
 
-	public static void reportPortfolio(SecurityPortfolio port) {
+	private static void reportPortfolio(SecurityPortfolio port) {
 		for (final SecurityPosition p : port.positions) {
 			System.out.println("Sec: " + p.security.getName());
 
@@ -584,7 +317,7 @@ public class QifReporter {
 		System.out.println("----------------------------");
 	}
 
-	public static void reportGlobalPortfolio(SecurityPortfolio port) {
+	private static void reportGlobalPortfolio(SecurityPortfolio port) {
 		for (final SecurityPosition p : port.positions) {
 			System.out.println("Sec: " + p.security.getName());
 

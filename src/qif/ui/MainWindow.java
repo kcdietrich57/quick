@@ -3,6 +3,7 @@ package qif.ui;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -47,7 +48,9 @@ public class MainWindow extends JPanel {
 		topTabs.add("Dashboard", dashboardPanel);
 		topTabs.add("Accounts", accountViewSplit);
 
+		add(new JButton("Toolbar Goes Here"), BorderLayout.NORTH);
 		add(topTabs, BorderLayout.CENTER);
+		add(new JButton("Status Bar Goes Here"), BorderLayout.SOUTH);
 	}
 
 	public void addAccountSelectionListener(AccountSelectionListener listener) {
