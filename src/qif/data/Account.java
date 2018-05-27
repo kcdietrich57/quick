@@ -344,77 +344,6 @@ public class Account {
 		System.out.println("^");
 	}
 
-	public void reportStatus(String interval) {
-		if (this.statements.isEmpty()) {
-			System.out.println("No statements for " + getDisplayName(36));
-		} else {
-			System.out.println();
-			System.out.println("-------------------------------------\n" //
-					+ getDisplayName(36));
-			System.out.println(String.format("%d Statements, %d Transactions", //
-					this.statements.size(), this.transactions.size()));
-			System.out.println("-------------------------------------");
-
-			final int nn = Math.max(0, this.statements.size() - 12);
-			int ct = 0;
-
-			for (int ii = nn; ii < this.statements.size(); ++ii) {
-				final Statement s = this.statements.get(ii);
-
-				if (ct++ == 3) {
-					ct = 1;
-					System.out.println();
-				}
-
-				System.out.print(String.format("   %s  %3d tx  %s", //
-						Common.formatDate(s.date), s.transactions.size(), //
-						Common.formatAmount(s.closingBalance)));
-			}
-
-			System.out.println();
-
-			System.out.println("Uncleared transactions as of last statement:");
-
-			for (final GenericTxn t : this.statements.get(this.statements.size() - 1).unclearedTransactions) {
-				System.out.println(String.format("  %s  %s  %s", //
-						Common.formatDate(t.getDate()), //
-						Common.formatAmount(t.getAmount()), //
-						t.getPayee()));
-			}
-
-			int unclearedCount = 0;
-
-			for (final GenericTxn t : this.transactions) {
-				if (t.stmtdate == null) {
-					++unclearedCount;
-				}
-			}
-
-			System.out.println("Total uncleared transactions: " + unclearedCount);
-		}
-
-		System.out.println(String.format("Current value: %s", //
-				Common.formatAmount(getCurrentValue())));
-
-		System.out.println();
-	}
-
-	public BigDecimal reportStatusForDate(Date d, String[] s) {
-		final BigDecimal acctValue = getValueForDate(d);
-
-		if ((isOpenAsOf(d) && !isClosedAsOf(d)) //
-				|| !Common.isEffectivelyZero(acctValue) //
-				|| (getFirstUnclearedTransaction() != null) //
-				|| !this.securities.isEmptyForDate(d)) {
-			s[0] = String.format("  %-36s: %s\n", //
-					getDisplayName(36), Common.formatAmount(acctValue));
-
-			reportPortfolioForDate(d, s);
-		}
-
-		return acctValue;
-	}
-
 	private String getOpenCloseDateString() {
 		String openstr = (this.transactions.isEmpty()) //
 				? "??/??/????" //
@@ -461,6 +390,7 @@ public class Account {
 		return (cashBal != null) ? cashBal : BigDecimal.ZERO;
 	}
 
+	// TODO unused, unfinished
 	void getPositionsForDate(Date d) {
 		this.securities.getPositionsForDate(d);
 	}
@@ -476,23 +406,16 @@ public class Account {
 		return acctValue;
 	}
 
-	public void reportPortfolioForDate(Date d, String[] s) {
+	BigDecimal getSecuritiesValueForDate(Date d) {
 		BigDecimal portValue = BigDecimal.ZERO;
-		final String[] ps = { "" };
 
 		for (final SecurityPosition pos : this.securities.positions) {
-			portValue = portValue.add(pos.reportSecurityPositionForDate(d, ps));
+			BigDecimal posamt = pos.getSecurityPositionValueForDate(d);
+
+			portValue = portValue.add(posamt);
 		}
 
-		if (!Common.isEffectivelyZero(portValue)) {
-			final BigDecimal cashPosition = getValueForDate(d).subtract(portValue);
-
-			if (!Common.isEffectivelyZero(cashPosition)) {
-				SecurityPosition.reportCashPosition(cashPosition, s);
-			}
-		}
-
-		s[0] += ps[0];
+		return portValue;
 	}
 
 	public String toString() {

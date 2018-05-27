@@ -8,6 +8,7 @@ import qif.data.Account;
 import qif.data.Common;
 import qif.data.QifDom;
 import qif.data.QifDomReader;
+import qif.data.QifReporter;
 
 public class QifLoader {
 	public static Scanner scn;
@@ -65,13 +66,13 @@ public class QifLoader {
 
 					// dom.reportActivity(d1, d2);
 				} else if (s.startsWith("accts")) {
-					dom.reportAllAccountStatus();
+					QifReporter.reportAllAccountStatus();
 				} else {
 					final String aname = s.substring(1).trim();
 
 					final Account a = dom.findAccount(aname);
 					if (a != null) {
-						a.reportStatus("m");
+						QifReporter.reportStatus(a, "m");
 					}
 				}
 			} else if (s.startsWith("c")) {
@@ -92,7 +93,7 @@ public class QifLoader {
 					d1 = Common.parseDate(ss);
 				}
 
-				dom.reportCashFlow(d1, d2);
+				QifReporter.reportCashFlow(d1, d2);
 			} else if (s.startsWith("g")) {
 				final String aname = s.substring(1).trim();
 
@@ -118,24 +119,24 @@ public class QifLoader {
 					 * 
 					 * dom.reportMonthlyActivity(d1, d2);
 					 */ } else if (s.startsWith("mnw")) {
-					dom.reportMonthlyNetWorth();
+					QifReporter.reportMonthlyNetWorth();
 				}
 			} else if (s.startsWith("r")) {
 				if (s.startsWith("relog")) {
 					dom.rewriteStatementLogFile();
 				}
 			} else if (s.startsWith("s")) {
-				dom.reportStatistics();
+				QifReporter.reportStatistics();
 			} else if (s.startsWith("u")) {
 				usage();
 			} else if (s.startsWith("y")) {
 				if (s.startsWith("ys")) {
-					dom.reportYearlyStatus();
+					QifReporter.reportYearlyStatus();
 				}
 			} else {
 				final Date d = Common.parseDate(s);
 				if (d != null) {
-					dom.reportStatusForDate(d);
+					QifReporter.reportStatusForDate(d);
 				}
 			}
 		}

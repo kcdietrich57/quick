@@ -1,7 +1,6 @@
 package qif.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Font;
 
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
@@ -29,7 +28,6 @@ public class AccountPanel extends JPanel {
 		setLayout(new BorderLayout());
 
 		acctInfoPanel = new AccountInfoPanel();
-		acctInfoPanel.setFont(new Font("Helvetica", Font.BOLD, 20));
 
 		transactionPanel = new TransactionPanel(true);
 

@@ -1,13 +1,531 @@
 package qif.data;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
+
+import qif.data.QifDom.Balances;
+import qif.data.QifReporter.StatusForDateModel.AccountSummary;
+import qif.data.QifReporter.StatusForDateModel.Section;
+import qif.data.QifReporter.StatusForDateModel.SecuritySummary;
 
 public class QifReporter {
 	public static boolean compact = false;
 
+	// ===============================================================
+
+	public static void reportStatusForDate(Date d) {
+		StatusForDateModel model = buildReportStatusForDate(d);
+
+		outputReportStatusForDate(model);
+	}
+
+	// ===============================================================
+
+	static class SectionInfo {
+		public static final SectionInfo[] sectionInfo = {
+				new SectionInfo("Bank", new AccountType[] { AccountType.Bank, AccountType.Cash }, true), //
+				new SectionInfo("Asset", new AccountType[] { AccountType.Asset }, true), //
+				new SectionInfo("Investment", new AccountType[] { AccountType.Invest, AccountType.InvPort }, true), //
+				new SectionInfo("Retirement", new AccountType[] { AccountType.InvMutual, AccountType.Inv401k }, true), //
+				new SectionInfo("Credit Card", new AccountType[] { AccountType.CCard }, false), //
+				new SectionInfo("Loan", new AccountType[] { AccountType.Liability }, false) //
+		};
+
+		private static AccountType[] allAcctTypes = { //
+				AccountType.Bank, AccountType.Cash, AccountType.Asset, //
+				AccountType.Invest, AccountType.InvPort, //
+				AccountType.InvMutual, AccountType.Inv401k, //
+				AccountType.CCard, AccountType.Liability };
+
+		AccountType[] atypes;
+		String label;
+		boolean isAsset;
+
+		public SectionInfo(String label, AccountType[] atypes, boolean isAsset) {
+			this.label = label;
+			this.atypes = atypes;
+			this.isAsset = isAsset;
+		}
+
+		public static SectionInfo getSectionInfoForAccount(Account a) {
+			for (SectionInfo sinfo : sectionInfo) {
+				if (sinfo.contains(a.type)) {
+					return sinfo;
+				}
+			}
+
+			return null;
+		}
+
+		public static AccountType[] getAccountTypes() {
+			return allAcctTypes;
+		}
+
+		public boolean contains(AccountType at) {
+			for (final AccountType myat : this.atypes) {
+				if (myat == at) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+	};
+
+	static class StatusForDateModel {
+		static class SecuritySummary {
+			String name;
+			BigDecimal value = BigDecimal.ZERO;
+			BigDecimal shares = BigDecimal.ZERO;
+			BigDecimal price = BigDecimal.ZERO;
+		};
+
+		static class AccountSummary {
+			String name;
+			BigDecimal balance = BigDecimal.ZERO;
+			BigDecimal cashBalance = BigDecimal.ZERO;
+
+			List<SecuritySummary> securities = new ArrayList<SecuritySummary>();
+		};
+
+		static class Section {
+			SectionInfo info;
+			BigDecimal subtotal = BigDecimal.ZERO;
+
+			List<AccountSummary> accounts = new ArrayList<AccountSummary>();
+		};
+
+		Date d;
+		BigDecimal assets = BigDecimal.ZERO;
+		BigDecimal liabilities = BigDecimal.ZERO;
+		BigDecimal netWorth = BigDecimal.ZERO;
+		Section[] sections = new Section[SectionInfo.sectionInfo.length];
+
+		public StatusForDateModel() {
+			for (int ii = 0; ii < SectionInfo.sectionInfo.length; ++ii) {
+				Section sect = new Section();
+				this.sections[ii] = sect;
+
+				sect.info = SectionInfo.sectionInfo[ii];
+			}
+		}
+
+		Section getSectionForAccount(Account acct) {
+			for (Section s : this.sections) {
+				if (s.info.contains(acct.type)) {
+					return s;
+				}
+			}
+
+			return null;
+		}
+	}
+
+	private static StatusForDateModel buildReportStatusForDate(Date d) {
+		StatusForDateModel model = new StatusForDateModel();
+		model.d = d;
+
+		QifDom dom = QifDom.dom;
+
+		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
+			Account a = dom.getAccount(acctid);
+			if (a == null) {
+				continue;
+			}
+
+			BigDecimal amt = a.getValueForDate(d);
+
+			if (!a.isOpenOn(d) //
+					&& Common.isEffectivelyZero(amt) //
+					&& (a.getFirstUnclearedTransaction() == null) //
+					&& a.securities.isEmptyForDate(d)) {
+				continue;
+			}
+
+			StatusForDateModel.Section modelsect = model.getSectionForAccount(a);
+
+			AccountSummary asummary = new AccountSummary();
+			modelsect.accounts.add(asummary);
+			modelsect.subtotal = modelsect.subtotal.add(amt);
+
+			asummary.name = a.getDisplayName(36);
+			asummary.balance = asummary.cashBalance = amt;
+
+			if (!a.securities.isEmptyForDate(d)) {
+				BigDecimal portValue = a.getSecuritiesValueForDate(d);
+
+				if (!Common.isEffectivelyZero(portValue)) {
+					asummary.cashBalance = amt.subtract(portValue);
+
+					for (SecurityPosition pos : a.securities.positions) {
+						BigDecimal posval = pos.getSecurityPositionValueForDate(d);
+
+						if (!Common.isEffectivelyZero(posval)) {
+							SecuritySummary ssummary = new SecuritySummary();
+							asummary.securities.add(ssummary);
+
+							String nn = pos.security.getName();
+							if (nn.length() > 34) {
+								nn = nn.substring(0, 31) + "...";
+							}
+
+							ssummary.name = nn;
+							ssummary.value = posval;
+							ssummary.price = pos.security.getPriceForDate(d).price;
+
+							int idx = pos.getTransactionIndexForDate(d);
+							if (idx >= 0) {
+								ssummary.shares = pos.shrBalance.get(idx);
+							}
+						}
+					}
+				}
+			}
+
+			modelsect.subtotal.add(amt);
+
+			if (modelsect.info.isAsset) {
+				model.assets = model.assets.add(amt);
+			} else {
+				model.liabilities = model.liabilities.add(amt);
+			}
+
+			model.netWorth = model.netWorth.add(amt);
+		}
+
+		return model;
+	}
+
+	private static void outputReportStatusForDate(StatusForDateModel model) {
+		StringBuilder sb = new StringBuilder();
+
+		sb.append("\n");
+		sb.append(String.format("Global status for date: %s\n", Common.formatDate(model.d)));
+		sb.append("--------------------------------------------------------\n");
+		sb.append(String.format("  %-36s : %10s\n", "Account", "Balance\n"));
+
+		for (Section sect : model.sections) {
+			String label = sect.info.label + " Accounts ";
+			while (label.length() < 30) {
+				label += "=";
+			}
+
+			sb.append(String.format( //
+					"======== %s===========================\n", //
+					label));
+
+			if (!sect.accounts.isEmpty()) {
+				for (AccountSummary asum : sect.accounts) {
+					sb.append(String.format("  %-36s: %s\n", //
+							asum.name, Common.formatAmount(asum.balance)));
+
+					if (!Common.isEffectivelyEqual(asum.balance, asum.cashBalance)) {
+						sb.append(String.format("    %-34s: ..%s\n", //
+								"Cash", Common.formatAmount(asum.cashBalance)));
+					}
+
+					for (SecuritySummary ssum : asum.securities) {
+						if (!Common.isEffectivelyZero(ssum.shares)) {
+							sb.append(String.format("    %-34s: ..%s %s %s\n", //
+									ssum.name, Common.formatAmount(ssum.value), //
+									Common.formatAmount3(ssum.shares), //
+									Common.formatAmount3(ssum.price)));
+						}
+					}
+				}
+
+				sb.append(String.format("Section Total: - - - - - - - - - - - %15.2f\n", sect.subtotal));
+			}
+
+			sb.append("\n");
+		}
+
+		sb.append(String.format("Assets:      %15.2f\n", model.assets));
+		sb.append(String.format("Liabilities: %15.2f\n", model.liabilities));
+		sb.append(String.format("Balance:     %15.2f\n", model.netWorth));
+		sb.append("\n");
+
+		System.out.println(sb.toString());
+	}
+
+	// ===============================================================
+
+	public static void reportStatus(Account acct, String interval) {
+		if (acct.statements.isEmpty()) {
+			System.out.println("No statements for " + acct.getDisplayName(36));
+		} else {
+			System.out.println();
+			System.out.println("-------------------------------------\n" //
+					+ acct.getDisplayName(36));
+			System.out.println(String.format("%d Statements, %d Transactions", //
+					acct.statements.size(), acct.transactions.size()));
+			System.out.println("-------------------------------------");
+
+			final int nn = Math.max(0, acct.statements.size() - 12);
+			int ct = 0;
+
+			for (int ii = nn; ii < acct.statements.size(); ++ii) {
+				final Statement s = acct.statements.get(ii);
+
+				if (ct++ == 3) {
+					ct = 1;
+					System.out.println();
+				}
+
+				System.out.print(String.format("   %s  %3d tx  %s", //
+						Common.formatDate(s.date), s.transactions.size(), //
+						Common.formatAmount(s.closingBalance)));
+			}
+
+			System.out.println();
+
+			System.out.println("Uncleared transactions as of last statement:");
+
+			for (final GenericTxn t : acct.statements.get(acct.statements.size() - 1).unclearedTransactions) {
+				System.out.println(String.format("  %s  %s  %s", //
+						Common.formatDate(t.getDate()), //
+						Common.formatAmount(t.getAmount()), //
+						t.getPayee()));
+			}
+
+			int unclearedCount = 0;
+
+			for (final GenericTxn t : acct.transactions) {
+				if (t.stmtdate == null) {
+					++unclearedCount;
+				}
+			}
+
+			System.out.println("Total uncleared transactions: " + unclearedCount);
+		}
+
+		System.out.println(String.format("Current value: %s", //
+				Common.formatAmount(acct.getCurrentValue())));
+
+		System.out.println();
+	}
+
+	public static void reportMonthlyNetWorth() {
+		QifDom dom = QifDom.dom;
+
+		System.out.println();
+
+		Date d = dom.getFirstTransactionDate();
+		final Date lastTxDate = dom.getLastTransactionDate();
+
+		final Calendar cal = Calendar.getInstance();
+		cal.setTime(d);
+		int year = cal.get(Calendar.YEAR);
+		int month = cal.get(Calendar.MONTH);
+
+		System.out.println(String.format("  %-10s %-15s %-15s %-15s", //
+				"Date", "NetWorth", "Assets", "Liabilities"));
+
+		do {
+			d = Common.getDateForEndOfMonth(year, month);
+			final Balances b = dom.getNetWorthForDate(d);
+
+			System.out.println(String.format("%s,%15.2f,%15.2f,%15.2f", //
+					Common.formatDateLong(d), //
+					b.netWorth, b.assets, b.liabilities));
+
+			if (month == 12) {
+				++year;
+				month = 1;
+			} else {
+				++month;
+			}
+		} while (d.compareTo(lastTxDate) <= 0);
+	}
+
+	public static void reportStatistics() {
+		QifDom dom = QifDom.dom;
+
+		final List<Account> ranking = new ArrayList<Account>();
+
+		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
+			Account a = dom.getAccount(acctid);
+
+			if (a != null) {
+				ranking.add(a);
+			}
+		}
+
+		final Comparator<Account> cmp = (o1, o2) -> {
+			if (o1.statements.isEmpty()) {
+				return (o2.statements.isEmpty()) ? 0 : -1;
+			}
+			return (o2.statements.isEmpty()) //
+					? 1 //
+					: o1.getLastStatementDate().compareTo(o2.getLastStatementDate());
+		};
+
+		Collections.sort(ranking, cmp);
+
+		System.out.println();
+		System.out.println("Overall");
+		System.out.println();
+
+		int unclracct_count = 0;
+		int unclracct_utx_count = 0;
+		int unclracct_tx_count = 0;
+
+		int clracct_count = 0;
+		int clracct_tx_count = 0;
+
+		final Calendar cal = Calendar.getInstance();
+		final Date today = cal.getTime();
+
+		final long dayms = 1000L * 24 * 60 * 60;
+		final long msCurrent = today.getTime();
+		final Date minus30 = new Date(msCurrent - 30 * dayms);
+		final Date minus60 = new Date(msCurrent - 60 * dayms);
+		final Date minus90 = new Date(msCurrent - 90 * dayms);
+
+		boolean nostat = false;
+		boolean stat90 = false;
+		boolean stat60 = false;
+		boolean stat30 = false;
+		boolean statcurrent = false;
+
+		System.out.println(String.format("%3s   %-35s   %-8s  %-10s   %-5s %-5S      %-8s", //
+				"N", "Account", "LastStmt", "Balance", "UncTx", "TotTx", "FirstUnc"));
+
+		final int max = ranking.size();
+		for (int ii = 0; ii < max; ++ii) {
+			final Account a = ranking.get(ii);
+			final Date laststatement = a.getLastStatementDate();
+
+			if (laststatement == null) {
+				if (!nostat) {
+					System.out.println("### No statements");
+					nostat = true;
+				}
+			} else if (laststatement.compareTo(minus90) < 0) {
+				if (!stat90) {
+					System.out.println("\n### More than 90 days");
+					stat90 = true;
+				}
+			} else if (laststatement.compareTo(minus60) < 0) {
+				if (!stat60) {
+					System.out.println("\n### 60-90 days");
+					stat60 = true;
+				}
+			} else if (laststatement.compareTo(minus30) < 0) {
+				if (!stat30) {
+					System.out.println("\n### 30-60 days");
+					stat30 = true;
+				}
+			} else {
+				if (!statcurrent) {
+					System.out.println("\n### Less than 30 days");
+					statcurrent = true;
+				}
+			}
+
+			final int ucount = a.getUnclearedTransactionCount();
+			final int tcount = a.transactions.size();
+
+			if ((ucount > 0) || !a.isClosedAsOf(null)) {
+				if (a.isClosedAsOf(null)) {
+					System.out.println("Warning! Account " + a.getName() + " is closed!");
+				}
+
+				++unclracct_count;
+				unclracct_utx_count += ucount;
+				unclracct_tx_count += tcount;
+
+				final String nam = a.getDisplayName(25);
+				final Statement lStat = a.getLastStatement();
+				final Date lStatDate = (lStat != null) ? lStat.date : null;
+
+				System.out.println(String.format("%3d   %-35s : %8s  %s : %5d/%5d :    %8s", //
+						unclracct_count, //
+						nam, //
+						Common.formatDate(lStatDate), //
+						Common.formatAmount(a.balance), //
+						ucount, //
+						tcount, //
+						Common.formatDate(a.getFirstUnclearedTransactionDate())));
+			} else {
+				++clracct_count;
+				clracct_tx_count += tcount;
+			}
+		}
+
+		System.out.println();
+		System.out.println(String.format("   %5d / %5d uncleared tx in %4d open accounts", //
+				unclracct_utx_count, unclracct_tx_count, unclracct_count));
+		System.out.println(String.format("        %5d      cleared tx in %4d closed accounts", //
+				clracct_tx_count, clracct_count));
+
+		System.out.println();
+	}
+
+	public static void reportCashFlow(Date d1, Date d2) {
+		QifDom dom = QifDom.dom;
+
+		AccountPosition[] info = new AccountPosition[dom.getNumAccounts()];
+
+		for (int id = 1; id <= dom.getNumAccounts(); ++id) {
+			Account a = dom.getAccount(id);
+
+			if (a != null) {
+				info[id - 1].acct = a;
+
+				BigDecimal v1 = a.getCashValueForDate(d1);
+			}
+		}
+	}
+
+	public static void reportActivity(Date d1, Date d2) {
+		// TODO Auto-generated method stub
+	}
+
+	public static void reportYearlyStatus() {
+		QifDom dom = QifDom.dom;
+
+		System.out.println();
+
+		Date d = dom.getFirstTransactionDate();
+		final Date lastTxDate = dom.getLastTransactionDate();
+
+		final Calendar cal = Calendar.getInstance();
+		cal.setTime(d);
+		int year = cal.get(Calendar.YEAR);
+
+		do {
+			d = Common.getDateForEndOfMonth(year, 12);
+
+			QifReporter.reportStatusForDate(d);
+
+			++year;
+		} while (d.compareTo(lastTxDate) < 0);
+	}
+
+	public static void reportAllAccountStatus() {
+		final Calendar cal = Calendar.getInstance();
+		reportStatusForDate(cal.getTime());
+	}
+
 	public static void reportDom(QifDom dom) {
+		Object model = buildReportDomModel();
+
+		outputReportDomModel(model);
+	}
+
+	private static Object buildReportDomModel() {
+		return null;
+	}
+
+	private static void outputReportDomModel(Object model) {
+		QifDom dom = QifDom.dom;
+
 		reportGlobalPortfolio(dom.portfolio);
 
 		System.out.println("============================");

@@ -90,35 +90,6 @@ public class SecurityPosition {
 
 	}
 
-	public BigDecimal reportSecurityPositionForDate(Date d, String[] s) {
-		final int idx = getTransactionIndexForDate(d);
-		if (idx < 0) {
-			return BigDecimal.ZERO;
-		}
-
-		final InvestmentTxn txn = this.transactions.get(idx);
-		final BigDecimal tshrbal = this.shrBalance.get(idx);
-		final BigDecimal price = txn.security.getPriceForDate(d).price;
-		final BigDecimal value = price.multiply(tshrbal);
-
-		String nn = txn.security.getName();
-		if (nn.length() > 34) {
-			nn = nn.substring(0, 31) + "...";
-		}
-
-		s[0] += String.format("    %-34s: ..%s %s %s\n", //
-				nn, Common.formatAmount(value), //
-				Common.formatAmount3(tshrbal), //
-				Common.formatAmount3(price));
-
-		return value;
-	}
-
-	public static void reportCashPosition(BigDecimal bal, String[] s) {
-		s[0] += String.format("    %-34s: ..%s\n", //
-				"Cash", Common.formatAmount(bal));
-	}
-
 	/**
 	 * Return the index of the last transaction within this position on or before a
 	 * given date.
