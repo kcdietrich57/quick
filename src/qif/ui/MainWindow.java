@@ -3,7 +3,6 @@ package qif.ui;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
@@ -47,14 +46,6 @@ class MainFrame extends JFrame {
 	}
 }
 
-class Dashboard extends JButton {
-	private static final long serialVersionUID = 1L;
-
-	public Dashboard() {
-		super("Dashboard goes here");
-	}
-}
-
 public class MainWindow extends JPanel {
 	private static final long serialVersionUID = 1L;
 
@@ -72,7 +63,7 @@ public class MainWindow extends JPanel {
 	// - - - - - - Statements
 	// - - - - - - Transactions
 	private JTabbedPane topTabs;
-	private JButton dashboardPanel;
+	private Dashboard dashboardPanel;
 	private JSplitPane accountViewSplit;
 	private AccountNavigationPanel accountNavigationPanel;
 	private AccountPanel accountPanel;

@@ -9,9 +9,10 @@ import java.util.Date;
 import java.util.List;
 
 import qif.data.QifDom.Balances;
-import qif.data.QifReporter.StatusForDateModel.AccountSummary;
-import qif.data.QifReporter.StatusForDateModel.Section;
-import qif.data.QifReporter.StatusForDateModel.SecuritySummary;
+import qif.data.report.StatusForDateModel;
+import qif.data.report.StatusForDateModel.AccountSummary;
+import qif.data.report.StatusForDateModel.Section;
+import qif.data.report.StatusForDateModel.SecuritySummary;
 
 public class QifReporter {
 	public static boolean compact = false;
@@ -21,112 +22,14 @@ public class QifReporter {
 	public static void reportStatusForDate(Date d) {
 		StatusForDateModel model = buildReportStatusForDate(d);
 
-		outputReportStatusForDate(model);
+		String s = generateReportStatusForDate(model);
+		
+		System.out.println(s);
 	}
 
 	// ===============================================================
 
-	static class SectionInfo {
-		public static final SectionInfo[] sectionInfo = {
-				new SectionInfo("Bank", new AccountType[] { AccountType.Bank, AccountType.Cash }, true), //
-				new SectionInfo("Asset", new AccountType[] { AccountType.Asset }, true), //
-				new SectionInfo("Investment", new AccountType[] { AccountType.Invest, AccountType.InvPort }, true), //
-				new SectionInfo("Retirement", new AccountType[] { AccountType.InvMutual, AccountType.Inv401k }, true), //
-				new SectionInfo("Credit Card", new AccountType[] { AccountType.CCard }, false), //
-				new SectionInfo("Loan", new AccountType[] { AccountType.Liability }, false) //
-		};
-
-		private static AccountType[] allAcctTypes = { //
-				AccountType.Bank, AccountType.Cash, AccountType.Asset, //
-				AccountType.Invest, AccountType.InvPort, //
-				AccountType.InvMutual, AccountType.Inv401k, //
-				AccountType.CCard, AccountType.Liability };
-
-		AccountType[] atypes;
-		String label;
-		boolean isAsset;
-
-		public SectionInfo(String label, AccountType[] atypes, boolean isAsset) {
-			this.label = label;
-			this.atypes = atypes;
-			this.isAsset = isAsset;
-		}
-
-		public static SectionInfo getSectionInfoForAccount(Account a) {
-			for (SectionInfo sinfo : sectionInfo) {
-				if (sinfo.contains(a.type)) {
-					return sinfo;
-				}
-			}
-
-			return null;
-		}
-
-		public static AccountType[] getAccountTypes() {
-			return allAcctTypes;
-		}
-
-		public boolean contains(AccountType at) {
-			for (final AccountType myat : this.atypes) {
-				if (myat == at) {
-					return true;
-				}
-			}
-
-			return false;
-		}
-	};
-
-	static class StatusForDateModel {
-		static class SecuritySummary {
-			String name;
-			BigDecimal value = BigDecimal.ZERO;
-			BigDecimal shares = BigDecimal.ZERO;
-			BigDecimal price = BigDecimal.ZERO;
-		};
-
-		static class AccountSummary {
-			String name;
-			BigDecimal balance = BigDecimal.ZERO;
-			BigDecimal cashBalance = BigDecimal.ZERO;
-
-			List<SecuritySummary> securities = new ArrayList<SecuritySummary>();
-		};
-
-		static class Section {
-			SectionInfo info;
-			BigDecimal subtotal = BigDecimal.ZERO;
-
-			List<AccountSummary> accounts = new ArrayList<AccountSummary>();
-		};
-
-		Date d;
-		BigDecimal assets = BigDecimal.ZERO;
-		BigDecimal liabilities = BigDecimal.ZERO;
-		BigDecimal netWorth = BigDecimal.ZERO;
-		Section[] sections = new Section[SectionInfo.sectionInfo.length];
-
-		public StatusForDateModel() {
-			for (int ii = 0; ii < SectionInfo.sectionInfo.length; ++ii) {
-				Section sect = new Section();
-				this.sections[ii] = sect;
-
-				sect.info = SectionInfo.sectionInfo[ii];
-			}
-		}
-
-		Section getSectionForAccount(Account acct) {
-			for (Section s : this.sections) {
-				if (s.info.contains(acct.type)) {
-					return s;
-				}
-			}
-
-			return null;
-		}
-	}
-
-	private static StatusForDateModel buildReportStatusForDate(Date d) {
+	public static StatusForDateModel buildReportStatusForDate(Date d) {
 		StatusForDateModel model = new StatusForDateModel();
 		model.d = d;
 
@@ -149,7 +52,7 @@ public class QifReporter {
 
 			StatusForDateModel.Section modelsect = model.getSectionForAccount(a);
 
-			AccountSummary asummary = new AccountSummary();
+			StatusForDateModel.AccountSummary asummary = new StatusForDateModel.AccountSummary();
 			modelsect.accounts.add(asummary);
 			modelsect.subtotal = modelsect.subtotal.add(amt);
 
@@ -166,7 +69,7 @@ public class QifReporter {
 						BigDecimal posval = pos.getSecurityPositionValueForDate(d);
 
 						if (!Common.isEffectivelyZero(posval)) {
-							SecuritySummary ssummary = new SecuritySummary();
+							StatusForDateModel.SecuritySummary ssummary = new StatusForDateModel.SecuritySummary();
 							asummary.securities.add(ssummary);
 
 							String nn = pos.security.getName();
@@ -201,7 +104,7 @@ public class QifReporter {
 		return model;
 	}
 
-	private static void outputReportStatusForDate(StatusForDateModel model) {
+	public static String generateReportStatusForDate(StatusForDateModel model) {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("\n");
@@ -250,7 +153,7 @@ public class QifReporter {
 		sb.append(String.format("Balance:     %15.2f\n", model.netWorth));
 		sb.append("\n");
 
-		System.out.println(sb.toString());
+		return sb.toString();
 	}
 
 	// ===============================================================
