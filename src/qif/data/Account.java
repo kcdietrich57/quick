@@ -85,6 +85,8 @@ public class Account {
 				|| name.equals("GD IRA (Scottrade)") //
 				|| name.equals("TD IRA (E*Trade)") //
 				|| name.equals("TD IRA (Scottrade)") //
+				|| name.equals("GD IRA Ameritrade") //
+				|| name.equals("TD IRA Ameritrade") //
 				|| name.equals("IBM Pension")) {
 			this.type = AccountType.Inv401k;
 		}
