@@ -23,19 +23,24 @@ public class QifDom {
 	// The one and only financial model
 	public static QifDom dom = null;
 
-	// The imported data does not connect transfers, so we need to do it.
-	// These keep track of successful and unsuccessful attempts to connect transfers
-	private static int totalXfers = 0;
-	private static int failedXfers = 0;
-
 	// Various types of information we track in this model
 	private final List<Category> categories;
 	private final Map<String, Security> securities;
+	/**
+	 * This list of accounts may not contain nulls, size == numAccounts, index is
+	 * unrelated to acctid
+	 */
 	private final List<Account> accounts;
+	/**
+	 * This list of accounts is indexed by acctid, size > numAccounts, and may
+	 * contain nulls
+	 */
 	private final List<Account> accountsByID;
 	private final List<GenericTxn> allTransactions;
 
 	public SecurityPortfolio portfolio;
+
+	/** Pay attention to version of the loaded QIF file format */
 	public int loadedStatementsVersion = -1;
 
 	private File stmtLogFile;
@@ -43,6 +48,11 @@ public class QifDom {
 	// As we are loading data, we track the account context we are within here
 	public Account currAccount = null;
 
+	// Housekeeping info while processing related transfer transactions.
+	// The imported data does not connect transfers, so we need to do it.
+	// These keep track of successful and unsuccessful attempts to connect transfers.
+	private int totalXfers = 0;
+	private int failedXfers = 0;
 	private final List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
 
 	public QifDom(File qifDir) {
