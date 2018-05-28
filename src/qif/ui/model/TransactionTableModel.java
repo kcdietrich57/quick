@@ -75,7 +75,7 @@ public class TransactionTableModel //
 			setTransactions(curAccount.transactions);
 		} else if (obj instanceof Statement) {
 			curStatement = (Statement) obj;
-			curAccount = QifDom.dom.getAccount(curStatement.acctid);
+			curAccount = QifDom.dom.getAccountByID(curStatement.acctid);
 
 			setTransactions(curStatement.transactions);
 		} else {
@@ -159,7 +159,7 @@ public class TransactionTableModel //
 			}
 
 			if (acctid > 0) {
-				return "[" + QifDom.dom.getAccount(acctid).getName() + "]";
+				return "[" + QifDom.dom.getAccountByID(acctid).getName() + "]";
 			}
 
 			return "";

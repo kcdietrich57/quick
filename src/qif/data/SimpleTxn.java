@@ -47,7 +47,7 @@ public class SimpleTxn {
 	}
 
 	public Account getAccount() {
-		return QifDom.dom.getAccount(this.acctid);
+		return QifDom.dom.getAccountByID(this.acctid);
 	}
 
 	public TxAction getAction() {
@@ -100,16 +100,16 @@ public class SimpleTxn {
 		final QifDom dom = QifDom.dom;
 
 		String s = "Tx" + this.txid + ":";
-		s += dom.getAccount(this.acctid).getName();
+		s += dom.getAccountByID(this.acctid).getName();
 		s += " amt=" + this.amount;
 		s += " memo=" + this.memo;
 
 		// TODO why have both negative cat and xacct to represent the same
 		// thing?
 		if (this.xacctid < (short) 0) {
-			s += " xacct=" + dom.getAccount(-this.xacctid).getName();
+			s += " xacct=" + dom.getAccountByID(-this.xacctid).getName();
 		} else if (this.catid < (short) 0) {
-			s += " xcat=" + dom.getAccount(-this.catid).getName();
+			s += " xcat=" + dom.getAccountByID(-this.catid).getName();
 		} else if (this.catid > (short) 0) {
 			s += " cat=" + dom.getCategory(this.catid).name;
 		}

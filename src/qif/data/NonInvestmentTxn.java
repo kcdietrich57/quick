@@ -92,7 +92,7 @@ public class NonInvestmentTxn extends GenericTxn {
 
 		String s = ((this.stmtdate != null) ? "*" : " ") + "Tx" + this.txid + ":";
 		s += " date=" + Common.formatDate(getDate());
-		s += " acct=" + dom.getAccount(this.acctid).getName();
+		s += " acct=" + dom.getAccountByID(this.acctid).getName();
 		s += " clr:" + this.clearedStatus;
 		s += " num=" + this.chkNumber;
 		s += " payee=" + getPayee();
@@ -100,7 +100,7 @@ public class NonInvestmentTxn extends GenericTxn {
 		s += " memo=" + this.memo;
 
 		if (this.catid < (short) 0) {
-			s += " xacct=[" + dom.getAccount(-this.catid).getName() + "]";
+			s += " xacct=[" + dom.getAccountByID(-this.catid).getName() + "]";
 		} else if (this.catid > (short) 0) {
 			s += " cat=" + dom.getCategory(this.catid).name;
 		}
@@ -119,7 +119,7 @@ public class NonInvestmentTxn extends GenericTxn {
 
 			for (final SimpleTxn txn : this.split) {
 				if (txn.catid < (short) 0) {
-					s += " [" + dom.getAccount(-txn.catid).getName() + "]";
+					s += " [" + dom.getAccountByID(-txn.catid).getName() + "]";
 				} else if (txn.catid > (short) 0) {
 					s += " " + dom.getCategory(txn.catid).name;
 				}

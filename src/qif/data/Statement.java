@@ -284,7 +284,7 @@ public class Statement {
 
 	// name;date;stmtBal;cashBal;numTx;numPos;[cashTx;][sec;numTx[txIdx;shareBal;]]
 	public String formatForSave() {
-		final Account a = QifDom.dom.getAccount(this.acctid);
+		final Account a = QifDom.dom.getAccountByID(this.acctid);
 
 		String s = String.format("%s;%s;%5.2f;%5.2f;%d;%d", //
 				a.getName(), //

@@ -1,6 +1,9 @@
-package qif.data;
+package qif.report;
 
 import java.math.BigDecimal;
+
+import qif.data.Account;
+import qif.data.SecurityPortfolio;
 
 public class AccountPosition {
 	public Account acct;

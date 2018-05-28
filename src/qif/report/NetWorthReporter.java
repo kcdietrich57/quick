@@ -8,6 +8,7 @@ import qif.data.Account;
 import qif.data.Common;
 import qif.data.QifDom;
 import qif.data.SecurityPosition;
+import qif.data.QifDom.Balances;
 import qif.report.StatusForDateModel.AccountSummary;
 import qif.report.StatusForDateModel.Section;
 import qif.report.StatusForDateModel.SecuritySummary;
@@ -28,6 +29,60 @@ public class NetWorthReporter {
 		System.out.println(s);
 	}
 
+	public static void reportMonthlyNetWorth() {
+		QifDom dom = QifDom.dom;
+
+		System.out.println();
+
+		Date d = dom.getFirstTransactionDate();
+		final Date lastTxDate = dom.getLastTransactionDate();
+
+		final Calendar cal = Calendar.getInstance();
+		cal.setTime(d);
+		int year = cal.get(Calendar.YEAR);
+		int month = cal.get(Calendar.MONTH);
+
+		System.out.println(String.format("  %-10s %-15s %-15s %-15s", //
+				"Date", "NetWorth", "Assets", "Liabilities"));
+
+		do {
+			d = Common.getDateForEndOfMonth(year, month);
+			final Balances b = dom.getNetWorthForDate(d);
+
+			System.out.println(String.format("%s,%15.2f,%15.2f,%15.2f", //
+					Common.formatDateLong(d), //
+					b.netWorth, b.assets, b.liabilities));
+
+			if (month == 12) {
+				++year;
+				month = 1;
+			} else {
+				++month;
+			}
+		} while (d.compareTo(lastTxDate) <= 0);
+	}
+
+	public static void reportYearlyNetWorth() {
+		QifDom dom = QifDom.dom;
+
+		System.out.println();
+
+		Date d = dom.getFirstTransactionDate();
+		final Date lastTxDate = dom.getLastTransactionDate();
+
+		final Calendar cal = Calendar.getInstance();
+		cal.setTime(d);
+		int year = cal.get(Calendar.YEAR);
+
+		do {
+			d = Common.getDateForEndOfMonth(year, 12);
+
+			NetWorthReporter.reportNetWorthForDate(d);
+
+			++year;
+		} while (d.compareTo(lastTxDate) < 0);
+	}
+
 	// ===============================================================
 
 	public static StatusForDateModel buildReportStatusForDate(Date d) {
@@ -36,8 +91,8 @@ public class NetWorthReporter {
 
 		QifDom dom = QifDom.dom;
 
-		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
-			Account a = dom.getAccount(acctid);
+		for (int anum = 0; anum <= dom.getNumAccounts(); ++anum) {
+			Account a = dom.getAccount(anum);
 			if (a == null) {
 				continue;
 			}
@@ -128,7 +183,8 @@ public class NetWorthReporter {
 					sb.append(String.format("  %-36s: %s\n", //
 							asum.name, Common.formatAmount(asum.balance)));
 
-					if (!Common.isEffectivelyEqual(asum.balance, asum.cashBalance)) {
+					if (!Common.isEffectivelyZero(asum.cashBalance) //
+							&& !asum.securities.isEmpty()) {
 						sb.append(String.format("    %-34s: ..%s\n", //
 								"Cash", Common.formatAmount(asum.cashBalance)));
 					}
@@ -143,6 +199,7 @@ public class NetWorthReporter {
 					}
 				}
 
+				sb.append("\n");
 				sb.append(String.format("Section Total: - - - - - - - - - - - %15.2f\n", sect.subtotal));
 			}
 

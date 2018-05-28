@@ -77,8 +77,6 @@ public class InvestmentTxn extends GenericTxn {
 		case REINV_DIV:
 		case REINV_LG:
 		case REINV_SH:
-		case GRANT:
-		case EXPIRE:
 			if (this.quantity == null) {
 				// System.out.println("NULL quantities: " + ++nullQuantities);
 				this.quantity = BigDecimal.ZERO;
@@ -88,7 +86,6 @@ public class InvestmentTxn extends GenericTxn {
 
 		case BUYX:
 		case REINV_INT:
-		case VEST:
 			if (this.price == null) {
 				this.price = BigDecimal.ZERO;
 			}
@@ -127,6 +124,18 @@ public class InvestmentTxn extends GenericTxn {
 			break;
 		}
 
+		// TODO We lack lots of information needed to properly track options
+		case GRANT:
+		case EXPIRE:
+			if (this.quantity == null) {
+				this.quantity = BigDecimal.ZERO;
+			}
+		case VEST:
+			if (this.price == null) {
+				this.price = BigDecimal.ZERO;
+			}
+			break;
+
 		default:
 			break;
 		}
@@ -147,27 +156,6 @@ public class InvestmentTxn extends GenericTxn {
 			assert (this.price == null) && (this.quantity == null);
 			break;
 
-		case GRANT:
-			// Strike price, open/close price, vest/expire date, qty
-			// System.out.println(this);
-			break;
-
-		case VEST:
-			// Connect to Grant
-			// System.out.println(this);
-			break;
-
-		case EXERCISE:
-		case EXERCISEX:
-			// Connect to Grant, qty/price
-			// System.out.println(this);
-			break;
-
-		case EXPIRE:
-			// Connect to Grant, qty
-			// System.out.println(this);
-			break;
-
 		case SHRS_IN:
 		case SHRS_OUT:
 			break;
@@ -185,9 +173,24 @@ public class InvestmentTxn extends GenericTxn {
 		case XOUT:
 			break;
 
+		// TODO We lack lots of information needed to properly track options
+		case GRANT:
+			// Strike price, open/close price, vest/expire date, qty
+			break;
+		case VEST:
+			// Connect to Grant
+			break;
+		case EXERCISE:
+		case EXERCISEX:
+			// Connect to Grant, qty/price
+			break;
+		case EXPIRE:
+			// Connect to Grant, qty
+			break;
+
 		case OTHER:
 			Common.reportError("Transaction has unknown type: " + //
-					QifDom.dom.getAccount(this.acctid).getName());
+					QifDom.dom.getAccountByID(this.acctid).getName());
 			break;
 		}
 
@@ -220,7 +223,7 @@ public class InvestmentTxn extends GenericTxn {
 			final BigDecimal newprice = tot.divide(this.quantity).abs();
 
 			String s = "Inconsistent " + this.action + " transaction:" + //
-					" acct=" + QifDom.dom.getAccount(this.acctid).getName() + //
+					" acct=" + QifDom.dom.getAccountByID(this.acctid).getName() + //
 					" " + Common.formatDate(getDate()) + "\n" + //
 					"  sec=" + this.security.getName() + //
 					" qty=" + this.quantity + //
@@ -364,7 +367,7 @@ public class InvestmentTxn extends GenericTxn {
 	public String toStringLong() {
 		String s = ((this.stmtdate != null) ? "*" : " ") + "InvTx" + this.txid + ":";
 		s += " dt=" + Common.formatDate(getDate());
-		s += " acct=" + QifDom.dom.getAccount(this.acctid).getName();
+		s += " acct=" + QifDom.dom.getAccountByID(this.acctid).getName();
 		s += " act=" + this.action;
 		if (this.security != null) {
 			s += " sec=" + this.security.getName();

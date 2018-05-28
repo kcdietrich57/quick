@@ -18,111 +18,29 @@ import java.util.Map;
 
 import qif.data.Statement.StatementDetails;
 
-//--------------------------------------------------------------------
-//TO DO
-//--------------------------------------------------------------------
-// 2/9/16 Use Acct ID in transactions
-// 2/9 Use Category ID in transactions
-// 2/9 Create Split transactions with IDs
-// 2/9 Verify split consistency
-// 2/9 Sort transactions by date
-// 2/11 Connect xfer transactions
-// 2/11 Security, prices
-// 2/12 Account type
-// 2/12 Account summary
-// 2/13 Non-Investment Statements
-// 2/16 Balance Non-Investment Statements
-// 2/20 Relaxed loading, fix load bugs, better errors, load old files
-// 2/21 Add to git
-// 2/22 Cloning Category/Security/Account info in new file (prep for merge)
-// 2/28 Running cash balance
-// 3/5 Non-investment register - running balance
-// 3/27 Investment cash balance
-// 3/27 Investment transactions - share balance
-// 3/28 Verify all transaction types - Dividends, Splits
-// 3/29 ShrsIn/ShrsOut (xfer)
-// 4/2 Share balance in account positions
-// 4/2 Security positions (all accounts)
-// 4/3 Security position by account and security for any date
-// 4/20 Security price history
-// 4/20 Point-in time positions (net worth)
-// 4/20 Handle investment amounts and transfers
-// 4/23 Consolidate existing data files
-// 5/7 Statements - store separately
-// 5/7 Manage security price history separately
-// 5/7 Portfolio market value
-// 5/7 round account value to nearest cent
-// 5/16 Review/reconcile statements
-// 7/3 Stock Splits
-// 7/3 ShrsIn/ShrsOut - add/remove
-// 7/3 Investment statement with additional info for securities
-// 8/7 Account value vs time
-// 8/7 Net worth vs time
-// 8/7 Yearly status
-//
-// Account open/close dates via statements file
-// Single account history over time (statements + txns)
-// Y/Y comparison by account, acctType, asset/liability, networth
-// Detailed net worth vs time
-//
-// Command to rewrite statementLog file
-//
-//Specify expected statements per account
-//Prompt for info for missing statements
-//
-// REPORTS
-// Account as of date - incl last statement
-// Categories vs time
-// Cash flow
-// Investment income
-//
-// INVESTMENTS
-// Dump portfolio for each month (positions)
-// Associate security sales with purchases (lots)
-// Track cost basis/gain/loss
-// ESPP grants
-// Extra ESPP tax info
-// Options - Grant, Vest, Exercise, Expire
-// Include vested options in portfolio
-// Optionally include non-vested options in portfolio (separately, perhaps)
-// Exclude expired options
-//
-// ASSETS
-// LOANS
-//
-//Code review/cleanup - ids for more fields?
-//
-// Encryption, security
-// GUI Register
-// Graphs
-//
-// Look up transaction by id?
-//--------------------------------------------------------------------
-
-// Document Object Model for a QIF file.
+/** Document Object Model for finances from Quicken */
 public class QifDom {
+	// The one and only financial model
 	public static QifDom dom = null;
-	private static boolean isverbose = false;
 
+	// The imported data does not connect transfers, so we need to do it.
+	// These keep track of successful and unsuccessful attempts to connect transfers
 	private static int totalXfers = 0;
 	private static int failedXfers = 0;
 
-	public static boolean verbose() {
-		return isverbose;
-	}
-
+	// Various types of information we track in this model
 	private final List<Category> categories;
 	private final Map<String, Security> securities;
-
 	private final List<Account> accounts;
-	private final List<Account> accounts_bytime;
-
+	private final List<Account> accountsByID;
 	private final List<GenericTxn> allTransactions;
 
 	public SecurityPortfolio portfolio;
 	public int loadedStatementsVersion = -1;
-	File stmtLogFile;
 
+	private File stmtLogFile;
+
+	// As we are loading data, we track the account context we are within here
 	public Account currAccount = null;
 
 	private final List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
@@ -131,8 +49,8 @@ public class QifDom {
 		QifDom.dom = this;
 
 		this.categories = new ArrayList<Category>();
+		this.accountsByID = new ArrayList<Account>();
 		this.accounts = new ArrayList<Account>();
-		this.accounts_bytime = new ArrayList<Account>();
 		this.securities = new HashMap<String, Security>();
 
 		this.allTransactions = new ArrayList<GenericTxn>();
@@ -156,12 +74,25 @@ public class QifDom {
 		return this.securities.size() - 1;
 	}
 
-	public Account getAccount(int acctid) {
-		return this.accounts.get(acctid);
+	public List<Account> getAccounts() {
+		return Collections.unmodifiableList(this.accounts);
+	}
+
+	public Account getAccount(int idx) {
+		return this.accounts.get(idx);
+	}
+
+	/**
+	 * Return the descriptor for a specific account
+	 * 
+	 * DO NOT use this to iterate over accounts; rather use getAccount(idx)
+	 */
+	public Account getAccountByID(int acctid) {
+		return this.accountsByID.get(acctid);
 	}
 
 	public List<Account> getSortedAccounts() {
-		List<Account> ret = new ArrayList<>(this.accounts);
+		List<Account> ret = new ArrayList<>(this.accountsByID);
 
 		for (int ii = ret.size() - 1; ii >= 0; --ii) {
 			if (ret.get(ii) == null) {
@@ -184,10 +115,6 @@ public class QifDom {
 		return ret;
 	}
 
-	public Account getAccountByTime(int acctid) {
-		return this.accounts_bytime.get(acctid);
-	}
-
 	public Category getCategory(int catid) {
 		return this.categories.get(catid);
 	}
@@ -203,7 +130,7 @@ public class QifDom {
 	public Date getFirstTransactionDate() {
 		Date retdate = null;
 
-		for (final Account a : this.accounts) {
+		for (final Account a : this.accountsByID) {
 			if (a == null) {
 				continue;
 			}
@@ -220,7 +147,7 @@ public class QifDom {
 	public Date getLastTransactionDate() {
 		Date retdate = null;
 
-		for (final Account a : this.accounts) {
+		for (final Account a : this.accountsByID) {
 			if (a == null) {
 				continue;
 			}
@@ -237,7 +164,7 @@ public class QifDom {
 	public List<GenericTxn> getAllTransactions() {
 		final List<GenericTxn> txns = new ArrayList<GenericTxn>();
 
-		for (final Account a : this.accounts) {
+		for (final Account a : this.accountsByID) {
 			if (a == null) {
 				continue;
 			}
@@ -250,16 +177,16 @@ public class QifDom {
 	}
 
 	public void addAccount(Account acct) {
-		while (this.accounts.size() <= acct.acctid) {
-			this.accounts.add(null);
+		while (this.accountsByID.size() <= acct.acctid) {
+			this.accountsByID.add(null);
 		}
 
-		this.accounts.set(acct.acctid, acct);
-		this.accounts_bytime.add(acct);
+		this.accountsByID.set(acct.acctid, acct);
+		this.accounts.add(acct);
 
 		this.currAccount = acct;
 
-		Collections.sort(this.accounts_bytime, (a1, a2) -> {
+		Collections.sort(this.accounts, (a1, a2) -> {
 			if (a1 == null) {
 				return (a2 == null) ? 0 : 1;
 			} else if (a2 == null) {
@@ -397,13 +324,13 @@ public class QifDom {
 	public Account findAccount(String name) {
 		name = name.toLowerCase();
 
-		for (final Account acct : this.accounts) {
+		for (final Account acct : this.accountsByID) {
 			if (acct != null && acct.getName().equalsIgnoreCase(name)) {
 				return acct;
 			}
 		}
 
-		for (final Account acct : this.accounts) {
+		for (final Account acct : this.accountsByID) {
 			if (acct != null && acct.getName().toLowerCase().startsWith(name)) {
 				return acct;
 			}
@@ -435,7 +362,7 @@ public class QifDom {
 			d = new Date();
 		}
 
-		for (final Account a : this.accounts) {
+		for (final Account a : this.accountsByID) {
 			if (a != null) {
 				final BigDecimal amt = a.getValueForDate(d);
 
@@ -480,14 +407,14 @@ public class QifDom {
 		String s = "";
 
 		s += "Categories: " + this.categories;
-		s += "Accounts: " + this.accounts_bytime;
+		s += "Accounts: " + this.accounts;
 		s += "Securities: " + this.securities;
 
 		return s;
 	}
 
 	public int getNextAccountID() {
-		return (this.accounts.isEmpty()) ? 1 : this.accounts.size();
+		return (this.accountsByID.isEmpty()) ? 1 : this.accountsByID.size();
 	}
 
 	public int getNextCategoryID() {
@@ -495,7 +422,7 @@ public class QifDom {
 	}
 
 	public void buildStatementChains() {
-		for (final Account a : this.accounts) {
+		for (final Account a : this.accountsByID) {
 			if (a == null) {
 				continue;
 			}
@@ -567,8 +494,8 @@ public class QifDom {
 		}
 
 		pw.println("" + Statement.StatementDetails.CURRENT_VERSION);
-		for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
-			final Account a = getAccount(acctid);
+		for (int anum = 0; anum <= getNumAccounts(); ++anum) {
+			final Account a = getAccount(anum);
 
 			for (final Statement s : a.statements) {
 				pw.println(s.formatForSave());
@@ -609,8 +536,8 @@ public class QifDom {
 		try {
 			pw = new PrintWriter(new FileWriter(this.stmtLogFile, true));
 
-			for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
-				final Account a = getAccount(acctid);
+			for (int anum = 0; anum <= getNumAccounts(); ++anum) {
+				final Account a = getAccount(anum);
 				a.reconcileStatements(pw);
 			}
 		} catch (final Exception e) {
@@ -631,7 +558,7 @@ public class QifDom {
 	 * @return The same statement in this dom
 	 */
 	public Statement findStatement(Statement stmt) {
-		final Account a = getAccount(stmt.acctid);
+		final Account a = getAccountByID(stmt.acctid);
 		if (a == null) {
 			Common.reportError("Can't find statement");
 		}
@@ -642,10 +569,10 @@ public class QifDom {
 	public void fixPortfolios() {
 		fixPortfolio(this.portfolio);
 
-		for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
-			final Account a = getAccount(acctid);
+		for (int anum = 0; anum <= getNumAccounts(); ++anum) {
+			final Account a = getAccount(anum);
 
-			if (a.isInvestmentAccount()) {
+			if (a != null && a.isInvestmentAccount()) {
 				fixPortfolio(a.securities);
 			}
 		}
@@ -675,8 +602,8 @@ public class QifDom {
 	public void processSecurities() {
 		processSecurities2(this.portfolio, getAllTransactions());
 
-		for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
-			final Account a = getAccount(acctid);
+		for (int anum = 0; anum <= getNumAccounts(); ++anum) {
+			final Account a = getAccount(anum);
 			if ((a == null) || !a.isInvestmentAccount()) {
 				continue;
 			}
@@ -746,8 +673,8 @@ public class QifDom {
 	}
 
 	private void sortTransactions() {
-		for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
-			final Account a = getAccount(acctid);
+		for (int anum = 0; anum <= getNumAccounts(); ++anum) {
+			final Account a = getAccount(anum);
 			if (a == null) {
 				continue;
 			}
@@ -757,8 +684,8 @@ public class QifDom {
 	}
 
 	private void cleanUpSplits() {
-		for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
-			final Account a = getAccount(acctid);
+		for (int anum = 0; anum <= getNumAccounts(); ++anum) {
+			final Account a = getAccount(anum);
 			if (a == null) {
 				continue;
 			}
@@ -813,7 +740,7 @@ public class QifDom {
 
 	private void calculateRunningTotals() {
 		for (int idx = 0; idx < getNumAccounts(); ++idx) {
-			final Account a = getAccountByTime(idx);
+			final Account a = getAccount(idx);
 
 			a.clearedBalance = a.balance = BigDecimal.ZERO;
 
@@ -833,8 +760,8 @@ public class QifDom {
 	}
 
 	private void connectTransfers() {
-		for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
-			final Account a = getAccount(acctid);
+		for (int anum = 0; anum <= getNumAccounts(); ++anum) {
+			final Account a = getAccount(anum);
 			if (a == null) {
 				continue;
 			}
@@ -863,7 +790,7 @@ public class QifDom {
 			return;
 		}
 
-		final Account a = getAccount(-txn.catid);
+		final Account a = getAccountByID(-txn.catid);
 
 		findMatches(a, txn, date, true);
 
@@ -951,9 +878,9 @@ public class QifDom {
 		final List<InvestmentTxn> xins = new ArrayList<InvestmentTxn>();
 		final List<InvestmentTxn> xouts = new ArrayList<InvestmentTxn>();
 
-		for (int acctid = 1; acctid <= getNumAccounts(); ++acctid) {
-			final Account a = getAccount(acctid);
-			if (!a.isInvestmentAccount()) {
+		for (int anum = 0; anum <= getNumAccounts(); ++anum) {
+			final Account a = getAccount(anum);
+			if (a == null || !a.isInvestmentAccount()) {
 				continue;
 			}
 
@@ -1004,6 +931,8 @@ public class QifDom {
 		BigDecimal inshrs;
 		BigDecimal outshrs;
 
+		boolean isverbose = false;
+
 		while (!xins.isEmpty()) {
 			ins.clear();
 			outs.clear();
@@ -1030,7 +959,7 @@ public class QifDom {
 				}
 			}
 
-			if (QifDom.verbose()) {
+			if (isverbose) {
 				final String s = String.format(//
 						"%-20s : %5s(%2d) %s INSH=%s (%2d txns) OUTSH=%s (%2d txns)", //
 						t.getAccount().getName(), t.security.symbol, t.security.secid, //
@@ -1041,7 +970,7 @@ public class QifDom {
 			}
 		}
 
-		if (QifDom.verbose()) {
+		if (isverbose) {
 			for (final InvestmentTxn t : unmatched) {
 				final String pad = (t.getAction() == TxAction.SHRS_IN) //
 						? "" //
@@ -1109,7 +1038,7 @@ public class QifDom {
 	 */
 	private void processStatementDetails(List<StatementDetails> details) {
 		for (final StatementDetails d : details) {
-			final Account a = getAccount(d.acctid);
+			final Account a = getAccountByID(d.acctid);
 
 			final Statement s = a.getStatement(d.date, d.closingBalance);
 			if (s == null) {

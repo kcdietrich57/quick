@@ -8,8 +8,9 @@ import qif.data.Account;
 import qif.data.Common;
 import qif.data.QifDom;
 import qif.importer.QifDomReader;
+import qif.report.AccountReporter;
+import qif.report.CashFlowReporter;
 import qif.report.NetWorthReporter;
-import qif.report.QifReporter;
 import qif.report.StatusReporter;
 
 public class QifLoader {
@@ -78,7 +79,7 @@ public class QifLoader {
 
 					final Account a = dom.findAccount(aname);
 					if (a != null) {
-						QifReporter.reportStatus(a, "m");
+						AccountReporter.reportStatus(a, "m");
 					}
 				}
 			} else if (s.startsWith("c")) {
@@ -99,7 +100,7 @@ public class QifLoader {
 					d1 = Common.parseDate(ss);
 				}
 
-				QifReporter.reportCashFlow(d1, d2);
+				CashFlowReporter.reportCashFlow(d1, d2);
 			} else if (s.startsWith("g")) {
 				final String aname = s.substring(1).trim();
 
@@ -125,7 +126,7 @@ public class QifLoader {
 					 * 
 					 * dom.reportMonthlyActivity(d1, d2);
 					 */ } else if (s.startsWith("mnw")) {
-					QifReporter.reportMonthlyNetWorth();
+					NetWorthReporter.reportMonthlyNetWorth();
 				}
 			} else if (s.startsWith("r")) {
 				if (s.startsWith("relog")) {
@@ -133,7 +134,7 @@ public class QifLoader {
 				}
 			} else if (s.startsWith("y")) {
 				if (s.startsWith("ys")) {
-					QifReporter.reportYearlyStatus();
+					NetWorthReporter.reportYearlyNetWorth();
 				}
 			} else {
 				final Date d = Common.parseDate(s);

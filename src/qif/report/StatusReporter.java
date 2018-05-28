@@ -26,8 +26,8 @@ public class StatusReporter {
 
 		final List<Account> ranking = new ArrayList<Account>();
 
-		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
-			Account a = dom.getAccount(acctid);
+		for (int anum = 0; anum <= dom.getNumAccounts(); ++anum) {
+			Account a = dom.getAccountByID(anum);
 
 			if (a != null) {
 				ranking.add(a);
@@ -239,8 +239,8 @@ public class StatusReporter {
 
 		final List<Account> ranking = new ArrayList<Account>();
 
-		for (int acctid = 1; acctid <= dom.getNumAccounts(); ++acctid) {
-			Account a = dom.getAccount(acctid);
+		for (int anum = 0; anum <= dom.getNumAccounts(); ++anum) {
+			Account a = dom.getAccount(anum);
 
 			if (a != null) {
 				ranking.add(a);
