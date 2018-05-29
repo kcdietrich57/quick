@@ -102,7 +102,7 @@ public class NonInvestmentTxn extends GenericTxn {
 		if (this.catid < (short) 0) {
 			s += " xacct=[" + dom.getAccountByID(-this.catid).getName() + "]";
 		} else if (this.catid > (short) 0) {
-			s += " cat=" + dom.getCategory(this.catid).name;
+			s += " cat=" + Category.getCategory(this.catid).name;
 		}
 
 		s += " bal=" + this.runningTotal;
@@ -121,7 +121,7 @@ public class NonInvestmentTxn extends GenericTxn {
 				if (txn.catid < (short) 0) {
 					s += " [" + dom.getAccountByID(-txn.catid).getName() + "]";
 				} else if (txn.catid > (short) 0) {
-					s += " " + dom.getCategory(txn.catid).name;
+					s += " " + Category.getCategory(txn.catid).name;
 				}
 
 				s += " " + txn.getAmount();

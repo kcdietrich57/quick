@@ -154,7 +154,7 @@ public class Statement {
 				final String valStr = ((vidx >= 0) && (vidx + ssx < ss.length)) ? ss[vidx + ssx] : "x";
 				final String priceStr = ((pidx >= 0) && (pidx + ssx < ss.length)) ? ss[pidx + ssx] : "x";
 
-				final Security sec = dom.findSecurity(secStr);
+				final Security sec = Security.findSecurity(secStr);
 				if (sec == null) {
 					Common.reportError("Unknown security: " + secStr);
 				}
@@ -800,7 +800,7 @@ public class Statement {
 				txinfo.cknum = Integer.parseInt(cknumStr);
 				txinfo.cashAmount = new BigDecimal(amtStr);
 				if (secStr.length() > 0) {
-					txinfo.security = dom.findSecurity(secStr);
+					txinfo.security = Security.findSecurity(secStr);
 					txinfo.shares = (shrStr.length() > 0) ? Common.parseDecimal(shrStr) : BigDecimal.ZERO;
 				}
 
@@ -812,7 +812,7 @@ public class Statement {
 				final String symStr = ss[ssx++].trim();
 				final String numtxStr = ss[ssx++].trim();
 
-				final Security sec = dom.findSecurity(symStr);
+				Security sec = Security.findSecurity(symStr);
 
 				final StatementPosition spos = new StatementPosition();
 				spos.sec = sec;

@@ -4,9 +4,56 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Security {
+	public static final Map<String, Security> securities = new HashMap<String, Security>();
+
+	public static int getNumSecurities() {
+		return securities.size() - 1;
+	}
+
+	public static void addSecurity(Security sec) {
+		final Security existingName = findSecurityByName(sec.getName());
+		if (existingName != null) {
+			Common.reportWarning("Adding duplicate security");
+		}
+
+		if (sec.symbol == null) {
+			// TODO this should not happen
+			sec.symbol = sec.getName();
+		}
+
+		final Security existingSymbol = securities.get(sec.symbol);
+		if (existingSymbol != null) {
+			Common.reportWarning("Adding duplicate security");
+		}
+
+		securities.put(sec.symbol, sec);
+	}
+
+	public static Security findSecurity(String nameOrSymbol) {
+		final Security s = findSecurityBySymbol(nameOrSymbol);
+
+		return (s != null) ? s : findSecurityByName(nameOrSymbol);
+	}
+
+	public static Security findSecurityByName(String name) {
+		for (Security sec : securities.values()) {
+			if (sec != null && sec.names.contains(name)) {
+				return sec;
+			}
+		}
+
+		return null;
+	}
+
+	public static Security findSecurityBySymbol(String sym) {
+		return securities.get(sym);
+	}
+
 	public int secid;
 	public List<String> names;
 	public String symbol;

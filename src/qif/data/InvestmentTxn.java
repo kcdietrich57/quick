@@ -34,7 +34,7 @@ public class InvestmentTxn extends GenericTxn {
 		super(other);
 
 		this.action = other.action;
-		this.security = QifDom.dom.findSecurityByName(other.security.getName());
+		this.security = Security.findSecurityByName(other.security.getName());
 		this.price = other.price;
 		this.quantity = other.quantity;
 		this.textFirstLine = other.textFirstLine;

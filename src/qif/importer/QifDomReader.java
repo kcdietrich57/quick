@@ -205,7 +205,7 @@ public class QifDomReader {
 		if ((txn.catid >= 0) || (txn.catid == -txn.getXferAcctid())) {
 			return;
 		}
-		
+
 		QifDom dom = QifDom.dom;
 
 		final Account a = dom.getAccountByID(-txn.catid);
@@ -703,7 +703,7 @@ public class QifDomReader {
 		for (final File f : quoteFiles) {
 			String symbol = f.getName();
 			symbol = symbol.replaceFirst(".csv", "");
-			final Security sec = this.dom.findSecurityBySymbol(symbol);
+			final Security sec = Security.findSecurityBySymbol(symbol);
 
 			if (sec != null) {
 				loadQuoteFile(sec, f);
@@ -881,7 +881,7 @@ public class QifDomReader {
 		if (refdom != null) {
 			this.dom = refdom;
 			this.nextAccountID = this.dom.getNextAccountID();
-			this.nextCategoryID = this.dom.getNextCategoryID();
+			this.nextCategoryID = Category.getNextCategoryID();
 		} else {
 			Common.reportError("Can't have null refdom");
 		}
@@ -966,12 +966,12 @@ public class QifDomReader {
 				break;
 			}
 
-			final Category existing = this.dom.findCategory(cat.name);
+			final Category existing = Category.findCategory(cat.name);
 			if (existing != null) {
 				// Let's just assume it is correct
 			} else {
 				cat.catid = this.nextCategoryID++;
-				this.dom.addCategory(cat);
+				Category.addCategory(cat);
 			}
 		}
 	}
@@ -1123,9 +1123,9 @@ public class QifDomReader {
 				break;
 			}
 
-			final Security existing = (sec.symbol != null) //
-					? this.dom.findSecurityBySymbol(sec.symbol) //
-					: this.dom.findSecurityByName(sec.getName());
+			Security existing = (sec.symbol != null) //
+					? Security.findSecurityBySymbol(sec.symbol) //
+					: Security.findSecurityByName(sec.getName());
 
 			if (existing != null) {
 				// TODO verify security
@@ -1134,7 +1134,7 @@ public class QifDomReader {
 				}
 			} else {
 				sec.secid = this.nextSecurityID++;
-				this.dom.addSecurity(sec);
+				Security.addSecurity(sec);
 			}
 		}
 	}
@@ -1257,9 +1257,9 @@ public class QifDomReader {
 				txn.setQuantity(Common.getDecimal(qline.value));
 				break;
 			case InvSecurity:
-				txn.security = this.dom.findSecurityByName(qline.value);
+				txn.security = Security.findSecurityByName(qline.value);
 				if (txn.security == null) {
-					txn.security = this.dom.findSecurityByName(qline.value);
+					txn.security = Security.findSecurityByName(qline.value);
 					Common.reportWarning("Txn for acct " + txn.acctid + ". " //
 							+ "No security '" + qline.value + "' was found.");
 				}
@@ -1273,7 +1273,7 @@ public class QifDomReader {
 			case InvXferAcct:
 				txn.accountForTransfer = qline.value;
 				// TODO fixme - this is never meaningfully used
-				txn.xacctid = this.dom.findCategoryID(qline.value);
+				txn.xacctid = Category.findCategoryID(qline.value);
 				break;
 
 			default:
@@ -1318,7 +1318,7 @@ public class QifDomReader {
 				return txn;
 
 			case TxnCategory:
-				txn.catid = this.dom.findCategoryID(qline.value);
+				txn.catid = Category.findCategoryID(qline.value);
 
 				if (txn.catid == 0) {
 					Common.reportError("Can't find xtxn: " + qline.value);
@@ -1366,7 +1366,7 @@ public class QifDomReader {
 				if (qline.value == null || qline.value.trim().isEmpty()) {
 					qline.value = "Fix Me";
 				}
-				cursplit.catid = this.dom.findCategoryID(qline.value);
+				cursplit.catid = Category.findCategoryID(qline.value);
 
 				if (cursplit.catid == 0) {
 					Common.reportError("Can't find xtxn: " + qline.value);
@@ -1404,7 +1404,7 @@ public class QifDomReader {
 				break;
 			}
 
-			final Security sec = this.dom.findSecurityBySymbol(price.symbol);
+			Security sec = Security.findSecurityBySymbol(price.symbol);
 			if (sec != null) {
 				sec.addPrice(price, true);
 			}

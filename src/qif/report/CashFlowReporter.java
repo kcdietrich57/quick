@@ -1,9 +1,7 @@
 package qif.report;
 
-import java.math.BigDecimal;
 import java.util.Date;
 
-import qif.data.Account;
 import qif.data.QifDom;
 
 public class CashFlowReporter {

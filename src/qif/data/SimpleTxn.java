@@ -111,7 +111,7 @@ public class SimpleTxn {
 		} else if (this.catid < (short) 0) {
 			s += " xcat=" + dom.getAccountByID(-this.catid).getName();
 		} else if (this.catid > (short) 0) {
-			s += " cat=" + dom.getCategory(this.catid).name;
+			s += " cat=" + Category.getCategory(this.catid).name;
 		}
 
 		return s;

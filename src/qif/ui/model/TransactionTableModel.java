@@ -7,6 +7,7 @@ import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
 import qif.data.Account;
+import qif.data.Category;
 import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
@@ -147,7 +148,7 @@ public class TransactionTableModel //
 
 		case 4: {
 			if (tx.catid > 0) {
-				return QifDom.dom.getCategory(tx.catid).name;
+				return Category.getCategory(tx.catid).name;
 			}
 
 			int acctid = 0;
