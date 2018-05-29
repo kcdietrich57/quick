@@ -14,11 +14,11 @@ public class CashFlowReporter {
 		AccountPosition[] info = new AccountPosition[dom.getNumAccounts()];
 
 		for (int anum = 0; anum < dom.getNumAccounts(); ++anum) {
-			Account a = dom.getAccount(anum);
-
-			info[anum].acct = a;
-
-			BigDecimal v1 = a.getCashValueForDate(d1);
+//			Account a = dom.getAccount(anum);
+//
+//			info[anum].acct = a;
+//
+//			BigDecimal v1 = a.getCashValueForDate(d1);
 		}
 	}
 

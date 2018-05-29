@@ -73,10 +73,6 @@ public class QifDom {
 		return Collections.unmodifiableList(this.accounts);
 	}
 
-	public Account getAccount(int idx) {
-		return this.accounts.get(idx);
-	}
-
 	public Account getAccountByID(int acctid) {
 		return this.accountsByID.get(acctid);
 	}
