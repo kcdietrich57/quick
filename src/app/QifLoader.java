@@ -11,6 +11,7 @@ import qif.importer.QifDomReader;
 import qif.report.AccountReporter;
 import qif.report.CashFlowReporter;
 import qif.report.NetWorthReporter;
+import qif.report.QifReporter;
 import qif.report.StatusReporter;
 
 public class QifLoader {
@@ -41,15 +42,8 @@ public class QifLoader {
 
 		final QifDom dom = QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
 
-		final Date firstTxDate = dom.getFirstTransactionDate();
-		final Date lastTxDate = dom.getLastTransactionDate();
-
 		for (;;) {
-			System.out.println( //
-					"First/last tx date (1): " + Common.formatDate(firstTxDate) //
-							+ " " + Common.formatDate(lastTxDate));
-
-			dom.showStatistics();
+			QifReporter.showStatistics();
 
 			final String s = scn.nextLine();
 
@@ -130,7 +124,7 @@ public class QifLoader {
 				}
 			} else if (s.startsWith("r")) {
 				if (s.startsWith("relog")) {
-					dom.rewriteStatementLogFile();
+					QifDomReader.rewriteStatementLogFile();
 				}
 			} else if (s.startsWith("y")) {
 				if (s.startsWith("ys")) {

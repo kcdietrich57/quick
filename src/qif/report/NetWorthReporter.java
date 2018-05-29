@@ -29,13 +29,41 @@ public class NetWorthReporter {
 		System.out.println(s);
 	}
 
+	public static Date getFirstTransactionDate(QifDom dom) {
+		Date retdate = null;
+
+		for (final Account a : dom.getAccounts()) {
+			final Date d = a.getFirstTransactionDate();
+
+			if ((d != null) && ((retdate == null) || d.compareTo(retdate) < 0)) {
+				retdate = d;
+			}
+		}
+
+		return retdate;
+	}
+
+	public static Date getLastTransactionDate(QifDom dom) {
+		Date retdate = null;
+
+		for (final Account a : dom.getAccounts()) {
+			Date d = a.getLastTransactionDate();
+
+			if ((d != null) && ((retdate == null) || d.compareTo(retdate) > 0)) {
+				retdate = d;
+			}
+		}
+
+		return retdate;
+	}
+
 	public static void reportMonthlyNetWorth() {
 		QifDom dom = QifDom.dom;
 
 		System.out.println();
 
-		Date d = dom.getFirstTransactionDate();
-		final Date lastTxDate = dom.getLastTransactionDate();
+		Date d = getFirstTransactionDate(dom);
+		final Date lastTxDate = getLastTransactionDate(dom);
 
 		final Calendar cal = Calendar.getInstance();
 		cal.setTime(d);
@@ -67,8 +95,8 @@ public class NetWorthReporter {
 
 		System.out.println();
 
-		Date d = dom.getFirstTransactionDate();
-		final Date lastTxDate = dom.getLastTransactionDate();
+		Date d = getFirstTransactionDate(dom);
+		final Date lastTxDate = getLastTransactionDate(dom);
 
 		final Calendar cal = Calendar.getInstance();
 		cal.setTime(d);
@@ -91,12 +119,7 @@ public class NetWorthReporter {
 
 		QifDom dom = QifDom.dom;
 
-		for (int anum = 0; anum <= dom.getNumAccounts(); ++anum) {
-			Account a = dom.getAccount(anum);
-			if (a == null) {
-				continue;
-			}
-
+		for (Account a : dom.getAccounts()) {
 			BigDecimal amt = a.getValueForDate(d);
 
 			if (!a.isOpenOn(d) //

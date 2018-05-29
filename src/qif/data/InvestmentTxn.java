@@ -1,6 +1,7 @@
 package qif.data;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 public class InvestmentTxn extends GenericTxn {
@@ -13,6 +14,7 @@ public class InvestmentTxn extends GenericTxn {
 	public String accountForTransfer;
 	public BigDecimal amountTransferred;
 	public List<InvestmentTxn> xferInv;
+	public List<Lot> lots = new ArrayList<Lot>();
 
 	public InvestmentTxn(int acctid) {
 		super(acctid);

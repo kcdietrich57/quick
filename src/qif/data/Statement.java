@@ -48,20 +48,6 @@ public class Statement {
 		this.unclearedTransactions = new ArrayList<GenericTxn>();
 	}
 
-	// Create a copy of a statement - used when creating a new Dom from an
-	// existing one.
-	public Statement(QifDom dom, Statement other) {
-		this(other.acctid);
-
-		this.date = other.date;
-		this.prevStatement = dom.findStatement(other.prevStatement);
-		this.closingBalance = other.closingBalance;
-		this.cashBalance = other.cashBalance;
-
-		// TODO copy holdings
-		// TODO copy details?
-	}
-
 	public static List<Statement> loadStatements(QFileReader qfr, QifDom dom) {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 		final List<Statement> stmts = new ArrayList<Statement>();
@@ -725,11 +711,11 @@ public class Statement {
 	public static class StatementDetails {
 		public static final int CURRENT_VERSION = 4;
 
-		int acctid;
-		Date date;
+		public int acctid;
+		public Date date;
 
 		// This is the cumulative account value
-		BigDecimal closingBalance;
+		public BigDecimal closingBalance;
 
 		// This is the net cash change
 		BigDecimal closingCashBalance;

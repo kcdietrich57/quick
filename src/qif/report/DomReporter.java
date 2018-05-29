@@ -35,12 +35,9 @@ public class DomReporter {
 		System.out.println("Accounts");
 		System.out.println("============================");
 
-		for (int anum = 0; anum < dom.getNumAccounts(); ++anum) {
-			final Account a = dom.getAccount(anum);
-
-			if ((a == null) || //
-					!a.isInvestmentAccount() || //
-					(a.balance.compareTo(BigDecimal.ZERO) == 0)) {
+		for (Account a : dom.getAccounts()) {
+			if (!a.isInvestmentAccount() || //
+					Common.isEffectivelyZero(a.balance)) {
 				continue;
 			}
 
