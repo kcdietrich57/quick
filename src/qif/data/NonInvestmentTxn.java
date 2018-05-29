@@ -5,10 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NonInvestmentTxn extends GenericTxn {
-	public enum TransactionType {
-		Check, Deposit, Payment, Investment, ElectronicPayee
-	};
-
 	public String chkNumber;
 
 	public List<String> address;

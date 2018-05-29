@@ -31,10 +31,9 @@ import qif.data.NonInvestmentTxn;
 import qif.data.QPrice;
 import qif.data.QifDom;
 import qif.data.Security;
+import qif.data.Security.SplitInfo;
 import qif.data.SecurityPortfolio;
 import qif.data.SecurityPosition;
-import qif.data.Security.SplitInfo;
-import qif.data.Statement.StatementDetails;
 import qif.data.SimpleTxn;
 import qif.data.Statement;
 import qif.data.TxAction;
@@ -311,7 +310,7 @@ public class QifDomReader {
 		}
 
 		// Update statement reconciliation file if format has changed
-		if (dom.loadedStatementsVersion != Statement.StatementDetails.CURRENT_VERSION) {
+		if (dom.loadedStatementsVersion != StatementDetails.CURRENT_VERSION) {
 			rewriteStatementLogFile();
 		}
 	}
@@ -590,7 +589,7 @@ public class QifDomReader {
 
 			s = stmtLogReader.readLine();
 			while (s != null) {
-				final Statement.StatementDetails d = //
+				final StatementDetails d = //
 						new StatementDetails(dom, s, dom.loadedStatementsVersion);
 
 				details.add(d);
@@ -629,7 +628,7 @@ public class QifDomReader {
 			return;
 		}
 
-		pw.println("" + Statement.StatementDetails.CURRENT_VERSION);
+		pw.println("" + StatementDetails.CURRENT_VERSION);
 		for (Account a : dom.getAccounts()) {
 			for (Statement s : a.statements) {
 				pw.println(s.formatForSave());
@@ -659,7 +658,7 @@ public class QifDomReader {
 
 		assert (logFileBackup.exists() && !stmtLogFile.exists());
 
-		dom.loadedStatementsVersion = Statement.StatementDetails.CURRENT_VERSION;
+		dom.loadedStatementsVersion = StatementDetails.CURRENT_VERSION;
 	}
 
 	/**
@@ -682,15 +681,87 @@ public class QifDomReader {
 						+ "  " + d.closingBalance);
 			}
 
-			s.getTransactionsFromDetails(a, d);
+			getTransactionsFromDetails(a, s, d);
 
 			if (!s.isBalanced) {
-				s.getTransactionsFromDetails(a, d);
+				getTransactionsFromDetails(a, s, d);
 				Common.reportError("Can't reconcile statement from log.\n" //
 						+ " a=" + a.getName() //
 						+ " s=" + s.toString());
 			}
 		}
+	}
+
+	/**
+	 * Match up loaded transactions with statement details from log.
+	 *
+	 * @param a
+	 *            Account
+	 * @return True if all transactions are found
+	 */
+	public void getTransactionsFromDetails(Account a, Statement s, StatementDetails d) {
+		if (s.isBalanced) {
+			return;
+		}
+
+		s.transactions.clear();
+		s.unclearedTransactions.clear();
+
+		final List<GenericTxn> txns = a.gatherTransactionsForStatement(s);
+		final List<TxInfo> badinfo = new ArrayList<TxInfo>();
+
+		for (final TxInfo info : d.transactions) {
+			boolean found = false;
+
+			for (int ii = 0; ii < txns.size(); ++ii) {
+				final GenericTxn t = txns.get(ii);
+
+				if (info.date.compareTo(t.getDate()) == 0) {
+					if ((info.cknum == t.getCheckNumber()) //
+							&& (info.cashAmount.compareTo(t.getCashAmount()) == 0)) {
+						if (t.stmtdate != null) {
+							Common.reportError("Reconciling transaction twice:\n" //
+									+ t.toString());
+						}
+
+						s.transactions.add(t);
+						txns.remove(ii);
+						found = true;
+
+						break;
+					}
+				}
+
+				// TODO txinfos are not sorted by date - should they be?
+				// final long infoms = info.date.getTime();
+				// final long tranms = t.getDate().getTime();
+				//
+				// if (infoms < tranms) {
+				// break;
+				// }
+			}
+
+			if (!found) {
+				badinfo.add(info);
+			}
+		}
+
+		s.unclearedTransactions.addAll(txns);
+
+		if (!badinfo.isEmpty()) {
+			// d.transactions.removeAll(badinfo);
+			Common.reportWarning( //
+					"Can't find " + badinfo.size() + " reconciled transactions" //
+							+ " for acct " + a.getName() + ":\n" //
+							+ badinfo.toString() + "\n" + toString());
+			return;
+		}
+
+		for (final GenericTxn t : s.transactions) {
+			t.stmtdate = s.date;
+		}
+
+		s.isBalanced = true;
 	}
 
 	private void loadSecurityPriceHistory(File quoteDirectory) {
@@ -1452,9 +1523,167 @@ public class QifDomReader {
 				break;
 			}
 
-			final List<Statement> stmts = Statement.loadStatements(qfr, this.dom);
+			final List<Statement> stmts = loadStatementsSection(qfr, this.dom);
 			for (final Statement stmt : stmts) {
 				this.dom.currAccount.statements.add(stmt);
+			}
+		}
+	}
+
+	private List<Statement> loadStatementsSection(QFileReader qfr, QifDom dom) {
+		final QFileReader.QLine qline = new QFileReader.QLine();
+		final List<Statement> stmts = new ArrayList<Statement>();
+
+		Statement currstmt = null;
+
+		for (;;) {
+			qfr.nextStatementsLine(qline);
+
+			switch (qline.type) {
+			case EndOfSection:
+				return stmts;
+
+			case StmtsAccount: {
+				final String aname = qline.value;
+				final Account a = dom.findAccount(aname);
+				if (a == null) {
+					Common.reportError("Can't find account: " + aname);
+				}
+
+				dom.currAccount = a;
+				currstmt = null;
+				break;
+			}
+
+			case StmtsMonthly: {
+				final String[] ss = qline.value.split(" ");
+				int ssx = 0;
+
+				final String datestr = ss[ssx++];
+				final int slash1 = datestr.indexOf('/');
+				final int slash2 = (slash1 < 0) ? -1 : datestr.indexOf('/', slash1 + 1);
+				int day = 0; // last day of month
+				int month = 1;
+				int year = 0;
+				if (slash2 > 0) {
+					month = Integer.parseInt(datestr.substring(0, slash1));
+					day = Integer.parseInt(datestr.substring(slash1 + 1, slash2));
+					year = Integer.parseInt(datestr.substring(slash2 + 1));
+				} else if (slash1 >= 0) {
+					month = Integer.parseInt(datestr.substring(0, slash1));
+					year = Integer.parseInt(datestr.substring(slash1 + 1));
+				} else {
+					year = Integer.parseInt(datestr);
+				}
+
+				while (ssx < ss.length) {
+					if (month > 12) {
+						Common.reportError( //
+								"Statements month wrapped to next year:\n" //
+										+ qline.value);
+					}
+
+					String balStr = ss[ssx++];
+					if (balStr.equals("x")) {
+						balStr = "0.00";
+					}
+
+					final BigDecimal bal = new BigDecimal(balStr);
+					final Date d = (day == 0) //
+							? Common.getDateForEndOfMonth(year, month) //
+							: Common.getDate(year, month, day);
+
+					final Statement prevstmt = (stmts.isEmpty() ? null : stmts.get(stmts.size() - 1));
+
+					currstmt = new Statement(dom.currAccount.acctid);
+					currstmt.date = d;
+					currstmt.closingBalance = currstmt.cashBalance = bal;
+					if ((prevstmt != null) && (prevstmt.acctid == currstmt.acctid)) {
+						currstmt.prevStatement = prevstmt;
+					}
+
+					stmts.add(currstmt);
+
+					++month;
+				}
+
+				break;
+			}
+
+			case StmtsCash:
+				currstmt.cashBalance = Common.parseDecimal(qline.value);
+				break;
+
+			case StmtsSecurity: {
+				final String[] ss = qline.value.split(";");
+				int ssx = 0;
+
+				// S<SYM>;[<order>;]QTY;VALUE;PRICE
+				final String secStr = ss[ssx++];
+
+				String ordStr = ss[ssx];
+				if ("qpv".indexOf(ordStr.charAt(0)) < 0) {
+					ordStr = "qvp";
+				} else {
+					++ssx;
+				}
+
+				final int qidx = ordStr.indexOf('q');
+				final int vidx = ordStr.indexOf('v');
+				final int pidx = ordStr.indexOf('p');
+
+				final String qtyStr = ((qidx >= 0) && (qidx + ssx < ss.length)) ? ss[qidx + ssx] : "x";
+				final String valStr = ((vidx >= 0) && (vidx + ssx < ss.length)) ? ss[vidx + ssx] : "x";
+				final String priceStr = ((pidx >= 0) && (pidx + ssx < ss.length)) ? ss[pidx + ssx] : "x";
+
+				final Security sec = Security.findSecurity(secStr);
+				if (sec == null) {
+					Common.reportError("Unknown security: " + secStr);
+				}
+
+				final SecurityPortfolio h = currstmt.holdings;
+				final SecurityPosition p = new SecurityPosition(sec);
+
+				p.value = (valStr.equals("x")) ? null : new BigDecimal(valStr);
+				p.shares = (qtyStr.equals("x")) ? null : new BigDecimal(qtyStr);
+				BigDecimal price = (priceStr.equals("x")) ? null : new BigDecimal(priceStr);
+				final BigDecimal price4date = sec.getPriceForDate(currstmt.date).price;
+
+				// We care primarily about the number of shares. If that is not
+				// present, the other two must be set for us to calculate the
+				// number of shares. If the price is not present, we can use the
+				// price on the day of the statement.
+				// If we know two of the values, we can calculate the third.
+				if (p.shares == null) {
+					if (p.value != null) {
+						if (price == null) {
+							price = price4date;
+						}
+
+						p.shares = p.value.divide(price, RoundingMode.HALF_UP);
+					}
+				} else if (p.value == null) {
+					if (p.shares != null) {
+						if (price == null) {
+							price = price4date;
+						}
+
+						p.value = price.multiply(p.shares);
+					}
+				} else if (price == null) {
+					price = price4date;
+				}
+
+				if (p.shares == null) {
+					Common.reportError("Missing security info in stmt");
+				}
+
+				h.positions.add(p);
+				break;
+			}
+
+			default:
+				Common.reportError("syntax error");
 			}
 		}
 	}

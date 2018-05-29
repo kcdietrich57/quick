@@ -25,6 +25,7 @@ public class QifDom {
 	 * contain nulls
 	 */
 	private final List<Account> accountsByID;
+
 	private final List<GenericTxn> allTransactionsByID;
 
 	public SecurityPortfolio portfolio;
@@ -212,7 +213,7 @@ public class QifDom {
 			pw = new PrintWriter(new FileWriter(this.stmtLogFile, true));
 
 			for (Account a : this.accounts) {
-				a.reconcileStatements(pw);
+				Reconciler.reconcileStatements(a, pw);
 			}
 		} catch (final Exception e) {
 			e.printStackTrace();

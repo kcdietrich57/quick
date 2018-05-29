@@ -100,7 +100,7 @@ public class QifLoader {
 
 				final Account a = dom.findAccount(aname);
 				if (a != null) {
-					a.generateMonthlyStatements();
+					QifReporter.generateMonthlyStatements(a);
 				}
 			} else if (s.startsWith("m")) {
 				if (s.startsWith("ma")) {

@@ -1,10 +1,8 @@
 package qif.data;
 
-import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -273,89 +271,6 @@ public class Account {
 		}
 
 		return -1;
-	}
-
-	public void reconcileStatements(PrintWriter pw) {
-		if (this.statements.isEmpty()) {
-			return;
-		}
-
-		for (int ii = 0; ii < this.statements.size(); ++ii) {
-			final Statement s = this.statements.get(ii);
-
-			final String msg = //
-					"Reconciling " + this.name + " statement " + (ii + 1) //
-							+ " of " + this.statements.size();
-
-			if (!s.reconcile(this, msg)) {
-				break;
-			}
-
-			if (s.dirty) {
-				final String logStr = s.formatForSave();
-				pw.println(logStr);
-				pw.flush();
-
-				s.dirty = false;
-			}
-
-			this.balance = s.closingBalance;
-		}
-	}
-
-	public void generateMonthlyStatements() {
-		int lastyear = -1;
-		int lastmonth = -1;
-		GenericTxn lasttx = null;
-		boolean first = true;
-
-		System.out.println("\n!Account");
-		System.out.println("N" + this.name);
-		System.out.println("^");
-		System.out.println("!Statements");
-
-		for (final GenericTxn t : this.transactions) {
-			final Calendar cal = Calendar.getInstance();
-			cal.setTime(t.getDate());
-
-			final int thisyear = cal.get(Calendar.YEAR);
-			final int thismonth = cal.get(Calendar.MONTH);
-
-			if ((lastyear != thisyear) || (lastmonth != thismonth)) {
-				if (!first) {
-					System.out.print(String.format(" %4.2f", lasttx.runningTotal));
-				}
-
-				if ((lastyear != thisyear) || (lastmonth + 1 != thismonth)) {
-					if (!first) {
-						System.out.println();
-					}
-
-					System.out.print("M" + Common.formatDateMonthYear(t.getDate()));
-				}
-
-				lastyear = thisyear;
-				lastmonth = thismonth;
-			}
-
-			first = false;
-			lasttx = t;
-		}
-
-		System.out.println();
-		System.out.println("^");
-	}
-
-	private String getOpenCloseDateString() {
-		String openstr = (this.transactions.isEmpty()) //
-				? "??/??/????" //
-				: Common.formatDate(this.transactions.get(0).getDate());
-		openstr += "- ";
-		openstr += (this.closeDate != null) //
-				? Common.formatDate(this.closeDate) //
-				: "  /  /  ";
-
-		return openstr;
 	}
 
 	public String getDisplayName(int length) {
