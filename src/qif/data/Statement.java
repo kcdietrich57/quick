@@ -2,7 +2,6 @@ package qif.data;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -287,22 +286,6 @@ public class Statement {
 	 */
 	public SecurityPortfolio getPortfolioDelta() {
 		return getPortfolioDelta(this.transactions);
-	}
-
-	public void arrangeTransactionsForDisplay(List<GenericTxn> txns) {
-		Collections.sort(txns, (o1, o2) -> {
-			int diff = o1.getCheckNumber() - o2.getCheckNumber();
-			if (diff != 0) {
-				return diff;
-			}
-
-			diff = o1.getDate().compareTo(o1.getDate());
-			if (diff != 0) {
-				return diff;
-			}
-
-			return o1.txid - o2.txid;
-		});
 	}
 
 	public String toString() {

@@ -3,6 +3,7 @@ package qif.data;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import app.QifLoader;
@@ -91,8 +92,9 @@ public class Reconciler {
 			ReviewDialog.review(s);
 
 			if (sort) {
-				s.arrangeTransactionsForDisplay(s.transactions);
-				s.arrangeTransactionsForDisplay(s.unclearedTransactions);
+				// TODO Don't do this in place
+				arrangeTransactionsForDisplay(s.transactions);
+				arrangeTransactionsForDisplay(s.unclearedTransactions);
 			}
 
 			displayReviewStatus(s, msg, 1);
@@ -201,6 +203,22 @@ public class Reconciler {
 		}
 
 		s.isBalanced = done && !abort;
+	}
+
+	private static void arrangeTransactionsForDisplay(List<GenericTxn> txns) {
+		Collections.sort(txns, (o1, o2) -> {
+			int diff = o1.getCheckNumber() - o2.getCheckNumber();
+			if (diff != 0) {
+				return diff;
+			}
+
+			diff = o1.getDate().compareTo(o1.getDate());
+			if (diff != 0) {
+				return diff;
+			}
+
+			return o1.txid - o2.txid;
+		});
 	}
 
 	private static void parseRange(String s, int[] range) {
