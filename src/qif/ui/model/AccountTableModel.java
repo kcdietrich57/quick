@@ -21,7 +21,7 @@ public class AccountTableModel extends AbstractTableModel {
 		this.accounts.clear();
 
 		for (Account a : accts) {
-			if (a != null && a.isClosedAsOf(null) != showOpenAccounts) {
+			if (a != null && a.isOpenOn(null) == showOpenAccounts) {
 				accounts.add(a);
 			}
 		}

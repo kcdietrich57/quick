@@ -53,8 +53,6 @@ public class QifDomReader {
 
 	private QifDom dom = null;
 	private int nextAccountID = 1;
-	private int nextCategoryID = 1;
-	private int nextSecurityID = 1;
 
 	public static QifDom loadDom(String[] qifFiles) {
 		final File qifDir = new File(qifFiles[0]).getParentFile();
@@ -952,7 +950,6 @@ public class QifDomReader {
 		if (refdom != null) {
 			this.dom = refdom;
 			this.nextAccountID = this.dom.getNextAccountID();
-			this.nextCategoryID = Category.getNextCategoryID();
 		} else {
 			Common.reportError("Can't have null refdom");
 		}
@@ -1027,21 +1024,19 @@ public class QifDomReader {
 
 	private void loadCategories() {
 		for (;;) {
-			final String s = this.filerdr.peekLine();
+			String s = this.filerdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			final Category cat = loadCategory();
+			Category cat = loadCategory();
 			if (cat == null) {
 				break;
 			}
 
-			final Category existing = Category.findCategory(cat.name);
-			if (existing != null) {
-				// Let's just assume it is correct
-			} else {
-				cat.catid = this.nextCategoryID++;
+			Category existing = Category.findCategory(cat.name);
+
+			if (existing == null) {
 				Category.addCategory(cat);
 			}
 		}
@@ -1184,12 +1179,12 @@ public class QifDomReader {
 
 	private void loadSecurities() {
 		for (;;) {
-			final String s = this.filerdr.peekLine();
+			String s = this.filerdr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			final Security sec = loadSecurity();
+			Security sec = loadSecurity();
 			if (sec == null) {
 				break;
 			}
@@ -1204,14 +1199,13 @@ public class QifDomReader {
 					existing.names.add(sec.getName());
 				}
 			} else {
-				sec.secid = this.nextSecurityID++;
 				Security.addSecurity(sec);
 			}
 		}
 	}
 
 	public Security loadSecurity() {
-		final QFileReader.QLine qline = new QFileReader.QLine();
+		QFileReader.QLine qline = new QFileReader.QLine();
 
 		String symbol = null;
 		String name = null;
@@ -1344,7 +1338,7 @@ public class QifDomReader {
 			case InvXferAcct:
 				txn.accountForTransfer = qline.value;
 				// TODO fixme - this is never meaningfully used
-				txn.xacctid = Category.findCategoryID(qline.value);
+				txn.xacctid = findCategoryID(qline.value);
 				break;
 
 			default:
@@ -1389,7 +1383,7 @@ public class QifDomReader {
 				return txn;
 
 			case TxnCategory:
-				txn.catid = Category.findCategoryID(qline.value);
+				txn.catid = findCategoryID(qline.value);
 
 				if (txn.catid == 0) {
 					Common.reportError("Can't find xtxn: " + qline.value);
@@ -1437,7 +1431,7 @@ public class QifDomReader {
 				if (qline.value == null || qline.value.trim().isEmpty()) {
 					qline.value = "Fix Me";
 				}
-				cursplit.catid = Category.findCategoryID(qline.value);
+				cursplit.catid = findCategoryID(qline.value);
 
 				if (cursplit.catid == 0) {
 					Common.reportError("Can't find xtxn: " + qline.value);
@@ -1461,6 +1455,26 @@ public class QifDomReader {
 				Common.reportError("syntax error; txn: " + qline);
 			}
 		}
+	}
+
+	private static int findCategoryID(String s) {
+		if (s.startsWith("[")) {
+			s = s.substring(1, s.length() - 1).trim();
+
+			Account acct = QifDom.dom.findAccount(s);
+
+			return (short) ((acct != null) ? (-acct.acctid) : 0);
+		}
+
+		final int slash = s.indexOf('/');
+		if (slash >= 0) {
+			// Throw away tag
+			s = s.substring(slash + 1);
+		}
+
+		Category cat = Category.findCategory(s);
+
+		return (cat != null) ? (cat.catid) : 0;
 	}
 
 	private void loadPrices() {

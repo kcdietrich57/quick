@@ -19,16 +19,10 @@ public class QPrice {
 		this.date = null;
 	}
 
-	public QPrice(BigDecimal val) {
+	private QPrice(BigDecimal val) {
 		this();
 
 		this.price = val;
-	}
-
-	public QPrice(BigDecimal val, Date date) {
-		this(val);
-
-		this.date = date;
 	}
 
 	/**
@@ -118,14 +112,4 @@ public class QPrice {
 
 		return s + "\n";
 	}
-
-	// public String toString() {
-	// final String s = "Price: " + this.symbol //
-	// + " date=" + this.date //
-	// + " price=" + this.price //
-	// + " splitAdjusted=" + this.splitAdjustedPrice //
-	// + "\n";
-	//
-	// return s;
-	// }
 }

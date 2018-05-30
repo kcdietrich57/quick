@@ -35,58 +35,53 @@ public class Account {
 		this.securities = new SecurityPortfolio();
 	}
 
-	public Account(int id, QifDom dom) {
-		this(dom);
-
-		this.acctid = id;
-	}
-
 	public Date getOpenDate() {
-		if (this.transactions != null) {
-			return this.transactions.get(0).getDate();
-		}
-
-		return null;
+		return (this.transactions != null) ? this.transactions.get(0).getDate() : null;
 	}
 
-	public boolean isOpenAsOf(Date d) {
-		if (d == null) {
-			d = new Date();
-		}
+	private boolean isOpenAsOf(Date d) {
+		Date openDate = getOpenDate();
 
-		final Date openDate = getOpenDate();
-
-		return (openDate == null) //
-				|| ((d == null) || (openDate.compareTo(d) <= 0));
+		return (openDate != null) && (openDate.compareTo(d) <= 0);
 	}
 
-	public boolean isClosedAsOf(Date d) {
-		if (d == null) {
-			d = new Date();
-		}
-
+	private boolean isClosedAsOf(Date d) {
 		return (this.closeDate != null) && (this.closeDate.compareTo(d) <= 0);
 	}
 
 	public boolean isOpenOn(Date d) {
+		if (d == null) {
+			d = new Date();
+		}
+
 		return isOpenAsOf(d) && !isClosedAsOf(d);
 	}
 
 	public void setName(String name) {
 		this.name = name;
 
-		if (name.equals("Waddell & Reed")) {
+		// TODO kluge - Quicken is confused about these accounts
+		if (name.equals("UnionNationalCD") //
+				|| name.equals("Waddell & Reed")) {
 			this.type = AccountType.Invest;
 		} else if (name.equals("Deferred 401k Match")) {
 			this.type = AccountType.Inv401k;
-		} else if (name.equals("GD IRA (E*Trade)") //
+		} else if (name.equals("ATT 401k") //
+				|| name.equals("CapFed IRA") //
+				|| name.equals("Fidelity HSA XX5575") //
+				|| name.equals("GD IRA (E*Trade)") //
 				|| name.equals("GD IRA (Scottrade)") //
-				|| name.equals("TD IRA (E*Trade)") //
+				|| name.equals("HEC 401k Profit Sharing") //
+				|| name.equals("HEC Pension") //
+				|| name.equals("HEC 401k Profit Sharing") //
+				|| name.equals("Invest IRA") //
 				|| name.equals("TD IRA (Scottrade)") //
 				|| name.equals("GD IRA Ameritrade") //
 				|| name.equals("TD IRA Ameritrade") //
 				|| name.equals("IBM Pension")) {
 			this.type = AccountType.Inv401k;
+		} else if (name.equals("CapCheck")) {
+			this.type = AccountType.Bank;
 		}
 	}
 
@@ -261,7 +256,7 @@ public class Account {
 		this.transactions.add(txn);
 	}
 
-	public int findFirstNonClearedTransaction() {
+	private int findFirstNonClearedTransaction() {
 		for (int ii = 0; ii < this.transactions.size(); ++ii) {
 			final GenericTxn t = this.transactions.get(ii);
 
@@ -293,7 +288,7 @@ public class Account {
 		return getValueForDate(d);
 	}
 
-	public BigDecimal getCashValueForDate(Date d) {
+	private BigDecimal getCashValueForDate(Date d) {
 		BigDecimal cashBal = null;
 
 		int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
@@ -305,11 +300,6 @@ public class Account {
 		}
 
 		return (cashBal != null) ? cashBal : BigDecimal.ZERO;
-	}
-
-	// TODO unused, unfinished
-	public void getPositionsForDate(Date d) {
-		this.securities.getPositionsForDate(d);
 	}
 
 	public BigDecimal getValueForDate(Date d) {
@@ -390,8 +380,13 @@ public class Account {
 	public AccountPosition getPosition(Date d1, Date d2) {
 		AccountPosition apos = new AccountPosition(this);
 
-		BigDecimal v1 = getCashValueForDate(d1);
+		//BigDecimal v1 = getCashValueForDate(d1);
 
 		return apos;
+	}
+
+	// TODO unused, unfinished
+	public void getPositionsForDate(Date d) {
+		this.securities.getPositionsForDate(d);
 	}
 }

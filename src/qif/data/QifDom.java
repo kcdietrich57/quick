@@ -15,6 +15,7 @@ public class QifDom {
 	// The one and only financial model
 	public static QifDom dom = null;
 
+	// TODO move to Account class
 	/**
 	 * This list of accounts may not contain nulls, size == numAccounts, index is
 	 * unrelated to acctid
@@ -26,10 +27,13 @@ public class QifDom {
 	 */
 	private final List<Account> accountsByID;
 
+	// TODO move to Transaction class
 	private final List<GenericTxn> allTransactionsByID;
 
+	// TODO move to Portfolio class
 	public SecurityPortfolio portfolio;
 
+	// TODO move to Statement class
 	/** Pay attention to version of the loaded QIF file format */
 	public int loadedStatementsVersion = -1;
 
@@ -99,6 +103,10 @@ public class QifDom {
 	}
 
 	public void addAccount(Account acct) {
+		if (acct.acctid == 0) {
+			acct.acctid = getNextAccountID();
+		}
+
 		while (this.accountsByID.size() <= acct.acctid) {
 			this.accountsByID.add(null);
 		}
@@ -188,16 +196,6 @@ public class QifDom {
 		}
 
 		return b;
-	}
-
-	public String toString() {
-		String s = "";
-
-		s += "Categories: " + Category.categories;
-		s += "Accounts: " + this.accounts;
-		s += "Securities: " + Security.securities;
-
-		return s;
 	}
 
 	public int getNextAccountID() {

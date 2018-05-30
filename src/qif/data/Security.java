@@ -9,26 +9,27 @@ import java.util.List;
 import java.util.Map;
 
 public class Security {
-	public static final Map<String, Security> securities = new HashMap<String, Security>();
+	private static final Map<String, Security> securities = new HashMap<String, Security>();
 
-	public static int getNumSecurities() {
-		return securities.size() - 1;
-	}
+	private static int nextSecurityID = 1;
 
 	public static void addSecurity(Security sec) {
-		final Security existingName = findSecurityByName(sec.getName());
+		Security existingName = findSecurityByName(sec.getName());
 		if (existingName != null) {
-			Common.reportWarning("Adding duplicate security");
+			Common.reportWarning("Adding duplicate security name");
 		}
 
 		if (sec.symbol == null) {
-			// TODO this should not happen
 			sec.symbol = sec.getName();
 		}
 
-		final Security existingSymbol = securities.get(sec.symbol);
+		Security existingSymbol = (sec.symbol != null) ? securities.get(sec.symbol) : null;
 		if (existingSymbol != null) {
-			Common.reportWarning("Adding duplicate security");
+			Common.reportWarning("Adding duplicate security symbol");
+		}
+
+		if (sec.secid == 0) {
+			sec.secid = nextSecurityID++;
 		}
 
 		securities.put(sec.symbol, sec);
@@ -79,14 +80,6 @@ public class Security {
 		this.goal = "";
 	}
 
-	public Security(Security other) {
-		this.secid = other.secid;
-		this.names = new ArrayList<String>(other.names);
-		this.symbol = other.symbol;
-		this.type = other.type;
-		this.goal = other.goal;
-	}
-
 	public Object getSymbol() {
 		return (this.symbol != null) ? this.symbol : getName();
 	}
@@ -104,6 +97,7 @@ public class Security {
 
 		if ((txn.price != null) && //
 				(txn.price.compareTo(BigDecimal.ZERO) != 0)) {
+
 			// The price for a transaction doesn't replace the price in the
 			// history. It is intra-day, and in the case of ESPP/options,
 			// may be discounted.
@@ -140,7 +134,7 @@ public class Security {
 		}
 	}
 
-	public void sortPrices() {
+	private void sortPrices() {
 		Collections.sort(this.prices, (o1, o2) -> o1.date.compareTo(o2.date));
 	}
 
@@ -155,7 +149,7 @@ public class Security {
 		return p;
 	}
 
-	public int getPriceIndexForDate(Date d) {
+	private int getPriceIndexForDate(Date d) {
 		if (this.prices.isEmpty()) {
 			return -1;
 		}
