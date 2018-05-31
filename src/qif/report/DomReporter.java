@@ -161,7 +161,7 @@ public class DomReporter {
 					System.out.println(String.format( //
 							"  %-12s  %-10s  %s  %s", //
 							Common.formatDate(t.getDate()), //
-							t.action.toString(), //
+							t.getAction().toString(), //
 							Common.formatAmount3(t.getShares()), //
 							Common.formatAmount3(shrbal)));
 				}
@@ -191,7 +191,7 @@ public class DomReporter {
 							"  %-12s  %-20s  %-10s  %s  %s", //
 							Common.formatDate(t.getDate()), //
 							QifDom.dom.getAccountByID(t.acctid).getName(), //
-							t.action.toString(), //
+							t.getAction().toString(), //
 							Common.formatAmount3(t.getShares()), //
 							Common.formatAmount3(shrbal)));
 				}

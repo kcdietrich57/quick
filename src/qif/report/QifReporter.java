@@ -6,7 +6,6 @@ import java.util.Date;
 import qif.data.Account;
 import qif.data.Common;
 import qif.data.GenericTxn;
-import qif.data.QifDom;
 
 public class QifReporter {
 	public static void reportActivity(Date d1, Date d2) {
@@ -18,7 +17,7 @@ public class QifReporter {
 		int reconciled = 0;
 		int unreconciled = 0;
 
-		for (GenericTxn t : QifDom.dom.getAllTransactions()) {
+		for (GenericTxn t : GenericTxn.getAllTransactions()) {
 			if (t == null) {
 				++nullt;
 			} else if (t.stmtdate != null) {

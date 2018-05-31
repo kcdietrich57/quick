@@ -40,6 +40,11 @@ import qif.data.TxAction;
 import qif.importer.QFileReader.SectionType;
 
 public class QifDomReader {
+
+	public static File getStatementLogFile() {
+		return QifDom.dom.stmtLogFile;
+	}
+
 	// Housekeeping info while processing related transfer transactions.
 	// The imported data does not connect transfers, so we need to do it.
 	// These keep track of successful and unsuccessful attempts to connect
@@ -316,7 +321,7 @@ public class QifDomReader {
 	public void processSecurities() {
 		QifDom dom = QifDom.dom;
 
-		processSecurities2(dom.portfolio, dom.getAllTransactions());
+		processSecurities2(dom.portfolio, GenericTxn.getAllTransactions());
 
 		for (Account a : dom.getAccounts()) {
 			if (a.isInvestmentAccount()) {
@@ -566,9 +571,8 @@ public class QifDomReader {
 	// Read statement log file, filling in statement details.
 	private void processStatementLog() {
 		QifDom dom = QifDom.dom;
-		File stmtLogFile = dom.getStatementLogFile();
 
-		if (!stmtLogFile.isFile()) {
+		if (!dom.stmtLogFile.isFile()) {
 			return;
 		}
 
@@ -576,7 +580,7 @@ public class QifDomReader {
 		List<StatementDetails> details = new ArrayList<StatementDetails>();
 
 		try {
-			stmtLogReader = new LineNumberReader(new FileReader(stmtLogFile));
+			stmtLogReader = new LineNumberReader(new FileReader(dom.stmtLogFile));
 
 			String s = stmtLogReader.readLine();
 			if (s == null) {
@@ -613,16 +617,15 @@ public class QifDomReader {
 	// Save the previous file as <name>.N
 	public static void rewriteStatementLogFile() {
 		QifDom dom = QifDom.dom;
-		File stmtLogFile = dom.getStatementLogFile();
 
-		final String basename = stmtLogFile.getName();
-		final File tmpLogFile = new File(stmtLogFile.getParentFile(), basename + ".tmp");
+		final String basename = dom.stmtLogFile.getName();
+		final File tmpLogFile = new File(dom.stmtLogFile.getParentFile(), basename + ".tmp");
 		PrintWriter pw = null;
 		try {
 			pw = new PrintWriter(new FileWriter(tmpLogFile));
 		} catch (final IOException e) {
 			Common.reportError("Can't open tmp stmt log file: " //
-					+ stmtLogFile.getAbsolutePath());
+					+ dom.stmtLogFile.getAbsolutePath());
 			return;
 		}
 
@@ -643,18 +646,18 @@ public class QifDomReader {
 		File logFileBackup = null;
 
 		for (int ii = 1;; ++ii) {
-			logFileBackup = new File(stmtLogFile.getParentFile(), basename + "." + ii);
+			logFileBackup = new File(dom.stmtLogFile.getParentFile(), basename + "." + ii);
 			if (!logFileBackup.exists()) {
 				break;
 			}
 		}
 
-		stmtLogFile.renameTo(logFileBackup);
-		if (logFileBackup.exists() && tmpLogFile.exists() && !stmtLogFile.exists()) {
-			tmpLogFile.renameTo(stmtLogFile);
+		dom.stmtLogFile.renameTo(logFileBackup);
+		if (logFileBackup.exists() && tmpLogFile.exists() && !dom.stmtLogFile.exists()) {
+			tmpLogFile.renameTo(dom.stmtLogFile);
 		}
 
-		assert (logFileBackup.exists() && !stmtLogFile.exists());
+		assert (logFileBackup.exists() && !dom.stmtLogFile.exists());
 
 		dom.loadedStatementsVersion = StatementDetails.CURRENT_VERSION;
 	}
@@ -1301,7 +1304,7 @@ public class QifDomReader {
 				break;
 			}
 			case InvAction:
-				txn.action = TxAction.parseAction(qline.value);
+				txn.setAction(TxAction.parseAction(qline.value));
 				break;
 			case InvClearedStatus:
 				txn.clearedStatus = qline.value;

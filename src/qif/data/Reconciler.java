@@ -86,16 +86,15 @@ public class Reconciler {
 	private static void review(Statement s, String msg, boolean reconcileNeeded) {
 		boolean done = false;
 		boolean abort = false;
-		boolean sort = true;
 
 		while (!done && !abort) {
 			ReviewDialog.review(s);
 
-			if (sort) {
-				// TODO Don't do this in place
-				arrangeTransactionsForDisplay(s.transactions);
-				arrangeTransactionsForDisplay(s.unclearedTransactions);
-			}
+			List<GenericTxn> alltx = new ArrayList<GenericTxn>(s.transactions);
+			List<GenericTxn> unclearedtx = new ArrayList<GenericTxn>(s.unclearedTransactions);
+
+			arrangeTransactionsForDisplay(alltx);
+			arrangeTransactionsForDisplay(unclearedtx);
 
 			displayReviewStatus(s, msg, 1);
 
@@ -120,11 +119,12 @@ public class Reconciler {
 			case 'a':
 				if (line.startsWith("auto")) {
 					final List<GenericTxn> subset = new ArrayList<GenericTxn>();
-					Common.findSubsetTotaling(s.unclearedTransactions, subset, s.getCashDifference());
+
+					Common.findSubsetTotaling(unclearedtx, subset, s.getCashDifference());
+
 					if (!subset.isEmpty()) {
 						System.out.println("success");
 					}
-
 				} else {
 					s.unclearAllTransactions();
 					abort = true;
@@ -136,19 +136,6 @@ public class Reconciler {
 				// TODO && holdingsMatch()
 				) {
 					done = true;
-				}
-				break;
-
-			case 's':
-				if (line.startsWith("sort")) {
-					sort = true;
-				}
-				break;
-
-			case 'n':
-				if (line.startsWith("nosort")) {
-					sort = false;
-					break;
 				}
 				break;
 
@@ -165,8 +152,8 @@ public class Reconciler {
 
 				final boolean isReconcile = line.charAt(0) == 'r';
 				final List<GenericTxn> lst = (isReconcile) //
-						? s.unclearedTransactions //
-						: s.transactions;
+						? unclearedtx //
+						: alltx;
 				final List<GenericTxn> txns = new ArrayList<GenericTxn>();
 				final String[] ss = line.substring(1).trim().split(" ");
 				int ssx = 0;

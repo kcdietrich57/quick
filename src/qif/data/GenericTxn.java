@@ -1,18 +1,38 @@
 package qif.data;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 public abstract class GenericTxn extends SimpleTxn {
+
+	private static List<GenericTxn> allTransactionsByID = new ArrayList<GenericTxn>();
+	private static List<GenericTxn> allTransactionsByID_readonly = null;
+
+	public static List<GenericTxn> getAllTransactions() {
+		if (allTransactionsByID_readonly == null) {
+			allTransactionsByID_readonly = Collections.unmodifiableList(allTransactionsByID);
+		}
+
+		return allTransactionsByID_readonly;
+	}
+
+	public static void addTransaction(GenericTxn txn) {
+		while (allTransactionsByID.size() < txn.txid + 1) {
+			allTransactionsByID.add(null);
+		}
+
+		allTransactionsByID.set(txn.txid, txn);
+		allTransactionsByID_readonly = null;
+	}
+
 	private Date date;
 	public String clearedStatus;
 	public Date stmtdate;
 	private String payee;
 	public BigDecimal runningTotal;
-
-	private void addToDom() {
-		QifDom.dom.addTransaction(this);
-	}
 
 	public GenericTxn(int acctid) {
 		super(acctid);
@@ -23,7 +43,7 @@ public abstract class GenericTxn extends SimpleTxn {
 		this.stmtdate = null;
 		this.runningTotal = null;
 
-		addToDom();
+		GenericTxn.addTransaction(this);
 	}
 
 	public GenericTxn(GenericTxn other) {
@@ -35,7 +55,7 @@ public abstract class GenericTxn extends SimpleTxn {
 		this.stmtdate = other.stmtdate;
 		this.runningTotal = null;
 
-		addToDom();
+		GenericTxn.addTransaction(this);
 	}
 
 	public int getCheckNumber() {

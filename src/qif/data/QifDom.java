@@ -27,18 +27,14 @@ public class QifDom {
 	 */
 	private final List<Account> accountsByID;
 
-	// TODO move to Transaction class
-	private final List<GenericTxn> allTransactionsByID;
+	// Info about reconciled statements goes in this file
+	public final File stmtLogFile;
 
-	// TODO move to Portfolio class
-	public SecurityPortfolio portfolio;
-
-	// TODO move to Statement class
 	/** Pay attention to version of the loaded QIF file format */
 	public int loadedStatementsVersion = -1;
 
-	// Info about reconciled statements goes in this file
-	private File stmtLogFile;
+	// TODO move to Portfolio class
+	public SecurityPortfolio portfolio;
 
 	// As we are loading data, we track the account context we are within here
 	public Account currAccount = null;
@@ -49,10 +45,9 @@ public class QifDom {
 		this.accountsByID = new ArrayList<Account>();
 		this.accounts = new ArrayList<Account>();
 
-		this.allTransactionsByID = new ArrayList<GenericTxn>();
-		this.stmtLogFile = new File(qifDir, "statementLog.dat");
-
 		this.portfolio = new SecurityPortfolio();
+
+		this.stmtLogFile = new File(qifDir, "statementLog.dat");
 	}
 
 	public int getNumAccounts() {
@@ -65,10 +60,6 @@ public class QifDom {
 
 	public Account getAccountByID(int acctid) {
 		return this.accountsByID.get(acctid);
-	}
-
-	public File getStatementLogFile() {
-		return this.stmtLogFile;
 	}
 
 	// Sort on isOpen|type|name
@@ -88,18 +79,6 @@ public class QifDom {
 		});
 
 		return ret;
-	}
-
-	public void addTransaction(GenericTxn txn) {
-		while (this.allTransactionsByID.size() < txn.txid + 1) {
-			this.allTransactionsByID.add(null);
-		}
-
-		this.allTransactionsByID.set(txn.txid, txn);
-	}
-
-	public List<GenericTxn> getAllTransactions() {
-		return Collections.unmodifiableList(this.allTransactionsByID);
 	}
 
 	public void addAccount(Account acct) {

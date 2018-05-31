@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InvestmentTxn extends GenericTxn {
-	public TxAction action;
+	private TxAction action;
 	public Security security;
 	public BigDecimal price;
 	private BigDecimal quantity;
@@ -14,6 +14,7 @@ public class InvestmentTxn extends GenericTxn {
 	public String accountForTransfer;
 	public BigDecimal amountTransferred;
 	public List<InvestmentTxn> xferInv;
+	// Buys/grants will create one lot; others may affect multiple lots (or none)
 	public List<Lot> lots = new ArrayList<Lot>();
 
 	public InvestmentTxn(int acctid) {
@@ -30,19 +31,12 @@ public class InvestmentTxn extends GenericTxn {
 		this.xferInv = null;
 	}
 
-	public InvestmentTxn(InvestmentTxn other) {
-		super(other);
+	public void setAction(TxAction action) {
+		this.action = action;
+	}
 
-		this.action = other.action;
-		this.security = Security.findSecurityByName(other.security.getName());
-		this.price = other.price;
-		this.quantity = other.quantity;
-		this.textFirstLine = other.textFirstLine;
-		this.commission = other.commission;
-		this.accountForTransfer = other.accountForTransfer;
-		this.amountTransferred = other.amountTransferred;
-
-		this.xferInv = null;
+	public TxAction getAction() {
+		return this.action;
 	}
 
 	public void setQuantity(BigDecimal qty) {
@@ -67,11 +61,10 @@ public class InvestmentTxn extends GenericTxn {
 
 	public void repair() {
 		switch (getAction()) {
-		case CASH: {
+		case CASH:
 			if ((getAmount() == null) && (this.amountTransferred == null)) {
 				setAmount(BigDecimal.ZERO);
 			}
-		}
 			break;
 
 		case BUY:
@@ -83,8 +76,10 @@ public class InvestmentTxn extends GenericTxn {
 				// System.out.println("NULL quantities: " + ++nullQuantities);
 				this.quantity = BigDecimal.ZERO;
 			}
-
-			// fall through
+			if (this.price == null) {
+				this.price = BigDecimal.ZERO;
+			}
+			break;
 
 		case BUYX:
 		case REINV_INT:
@@ -138,8 +133,13 @@ public class InvestmentTxn extends GenericTxn {
 			}
 			break;
 
-		default:
+		case REMINDER:
 			break;
+
+		case OTHER:
+			Common.reportError("Transaction has unknown type: " + //
+					QifDom.dom.getAccountByID(this.acctid).getName());
+			return;
 		}
 
 		switch (getAction()) {
@@ -191,12 +191,100 @@ public class InvestmentTxn extends GenericTxn {
 			break;
 
 		case OTHER:
-			Common.reportError("Transaction has unknown type: " + //
-					QifDom.dom.getAccountByID(this.acctid).getName());
-			break;
+			assert (false); // can't happen
+			return;
 		}
 
+		// TODO what if amount is null and xferamt is not? We don't want to set amount
+		// then, right?
 		super.repair();
+
+		setupLots();
+	}
+
+	private void createLot() {
+		Lot lot = new Lot();
+
+		lot.purchaseDate = getDate();
+		lot.secid = this.security.secid;
+		lot.originalShares = this.quantity;
+
+		addLot(lot);
+	}
+
+	private void addLot(Lot lot) {
+		if (this.lots == null) {
+			this.lots = new ArrayList<Lot>();
+		}
+
+		// TODO ultimately, we need to track lots in the security itself
+		// GlobalPortfolio keeps track of all lot activity for each security
+		// AccountPortfolio keeps track of lot activity in the account context
+		// StatementHoldings keeps track of lot activity in the account/statement
+		this.lots.add(lot);
+	}
+
+	private void setupLots() {
+		switch (getAction()) {
+		case BUY:
+		case BUYX:
+		case REINV_DIV:
+		case REINV_INT:
+		case REINV_LG:
+		case REINV_SH:
+			createLot();
+			break;
+
+		// TODO this is a bit different - create lot(s) for this account?
+		case SHRS_IN:
+			break;
+
+		case GRANT:
+			// TODO new lot - Strike price, open/close price, vest/expire date, qty
+			break;
+
+		case VEST:
+			// TODO Adjust lot info
+			break;
+
+		case SELL:
+		case SELLX:
+			// TODO pick shares from available lots
+			break;
+
+		case EXERCISE:
+		case EXERCISEX:
+			// TODO This may convert the option to shares, or cash out
+			break;
+
+		// TODO this is the same as selling, or different?
+		case SHRS_OUT:
+			break;
+
+		case EXPIRE:
+			// TODO adjust lot info
+			break;
+
+		// TODO perhaps we need to adjust lot shares here?
+		case STOCKSPLIT:
+			break;
+
+		// Cash-only transactions (no lots affected)
+		case DIV:
+		case CASH:
+		case CONTRIBX:
+		case INT_INC:
+		case MISC_INCX:
+		case WITHDRAWX:
+		case XIN:
+		case XOUT:
+		case REMINDER:
+			break;
+
+		case OTHER:
+			assert (false); // can't happen
+			return;
+		}
 	}
 
 	private void repairBuySell() {
@@ -245,10 +333,6 @@ public class InvestmentTxn extends GenericTxn {
 
 			this.price = newprice;
 		}
-	}
-
-	public TxAction getAction() {
-		return this.action;
 	}
 
 	// Get the total amount of a buy/sell transaction.
