@@ -14,8 +14,9 @@ public class InvestmentTxn extends GenericTxn {
 	public String accountForTransfer;
 	public BigDecimal amountTransferred;
 	public List<InvestmentTxn> xferInv;
-	// Buys/grants will create one lot; others may affect multiple lots (or none)
-	public List<Lot> lots = new ArrayList<Lot>();
+
+	public List<Lot> srcLots = null;
+	public List<Lot> dstLots = null;
 
 	public InvestmentTxn(int acctid) {
 		super(acctid);
@@ -202,26 +203,18 @@ public class InvestmentTxn extends GenericTxn {
 		setupLots();
 	}
 
-	private void createLot() {
-		Lot lot = new Lot();
+	private void createDstLot() {
+		Lot lot = new Lot(getDate(), this.security.secid, this.quantity, getBuySellAmount(), this);
 
-		lot.purchaseDate = getDate();
-		lot.secid = this.security.secid;
-		lot.originalShares = this.quantity;
-
-		addLot(lot);
+		addDstLot(lot);
 	}
 
-	private void addLot(Lot lot) {
-		if (this.lots == null) {
-			this.lots = new ArrayList<Lot>();
+	private void addDstLot(Lot lot) {
+		if (this.dstLots == null) {
+			this.dstLots = new ArrayList<Lot>();
 		}
 
-		// TODO ultimately, we need to track lots in the security itself
-		// GlobalPortfolio keeps track of all lot activity for each security
-		// AccountPortfolio keeps track of lot activity in the account context
-		// StatementHoldings keeps track of lot activity in the account/statement
-		this.lots.add(lot);
+		this.dstLots.add(lot);
 	}
 
 	private void setupLots() {
@@ -232,7 +225,7 @@ public class InvestmentTxn extends GenericTxn {
 		case REINV_INT:
 		case REINV_LG:
 		case REINV_SH:
-			createLot();
+			createDstLot();
 			break;
 
 		// TODO this is a bit different - create lot(s) for this account?

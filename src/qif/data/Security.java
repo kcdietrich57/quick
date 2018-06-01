@@ -10,6 +10,7 @@ import java.util.Map;
 
 public class Security {
 	private static final Map<String, Security> securities = new HashMap<String, Security>();
+	private static final List<Security> securitiesByID = new ArrayList<Security>();
 
 	private static int nextSecurityID = 1;
 
@@ -32,7 +33,16 @@ public class Security {
 			sec.secid = nextSecurityID++;
 		}
 
+		while (securitiesByID.size() <= sec.secid) {
+			securitiesByID.add(null);
+		}
+
+		securitiesByID.set(sec.secid, sec);
 		securities.put(sec.symbol, sec);
+	}
+
+	public static Security getSecurity(int secid) {
+		return securitiesByID.get(secid);
 	}
 
 	public static Security findSecurity(String nameOrSymbol) {
