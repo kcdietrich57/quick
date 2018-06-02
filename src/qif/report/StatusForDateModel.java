@@ -2,11 +2,11 @@ package qif.report;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import qif.data.Account;
 import qif.data.AccountType;
+import qif.data.QDate;
 
 public class StatusForDateModel {
 	public static class SectionInfo {
@@ -82,7 +82,7 @@ public class StatusForDateModel {
 		public List<StatusForDateModel.AccountSummary> accounts = new ArrayList<StatusForDateModel.AccountSummary>();
 	};
 
-	public Date d;
+	public QDate d;
 	public BigDecimal assets = BigDecimal.ZERO;
 	public BigDecimal liabilities = BigDecimal.ZERO;
 	public BigDecimal netWorth = BigDecimal.ZERO;

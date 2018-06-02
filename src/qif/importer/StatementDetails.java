@@ -2,13 +2,13 @@ package qif.importer;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
 import qif.data.NonInvestmentTxn;
+import qif.data.QDate;
 import qif.data.QifDom;
 import qif.data.Security;
 
@@ -18,7 +18,7 @@ import qif.data.Security;
 	public static final int CURRENT_VERSION = 4;
 
 	public int acctid;
-	public Date date;
+	public QDate date;
 
 	// This is the cumulative account value
 	public BigDecimal closingBalance;
@@ -59,7 +59,7 @@ import qif.data.Security;
 		final String secCountStr = (version > 1) ? ss[ssx++].trim() : "0";
 
 		this.acctid = dom.findAccount(acctname).acctid;
-		this.date = Common.parseDate(dateStr);
+		this.date = Common.parseQDate(dateStr);
 		if (version < 3) {
 			this.closingBalance = this.closingCashBalance = new BigDecimal(closeCashStr);
 		} else {
@@ -101,7 +101,7 @@ import qif.data.Security;
 			}
 			final String amtStr = ss[ssx++].trim();
 
-			txinfo.date = Common.parseDate(tdateStr);
+			txinfo.date = Common.parseQDate(tdateStr);
 			txinfo.action = actStr;
 			txinfo.cknum = Integer.parseInt(cknumStr);
 			txinfo.cashAmount = new BigDecimal(amtStr);
@@ -141,7 +141,7 @@ import qif.data.Security;
 
 	public String toString() {
 		final String s = "" + this.acctid + " " //
-				+ Common.formatDate(this.date) //
+				+ this.date.toString() //
 				+ String.format("%s  %s %d tx", //
 						Common.formatAmount(this.closingBalance), //
 						Common.formatAmount(this.closingCashBalance), //
@@ -154,7 +154,7 @@ import qif.data.Security;
 //This represents the information stored in the statementLog file for each
 //transaction that is part of a statement.
 class TxInfo {
-	Date date;
+	QDate date;
 	String action;
 	int cknum;
 	BigDecimal cashAmount;
@@ -205,7 +205,7 @@ class TxInfo {
 
 	public String toString() {
 		return String.format("%s %5d %s", //
-				Common.formatDate(this.date), this.cknum, //
+				this.date.toString(), this.cknum, //
 				Common.formatAmount(this.cashAmount));
 	}
 }

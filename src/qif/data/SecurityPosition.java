@@ -69,7 +69,7 @@ public class SecurityPosition {
 		return s;
 	}
 
-	public BigDecimal getSecurityPositionValueForDate(Date d) {
+	public BigDecimal getSecurityPositionValueForDate(QDate d) {
 		if (this.transactions.isEmpty()) {
 			return this.shares.multiply(this.security.getPriceForDate(d).price);
 		}
@@ -97,7 +97,7 @@ public class SecurityPosition {
 	 * @param d
 	 * @return The index; -1 if no such transaction exists
 	 */
-	public int getTransactionIndexForDate(Date d) {
+	public int getTransactionIndexForDate(QDate d) {
 		final int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
 		if (idx < 0) {
 			return -1;

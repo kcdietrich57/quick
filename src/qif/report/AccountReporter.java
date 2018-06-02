@@ -30,7 +30,7 @@ public class AccountReporter {
 				}
 
 				System.out.print(String.format("   %s  %3d tx  %s", //
-						Common.formatDate(s.date), s.transactions.size(), //
+						s.date.toString(), s.transactions.size(), //
 						Common.formatAmount(s.closingBalance)));
 			}
 
@@ -40,7 +40,7 @@ public class AccountReporter {
 
 			for (final GenericTxn t : acct.statements.get(acct.statements.size() - 1).unclearedTransactions) {
 				System.out.println(String.format("  %s  %s  %s", //
-						Common.formatDate(t.getDate()), //
+						t.getDate().toString(), //
 						Common.formatAmount(t.getAmount()), //
 						t.getPayee()));
 			}

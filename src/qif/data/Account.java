@@ -12,7 +12,7 @@ public class Account {
 	private String name;
 	public AccountType type;
 	public String description;
-	public Date closeDate;
+	public QDate closeDate;
 	public BigDecimal creditLimit;
 	public BigDecimal balance;
 	public BigDecimal clearedBalance;
@@ -35,23 +35,23 @@ public class Account {
 		this.securities = new SecurityPortfolio();
 	}
 
-	public Date getOpenDate() {
-		return (this.transactions != null) ? this.transactions.get(0).getDate() : null;
+	public QDate getOpenDate() {
+		return (this.transactions != null) ? this.transactions.get(0).getDate() : QDate.today();
 	}
 
-	private boolean isOpenAsOf(Date d) {
-		Date openDate = getOpenDate();
+	private boolean isOpenAsOf(QDate d) {
+		QDate openDate = getOpenDate();
 
 		return (openDate != null) && (openDate.compareTo(d) <= 0);
 	}
 
-	private boolean isClosedAsOf(Date d) {
+	private boolean isClosedAsOf(QDate d) {
 		return (this.closeDate != null) && (this.closeDate.compareTo(d) <= 0);
 	}
 
-	public boolean isOpenOn(Date d) {
+	public boolean isOpenOn(QDate d) {
 		if (d == null) {
-			d = new Date();
+			d = QDate.today();
 		}
 
 		return isOpenAsOf(d) && !isClosedAsOf(d);
@@ -89,7 +89,7 @@ public class Account {
 		return this.name;
 	}
 
-	public Date getLastStatementDate() {
+	public QDate getLastStatementDate() {
 		return (this.statements.isEmpty()) //
 				? null //
 				: this.statements.get(this.statements.size() - 1).date;
@@ -101,11 +101,11 @@ public class Account {
 				: this.statements.get(this.statements.size() - 1);
 	}
 
-	public Statement getStatement(Date date) {
+	public Statement getStatement(QDate date) {
 		return getStatement(date, null);
 	}
 
-	public Statement getStatement(Date date, BigDecimal balance) {
+	public Statement getStatement(QDate date, BigDecimal balance) {
 		if (date == null) {
 			return null;
 		}
@@ -125,7 +125,7 @@ public class Account {
 
 		Common.reportError("Can't find statement: " //
 				+ this.name //
-				+ Common.formatDate(date) + " " //
+				+ date.toString() + " " //
 				+ Common.formatAmount(balance));
 		return null;
 	}
@@ -142,15 +142,15 @@ public class Account {
 		return count;
 	}
 
-	public Date getFirstTransactionDate() {
+	public QDate getFirstTransactionDate() {
 		return (this.transactions.isEmpty()) ? null : this.transactions.get(0).getDate();
 	}
 
-	public Date getLastTransactionDate() {
+	public QDate getLastTransactionDate() {
 		return (this.transactions.isEmpty()) ? null : this.transactions.get(this.transactions.size() - 1).getDate();
 	}
 
-	public Date getFirstUnclearedTransactionDate() {
+	public QDate getFirstUnclearedTransactionDate() {
 		final GenericTxn t = getFirstUnclearedTransaction();
 
 		return (t == null) ? null : t.getDate();
@@ -278,17 +278,17 @@ public class Account {
 	}
 
 	public BigDecimal getCurrentValue() {
-		return getValueForDate(new Date());
+		return getValueForDate(QDate.today());
 	}
 
 	public BigDecimal getFinalValue() {
-		final Date d = (this.transactions.isEmpty()) //
-				? new Date() //
+		QDate d = (this.transactions.isEmpty()) //
+				? QDate.today() //
 				: this.transactions.get(this.transactions.size() - 1).getDate();
 		return getValueForDate(d);
 	}
 
-	private BigDecimal getCashValueForDate(Date d) {
+	private BigDecimal getCashValueForDate(QDate d) {
 		BigDecimal cashBal = null;
 
 		int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
@@ -302,7 +302,7 @@ public class Account {
 		return (cashBal != null) ? cashBal : BigDecimal.ZERO;
 	}
 
-	public BigDecimal getValueForDate(Date d) {
+	public BigDecimal getValueForDate(QDate d) {
 		final BigDecimal cashBal = getCashValueForDate(d);
 		final BigDecimal secBal = this.securities.getPortfolioValueForDate(d);
 
@@ -313,7 +313,7 @@ public class Account {
 		return acctValue;
 	}
 
-	public BigDecimal getSecuritiesValueForDate(Date d) {
+	public BigDecimal getSecuritiesValueForDate(QDate d) {
 		BigDecimal portValue = BigDecimal.ZERO;
 
 		for (final SecurityPosition pos : this.securities.positions) {
@@ -380,7 +380,7 @@ public class Account {
 	public AccountPosition getPosition(Date d1, Date d2) {
 		AccountPosition apos = new AccountPosition(this);
 
-		//BigDecimal v1 = getCashValueForDate(d1);
+		// BigDecimal v1 = getCashValueForDate(d1);
 
 		return apos;
 	}

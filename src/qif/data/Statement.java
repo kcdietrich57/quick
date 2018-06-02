@@ -2,12 +2,11 @@ package qif.data;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class Statement {
 	public int acctid;
-	public Date date;
+	public QDate date;
 
 	public Statement prevStatement;
 
@@ -104,13 +103,14 @@ public class Statement {
 		this.unclearedTransactions.addAll(unclearedTxns);
 	}
 
+	// TODO relocate this format method
 	// name;date;stmtBal;cashBal;numTx;numPos;[cashTx;][sec;numTx[txIdx;shareBal;]]
 	public String formatForSave() {
 		final Account a = QifDom.dom.getAccountByID(this.acctid);
 
 		String s = String.format("%s;%s;%5.2f;%5.2f;%d;%d", //
 				a.getName(), //
-				Common.formatDate(this.date), //
+				this.date.toString(), //
 				this.closingBalance, //
 				this.cashBalance, //
 				this.transactions.size(), //
@@ -289,7 +289,7 @@ public class Statement {
 	}
 
 	public String toString() {
-		final String s = Common.formatDate(this.date) //
+		final String s = this.date.toString() //
 				+ "  " + this.closingBalance //
 				+ " tran=" + ((this.transactions != null) ? this.transactions.size() : null);
 

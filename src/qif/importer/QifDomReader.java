@@ -8,15 +8,9 @@ import java.io.LineNumberReader;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 import app.QifLoader;
@@ -28,6 +22,7 @@ import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
 import qif.data.MultiSplitTxn;
 import qif.data.NonInvestmentTxn;
+import qif.data.QDate;
 import qif.data.QPrice;
 import qif.data.QifDom;
 import qif.data.Security;
@@ -203,7 +198,7 @@ public class QifDomReader {
 		}
 	}
 
-	private void connectTransfers(SimpleTxn txn, Date date) {
+	private void connectTransfers(SimpleTxn txn, QDate date) {
 		// Opening balance appears as a transfer to the same acct
 		if ((txn.catid >= 0) || (txn.catid == -txn.getXferAcctid())) {
 			return;
@@ -240,7 +235,7 @@ public class QifDomReader {
 		xtxn.xtxn = txn;
 	}
 
-	private void findMatches(Account acct, SimpleTxn txn, Date date, boolean strict) {
+	private void findMatches(Account acct, SimpleTxn txn, QDate date, boolean strict) {
 		this.matchingTxns.clear();
 
 		final int idx = Common.findLastTransactionOnOrBeforeDate(acct.transactions, date);
@@ -507,7 +502,7 @@ public class QifDomReader {
 				final String s = String.format(//
 						"%-20s : %5s(%2d) %s INSH=%s (%2d txns) OUTSH=%s (%2d txns)", //
 						t.getAccount().getName(), t.security.symbol, t.security.secid, //
-						Common.formatDate(t.getDate()), //
+						t.getDate().toString(), //
 						Common.formatAmount3(inshrs), ins.size(), //
 						Common.formatAmount3(outshrs), outs.size());
 				System.out.println(s);
@@ -522,7 +517,7 @@ public class QifDomReader {
 
 				final String s = String.format("%-20s : %5s(%2d) %s %s SHR=%s", //
 						t.getAccount().getName(), t.security.symbol, t.security.secid, //
-						Common.formatDate(t.getDate()), pad, //
+						t.getDate().toString(), pad, //
 						Common.formatAmount3(t.getShares()));
 				System.out.println(s);
 			}
@@ -533,7 +528,8 @@ public class QifDomReader {
 			List<InvestmentTxn> rettxns, //
 			List<InvestmentTxn> srctxns, //
 			List<InvestmentTxn> unmatched, //
-			Security s, Date d) {
+			Security s, //
+			QDate d) {
 		BigDecimal numshrs = BigDecimal.ZERO;
 
 		if (srctxns.isEmpty()) {
@@ -684,7 +680,7 @@ public class QifDomReader {
 			if (s == null) {
 				Common.reportError("Can't find statement for details: " //
 						+ a.getName() //
-						+ "  " + Common.formatDate(d.date) //
+						+ "  " + d.date.toString() //
 						+ "  " + d.closingBalance);
 			}
 
@@ -811,7 +807,7 @@ public class QifDomReader {
 		boolean chlvd = false;
 		boolean dohlcv = false;
 
-		Date splitDate = null;
+		QDate splitDate = null;
 
 		try {
 			fr = new FileReader(f);
@@ -858,7 +854,7 @@ public class QifDomReader {
 					final String dateStr = ss[ssx++];
 
 					final BigDecimal splitAdjust = new BigDecimal(newshrStr).divide(new BigDecimal(oldshrStr));
-					splitDate = Common.parseDate(dateStr);
+					splitDate = Common.parseQDate(dateStr);
 
 					final SplitInfo si = new SplitInfo();
 					si.splitDate = splitDate;
@@ -901,27 +897,22 @@ public class QifDomReader {
 					datestr = ss[ssx++];
 				}
 
-				Date date = Common.parseDate(datestr);
+				QDate date = Common.parseQDate(datestr);
 				BigDecimal price = null;
 				try {
 					price = new BigDecimal(pricestr);
 				} catch (final Exception e) {
+					// TODO this is serious
 					e.printStackTrace();
 				}
 
 				final QPrice p = new QPrice();
 
 				if (isWeekly) {
-					final Calendar cal = new GregorianCalendar();
-					cal.setTime(date);
-					final LocalDate d = LocalDate.of( //
-							cal.get(Calendar.YEAR), //
-							cal.get(Calendar.MONTH) + 1, //
-							cal.get(Calendar.DAY_OF_MONTH));
-					final LocalDate d2 = d.plusDays(4);
-					final Instant instant = d2.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
-					date = Date.from(instant);
+					// TODO I don't get this
+					date = date.addDays(4);
 				}
+
 				p.date = date;
 
 				final BigDecimal splitRatio = sec.getSplitRatioForDate(date);
@@ -1177,7 +1168,7 @@ public class QifDomReader {
 				// acct.stmtBalance = Common.getDecimal(qline.value);
 				break;
 			case AcctCloseDate:
-				acct.closeDate = Common.parseDate(qline.value);
+				acct.closeDate = Common.parseQDate(qline.value);
 				break;
 
 			default:
@@ -1319,7 +1310,7 @@ public class QifDomReader {
 				txn.commission = Common.getDecimal(qline.value);
 				break;
 			case InvDate:
-				txn.setDate(Common.parseDate(qline.value));
+				txn.setDate(Common.parseQDate(qline.value));
 				break;
 			case InvMemo:
 				txn.memo = qline.value;
@@ -1416,7 +1407,7 @@ public class QifDomReader {
 				break;
 
 			case TxnDate:
-				txn.setDate(Common.parseDate(qline.value));
+				txn.setDate(Common.parseQDate(qline.value));
 				break;
 			case TxnClearedStatus:
 				txn.clearedStatus = qline.value;
@@ -1612,9 +1603,9 @@ public class QifDomReader {
 					}
 
 					final BigDecimal bal = new BigDecimal(balStr);
-					final Date d = (day == 0) //
+					final QDate d = (day == 0) //
 							? Common.getDateForEndOfMonth(year, month) //
-							: Common.getDate(year, month, day);
+							: new QDate(year, month, day);
 
 					final Statement prevstmt = (stmts.isEmpty() ? null : stmts.get(stmts.size() - 1));
 

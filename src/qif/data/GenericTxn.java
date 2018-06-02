@@ -3,7 +3,6 @@ package qif.data;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 public abstract class GenericTxn extends SimpleTxn {
@@ -28,9 +27,9 @@ public abstract class GenericTxn extends SimpleTxn {
 		allTransactionsByID_readonly = null;
 	}
 
-	private Date date;
+	private QDate date;
 	public String clearedStatus;
-	public Date stmtdate;
+	public QDate stmtdate;
 	private String payee;
 	public BigDecimal runningTotal;
 
@@ -84,17 +83,17 @@ public abstract class GenericTxn extends SimpleTxn {
 		this.stmtdate = s.date;
 	}
 
-	public void setDate(Date date) {
+	public void setDate(QDate date) {
 		this.date = date;
 	}
 
-	public Date getDate() {
+	public QDate getDate() {
 		return this.date;
 	}
 
 	public String formatForSave() {
 		final String s = String.format("T;%s;%d;%5.2f", //
-				Common.formatDate(getDate()), //
+				getDate().toString(), //
 				getCheckNumber(), //
 				getCashAmount());
 		return s;

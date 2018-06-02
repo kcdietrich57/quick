@@ -173,7 +173,7 @@ public class ReviewDialog extends JFrame {
 			}
 
 			final Account a = QifDom.dom.getAccountByID(stmt.acctid);
-			statusMsg = a.getName() + ": " + Common.formatDate(stmt.date) + "\n";
+			statusMsg = a.getName() + ": " + stmt.date.toString() + "\n";
 			statusMsg += String.format( //
 					"Opening Balance:\t%s\nClosing Balance:\t%s\nCleared Balance:\t%s", //
 					Common.formatAmount(stmt.getOpeningCashBalance()), //

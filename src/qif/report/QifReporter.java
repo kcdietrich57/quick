@@ -4,7 +4,6 @@ import java.util.Calendar;
 import java.util.Date;
 
 import qif.data.Account;
-import qif.data.Common;
 import qif.data.GenericTxn;
 
 public class QifReporter {
@@ -47,7 +46,8 @@ public class QifReporter {
 
 		for (final GenericTxn t : a.transactions) {
 			final Calendar cal = Calendar.getInstance();
-			cal.setTime(t.getDate());
+// TODO fix this
+//			cal.setTime(t.getDate());
 
 			final int thisyear = cal.get(Calendar.YEAR);
 			final int thismonth = cal.get(Calendar.MONTH);
@@ -62,7 +62,7 @@ public class QifReporter {
 						System.out.println();
 					}
 
-					System.out.print("M" + Common.formatDateMonthYear(t.getDate()));
+					System.out.print("M" + t.getDate().monthYearString);
 				}
 
 				lastyear = thisyear;

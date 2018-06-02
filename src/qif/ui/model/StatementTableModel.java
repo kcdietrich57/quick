@@ -85,7 +85,7 @@ public class StatementTableModel extends AbstractTableModel {
 
 		switch (col) {
 		case 0:
-			return Common.formatDate(s.date);
+			return s.date.toString();
 		case 1:
 			return Common.stringValue(s.closingBalance);
 		case 2:

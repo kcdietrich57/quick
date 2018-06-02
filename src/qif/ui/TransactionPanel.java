@@ -10,7 +10,6 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.Date;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -22,6 +21,7 @@ import javax.swing.table.TableColumnModel;
 
 import qif.data.Account;
 import qif.data.GenericTxn;
+import qif.data.QDate;
 import qif.data.Statement;
 import qif.ui.model.TransactionTableModel;
 
@@ -139,9 +139,8 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 		TransactionTableModel model = (TransactionTableModel) table.getModel();
 		GenericTxn tx = model.getTransactionAt(row);
 
-		Date now = new Date();
 		boolean cleared = (tx != null && tx.isCleared());
-		boolean future = (tx != null && tx.getDate().compareTo(now) > 0);
+		boolean future = (tx != null && tx.getDate().compareTo(QDate.today()) > 0);
 
 		if (!this.highlighting) {
 			c.setFont(regularFont);

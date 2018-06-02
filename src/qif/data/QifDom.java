@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 /** Document Object Model for finances from Quicken */
@@ -155,11 +154,11 @@ public class QifDom {
 		public BigDecimal liabilities = BigDecimal.ZERO;
 	}
 
-	public Balances getNetWorthForDate(Date d) {
+	public Balances getNetWorthForDate(QDate d) {
 		final Balances b = new Balances();
 
 		if (d == null) {
-			d = new Date();
+			d = QDate.today();
 		}
 
 		for (final Account a : this.accounts) {

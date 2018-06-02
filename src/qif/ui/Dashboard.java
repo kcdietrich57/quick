@@ -2,13 +2,13 @@ package qif.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Font;
-import java.util.Date;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 
+import qif.data.QDate;
 import qif.report.NetWorthReporter;
 import qif.report.StatusForDateModel;
 import qif.report.StatusReporter;
@@ -36,7 +36,7 @@ public class Dashboard extends JPanel {
 
 		add(tabs, BorderLayout.CENTER);
 
-		StatusForDateModel model = NetWorthReporter.buildReportStatusForDate(new Date());
+		StatusForDateModel model = NetWorthReporter.buildReportStatusForDate(QDate.today());
 		textarea.setText(NetWorthReporter.generateReportStatusForDate(model));
 
 		ReportStatusModel model2 = StatusReporter.buildReportStatusModel();

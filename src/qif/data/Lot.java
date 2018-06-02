@@ -1,24 +1,23 @@
 package qif.data;
 
 import java.math.BigDecimal;
-import java.util.Date;
 
 public class Lot {
 	/** When created (via purchase, grant, transfer, leftover from sale, etc) */
-	public final Date createDate;
+	public final QDate createDate;
 	/** Lot this is derived from if not original purchase/grant */
 	public final Lot sourceLot;
 	/** Date this lot ceases to exist via sale, expiration, transfer, etc */
-	public Date expireDate;
+	public QDate expireDate;
 	
 	public final int secid;
 	public final BigDecimal shares;
-	public final Date purchaseDate;
+	public final QDate purchaseDate;
 	public final BigDecimal costBasis;
 
 	public final InvestmentTxn transaction;
 
-	public Lot(Date date, int secid, BigDecimal shares, BigDecimal cost, InvestmentTxn txn) {
+	public Lot(QDate date, int secid, BigDecimal shares, BigDecimal cost, InvestmentTxn txn) {
 		this.createDate = date;
 		this.sourceLot = null;
 		this.expireDate = null;
@@ -62,7 +61,7 @@ public class Lot {
 	public String toString() {
 		String s = "Lot(";
 
-		s += Common.formatDate(this.purchaseDate).trim();
+		s += this.purchaseDate.toString().trim();
 		s += ", '" + Security.getSecurity(this.secid).getName() + "'";
 		s += ", " + Common.formatAmount3(this.shares).trim();
 		s += ", cost=" + Common.formatAmount3(costBasis).trim();

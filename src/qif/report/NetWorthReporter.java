@@ -2,13 +2,13 @@ package qif.report;
 
 import java.math.BigDecimal;
 import java.util.Calendar;
-import java.util.Date;
 
 import qif.data.Account;
 import qif.data.Common;
+import qif.data.QDate;
 import qif.data.QifDom;
-import qif.data.SecurityPosition;
 import qif.data.QifDom.Balances;
+import qif.data.SecurityPosition;
 import qif.report.StatusForDateModel.AccountSummary;
 import qif.report.StatusForDateModel.Section;
 import qif.report.StatusForDateModel.SecuritySummary;
@@ -16,24 +16,22 @@ import qif.report.StatusForDateModel.SecuritySummary;
 public class NetWorthReporter {
 
 	public static void reportCurrentNetWorth() {
-		final Calendar cal = Calendar.getInstance();
-
-		reportNetWorthForDate(cal.getTime());
+		reportNetWorthForDate(QDate.today());
 	}
 
-	public static void reportNetWorthForDate(Date d) {
+	public static void reportNetWorthForDate(QDate d) {
 		StatusForDateModel model = buildReportStatusForDate(d);
 
 		String s = generateReportStatusForDate(model);
-		
+
 		System.out.println(s);
 	}
 
-	public static Date getFirstTransactionDate(QifDom dom) {
-		Date retdate = null;
+	public static QDate getFirstTransactionDate(QifDom dom) {
+		QDate retdate = null;
 
 		for (final Account a : dom.getAccounts()) {
-			final Date d = a.getFirstTransactionDate();
+			final QDate d = a.getFirstTransactionDate();
 
 			if ((d != null) && ((retdate == null) || d.compareTo(retdate) < 0)) {
 				retdate = d;
@@ -43,11 +41,11 @@ public class NetWorthReporter {
 		return retdate;
 	}
 
-	public static Date getLastTransactionDate(QifDom dom) {
-		Date retdate = null;
+	public static QDate getLastTransactionDate(QifDom dom) {
+		QDate retdate = null;
 
 		for (final Account a : dom.getAccounts()) {
-			Date d = a.getLastTransactionDate();
+			QDate d = a.getLastTransactionDate();
 
 			if ((d != null) && ((retdate == null) || d.compareTo(retdate) > 0)) {
 				retdate = d;
@@ -62,13 +60,11 @@ public class NetWorthReporter {
 
 		System.out.println();
 
-		Date d = getFirstTransactionDate(dom);
-		final Date lastTxDate = getLastTransactionDate(dom);
+		QDate d = getFirstTransactionDate(dom);
+		QDate lastTxDate = getLastTransactionDate(dom);
 
-		final Calendar cal = Calendar.getInstance();
-		cal.setTime(d);
-		int year = cal.get(Calendar.YEAR);
-		int month = cal.get(Calendar.MONTH);
+		int year = d.getYear();
+		int month = d.getMonth();
 
 		System.out.println(String.format("  %-10s %-15s %-15s %-15s", //
 				"Date", "NetWorth", "Assets", "Liabilities"));
@@ -78,8 +74,7 @@ public class NetWorthReporter {
 			final Balances b = dom.getNetWorthForDate(d);
 
 			System.out.println(String.format("%s,%15.2f,%15.2f,%15.2f", //
-					Common.formatDateLong(d), //
-					b.netWorth, b.assets, b.liabilities));
+					d.longString, b.netWorth, b.assets, b.liabilities));
 
 			if (month == 12) {
 				++year;
@@ -95,11 +90,12 @@ public class NetWorthReporter {
 
 		System.out.println();
 
-		Date d = getFirstTransactionDate(dom);
-		final Date lastTxDate = getLastTransactionDate(dom);
+		QDate d = getFirstTransactionDate(dom);
+		QDate lastTxDate = getLastTransactionDate(dom);
 
 		final Calendar cal = Calendar.getInstance();
-		cal.setTime(d);
+// TODO fix this
+//		cal.setTime(d);
 		int year = cal.get(Calendar.YEAR);
 
 		do {
@@ -113,7 +109,7 @@ public class NetWorthReporter {
 
 	// ===============================================================
 
-	public static StatusForDateModel buildReportStatusForDate(Date d) {
+	public static StatusForDateModel buildReportStatusForDate(QDate d) {
 		StatusForDateModel model = new StatusForDateModel();
 		model.d = d;
 
@@ -187,7 +183,7 @@ public class NetWorthReporter {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("\n");
-		sb.append(String.format("Global status for date: %s\n", Common.formatDate(model.d)));
+		sb.append(String.format("Global status for date: %s\n", model.d.toString()));
 		sb.append("--------------------------------------------------------\n");
 		sb.append(String.format("  %-36s : %10s\n", "Account", "Balance\n"));
 
@@ -235,5 +231,5 @@ public class NetWorthReporter {
 		sb.append("\n");
 
 		return sb.toString();
-	}	
+	}
 }

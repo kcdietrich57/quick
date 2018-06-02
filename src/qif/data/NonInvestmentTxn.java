@@ -72,12 +72,12 @@ public class NonInvestmentTxn extends GenericTxn {
 
 		return (veryshort) //
 				? String.format("%s %s  %s", //
-						Common.formatDateShort(getDate()), //
+						getDate().shortString, //
 						Common.formatAmount(getAmount()), //
 						getPayee()) //
 				: String.format("%s %s %5s %s %s", //
 						((this.stmtdate != null) ? "*" : " "), //
-						Common.formatDate(getDate()), //
+						getDate().toString(), //
 						this.chkNumber, //
 						Common.formatAmount(getAmount()), //
 						getPayee());
@@ -87,7 +87,7 @@ public class NonInvestmentTxn extends GenericTxn {
 		final QifDom dom = QifDom.dom;
 
 		String s = ((this.stmtdate != null) ? "*" : " ") + "Tx" + this.txid + ":";
-		s += " date=" + Common.formatDate(getDate());
+		s += " date=" + getDate().toString();
 		s += " acct=" + dom.getAccountByID(this.acctid).getName();
 		s += " clr:" + this.clearedStatus;
 		s += " num=" + this.chkNumber;

@@ -1,14 +1,13 @@
 package qif.data;
 
 import java.math.BigDecimal;
-import java.util.Date;
 
 import qif.importer.QFileReader;
 
 public class QPrice {
 	public static final QPrice ZERO = new QPrice(new BigDecimal(0));
 
-	public Date date;
+	public QDate date;
 	public String symbol;
 	public BigDecimal price;
 	public BigDecimal splitAdjustedPrice;
@@ -77,7 +76,7 @@ public class QPrice {
 		}
 
 		final String datestr = s.substring(1, idx);
-		final Date date = Common.parseDate(datestr);
+		final QDate date = Common.parseQDate(datestr);
 
 		final QPrice p = new QPrice();
 
@@ -102,7 +101,7 @@ public class QPrice {
 
 	public String toString() {
 		String s = String.format("Price: %s  %s", //
-				Common.formatDate(this.date), //
+				this.date.toString(), //
 				Common.formatAmount(this.price));
 
 		if (this.splitAdjustedPrice != null) {

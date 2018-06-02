@@ -109,7 +109,7 @@ public class SecurityPortfolio {
 		}
 	}
 
-	public BigDecimal getPortfolioValueForDate(Date d) {
+	public BigDecimal getPortfolioValueForDate(QDate d) {
 		BigDecimal portValue = BigDecimal.ZERO;
 
 		for (final SecurityPosition pos : this.positions) {
@@ -130,7 +130,7 @@ public class SecurityPortfolio {
 		return s;
 	}
 
-	public boolean isEmptyForDate(Date d) {
+	public boolean isEmptyForDate(QDate d) {
 		for (final SecurityPosition p : this.positions) {
 			final int ii = p.getTransactionIndexForDate(d);
 

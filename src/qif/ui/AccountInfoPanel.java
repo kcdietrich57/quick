@@ -88,7 +88,7 @@ public class AccountInfoPanel //
 
 		this.accountType.setText((account != null) ? account.type.toString() : "---");
 		this.accountDescription.setText((account != null) ? account.description : "---");
-		this.accountOpen.setText((account != null) ? Common.formatDate(account.getOpenDate()) : "---");
+		this.accountOpen.setText((account != null) ? account.getOpenDate().toString() : "---");
 		String close = (account != null) && account.isOpenOn(null) ? "No" : "Yes";
 		this.accountClose.setText((account != null) ? close : "---");
 		this.accountBalance.setText((account != null) ? Common.formatAmount(account.balance) : "---");

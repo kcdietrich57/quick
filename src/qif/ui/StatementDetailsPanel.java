@@ -11,7 +11,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import qif.data.Common;
 import qif.data.Statement;
 
 public class StatementDetailsPanel //
@@ -83,7 +82,7 @@ public class StatementDetailsPanel //
 
 			transactionPanel.transactionTableModel.setStatement(null);
 		} else {
-			date.setText(Common.formatDate(stmt.date));
+			date.setText(stmt.date.toString());
 			ntx.setText(Integer.toString(stmt.transactions.size()));
 
 			transactionPanel.transactionTableModel.setStatement(stmt);

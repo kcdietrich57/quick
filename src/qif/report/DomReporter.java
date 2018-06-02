@@ -2,7 +2,6 @@ package qif.report;
 
 import java.math.BigDecimal;
 import java.util.Calendar;
-import java.util.Date;
 
 import qif.data.Account;
 import qif.data.Common;
@@ -81,8 +80,8 @@ public class DomReporter {
 			final GenericTxn lt = a.transactions.get(ntran - 1);
 
 			System.out.println("    Date range: " //
-					+ Common.formatDate(ft.getDate()) //
-					+ " - " + Common.formatDate(lt.getDate()));
+					+ ft.getDate().toString() + " - " + lt.getDate().toString());
+
 			if (includePseudoStatements) {
 				System.out.println("----------------------------");
 			}
@@ -93,27 +92,28 @@ public class DomReporter {
 			BigDecimal bal = BigDecimal.ZERO;
 			final Calendar cal = Calendar.getInstance();
 
-			for (final GenericTxn t : a.transactions) {
-				final Date d = t.getDate();
-				cal.setTime(d);
-
-				if (includePseudoStatements) {
-					if ((cal.get(Calendar.YEAR) != curYear) //
-							|| (cal.get(Calendar.MONTH) != curMonth)) {
-						System.out.println(Common.formatDate(t.getDate()) //
-								+ ": " + bal //
-								+ " " + curNumTxn + " transactions");
-
-						curNumTxn = 0;
-						curYear = cal.get(Calendar.YEAR);
-						curMonth = cal.get(Calendar.MONTH);
-					}
-
-					++curNumTxn;
-				}
-
-				bal = bal.add(t.getAmount());
-			}
+			// TODO im not sure what this is about exactly
+//			for (final GenericTxn t : a.transactions) {
+//				final QDate d = t.getDate();
+//				cal.setTime(d);
+//
+//				if (includePseudoStatements) {
+//					if ((cal.get(Calendar.YEAR) != curYear) //
+//							|| (cal.get(Calendar.MONTH) != curMonth)) {
+//						System.out.println(t.getDate().toString() //
+//								+ ": " + bal //
+//								+ " " + curNumTxn + " transactions");
+//
+//						curNumTxn = 0;
+//						curYear = cal.get(Calendar.YEAR);
+//						curMonth = cal.get(Calendar.MONTH);
+//					}
+//
+//					++curNumTxn;
+//				}
+//
+//				bal = bal.add(t.getAmount());
+//			}
 
 			System.out.println("    " + ntran + " transactions");
 			System.out.println("    Final: " + bal);
@@ -136,8 +136,7 @@ public class DomReporter {
 			final GenericTxn lt = a.transactions.get(ntran - 1);
 
 			System.out.println("Date range: " //
-					+ Common.formatDate(ft.getDate()) //
-					+ " - " + Common.formatDate(lt.getDate()));
+					+ ft.getDate().toString() + " - " + lt.getDate().toString());
 			System.out.println("----------------------------");
 		}
 
@@ -160,7 +159,7 @@ public class DomReporter {
 
 					System.out.println(String.format( //
 							"  %-12s  %-10s  %s  %s", //
-							Common.formatDate(t.getDate()), //
+							t.getDate().toString(), //
 							t.getAction().toString(), //
 							Common.formatAmount3(t.getShares()), //
 							Common.formatAmount3(shrbal)));
@@ -189,7 +188,7 @@ public class DomReporter {
 
 					System.out.println(String.format( //
 							"  %-12s  %-20s  %-10s  %s  %s", //
-							Common.formatDate(t.getDate()), //
+							t.getDate().toString(), //
 							QifDom.dom.getAccountByID(t.acctid).getName(), //
 							t.getAction().toString(), //
 							Common.formatAmount3(t.getShares()), //

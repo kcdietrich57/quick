@@ -10,6 +10,7 @@ import java.util.List;
 
 import qif.data.Account;
 import qif.data.Common;
+import qif.data.QDate;
 import qif.data.QifDom;
 import qif.data.Statement;
 import qif.report.StatusReporter.ReportStatusModel.AccountInfo;
@@ -24,14 +25,14 @@ public class StatusReporter {
 	public static class ReportStatusModel {
 		public static class AccountInfo {
 			public boolean isClosed;
-			public Date lastStatementDate;
+			public QDate lastStatementDate;
 			public BigDecimal balance;
 			public int ucount;
 			public int tcount;
 			public String name;
 			public Statement lStat;
-			public Date lStatDate;
-			public Date firstUnclearedTxDate;
+			private QDate lStatDate;
+			public QDate firstUnclearedTxDate;
 
 			public AccountInfo(Account a) {
 				isClosed = !a.isOpenOn(null);
@@ -48,10 +49,9 @@ public class StatusReporter {
 			}
 		}
 
-		public Date today;
-		private Date minus30;
-		private Date minus60;
-		private Date minus90;
+		private QDate minus30;
+		private QDate minus60;
+		private QDate minus90;
 
 		public int unclracct_count = 0;
 		public int unclracct_utx_count = 0;
@@ -68,13 +68,13 @@ public class StatusReporter {
 
 		public ReportStatusModel() {
 			Calendar cal = Calendar.getInstance();
-			today = cal.getTime();
+			Date today = cal.getTime();
 
 			long dayms = 1000L * 24 * 60 * 60;
 			long msCurrent = today.getTime();
-			minus30 = new Date(msCurrent - 30 * dayms);
-			minus60 = new Date(msCurrent - 60 * dayms);
-			minus90 = new Date(msCurrent - 90 * dayms);
+			minus30 = new QDate(msCurrent - 30 * dayms);
+			minus60 = new QDate(msCurrent - 60 * dayms);
+			minus90 = new QDate(msCurrent - 90 * dayms);
 		}
 
 		public void add(AccountInfo ainfo) {
@@ -138,11 +138,11 @@ public class StatusReporter {
 		return String.format("%3d   %-35s : %8s  %s : %5d/%5d :    %8s", //
 				anum, //
 				ainfo.name, //
-				Common.formatDate(ainfo.lStatDate), //
+				((ainfo.lastStatementDate != null) ? ainfo.lStatDate.toString() : "null"), //
 				Common.formatAmount(ainfo.balance), //
 				ainfo.ucount, //
 				ainfo.tcount, //
-				Common.formatDate(ainfo.firstUnclearedTxDate));
+				((ainfo.firstUnclearedTxDate != null) ? ainfo.firstUnclearedTxDate.toString(): null));
 	}
 
 	private static int appendAccountSection(StringBuilder sb, //

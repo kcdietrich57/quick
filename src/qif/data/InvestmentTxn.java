@@ -227,38 +227,28 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 		List<Lot> srcLots = txn.getLots();
-/*
-		BigDecimal remainingShares = this.quantity;
-
-		for (Lot srcLot : srcLots) {
-			BigDecimal shares;
-			BigDecimal cost;
-
-			if (remainingShares.compareTo(srcLot.shares) <= 0) {
-				shares = remainingShares;
-				cost = shares.multiply(srcLot.getPrice());
-
-				remainingShares = null;
-			} else {
-				shares = srcLot.shares;
-				cost = srcLot.costBasis;
-
-				remainingShares = remainingShares.subtract(shares);
-			}
-
-			Lot lot = new Lot(srcLot, shares, cost, this);
-
-			addDstLot(lot);
-
-			if (remainingShares == null) {
-				break;
-			}
-		}
-
-		if (remainingShares != null) {
-			// TODO ERROR - source share count is insufficient
-		}
-*/
+		/*
+		 * BigDecimal remainingShares = this.quantity;
+		 * 
+		 * for (Lot srcLot : srcLots) { BigDecimal shares; BigDecimal cost;
+		 * 
+		 * if (remainingShares.compareTo(srcLot.shares) <= 0) { shares =
+		 * remainingShares; cost = shares.multiply(srcLot.getPrice());
+		 * 
+		 * remainingShares = null; } else { shares = srcLot.shares; cost =
+		 * srcLot.costBasis;
+		 * 
+		 * remainingShares = remainingShares.subtract(shares); }
+		 * 
+		 * Lot lot = new Lot(srcLot, shares, cost, this);
+		 * 
+		 * addDstLot(lot);
+		 * 
+		 * if (remainingShares == null) { break; } }
+		 * 
+		 * if (remainingShares != null) { // TODO ERROR - source share count is
+		 * insufficient }
+		 */
 	}
 
 	// TODO does this need to be separate from createDstLot()?
@@ -365,7 +355,7 @@ public class InvestmentTxn extends GenericTxn {
 
 			String s = "Inconsistent " + this.action + " transaction:" + //
 					" acct=" + QifDom.dom.getAccountByID(this.acctid).getName() + //
-					" " + Common.formatDate(getDate()) + "\n" + //
+					" " + getDate().toString() + "\n" + //
 					"  sec=" + this.security.getName() + //
 					" qty=" + this.quantity + //
 					" price=" + this.price;
@@ -473,7 +463,7 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 		final String s = String.format("I;%s;%s;%s;%5.2f", //
-				Common.formatDate(getDate()), //
+				getDate().toString(), //
 				getAction().toString(), //
 				secString, //
 				getCashAmount());
@@ -483,7 +473,7 @@ public class InvestmentTxn extends GenericTxn {
 	public String toStringShort(boolean veryshort) {
 		String s = String.format("%s %s %s", //
 				((this.stmtdate != null) ? "*" : " "), //
-				Common.formatDate(getDate()), //
+				getDate().toString(), //
 				this.action.toString());
 
 		if (this.action == TxAction.STOCKSPLIT) {
@@ -503,7 +493,7 @@ public class InvestmentTxn extends GenericTxn {
 
 	public String toStringLong() {
 		String s = ((this.stmtdate != null) ? "*" : " ") + "InvTx" + this.txid + ":";
-		s += " dt=" + Common.formatDate(getDate());
+		s += " dt=" + getDate().toString();
 		s += " acct=" + QifDom.dom.getAccountByID(this.acctid).getName();
 		s += " act=" + this.action;
 		if (this.security != null) {

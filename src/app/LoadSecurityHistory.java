@@ -2,10 +2,10 @@ package app;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import qif.data.Common;
+import qif.data.QDate;
 import qif.data.QPrice;
 import qif.data.Security;
 import qif.importer.QifDomReader;
@@ -41,7 +41,7 @@ public class LoadSecurityHistory {
 		}
 
 		final List<List<QPrice>> mergedPrices = new ArrayList<List<QPrice>>();
-		Date fd = getFirstDate(securities);
+		QDate fd = getFirstDate(securities);
 		final List<QPrice> extraPricesForDate = new ArrayList<QPrice>();
 
 		while (fd != null) {
@@ -105,7 +105,7 @@ public class LoadSecurityHistory {
 
 			mergedPrices.add(pricesForDate);
 
-			String s = Common.formatDate(fd);
+			String s = fd.toString();
 
 			for (int ii = 1; ii < pricesForDate.size(); ++ii) {
 				final QPrice p = pricesForDate.get(ii);
@@ -153,8 +153,8 @@ public class LoadSecurityHistory {
 		System.out.println("NumPrices = " + mergedPrices.size());
 	}
 
-	static Date getFirstDate(List<Security> securities) {
-		Date ret = null;
+	static QDate getFirstDate(List<Security> securities) {
+		QDate ret = null;
 
 		for (final Security sec : securities) {
 			final List<QPrice> list = sec.prices;
@@ -162,7 +162,7 @@ public class LoadSecurityHistory {
 				continue;
 			}
 
-			final Date d = list.get(0).date;
+			final QDate d = list.get(0).date;
 
 			if ((ret == null) || (ret.compareTo(list.get(0).date) > 0)) {
 				ret = d;

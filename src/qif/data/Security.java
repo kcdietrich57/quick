@@ -3,7 +3,6 @@ package qif.data;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +74,7 @@ public class Security {
 	public final List<QPrice> prices = new ArrayList<QPrice>();
 
 	public static class SplitInfo {
-		public Date splitDate;
+		public QDate splitDate;
 		public BigDecimal splitRatio;
 	}
 
@@ -148,7 +147,7 @@ public class Security {
 		Collections.sort(this.prices, (o1, o2) -> o1.date.compareTo(o2.date));
 	}
 
-	public QPrice getPriceForDate(Date d) {
+	public QPrice getPriceForDate(QDate d) {
 		final int idx = getPriceIndexForDate(d);
 
 		if (idx < 0) {
@@ -159,15 +158,15 @@ public class Security {
 		return p;
 	}
 
-	private int getPriceIndexForDate(Date d) {
+	private int getPriceIndexForDate(QDate d) {
 		if (this.prices.isEmpty()) {
 			return -1;
 		}
 
 		int loidx = 0;
 		int hiidx = this.prices.size() - 1;
-		final Date loval = this.prices.get(loidx).date;
-		final Date hival = this.prices.get(hiidx).date;
+		final QDate loval = this.prices.get(loidx).date;
+		final QDate hival = this.prices.get(hiidx).date;
 		if (loval.compareTo(d) >= 0) {
 			return loidx;
 		}
@@ -182,7 +181,7 @@ public class Security {
 				idx = mididx;
 				break;
 			}
-			final Date val = this.prices.get(mididx).date;
+			final QDate val = this.prices.get(mididx).date;
 
 			if (val.compareTo(d) < 0) {
 				loidx = mididx;
@@ -197,7 +196,7 @@ public class Security {
 		return idx;
 	}
 
-	public BigDecimal getSplitRatioForDate(Date d) {
+	public BigDecimal getSplitRatioForDate(QDate d) {
 		BigDecimal ret = BigDecimal.ONE;
 
 		for (int ii = this.splits.size() - 1; ii >= 0; --ii) {

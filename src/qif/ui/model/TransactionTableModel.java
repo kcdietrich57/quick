@@ -1,7 +1,6 @@
 package qif.ui.model;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
@@ -11,6 +10,7 @@ import qif.data.Category;
 import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
+import qif.data.QDate;
 import qif.data.QifDom;
 import qif.data.Statement;
 import qif.ui.AccountSelectionListener;
@@ -86,7 +86,7 @@ public class TransactionTableModel //
 		curObject = obj;
 	}
 
-	public void setStatementDate(Date date) {
+	public void setStatementDate(QDate date) {
 		if ((date == null) || (curAccount == null)) {
 			return;
 		}
@@ -127,7 +127,7 @@ public class TransactionTableModel //
 
 		switch (col) {
 		case 0:
-			return Common.formatDate(tx.getDate());
+			return tx.getDate().toString();
 
 		case 1:
 			return tx.getAction().toString();

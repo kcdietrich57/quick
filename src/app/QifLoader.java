@@ -6,6 +6,7 @@ import java.util.StringTokenizer;
 
 import qif.data.Account;
 import qif.data.Common;
+import qif.data.QDate;
 import qif.data.QifDom;
 import qif.importer.QifDomReader;
 import qif.report.AccountReporter;
@@ -131,7 +132,7 @@ public class QifLoader {
 					NetWorthReporter.reportYearlyNetWorth();
 				}
 			} else {
-				final Date d = Common.parseDate(s);
+				final QDate d = Common.parseQDate(s);
 				if (d != null) {
 					NetWorthReporter.reportNetWorthForDate(d);
 				}

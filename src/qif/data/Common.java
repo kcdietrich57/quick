@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -82,6 +81,12 @@ public class Common {
 		return qifDateString.replace(" ", "0");
 	}
 
+	public static QDate parseQDate(String value) {
+		Date d = parseDate(value);
+
+		return new QDate(d);
+	}
+
 	/**
 	 * Parse a date in various formats
 	 */
@@ -130,20 +135,10 @@ public class Common {
 		return parseDate(datestr);
 	}
 
-	public static Date getDateForEndOfMonth(int year, int month) {
-		int mdays = MONTH_DAYS[month - 1];
-
-		String datestr = "" + month + "/" + mdays + "/" + year;
-		Date d = parseDate(datestr);
-		final Calendar c = Calendar.getInstance();
-		c.setTime(d);
-		if (c.get(Calendar.DAY_OF_MONTH) != mdays) {
-			--mdays;
-			datestr = "" + month + "/" + mdays + "/" + year;
-			d = parseDate(datestr);
-		}
-
-		return d;
+	public static QDate getDateForEndOfMonth(int year, int month) {
+		return (month == 2) //
+				? new QDate(year, 3, 1).addDays(-1) //
+				: new QDate(year, month, MONTH_DAYS[(month + 11) % 12]);
 	}
 
 	public static String stringValue(Object o) {
@@ -321,7 +316,7 @@ public class Common {
 	// Return the index of the first transaction on or after a given date
 	// in a list of transactions sorted by date.
 	public static int findFirstTransactionOnOrAfterDate( //
-			List<? extends GenericTxn> txns, Date d) {
+			List<? extends GenericTxn> txns, QDate d) {
 		if (txns.isEmpty()) {
 			return -1;
 		}
@@ -340,7 +335,7 @@ public class Common {
 	// in a list of transactions sorted by date.
 	// Returns -1 if no such transaction exists.
 	public static int findLastTransactionOnOrBeforeDate( //
-			List<? extends GenericTxn> txns, Date d) {
+			List<? extends GenericTxn> txns, QDate d) {
 		if (txns.isEmpty()) {
 			return -1;
 		}
@@ -362,11 +357,11 @@ public class Common {
 	// Return the index of a transaction on or before a given date
 	// in a list of transactions sorted by date.
 	private static int findTransactionForDate( //
-			List<? extends GenericTxn> txns, Date d) {
+			List<? extends GenericTxn> txns, QDate d) {
 		int loidx = 0;
 		int hiidx = txns.size() - 1;
-		final Date loval = txns.get(loidx).getDate();
-		final Date hival = txns.get(hiidx).getDate();
+		final QDate loval = txns.get(loidx).getDate();
+		final QDate hival = txns.get(hiidx).getDate();
 		if (loval.compareTo(d) >= 0) {
 			return loidx;
 		}
@@ -379,7 +374,7 @@ public class Common {
 			if (idx <= loidx || idx >= hiidx) {
 				return idx;
 			}
-			final Date val = txns.get(idx).getDate();
+			final QDate val = txns.get(idx).getDate();
 
 			if (val.compareTo(d) < 0) {
 				loidx = idx;
@@ -405,7 +400,7 @@ public class Common {
 			}
 
 			System.out.println(String.format("%s  %5s %s  %s", //
-					Common.formatDate(t.getDate()), //
+					t.getDate().toString(), //
 					cknum, //
 					Common.formatAmount(t.getAmount()), //
 					Common.formatAmount(t.runningTotal)));
