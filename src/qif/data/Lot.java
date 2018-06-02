@@ -4,27 +4,44 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 public class Lot {
-	public Lot sourceLot;
-	public Date purchaseDate;
-	public int secid;
-	public BigDecimal shares;
-	public BigDecimal costBasis;
-	public InvestmentTxn transaction = null;
+	/** When created (via purchase, grant, transfer, leftover from sale, etc) */
+	public final Date createDate;
+	/** Lot this is derived from if not original purchase/grant */
+	public final Lot sourceLot;
+	/** Date this lot ceases to exist via sale, expiration, transfer, etc */
+	public Date expireDate;
+	
+	public final int secid;
+	public final BigDecimal shares;
+	public final Date purchaseDate;
+	public final BigDecimal costBasis;
+
+	public final InvestmentTxn transaction;
 
 	public Lot(Date date, int secid, BigDecimal shares, BigDecimal cost, InvestmentTxn txn) {
-		this.purchaseDate = date;
+		this.createDate = date;
+		this.sourceLot = null;
+		this.expireDate = null;
 		this.secid = secid;
 		this.shares = shares;
+		this.purchaseDate = date;
 		this.costBasis = cost;
 		this.transaction = txn;
 	}
 
 	public Lot(Lot src, BigDecimal shares, BigDecimal cost, InvestmentTxn txn) {
-		this.purchaseDate = src.purchaseDate;
+		this.createDate = null;
+		this.sourceLot = src;
+		this.expireDate = null;
 		this.secid = src.secid;
 		this.shares = shares;
+		this.purchaseDate = src.purchaseDate;
 		this.costBasis = cost;
 		this.transaction = txn;
+	}
+
+	public BigDecimal getPrice() {
+		return this.costBasis.divide(this.shares);
 	}
 
 	public Lot[] divide(BigDecimal dstShares, InvestmentTxn dstTxn, InvestmentTxn srcTxn) {

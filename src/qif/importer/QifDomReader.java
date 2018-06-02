@@ -105,6 +105,7 @@ public class QifDomReader {
 		calculateRunningTotals();
 		connectTransfers();
 		connectSecurityTransfers();
+		setupSecurityLots();
 	}
 
 	private void sortTransactions() {
@@ -417,16 +418,8 @@ public class QifDomReader {
 		final List<InvestmentTxn> xins = new ArrayList<InvestmentTxn>();
 		final List<InvestmentTxn> xouts = new ArrayList<InvestmentTxn>();
 
-		for (Account a : QifDom.dom.getAccounts()) {
-			if (!a.isInvestmentAccount()) {
-				continue;
-			}
-
-			for (final GenericTxn txn : a.transactions) {
-				if (!(txn instanceof InvestmentTxn)) {
-					continue;
-				}
-
+		for (GenericTxn txn : GenericTxn.getAllTransactions()) {
+			if (txn instanceof InvestmentTxn) {
 				if ((txn.getAction() == TxAction.SHRS_IN)) {
 					xins.add((InvestmentTxn) txn);
 				} else if (txn.getAction() == TxAction.SHRS_OUT) {
@@ -436,6 +429,14 @@ public class QifDomReader {
 		}
 
 		connectSecurityTransfers(xins, xouts);
+	}
+
+	private void setupSecurityLots() {
+		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
+			if (tx instanceof InvestmentTxn) {
+//				((InvestmentTxn) tx).setupLots();
+			}
+		}
 	}
 
 	private void connectSecurityTransfers(List<InvestmentTxn> xins, List<InvestmentTxn> xouts) {
@@ -448,6 +449,11 @@ public class QifDomReader {
 			}
 
 			diff = o1.security.getName().compareTo(o2.security.getName());
+			if (diff != 0) {
+				return diff;
+			}
+
+			diff = o1.getShares().compareTo(o2.getShares());
 			if (diff != 0) {
 				return diff;
 			}

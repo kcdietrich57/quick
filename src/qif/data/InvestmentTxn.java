@@ -2,6 +2,7 @@ package qif.data;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class InvestmentTxn extends GenericTxn {
@@ -199,25 +200,81 @@ public class InvestmentTxn extends GenericTxn {
 		// TODO what if amount is null and xferamt is not? We don't want to set amount
 		// then, right?
 		super.repair();
-
-		setupLots();
 	}
 
-	private void createDstLot() {
+	public List<Lot> getLots() {
+		return this.dstLots;
+	}
+
+	private void createDestinationLot() {
 		Lot lot = new Lot(getDate(), this.security.secid, this.quantity, getBuySellAmount(), this);
 
 		addDstLot(lot);
 	}
 
+	private void createTransferLot() {
+		InvestmentTxn txn;
+
+		if (this.xtxn == null) {
+			if (this.xferInv == null || this.xferInv.size() != 1) {
+				return;
+			}
+
+			txn = this.xferInv.get(0);
+		} else {
+			assert (this.xtxn instanceof InvestmentTxn);
+			txn = (InvestmentTxn) this.xtxn;
+		}
+
+		List<Lot> srcLots = txn.getLots();
+/*
+		BigDecimal remainingShares = this.quantity;
+
+		for (Lot srcLot : srcLots) {
+			BigDecimal shares;
+			BigDecimal cost;
+
+			if (remainingShares.compareTo(srcLot.shares) <= 0) {
+				shares = remainingShares;
+				cost = shares.multiply(srcLot.getPrice());
+
+				remainingShares = null;
+			} else {
+				shares = srcLot.shares;
+				cost = srcLot.costBasis;
+
+				remainingShares = remainingShares.subtract(shares);
+			}
+
+			Lot lot = new Lot(srcLot, shares, cost, this);
+
+			addDstLot(lot);
+
+			if (remainingShares == null) {
+				break;
+			}
+		}
+
+		if (remainingShares != null) {
+			// TODO ERROR - source share count is insufficient
+		}
+*/
+	}
+
+	// TODO does this need to be separate from createDstLot()?
 	private void addDstLot(Lot lot) {
 		if (this.dstLots == null) {
 			this.dstLots = new ArrayList<Lot>();
 		}
 
 		this.dstLots.add(lot);
+
+		Collections.sort(this.dstLots, (o1, o2) -> {
+			return o1.purchaseDate.compareTo(o2.purchaseDate);
+		});
 	}
 
-	private void setupLots() {
+	public void setupLots() {
 		switch (getAction()) {
 		case BUY:
 		case BUYX:
@@ -225,11 +282,12 @@ public class InvestmentTxn extends GenericTxn {
 		case REINV_INT:
 		case REINV_LG:
 		case REINV_SH:
-			createDstLot();
+			createDestinationLot();
 			break;
 
 		// TODO this is a bit different - create lot(s) for this account?
 		case SHRS_IN:
+			createTransferLot();
 			break;
 
 		case GRANT:
