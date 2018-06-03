@@ -373,7 +373,7 @@ public class InvestmentTxn extends GenericTxn {
 					" diff=" + diff + "\n";
 			s += "  Corrected price: " + newprice;
 
-			if (QifDom.dom.verbose) {
+			if (QifDom.verbose) {
 				Common.reportWarning(s);
 			}
 

@@ -10,7 +10,6 @@ import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
 import qif.data.NonInvestmentTxn;
 import qif.data.QDate;
-import qif.data.QifDom;
 import qif.data.Security;
 import qif.data.SecurityPosition;
 import qif.data.Statement;
@@ -67,13 +66,13 @@ public class StatementDetails {
 	}
 
 	// Load details object from file
-	public StatementDetails(QifDom dom, String s, int version) {
+	public StatementDetails(String s, int version) {
 		this();
 
-		parseStatementDetails(dom, s, version);
+		parseStatementDetails(s, version);
 	}
 
-	private void parseStatementDetails(QifDom dom, String s, int version) {
+	private void parseStatementDetails(String s, int version) {
 		final String[] ss = s.split(";");
 		int ssx = 0;
 

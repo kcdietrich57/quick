@@ -130,7 +130,7 @@ public class Security {
 					this.prices.set(idx, newPrice);
 				} else {
 					if (!p.splitAdjustedPrice.equals(newPrice.splitAdjustedPrice) //
-							&& QifDom.dom.verbose) {
+							&& QifDom.verbose) {
 						Common.reportWarning("Security price mismatch");
 					}
 				}

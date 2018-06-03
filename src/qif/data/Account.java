@@ -141,7 +141,7 @@ public class Account {
 	public List<Statement> statements;
 	public SecurityPortfolio securities;
 
-	public Account(QifDom dom) {
+	public Account() {
 		this.acctid = 0;
 
 		this.name = "";

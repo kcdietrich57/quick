@@ -26,7 +26,7 @@ public class NetWorthReporter {
 		System.out.println(s);
 	}
 
-	public static QDate getFirstTransactionDate(QifDom dom) {
+	public static QDate getFirstTransactionDate() {
 		QDate retdate = null;
 
 		for (final Account a : Account.getAccounts()) {
@@ -40,7 +40,7 @@ public class NetWorthReporter {
 		return retdate;
 	}
 
-	public static QDate getLastTransactionDate(QifDom dom) {
+	public static QDate getLastTransactionDate() {
 		QDate retdate = null;
 
 		for (final Account a : Account.getAccounts()) {
@@ -55,12 +55,10 @@ public class NetWorthReporter {
 	}
 
 	public static void reportMonthlyNetWorth() {
-		QifDom dom = QifDom.dom;
-
 		System.out.println();
 
-		QDate d = getFirstTransactionDate(dom);
-		QDate lastTxDate = getLastTransactionDate(dom);
+		QDate d = getFirstTransactionDate();
+		QDate lastTxDate = getLastTransactionDate();
 
 		int year = d.getYear();
 		int month = d.getMonth();
@@ -70,7 +68,7 @@ public class NetWorthReporter {
 
 		do {
 			d = Common.getDateForEndOfMonth(year, month);
-			final Balances b = dom.getNetWorthForDate(d);
+			final Balances b = QifDom.getNetWorthForDate(d);
 
 			System.out.println(String.format("%s,%15.2f,%15.2f,%15.2f", //
 					d.longString, b.netWorth, b.assets, b.liabilities));
@@ -85,12 +83,10 @@ public class NetWorthReporter {
 	}
 
 	public static void reportYearlyNetWorth() {
-		QifDom dom = QifDom.dom;
-
 		System.out.println();
 
-		QDate firstTxDate = getFirstTransactionDate(dom);
-		QDate lastTxDate = getLastTransactionDate(dom);
+		QDate firstTxDate = getFirstTransactionDate();
+		QDate lastTxDate = getLastTransactionDate();
 
 		for (int year = firstTxDate.getYear(); year <= lastTxDate.getYear(); ++year) {
 			NetWorthReporter.reportNetWorthForDate(Common.getDateForEndOfMonth(year, 12));

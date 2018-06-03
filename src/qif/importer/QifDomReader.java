@@ -25,7 +25,6 @@ import qif.data.NonInvestmentTxn;
 import qif.data.QDate;
 import qif.data.QPrice;
 import qif.data.QifDom;
-import qif.data.Reconciler;
 import qif.data.Security;
 import qif.data.Security.SplitInfo;
 import qif.data.SecurityPortfolio;
@@ -34,6 +33,7 @@ import qif.data.SimpleTxn;
 import qif.data.Statement;
 import qif.data.TxAction;
 import qif.importer.QFileReader.SectionType;
+import qif.reconcile.Reconciler;
 
 public class QifDomReader {
 
@@ -48,47 +48,41 @@ public class QifDomReader {
 	private QFileReader filerdr = null;
 	private File qifDir = null;
 
-	private QifDom dom = null;
 	private int nextAccountID = 1;
 
-	public static QifDom loadDom(String[] qifFiles) {
-		final File qifDir = new File(qifFiles[0]).getParentFile();
-		final QifDomReader rdr = new QifDomReader(qifDir);
-		final QifDom dom = new QifDom(qifDir);
+	public static void loadDom(String[] qifFiles) {
+		QifDom.qifDir = new File(qifFiles[0]).getParentFile();
+
+		final QifDomReader rdr = new QifDomReader(QifDom.qifDir);
 
 		// Process all the QIF files
 		for (final String fn : qifFiles) {
-			rdr.load(dom, fn);
+			rdr.load(fn);
 		}
 
 		// Additional processing once the data is loaded (quotes, stmts, etc)
 		rdr.postLoad();
-
-		return dom;
 	}
 
 	public QifDomReader(File qifDir) {
 		this.qifDir = qifDir;
 	}
 
-	public QifDom load(QifDom refdom, String fileName) {
+	public void load(String fileName) {
 		if (!new File(fileName).exists()) {
 			if (new File("c:" + fileName).exists()) {
 				fileName = "c:" + fileName;
 			} else {
 				Common.reportError("Input file '" + fileName + "' does not exist");
-
-				return null;
+				return;
 			}
 		}
 
-		init(fileName, refdom);
+		init(fileName);
 
 		processFile();
 
 		cleanUpTransactions();
-
-		return this.dom;
 	}
 
 	public void cleanUpTransactions() {
@@ -305,7 +299,7 @@ public class QifDomReader {
 		}
 
 		// Update statement reconciliation file if format has changed
-		if (dom.loadedStatementsVersion != StatementDetails.CURRENT_VERSION) {
+		if (QifDom.loadedStatementsVersion != StatementDetails.CURRENT_VERSION) {
 			rewriteStatementLogFile();
 		}
 	}
@@ -566,8 +560,6 @@ public class QifDomReader {
 
 	// Read statement log file, filling in statement details.
 	private void processStatementLog() {
-		QifDom dom = QifDom.dom;
-
 		if (!Statement.stmtLogFile.isFile()) {
 			return;
 		}
@@ -583,12 +575,12 @@ public class QifDomReader {
 				return;
 			}
 
-			dom.loadedStatementsVersion = Integer.parseInt(s.trim());
+			QifDom.loadedStatementsVersion = Integer.parseInt(s.trim());
 
 			s = stmtLogReader.readLine();
 			while (s != null) {
 				final StatementDetails d = //
-						new StatementDetails(dom, s, dom.loadedStatementsVersion);
+						new StatementDetails(s, QifDom.loadedStatementsVersion);
 
 				details.add(d);
 
@@ -612,8 +604,6 @@ public class QifDomReader {
 	// version
 	// Save the previous file as <name>.N
 	public static void rewriteStatementLogFile() {
-		QifDom dom = QifDom.dom;
-
 		final String basename = Statement.stmtLogFile.getName();
 		final File tmpLogFile = new File(QifDom.qifDir, basename + ".tmp");
 
@@ -657,7 +647,7 @@ public class QifDomReader {
 
 		assert (logFileBackup.exists() && !Statement.stmtLogFile.exists());
 
-		dom.loadedStatementsVersion = StatementDetails.CURRENT_VERSION;
+		QifDom.loadedStatementsVersion = StatementDetails.CURRENT_VERSION;
 	}
 
 	/**
@@ -933,7 +923,7 @@ public class QifDomReader {
 		Collections.sort(prices, (o1, o2) -> o1.date.compareTo(o2.date));
 	}
 
-	private void init(String filename, QifDom refdom) {
+	private void init(String filename) {
 		final File f = new File(filename);
 		if (!f.exists()) {
 			Common.reportError("File '" + filename + "' does not exist");
@@ -941,12 +931,7 @@ public class QifDomReader {
 
 		this.filerdr = new QFileReader(f);
 
-		if (refdom != null) {
-			this.dom = refdom;
-			this.nextAccountID = Account.getNextAccountID();
-		} else {
-			Common.reportError("Can't have null refdom");
-		}
+		this.nextAccountID = Account.getNextAccountID();
 	}
 
 	private void processFile() {
@@ -1127,7 +1112,7 @@ public class QifDomReader {
 	public Account loadAccount() {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		final Account acct = new Account(this.dom);
+		Account acct = new Account();
 
 		for (;;) {
 			this.filerdr.nextAccountLine(qline);
@@ -1500,7 +1485,7 @@ public class QifDomReader {
 			}
 
 			try {
-				load(this.dom, f.getAbsolutePath());
+				load(f.getAbsolutePath());
 			} catch (final Exception e) {
 				e.printStackTrace();
 			}
@@ -1528,14 +1513,14 @@ public class QifDomReader {
 				break;
 			}
 
-			final List<Statement> stmts = loadStatementsSection(qfr, this.dom);
+			final List<Statement> stmts = loadStatementsSection(qfr);
 			for (final Statement stmt : stmts) {
 				Account.currAccount.statements.add(stmt);
 			}
 		}
 	}
 
-	private List<Statement> loadStatementsSection(QFileReader qfr, QifDom dom) {
+	private List<Statement> loadStatementsSection(QFileReader qfr) {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 		final List<Statement> stmts = new ArrayList<Statement>();
 

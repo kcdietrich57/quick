@@ -1,4 +1,4 @@
-package qif.data;
+package qif.reconcile;
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -8,6 +8,12 @@ import java.util.Collections;
 import java.util.List;
 
 import app.QifLoader;
+import qif.data.Account;
+import qif.data.Common;
+import qif.data.GenericTxn;
+import qif.data.SecurityPortfolio;
+import qif.data.SecurityPosition;
+import qif.data.Statement;
 import qif.importer.StatementDetails;
 import qif.ui.ReviewDialog;
 

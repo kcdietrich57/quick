@@ -30,7 +30,7 @@ public class Statement {
 	public final List<GenericTxn> unclearedTransactions;
 
 	/** Whether this statement has been saved to the reconcile log file */
-	boolean dirty = false;
+	public boolean dirty = false;
 
 	public Statement(int acctid) {
 		this.isBalanced = false;
