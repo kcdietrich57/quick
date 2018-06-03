@@ -11,7 +11,6 @@ import java.util.List;
 import qif.data.Account;
 import qif.data.Common;
 import qif.data.QDate;
-import qif.data.QifDom;
 import qif.data.Statement;
 import qif.report.StatusReporter.ReportStatusModel.AccountInfo;
 
@@ -109,11 +108,9 @@ public class StatusReporter {
 	}
 
 	public static ReportStatusModel buildReportStatusModel() {
-		QifDom dom = QifDom.dom;
-
 		ReportStatusModel model = new ReportStatusModel();
 
-		final List<Account> ranking = new ArrayList<Account>(dom.getAccounts());
+		final List<Account> ranking = new ArrayList<Account>(Account.getAccounts());
 
 		final Comparator<Account> cmp = (o1, o2) -> {
 			if (o1.statements.isEmpty()) {

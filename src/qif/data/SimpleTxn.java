@@ -47,7 +47,7 @@ public class SimpleTxn {
 	}
 
 	public Account getAccount() {
-		return QifDom.dom.getAccountByID(this.acctid);
+		return Account.getAccountByID(this.acctid);
 	}
 
 	public TxAction getAction() {
@@ -90,26 +90,23 @@ public class SimpleTxn {
 	// This is a compact, single-line version of the transaction, such as would
 	// appear in a list for displaying and/or selecting transactions.
 	public String toStringShort(boolean veryshort) {
-		// TODO implement SimpleTxn::toStringShort()
+		// FIXME implement SimpleTxn::toStringShort()
 		return "Tx" + this.txid;
 	}
 
 	// This is a more complete summary of the transaction, possibly split into
 	// multiple lines.
 	public String toStringLong() {
-		final QifDom dom = QifDom.dom;
-
 		String s = "Tx" + this.txid + ":";
-		s += dom.getAccountByID(this.acctid).getName();
+		s += Account.getAccountByID(this.acctid).getName();
 		s += " amt=" + this.amount;
 		s += " memo=" + this.memo;
 
-		// TODO why have both negative cat and xacct to represent the same
-		// thing?
+		// TODO why have negative cat and xacct to represent the same thing?
 		if (this.xacctid < (short) 0) {
-			s += " xacct=" + dom.getAccountByID(-this.xacctid).getName();
+			s += " xacct=" + Account.getAccountByID(-this.xacctid).getName();
 		} else if (this.catid < (short) 0) {
-			s += " xcat=" + dom.getAccountByID(-this.catid).getName();
+			s += " xcat=" + Account.getAccountByID(-this.catid).getName();
 		} else if (this.catid > (short) 0) {
 			s += " cat=" + Category.getCategory(this.catid).name;
 		}

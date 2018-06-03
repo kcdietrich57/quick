@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import qif.data.Account;
 import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
@@ -11,10 +12,12 @@ import qif.data.NonInvestmentTxn;
 import qif.data.QDate;
 import qif.data.QifDom;
 import qif.data.Security;
+import qif.data.SecurityPosition;
+import qif.data.Statement;
 
 // StatementDetails represents a reconciled statement as stored in the
 // statements log file.
- public class StatementDetails {
+public class StatementDetails {
 	public static final int CURRENT_VERSION = 4;
 
 	public int acctid;
@@ -31,6 +34,29 @@ import qif.data.Security;
 
 	public List<TxInfo> transactions;
 	public List<TxInfo> unclearedTransactions;
+
+	// name;date;stmtBal;cashBal;numTx;numPos;[cashTx;][sec;numTx[txIdx;shareBal;]]
+	public static String formatStatementForSave(Statement stmt) {
+		Account a = Account.getAccountByID(stmt.acctid);
+
+		String s = String.format("%s;%s;%5.2f;%5.2f;%d;%d", //
+				a.getName(), //
+				stmt.date.toString(), //
+				stmt.closingBalance, //
+				stmt.cashBalance, //
+				stmt.transactions.size(), //
+				stmt.holdings.positions.size());
+
+		for (final GenericTxn t : stmt.transactions) {
+			s += ";" + t.formatForSave();
+		}
+
+		for (final SecurityPosition p : stmt.holdings.positions) {
+			s += ";" + p.formatForSave(stmt);
+		}
+
+		return s;
+	}
 
 	private StatementDetails() {
 		this.closingCashBalance = BigDecimal.ZERO;
@@ -58,7 +84,7 @@ import qif.data.Security;
 		final String txCountStr = ss[ssx++].trim();
 		final String secCountStr = (version > 1) ? ss[ssx++].trim() : "0";
 
-		this.acctid = dom.findAccount(acctname).acctid;
+		this.acctid = Account.findAccount(acctname).acctid;
 		this.date = Common.parseQDate(dateStr);
 		if (version < 3) {
 			this.closingBalance = this.closingCashBalance = new BigDecimal(closeCashStr);
@@ -86,6 +112,7 @@ import qif.data.Security;
 			String secStr = "";
 			String shrStr = "";
 			String cknumStr = "0";
+
 			if (isInvestmentTx) {
 				// I;12/27/1999;BUY;ETMMTD;7024.50;-7024.50;
 				tdateStr = ss[ssx++].trim();
@@ -93,12 +120,13 @@ import qif.data.Security;
 				secStr = ss[ssx++].trim();
 				shrStr = ss[ssx++].trim();
 			} else {
-				// TODO this makes no sense? It is always "T"
+				// FIXME this makes no sense? It is always "T"
 				tdateStr = (txtypeStr.equals("T")) //
 						? shrStr = ss[ssx++].trim() //
 						: txtypeStr;
 				cknumStr = ss[ssx++].trim();
 			}
+
 			final String amtStr = ss[ssx++].trim();
 
 			txinfo.date = Common.parseQDate(tdateStr);
@@ -151,8 +179,8 @@ import qif.data.Security;
 	}
 }
 
-//This represents the information stored in the statementLog file for each
-//transaction that is part of a statement.
+// This represents the information stored in the statementLog file for each
+// transaction that is part of a statement.
 class TxInfo {
 	QDate date;
 	String action;
@@ -210,7 +238,7 @@ class TxInfo {
 	}
 }
 
-//[name;numtx[;txidx;shrbal]]
+// [name;numtx[;txidx;shrbal]]
 class StatementPositionTx {
 	int txidx;
 	BigDecimal shrbal;

@@ -1,6 +1,5 @@
 package qif.report;
 
-import java.util.Calendar;
 import java.util.Date;
 
 import qif.data.Account;
@@ -8,7 +7,7 @@ import qif.data.GenericTxn;
 
 public class QifReporter {
 	public static void reportActivity(Date d1, Date d2) {
-		// TODO Auto-generated method stub
+		// Auto-generated method stub
 	}
 
 	public static void showStatistics() {
@@ -34,29 +33,30 @@ public class QifReporter {
 	}
 
 	public static void generateMonthlyStatements(Account a) {
-		int lastyear = -1;
-		int lastmonth = -1;
-		GenericTxn lasttx = null;
-		boolean first = true;
-
 		System.out.println("\n!Account");
 		System.out.println("N" + a.getName());
 		System.out.println("^");
 		System.out.println("!Statements");
 
-		for (final GenericTxn t : a.transactions) {
-			final Calendar cal = Calendar.getInstance();
-// TODO fix this
-//			cal.setTime(t.getDate());
+		String lastMonthStr = "";
+		int lastyear = -1;
+		int lastmonth = -1;
+		GenericTxn lasttx = null;
+		boolean first = true;
 
-			final int thisyear = cal.get(Calendar.YEAR);
-			final int thismonth = cal.get(Calendar.MONTH);
+		for (GenericTxn t : a.transactions) {
+			int thisyear = t.getDate().getYear();
+			int thismonth = t.getDate().getMonth();
+			String thisMonthStr = t.getDate().monthYearString;
 
-			if ((lastyear != thisyear) || (lastmonth != thismonth)) {
+			if (!lastMonthStr.isEmpty() && !lastMonthStr.equals(thisMonthStr)) {
+				// End of month
 				if (!first) {
+					// Append balance to this year's line
 					System.out.print(String.format(" %4.2f", lasttx.runningTotal));
 				}
 
+				// New year, or skipped month
 				if ((lastyear != thisyear) || (lastmonth + 1 != thismonth)) {
 					if (!first) {
 						System.out.println();
@@ -67,6 +67,7 @@ public class QifReporter {
 
 				lastyear = thisyear;
 				lastmonth = thismonth;
+				lastMonthStr = thisMonthStr;
 			}
 
 			first = false;

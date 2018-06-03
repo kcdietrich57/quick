@@ -8,6 +8,9 @@ import java.util.List;
 
 // This can be global information, or for a single account or statement
 public class SecurityPortfolio {
+
+	public static final SecurityPortfolio portfolio = new SecurityPortfolio();
+
 	public List<SecurityPosition> positions;
 
 	public SecurityPortfolio() {

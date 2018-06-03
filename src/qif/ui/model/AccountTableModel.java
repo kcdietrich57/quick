@@ -7,7 +7,6 @@ import javax.swing.table.AbstractTableModel;
 
 import qif.data.Account;
 import qif.data.Common;
-import qif.data.QifDom;
 
 public class AccountTableModel extends AbstractTableModel {
 	private static final long serialVersionUID = 1L;
@@ -16,7 +15,7 @@ public class AccountTableModel extends AbstractTableModel {
 	private List<Account> accounts = new ArrayList<Account>();
 
 	public void load(boolean showOpenAccounts) {
-		List<Account> accts = QifDom.dom.getSortedAccounts();
+		List<Account> accts = Account.getSortedAccounts();
 
 		this.accounts.clear();
 

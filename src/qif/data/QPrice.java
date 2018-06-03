@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 import qif.importer.QFileReader;
 
-public class QPrice {
+public class QPrice implements Comparable<QPrice> {
 	public static final QPrice ZERO = new QPrice(new BigDecimal(0));
 
 	public QDate date;
@@ -82,7 +82,7 @@ public class QPrice {
 
 		p.symbol = sym;
 		p.price = price;
-		// TODO figure out splitAdjustedPrice (or ignore quicken price history?)
+		// FIXME figure out splitAdjustedPrice (or ignore quicken price history?)
 		p.splitAdjustedPrice = null;
 		p.date = date;
 
@@ -97,6 +97,18 @@ public class QPrice {
 			Common.reportError("syntax error for price");
 			return null;
 		}
+	}
+
+	public boolean equals(Object o) {
+		if (!(o instanceof QPrice)) {
+			return false;
+		}
+
+		return Common.isEffectivelyEqual(this.splitAdjustedPrice, ((QPrice) o).splitAdjustedPrice);
+	}
+
+	public int compareTo(QPrice o) {
+		return this.splitAdjustedPrice.compareTo(o.splitAdjustedPrice);
 	}
 
 	public String toString() {

@@ -1,7 +1,6 @@
 package qif.report;
 
 import java.math.BigDecimal;
-import java.util.Calendar;
 
 import qif.data.Account;
 import qif.data.Common;
@@ -30,7 +29,7 @@ public class NetWorthReporter {
 	public static QDate getFirstTransactionDate(QifDom dom) {
 		QDate retdate = null;
 
-		for (final Account a : dom.getAccounts()) {
+		for (final Account a : Account.getAccounts()) {
 			final QDate d = a.getFirstTransactionDate();
 
 			if ((d != null) && ((retdate == null) || d.compareTo(retdate) < 0)) {
@@ -44,7 +43,7 @@ public class NetWorthReporter {
 	public static QDate getLastTransactionDate(QifDom dom) {
 		QDate retdate = null;
 
-		for (final Account a : dom.getAccounts()) {
+		for (final Account a : Account.getAccounts()) {
 			QDate d = a.getLastTransactionDate();
 
 			if ((d != null) && ((retdate == null) || d.compareTo(retdate) > 0)) {
@@ -90,21 +89,12 @@ public class NetWorthReporter {
 
 		System.out.println();
 
-		QDate d = getFirstTransactionDate(dom);
+		QDate firstTxDate = getFirstTransactionDate(dom);
 		QDate lastTxDate = getLastTransactionDate(dom);
 
-		final Calendar cal = Calendar.getInstance();
-// TODO fix this
-//		cal.setTime(d);
-		int year = cal.get(Calendar.YEAR);
-
-		do {
-			d = Common.getDateForEndOfMonth(year, 12);
-
-			NetWorthReporter.reportNetWorthForDate(d);
-
-			++year;
-		} while (d.compareTo(lastTxDate) < 0);
+		for (int year = firstTxDate.getYear(); year <= lastTxDate.getYear(); ++year) {
+			NetWorthReporter.reportNetWorthForDate(Common.getDateForEndOfMonth(year, 12));
+		}
 	}
 
 	// ===============================================================
@@ -113,9 +103,7 @@ public class NetWorthReporter {
 		StatusForDateModel model = new StatusForDateModel();
 		model.d = d;
 
-		QifDom dom = QifDom.dom;
-
-		for (Account a : dom.getAccounts()) {
+		for (Account a : Account.getAccounts()) {
 			BigDecimal amt = a.getValueForDate(d);
 
 			if (!a.isOpenOn(d) //

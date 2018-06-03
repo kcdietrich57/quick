@@ -3,10 +3,130 @@ package qif.data;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
 public class Account {
+	/**
+	 * This list of accounts may not contain nulls, size == numAccounts, index is
+	 * unrelated to acctid
+	 */
+	public static final List<Account> accounts = new ArrayList<Account>();
+
+	/**
+	 * This list of accounts is indexed by acctid, size > numAccounts, and may
+	 * contain nulls
+	 */
+	private static final List<Account> accountsByID = new ArrayList<Account>();
+
+	// As we are loading data, we track the account context we are within here
+	public static Account currAccount = null;
+
+	public static int getNextAccountID() {
+		return (accountsByID.isEmpty()) ? 1 : accountsByID.size();
+	}
+
+	public static int getNumAccounts() {
+		return accounts.size();
+	}
+
+	public static List<Account> getAccounts() {
+		return Collections.unmodifiableList(accounts);
+	}
+
+	public static Account getAccountByID(int acctid) {
+		return accountsByID.get(acctid);
+	}
+
+	// Sort on isOpen|type|name
+	public static List<Account> getSortedAccounts() {
+		List<Account> ret = new ArrayList<>(accounts);
+
+		Collections.sort(ret, new Comparator<Account>() {
+			public int compare(Account a1, Account a2) {
+				if (a1.isOpenOn(null) != a2.isOpenOn(null)) {
+					return a1.isOpenOn(null) ? 1 : -1;
+				} else if (a1.type != a2.type) {
+					return a1.type.compareTo(a2.type);
+				}
+
+				return a1.getName().compareTo(a2.getName());
+			}
+		});
+
+		return ret;
+	}
+
+	public static void addAccount(Account acct) {
+		if (acct.acctid == 0) {
+			acct.acctid = getNextAccountID();
+		}
+
+		while (accountsByID.size() <= acct.acctid) {
+			accountsByID.add(null);
+		}
+
+		accountsByID.set(acct.acctid, acct);
+		accounts.add(acct);
+
+		currAccount = acct;
+
+		Collections.sort(accounts, (a1, a2) -> {
+			if (a1 == null) {
+				return (a2 == null) ? 0 : 1;
+			} else if (a2 == null) {
+				return -1;
+			}
+
+			// Order by firsttran, lasttran
+			final int ct1 = a1.transactions.size();
+			final int ct2 = a2.transactions.size();
+
+			if (ct1 == 0) {
+				return (ct2 == 0) ? 0 : -1;
+			} else if (ct2 == 0) {
+				return 1;
+			}
+
+			final GenericTxn firsttxn1 = a1.transactions.get(0);
+			final GenericTxn lasttxn1 = a1.transactions.get(ct1 - 1);
+			final GenericTxn firsttxn2 = a2.transactions.get(0);
+			final GenericTxn lasttxn2 = a2.transactions.get(ct2 - 1);
+
+			int diff = firsttxn1.getDate().compareTo(firsttxn2.getDate());
+			if (diff != 0) {
+				return diff;
+			}
+
+			diff = lasttxn1.getDate().compareTo(lasttxn2.getDate());
+			if (diff != 0) {
+				return diff;
+			}
+
+			return (a1.getName().compareTo(a2.getName()));
+		});
+	}
+
+	public static Account findAccount(String name) {
+		name = name.toLowerCase();
+
+		for (Account acct : accounts) {
+			if (acct.getName().equalsIgnoreCase(name)) {
+				return acct;
+			}
+		}
+
+		for (Account acct : accounts) {
+			if (acct.getName().toLowerCase().startsWith(name)) {
+				return acct;
+			}
+		}
+
+		return null;
+	}
+
 	public int acctid;
 
 	private String name;
@@ -59,30 +179,6 @@ public class Account {
 
 	public void setName(String name) {
 		this.name = name;
-
-		// TODO kluge - Quicken is confused about these accounts
-		if (name.equals("UnionNationalCD") //
-				|| name.equals("Waddell & Reed")) {
-			this.type = AccountType.Invest;
-		} else if (name.equals("Deferred 401k Match")) {
-			this.type = AccountType.Inv401k;
-		} else if (name.equals("ATT 401k") //
-				|| name.equals("CapFed IRA") //
-				|| name.equals("Fidelity HSA XX5575") //
-				|| name.equals("GD IRA (E*Trade)") //
-				|| name.equals("GD IRA (Scottrade)") //
-				|| name.equals("HEC 401k Profit Sharing") //
-				|| name.equals("HEC Pension") //
-				|| name.equals("HEC 401k Profit Sharing") //
-				|| name.equals("Invest IRA") //
-				|| name.equals("TD IRA (Scottrade)") //
-				|| name.equals("GD IRA Ameritrade") //
-				|| name.equals("TD IRA Ameritrade") //
-				|| name.equals("IBM Pension")) {
-			this.type = AccountType.Inv401k;
-		} else if (name.equals("CapCheck")) {
-			this.type = AccountType.Bank;
-		}
 	}
 
 	public String getName() {
@@ -385,7 +481,7 @@ public class Account {
 		return apos;
 	}
 
-	// TODO unused, unfinished
+	// FIXME unused, unfinished
 	public void getPositionsForDate(Date d) {
 		this.securities.getPositionsForDate(d);
 	}

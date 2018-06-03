@@ -25,6 +25,7 @@ import qif.data.NonInvestmentTxn;
 import qif.data.QDate;
 import qif.data.QPrice;
 import qif.data.QifDom;
+import qif.data.Reconciler;
 import qif.data.Security;
 import qif.data.Security.SplitInfo;
 import qif.data.SecurityPortfolio;
@@ -35,10 +36,6 @@ import qif.data.TxAction;
 import qif.importer.QFileReader.SectionType;
 
 public class QifDomReader {
-
-	public static File getStatementLogFile() {
-		return QifDom.dom.stmtLogFile;
-	}
 
 	// Housekeeping info while processing related transfer transactions.
 	// The imported data does not connect transfers, so we need to do it.
@@ -104,13 +101,13 @@ public class QifDomReader {
 	}
 
 	private void sortTransactions() {
-		for (Account a : QifDom.dom.getAccounts()) {
+		for (Account a : Account.getAccounts()) {
 			Common.sortTransactionsByDate(a.transactions);
 		}
 	}
 
 	private void cleanUpSplits() {
-		for (Account a : QifDom.dom.getAccounts()) {
+		for (Account a : Account.getAccounts()) {
 			for (GenericTxn txn : a.transactions) {
 				massageSplits(txn);
 			}
@@ -160,7 +157,7 @@ public class QifDomReader {
 	}
 
 	private void calculateRunningTotals() {
-		for (Account a : QifDom.dom.getAccounts()) {
+		for (Account a : Account.getAccounts()) {
 			a.clearedBalance = a.balance = BigDecimal.ZERO;
 
 			for (GenericTxn t : a.transactions) {
@@ -179,7 +176,7 @@ public class QifDomReader {
 	}
 
 	private void connectTransfers() {
-		for (Account a : QifDom.dom.getAccounts()) {
+		for (Account a : Account.getAccounts()) {
 			for (GenericTxn txn : a.transactions) {
 				connectTransfers(txn);
 			}
@@ -204,9 +201,7 @@ public class QifDomReader {
 			return;
 		}
 
-		QifDom dom = QifDom.dom;
-
-		final Account a = dom.getAccountByID(-txn.catid);
+		final Account a = Account.getAccountByID(-txn.catid);
 
 		findMatches(a, txn, date, true);
 
@@ -227,7 +222,8 @@ public class QifDomReader {
 		if (this.matchingTxns.size() == 1) {
 			xtxn = this.matchingTxns.get(0);
 		} else {
-			// TODO choose one more deliberately
+			Common.reportWarning("Multiple matching transactions - using the first one.");
+			// FIXME choose one more deliberately
 			xtxn = this.matchingTxns.get(0);
 		}
 
@@ -305,7 +301,7 @@ public class QifDomReader {
 
 		// Process statements that have not yet been reconciled
 		if (QifLoader.scn != null) {
-			this.dom.reconcileStatements();
+			Reconciler.reconcileStatements();
 		}
 
 		// Update statement reconciliation file if format has changed
@@ -315,11 +311,9 @@ public class QifDomReader {
 	}
 
 	public void processSecurities() {
-		QifDom dom = QifDom.dom;
+		processSecurities2(SecurityPortfolio.portfolio, GenericTxn.getAllTransactions());
 
-		processSecurities2(dom.portfolio, GenericTxn.getAllTransactions());
-
-		for (Account a : dom.getAccounts()) {
+		for (Account a : Account.getAccounts()) {
 			if (a.isInvestmentAccount()) {
 				processSecurities2(a.securities, a.transactions);
 			}
@@ -379,9 +373,9 @@ public class QifDomReader {
 	}
 
 	public void fixPortfolios() {
-		fixPortfolio(QifDom.dom.portfolio);
+		fixPortfolio(SecurityPortfolio.portfolio);
 
-		for (Account a : QifDom.dom.getAccounts()) {
+		for (Account a : Account.getAccounts()) {
 			if (a.isInvestmentAccount()) {
 				fixPortfolio(a.securities);
 			}
@@ -429,7 +423,7 @@ public class QifDomReader {
 	private void setupSecurityLots() {
 		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
 			if (tx instanceof InvestmentTxn) {
-//				((InvestmentTxn) tx).setupLots();
+				// ((InvestmentTxn) tx).setupLots();
 			}
 		}
 	}
@@ -574,7 +568,7 @@ public class QifDomReader {
 	private void processStatementLog() {
 		QifDom dom = QifDom.dom;
 
-		if (!dom.stmtLogFile.isFile()) {
+		if (!Statement.stmtLogFile.isFile()) {
 			return;
 		}
 
@@ -582,7 +576,7 @@ public class QifDomReader {
 		List<StatementDetails> details = new ArrayList<StatementDetails>();
 
 		try {
-			stmtLogReader = new LineNumberReader(new FileReader(dom.stmtLogFile));
+			stmtLogReader = new LineNumberReader(new FileReader(Statement.stmtLogFile));
 
 			String s = stmtLogReader.readLine();
 			if (s == null) {
@@ -620,21 +614,22 @@ public class QifDomReader {
 	public static void rewriteStatementLogFile() {
 		QifDom dom = QifDom.dom;
 
-		final String basename = dom.stmtLogFile.getName();
-		final File tmpLogFile = new File(dom.stmtLogFile.getParentFile(), basename + ".tmp");
+		final String basename = Statement.stmtLogFile.getName();
+		final File tmpLogFile = new File(QifDom.qifDir, basename + ".tmp");
+
 		PrintWriter pw = null;
 		try {
 			pw = new PrintWriter(new FileWriter(tmpLogFile));
 		} catch (final IOException e) {
 			Common.reportError("Can't open tmp stmt log file: " //
-					+ dom.stmtLogFile.getAbsolutePath());
+					+ Statement.stmtLogFile.getAbsolutePath());
 			return;
 		}
 
 		pw.println("" + StatementDetails.CURRENT_VERSION);
-		for (Account a : dom.getAccounts()) {
+		for (Account a : Account.getAccounts()) {
 			for (Statement s : a.statements) {
-				pw.println(s.formatForSave());
+				pw.println(StatementDetails.formatStatementForSave(s));
 			}
 		}
 
@@ -648,18 +643,19 @@ public class QifDomReader {
 		File logFileBackup = null;
 
 		for (int ii = 1;; ++ii) {
-			logFileBackup = new File(dom.stmtLogFile.getParentFile(), basename + "." + ii);
+			logFileBackup = new File(QifDom.qifDir, basename + "." + ii);
 			if (!logFileBackup.exists()) {
 				break;
 			}
 		}
 
-		dom.stmtLogFile.renameTo(logFileBackup);
-		if (logFileBackup.exists() && tmpLogFile.exists() && !dom.stmtLogFile.exists()) {
-			tmpLogFile.renameTo(dom.stmtLogFile);
+		Statement.stmtLogFile.renameTo(logFileBackup);
+		if (logFileBackup.exists() && tmpLogFile.exists() //
+				&& !Statement.stmtLogFile.exists()) {
+			tmpLogFile.renameTo(Statement.stmtLogFile);
 		}
 
-		assert (logFileBackup.exists() && !dom.stmtLogFile.exists());
+		assert (logFileBackup.exists() && !Statement.stmtLogFile.exists());
 
 		dom.loadedStatementsVersion = StatementDetails.CURRENT_VERSION;
 	}
@@ -671,10 +667,8 @@ public class QifDomReader {
 	 *            List of reconciliation info for statements
 	 */
 	private void processStatementDetails(List<StatementDetails> details) {
-		QifDom dom = QifDom.dom;
-
 		for (StatementDetails d : details) {
-			final Account a = dom.getAccountByID(d.acctid);
+			Account a = Account.getAccountByID(d.acctid);
 
 			Statement s = a.getStatement(d.date, d.closingBalance);
 			if (s == null) {
@@ -735,7 +729,7 @@ public class QifDomReader {
 					}
 				}
 
-				// TODO txinfos are not sorted by date - should they be?
+				// FIXME txinfos are not sorted by date - should they be?
 				// final long infoms = info.date.getTime();
 				// final long tranms = t.getDate().getTime();
 				//
@@ -902,14 +896,14 @@ public class QifDomReader {
 				try {
 					price = new BigDecimal(pricestr);
 				} catch (final Exception e) {
-					// TODO this is serious
 					e.printStackTrace();
+					Common.reportError("Invalid price in quote file");
 				}
 
 				final QPrice p = new QPrice();
 
 				if (isWeekly) {
-					// TODO I don't get this
+					// FIXME I don't get this - go to middle of the week?
 					date = date.addDays(4);
 				}
 
@@ -949,7 +943,7 @@ public class QifDomReader {
 
 		if (refdom != null) {
 			this.dom = refdom;
-			this.nextAccountID = this.dom.getNextAccountID();
+			this.nextAccountID = Account.getNextAccountID();
 		} else {
 			Common.reportError("Can't have null refdom");
 		}
@@ -1089,19 +1083,19 @@ public class QifDomReader {
 				break;
 			}
 
-			final Account acct = loadAccount();
+			Account acct = loadAccount();
 			if (acct == null) {
 				break;
 			}
 
-			Account existing = this.dom.findAccount(acct.getName());
+			Account existing = Account.findAccount(acct.getName());
 
 			if (existing != null) {
 				updateAccount(existing, acct);
-				this.dom.currAccount = existing;
+				Account.currAccount = existing;
 			} else {
 				acct.acctid = this.nextAccountID++;
-				this.dom.addAccount(acct);
+				Account.addAccount(acct);
 			}
 		}
 	}
@@ -1140,10 +1134,7 @@ public class QifDomReader {
 
 			switch (qline.type) {
 			case EndOfSection:
-				// N.B. hack for bad quicken data
-				if (acct.getName().endsWith("Checking")) {
-					acct.type = AccountType.Bank;
-				}
+				QKludge.fixAccount(acct);
 
 				return acct;
 
@@ -1194,7 +1185,7 @@ public class QifDomReader {
 					: Security.findSecurityByName(sec.getName());
 
 			if (existing != null) {
-				// TODO verify security
+				// FIXME verify security details
 				if (!existing.names.contains(sec.getName())) {
 					existing.names.add(sec.getName());
 				}
@@ -1270,14 +1261,14 @@ public class QifDomReader {
 				txn.security.addTransaction(txn);
 			}
 
-			this.dom.currAccount.addTransaction(txn);
+			Account.currAccount.addTransaction(txn);
 		}
 	}
 
 	public InvestmentTxn loadInvestmentTransaction() {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		final InvestmentTxn txn = new InvestmentTxn(this.dom.currAccount.acctid);
+		final InvestmentTxn txn = new InvestmentTxn(Account.currAccount.acctid);
 
 		for (;;) {
 			this.filerdr.nextInvLine(qline);
@@ -1337,7 +1328,7 @@ public class QifDomReader {
 				break;
 			case InvXferAcct:
 				txn.accountForTransfer = qline.value;
-				// TODO fixme - this is never meaningfully used
+				// FIXME - this is never meaningfully used
 				txn.xacctid = findCategoryID(qline.value);
 				break;
 
@@ -1365,14 +1356,14 @@ public class QifDomReader {
 
 			txn.verifySplit();
 
-			this.dom.currAccount.addTransaction(txn);
+			Account.currAccount.addTransaction(txn);
 		}
 	}
 
 	public NonInvestmentTxn loadNonInvestmentTransaction() {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		final NonInvestmentTxn txn = new NonInvestmentTxn(this.dom.currAccount.acctid);
+		final NonInvestmentTxn txn = new NonInvestmentTxn(Account.currAccount.acctid);
 		SimpleTxn cursplit = null;
 
 		for (;;) {
@@ -1461,7 +1452,7 @@ public class QifDomReader {
 		if (s.startsWith("[")) {
 			s = s.substring(1, s.length() - 1).trim();
 
-			Account acct = QifDom.dom.findAccount(s);
+			Account acct = Account.findAccount(s);
 
 			return (short) ((acct != null) ? (-acct.acctid) : 0);
 		}
@@ -1519,7 +1510,7 @@ public class QifDomReader {
 	}
 
 	private void buildStatementChains() {
-		for (Account a : this.dom.getAccounts()) {
+		for (Account a : Account.getAccounts()) {
 			Statement last = null;
 
 			for (Statement s : a.statements) {
@@ -1539,7 +1530,7 @@ public class QifDomReader {
 
 			final List<Statement> stmts = loadStatementsSection(qfr, this.dom);
 			for (final Statement stmt : stmts) {
-				this.dom.currAccount.statements.add(stmt);
+				Account.currAccount.statements.add(stmt);
 			}
 		}
 	}
@@ -1559,12 +1550,12 @@ public class QifDomReader {
 
 			case StmtsAccount: {
 				final String aname = qline.value;
-				final Account a = dom.findAccount(aname);
+				final Account a = Account.findAccount(aname);
 				if (a == null) {
 					Common.reportError("Can't find account: " + aname);
 				}
 
-				dom.currAccount = a;
+				Account.currAccount = a;
 				currstmt = null;
 				break;
 			}
@@ -1609,7 +1600,7 @@ public class QifDomReader {
 
 					final Statement prevstmt = (stmts.isEmpty() ? null : stmts.get(stmts.size() - 1));
 
-					currstmt = new Statement(dom.currAccount.acctid);
+					currstmt = new Statement(Account.currAccount.acctid);
 					currstmt.date = d;
 					currstmt.closingBalance = currstmt.cashBalance = bal;
 					if ((prevstmt != null) && (prevstmt.acctid == currstmt.acctid)) {

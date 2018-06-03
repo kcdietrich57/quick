@@ -1,7 +1,6 @@
 package qif.report;
 
 import java.math.BigDecimal;
-import java.util.Calendar;
 
 import qif.data.Account;
 import qif.data.Common;
@@ -26,15 +25,13 @@ public class DomReporter {
 	}
 
 	private static void outputReportDomModel(Object model) {
-		QifDom dom = QifDom.dom;
-
-		reportGlobalPortfolio(dom.portfolio);
+		reportGlobalPortfolio();
 
 		System.out.println("============================");
 		System.out.println("Accounts");
 		System.out.println("============================");
 
-		for (Account a : dom.getAccounts()) {
+		for (Account a : Account.getAccounts()) {
 			if (!a.isInvestmentAccount() || //
 					Common.isEffectivelyZero(a.balance)) {
 				continue;
@@ -71,8 +68,8 @@ public class DomReporter {
 		System.out.println("----------------------------");
 		// System.out.println(a.name + " " + a.type + " " + a.description);
 		System.out.println(a.toString());
-		final int ntran = a.transactions.size();
 
+		int ntran = a.transactions.size();
 		// System.out.println(" " + ntran + " transactions");
 
 		if (ntran > 0) {
@@ -87,33 +84,27 @@ public class DomReporter {
 			}
 
 			int curNumTxn = 0;
-			int curYear = -1;
-			int curMonth = -1;
+			String curMonth = "";
 			BigDecimal bal = BigDecimal.ZERO;
-			final Calendar cal = Calendar.getInstance();
 
-			// TODO im not sure what this is about exactly
-//			for (final GenericTxn t : a.transactions) {
-//				final QDate d = t.getDate();
-//				cal.setTime(d);
-//
-//				if (includePseudoStatements) {
-//					if ((cal.get(Calendar.YEAR) != curYear) //
-//							|| (cal.get(Calendar.MONTH) != curMonth)) {
-//						System.out.println(t.getDate().toString() //
-//								+ ": " + bal //
-//								+ " " + curNumTxn + " transactions");
-//
-//						curNumTxn = 0;
-//						curYear = cal.get(Calendar.YEAR);
-//						curMonth = cal.get(Calendar.MONTH);
-//					}
-//
-//					++curNumTxn;
-//				}
-//
-//				bal = bal.add(t.getAmount());
-//			}
+			for (GenericTxn t : a.transactions) {
+				if (includePseudoStatements) {
+					String txmonth = t.getDate().monthYearString;
+
+					if (!curMonth.isEmpty() && !curMonth.equals(txmonth)) {
+						System.out.println(curMonth //
+								+ ": " + bal //
+								+ " " + curNumTxn + " transactions");
+
+						curNumTxn = 0;
+						curMonth = txmonth;
+					}
+
+					++curNumTxn;
+				}
+
+				bal = bal.add(t.getAmount());
+			}
 
 			System.out.println("    " + ntran + " transactions");
 			System.out.println("    Final: " + bal);
@@ -172,8 +163,8 @@ public class DomReporter {
 		System.out.println("----------------------------");
 	}
 
-	private static void reportGlobalPortfolio(SecurityPortfolio port) {
-		for (final SecurityPosition p : port.positions) {
+	private static void reportGlobalPortfolio() {
+		for (SecurityPosition p : SecurityPortfolio.portfolio.positions) {
 			System.out.println("Sec: " + p.security.getName());
 
 			System.out.println(String.format( //
@@ -189,7 +180,7 @@ public class DomReporter {
 					System.out.println(String.format( //
 							"  %-12s  %-20s  %-10s  %s  %s", //
 							t.getDate().toString(), //
-							QifDom.dom.getAccountByID(t.acctid).getName(), //
+							Account.getAccountByID(t.acctid).getName(), //
 							t.getAction().toString(), //
 							Common.formatAmount3(t.getShares()), //
 							Common.formatAmount3(shrbal)));

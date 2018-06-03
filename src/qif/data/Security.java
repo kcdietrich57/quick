@@ -2,7 +2,6 @@ package qif.data;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,8 +109,7 @@ public class Security {
 			// The price for a transaction doesn't replace the price in the
 			// history. It is intra-day, and in the case of ESPP/options,
 			// may be discounted.
-			// TODO add prices from transactions after loading price history,
-			// if at all.
+			// FIXME add prices from txns after loading price history, if at all.
 			// addPrice(new Price(txn.price, txn.getDate()), false);
 		}
 	}
@@ -131,7 +129,10 @@ public class Security {
 				if (replace) {
 					this.prices.set(idx, newPrice);
 				} else {
-					// TODO warn if different?
+					if (!p.splitAdjustedPrice.equals(newPrice.splitAdjustedPrice) //
+							&& QifDom.dom.verbose) {
+						Common.reportWarning("Security price mismatch");
+					}
 				}
 			} else if (diff < 0) {
 				this.prices.add(idx, newPrice);
@@ -143,9 +144,9 @@ public class Security {
 		}
 	}
 
-	private void sortPrices() {
-		Collections.sort(this.prices, (o1, o2) -> o1.date.compareTo(o2.date));
-	}
+//	private void sortPrices() {
+//		Collections.sort(this.prices, (o1, o2) -> o1.date.compareTo(o2.date));
+//	}
 
 	public QPrice getPriceForDate(QDate d) {
 		final int idx = getPriceIndexForDate(d);

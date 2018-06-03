@@ -123,7 +123,7 @@ public class InvestmentTxn extends GenericTxn {
 			break;
 		}
 
-		// TODO We lack lots of information needed to properly track options
+		// We lack lots of information needed to properly track options
 		case GRANT:
 		case EXPIRE:
 			if (this.quantity == null) {
@@ -140,7 +140,7 @@ public class InvestmentTxn extends GenericTxn {
 
 		case OTHER:
 			Common.reportError("Transaction has unknown type: " + //
-					QifDom.dom.getAccountByID(this.acctid).getName());
+					Account.getAccountByID(this.acctid).getName());
 			return;
 		}
 
@@ -177,7 +177,7 @@ public class InvestmentTxn extends GenericTxn {
 		case XOUT:
 			break;
 
-		// TODO We lack lots of information needed to properly track options
+		// We lack lots of information needed to properly track options
 		case GRANT:
 			// Strike price, open/close price, vest/expire date, qty
 			break;
@@ -197,8 +197,10 @@ public class InvestmentTxn extends GenericTxn {
 			return;
 		}
 
-		// TODO what if amount is null and xferamt is not? We don't want to set amount
-		// then, right?
+		if ((getAmount() == null) && getXferAmount() != null) {
+			setAmount(getXferAmount());
+		}
+
 		super.repair();
 	}
 
@@ -246,12 +248,12 @@ public class InvestmentTxn extends GenericTxn {
 		 * 
 		 * if (remainingShares == null) { break; } }
 		 * 
-		 * if (remainingShares != null) { // TODO ERROR - source share count is
-		 * insufficient }
+		 * if (remainingShares != null) { // ERROR - source share count is insufficient
+		 * }
 		 */
 	}
 
-	// TODO does this need to be separate from createDstLot()?
+	// does this need to be separate from createDstLot()?
 	private void addDstLot(Lot lot) {
 		if (this.dstLots == null) {
 			this.dstLots = new ArrayList<Lot>();
@@ -264,6 +266,7 @@ public class InvestmentTxn extends GenericTxn {
 		});
 	}
 
+	// TODO finish implementing lot tracking
 	public void setupLots() {
 		switch (getAction()) {
 		case BUY:
@@ -275,38 +278,38 @@ public class InvestmentTxn extends GenericTxn {
 			createDestinationLot();
 			break;
 
-		// TODO this is a bit different - create lot(s) for this account?
+		// this is a bit different - create lot(s) for this account?
 		case SHRS_IN:
 			createTransferLot();
 			break;
 
 		case GRANT:
-			// TODO new lot - Strike price, open/close price, vest/expire date, qty
+			// new lot - Strike price, open/close price, vest/expire date, qty
 			break;
 
 		case VEST:
-			// TODO Adjust lot info
+			// Adjust lot info
 			break;
 
 		case SELL:
 		case SELLX:
-			// TODO pick shares from available lots
+			// pick shares from available lots
 			break;
 
 		case EXERCISE:
 		case EXERCISEX:
-			// TODO This may convert the option to shares, or cash out
+			// This may convert the option to shares, or cash out
 			break;
 
-		// TODO this is the same as selling, or different?
+		// this is the same as selling, or different?
 		case SHRS_OUT:
 			break;
 
 		case EXPIRE:
-			// TODO adjust lot info
+			// adjust lot info
 			break;
 
-		// TODO perhaps we need to adjust lot shares here?
+		// perhaps we need to adjust lot shares here?
 		case STOCKSPLIT:
 			break;
 
@@ -354,7 +357,7 @@ public class InvestmentTxn extends GenericTxn {
 			final BigDecimal newprice = tot.divide(this.quantity).abs();
 
 			String s = "Inconsistent " + this.action + " transaction:" + //
-					" acct=" + QifDom.dom.getAccountByID(this.acctid).getName() + //
+					" acct=" + Account.getAccountByID(this.acctid).getName() + //
 					" " + getDate().toString() + "\n" + //
 					"  sec=" + this.security.getName() + //
 					" qty=" + this.quantity + //
@@ -370,7 +373,9 @@ public class InvestmentTxn extends GenericTxn {
 					" diff=" + diff + "\n";
 			s += "  Corrected price: " + newprice;
 
-			// Common.reportWarning(s);
+			if (QifDom.dom.verbose) {
+				Common.reportWarning(s);
+			}
 
 			this.price = newprice;
 		}
@@ -494,7 +499,7 @@ public class InvestmentTxn extends GenericTxn {
 	public String toStringLong() {
 		String s = ((this.stmtdate != null) ? "*" : " ") + "InvTx" + this.txid + ":";
 		s += " dt=" + getDate().toString();
-		s += " acct=" + QifDom.dom.getAccountByID(this.acctid).getName();
+		s += " acct=" + Account.getAccountByID(this.acctid).getName();
 		s += " act=" + this.action;
 		if (this.security != null) {
 			s += " sec=" + this.security.getName();

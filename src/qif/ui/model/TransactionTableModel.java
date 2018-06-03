@@ -11,7 +11,6 @@ import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
 import qif.data.QDate;
-import qif.data.QifDom;
 import qif.data.Statement;
 import qif.ui.AccountSelectionListener;
 
@@ -76,7 +75,7 @@ public class TransactionTableModel //
 			setTransactions(curAccount.transactions);
 		} else if (obj instanceof Statement) {
 			curStatement = (Statement) obj;
-			curAccount = QifDom.dom.getAccountByID(curStatement.acctid);
+			curAccount = Account.getAccountByID(curStatement.acctid);
 
 			setTransactions(curStatement.transactions);
 		} else {
@@ -160,7 +159,7 @@ public class TransactionTableModel //
 			}
 
 			if (acctid > 0) {
-				return "[" + QifDom.dom.getAccountByID(acctid).getName() + "]";
+				return "[" + Account.getAccountByID(acctid).getName() + "]";
 			}
 
 			return "";

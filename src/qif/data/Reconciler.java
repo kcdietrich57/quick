@@ -1,5 +1,6 @@
 package qif.data;
 
+import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -7,9 +8,30 @@ import java.util.Collections;
 import java.util.List;
 
 import app.QifLoader;
+import qif.importer.StatementDetails;
 import qif.ui.ReviewDialog;
 
 public class Reconciler {
+
+	// Process unreconciled statements for each account, matching statements
+	// with transactions and logging the results.
+	public static void reconcileStatements() {
+		PrintWriter pw = null;
+
+		try {
+			pw = new PrintWriter(new FileWriter(Statement.stmtLogFile, true));
+
+			for (Account a : Account.accounts) {
+				Reconciler.reconcileStatements(a, pw);
+			}
+		} catch (final Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (pw != null) {
+				pw.close();
+			}
+		}
+	}
 
 	public static void reconcileStatements(Account a, PrintWriter pw) {
 		if (a.statements.isEmpty()) {
@@ -28,7 +50,7 @@ public class Reconciler {
 			}
 
 			if (s.dirty) {
-				final String logStr = s.formatForSave();
+				final String logStr = StatementDetails.formatStatementForSave(s);
 				pw.println(logStr);
 				pw.flush();
 
@@ -133,7 +155,7 @@ public class Reconciler {
 
 			case 'q':
 				if (s.cashMatches() //
-				// TODO && holdingsMatch()
+				// FIXME && holdingsMatch()
 				) {
 					done = true;
 				}
@@ -331,7 +353,7 @@ public class Reconciler {
 					expectedValue.subtract(pValue));
 
 			if (!Common.isEffectivelyEqual(p.shares, expectedShares) //
-			// TODO || !Common.isEffectivelyEqual(pValue, opValue)
+			// FIXME || !Common.isEffectivelyEqual(pValue, opValue)
 			) {
 				s += " ********";
 			}

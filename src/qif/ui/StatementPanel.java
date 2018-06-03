@@ -200,11 +200,11 @@ public class StatementPanel extends JPanel implements AccountSelectionListener {
 			}
 
 			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-				// TODO Auto-generated method stub
+				//  Auto-generated method stub
 			}
 
 			public void popupMenuCanceled(PopupMenuEvent e) {
-				// TODO Auto-generated method stub
+				//  Auto-generated method stub
 			}
 		});
 	}

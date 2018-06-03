@@ -7,7 +7,6 @@ import java.util.StringTokenizer;
 import qif.data.Account;
 import qif.data.Common;
 import qif.data.QDate;
-import qif.data.QifDom;
 import qif.importer.QifDomReader;
 import qif.report.AccountReporter;
 import qif.report.CashFlowReporter;
@@ -41,8 +40,6 @@ public class QifLoader {
 	public static void main(String[] args) {
 		scn = new Scanner(System.in);
 
-		final QifDom dom = QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
-
 		for (;;) {
 			QifReporter.showStatistics();
 
@@ -66,13 +63,13 @@ public class QifLoader {
 					Date d1 = Common.parseDate(d1str);
 					Date d2 = (d2str != null) ? Common.parseDate(d2str) : new Date();
 
-					// dom.reportActivity(d1, d2);
+					QifReporter.reportActivity(d1, d2);
 				} else if (s.startsWith("accts")) {
 					NetWorthReporter.reportCurrentNetWorth();
 				} else {
 					final String aname = s.substring(1).trim();
 
-					final Account a = dom.findAccount(aname);
+					final Account a = Account.findAccount(aname);
 					if (a != null) {
 						AccountReporter.reportStatus(a, "m");
 					}
@@ -99,7 +96,7 @@ public class QifLoader {
 			} else if (s.startsWith("g")) {
 				final String aname = s.substring(1).trim();
 
-				final Account a = dom.findAccount(aname);
+				Account a = Account.findAccount(aname);
 				if (a != null) {
 					QifReporter.generateMonthlyStatements(a);
 				}

@@ -1,10 +1,14 @@
 package qif.data;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Statement {
+	// Info about reconciled statements goes in this file
+	public static File stmtLogFile = new File(QifDom.qifDir, "statementLog.dat");
+
 	public int acctid;
 	public QDate date;
 
@@ -101,30 +105,6 @@ public class Statement {
 
 		this.transactions.addAll(txns);
 		this.unclearedTransactions.addAll(unclearedTxns);
-	}
-
-	// TODO relocate this format method
-	// name;date;stmtBal;cashBal;numTx;numPos;[cashTx;][sec;numTx[txIdx;shareBal;]]
-	public String formatForSave() {
-		final Account a = QifDom.dom.getAccountByID(this.acctid);
-
-		String s = String.format("%s;%s;%5.2f;%5.2f;%d;%d", //
-				a.getName(), //
-				this.date.toString(), //
-				this.closingBalance, //
-				this.cashBalance, //
-				this.transactions.size(), //
-				this.holdings.positions.size());
-
-		for (final GenericTxn t : this.transactions) {
-			s += ";" + t.formatForSave();
-		}
-
-		for (final SecurityPosition p : this.holdings.positions) {
-			s += ";" + p.formatForSave(this);
-		}
-
-		return s;
 	}
 
 	public void clearAllTransactions() {

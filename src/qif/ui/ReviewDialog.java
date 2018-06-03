@@ -18,7 +18,6 @@ import javax.swing.ListSelectionModel;
 import qif.data.Account;
 import qif.data.Common;
 import qif.data.GenericTxn;
-import qif.data.QifDom;
 import qif.data.Statement;
 
 public class ReviewDialog extends JFrame {
@@ -172,7 +171,7 @@ public class ReviewDialog extends JFrame {
 				this.cleared.add(t);
 			}
 
-			final Account a = QifDom.dom.getAccountByID(stmt.acctid);
+			final Account a = Account.getAccountByID(stmt.acctid);
 			statusMsg = a.getName() + ": " + stmt.date.toString() + "\n";
 			statusMsg += String.format( //
 					"Opening Balance:\t%s\nClosing Balance:\t%s\nCleared Balance:\t%s", //
