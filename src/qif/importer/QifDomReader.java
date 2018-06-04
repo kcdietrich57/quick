@@ -419,7 +419,7 @@ public class QifDomReader {
 	private void setupSecurityLots() {
 		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
 			if (tx instanceof InvestmentTxn) {
-				// TODO ((InvestmentTxn) tx).setupLots();
+				((InvestmentTxn) tx).setupLots();
 			}
 		}
 	}

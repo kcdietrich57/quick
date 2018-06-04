@@ -24,8 +24,8 @@ public class InvestmentTxn extends GenericTxn {
 
 		this.action = TxAction.OTHER;
 		this.security = null;
-		this.price = null;
-		this.quantity = null;
+		this.price = BigDecimal.ZERO;
+		this.quantity = BigDecimal.ZERO;
 		this.textFirstLine = "";
 		this.commission = null;
 		this.accountForTransfer = "";
@@ -62,47 +62,31 @@ public class InvestmentTxn extends GenericTxn {
 	}
 
 	public void repair() {
-		switch (getAction()) {
-		case CASH:
-			if ((getAmount() == null) && (this.amountTransferred == null)) {
-				setAmount(BigDecimal.ZERO);
-			}
-			break;
+		TxAction action = getAction();
 
-		case BUY:
-		case SHRS_IN:
-		case REINV_DIV:
-		case REINV_LG:
-		case REINV_SH:
-			if (this.quantity == null) {
-				// System.out.println("NULL quantities: " + ++nullQuantities);
-				this.quantity = BigDecimal.ZERO;
-			}
-			if (this.price == null) {
-				this.price = BigDecimal.ZERO;
-			}
-			break;
+		if (action == TxAction.OTHER) {
+			Common.reportError("Transaction has unknown type: " + //
+					Account.getAccountByID(this.acctid).getName());
+			return;
+		}
 
-		case BUYX:
-		case REINV_INT:
-			if (this.price == null) {
-				this.price = BigDecimal.ZERO;
-			}
-			break;
+		if ((action == TxAction.CASH) //
+				&& (getAmount() == null) && (this.amountTransferred == null)) {
+			setAmount(BigDecimal.ZERO);
+		}
 
+		if (action == TxAction.XOUT) {
+			this.amountTransferred = this.amountTransferred.negate();
+			setAmount(this.amountTransferred);
+		}
+
+		switch (action) {
 		case SHRS_OUT:
 		case SELL:
 		case SELLX:
 		case EXERCISE:
 		case EXERCISEX:
-			if (this.price == null) {
-				this.price = BigDecimal.ZERO;
-			}
-
 			this.quantity = this.quantity.negate();
-			break;
-
-		case STOCKSPLIT:
 			break;
 
 		case XIN: // amt/xamt
@@ -111,37 +95,12 @@ public class InvestmentTxn extends GenericTxn {
 		case CONTRIBX: // amt/xamt
 		case WITHDRAWX: // + amt/xamt
 		case DIV: // amt
-			if (this.security != null) {
-				this.security = null;
-			}
+			// This, apparently, is to treat MM balances as cash
+			this.security = null;
 			break;
 
-		case XOUT: { // + amt/xamt
-			final BigDecimal amt = this.amountTransferred.negate();
-			this.amountTransferred = amt;
-			setAmount(amt);
+		default:
 			break;
-		}
-
-		// We lack lots of information needed to properly track options
-		case GRANT:
-		case EXPIRE:
-			if (this.quantity == null) {
-				this.quantity = BigDecimal.ZERO;
-			}
-		case VEST:
-			if (this.price == null) {
-				this.price = BigDecimal.ZERO;
-			}
-			break;
-
-		case REMINDER:
-			break;
-
-		case OTHER:
-			Common.reportError("Transaction has unknown type: " + //
-					Account.getAccountByID(this.acctid).getName());
-			return;
 		}
 
 		switch (getAction()) {
@@ -156,30 +115,15 @@ public class InvestmentTxn extends GenericTxn {
 			repairBuySell();
 			break;
 
-		case DIV:
-			assert (this.price == null) && (this.quantity == null);
+		default:
 			break;
-
-		case SHRS_IN:
-		case SHRS_OUT:
-			break;
-
-		case STOCKSPLIT:
-			break;
-
-		case CASH:
-		case CONTRIBX:
-		case INT_INC:
-		case MISC_INCX:
-		case REMINDER:
-		case WITHDRAWX:
-		case XIN:
-		case XOUT:
-			break;
+		}
 
 		// We lack lots of information needed to properly track options
+		switch (getAction()) {
 		case GRANT:
 			// Strike price, open/close price, vest/expire date, qty
+			// TODO Add missing option info to memo
 			break;
 		case VEST:
 			// Connect to Grant
@@ -192,65 +136,15 @@ public class InvestmentTxn extends GenericTxn {
 			// Connect to Grant, qty
 			break;
 
-		case OTHER:
-			assert (false); // can't happen
-			return;
+		default:
+			break;
 		}
 
-		if ((getAmount() == null) && getXferAmount() != null) {
+		if ((getAmount() == null) && (getXferAmount() != null)) {
 			setAmount(getXferAmount());
 		}
 
 		super.repair();
-	}
-
-	public List<Lot> getLots() {
-		return this.dstLots;
-	}
-
-	private void createDestinationLot() {
-		Lot lot = new Lot(getDate(), this.security.secid, this.quantity, getBuySellAmount(), this);
-
-		addDstLot(lot);
-	}
-
-	private void createTransferLot() {
-		InvestmentTxn txn;
-
-		if (this.xtxn == null) {
-			if (this.xferInv == null || this.xferInv.size() != 1) {
-				return;
-			}
-
-			txn = this.xferInv.get(0);
-		} else {
-			assert (this.xtxn instanceof InvestmentTxn);
-			txn = (InvestmentTxn) this.xtxn;
-		}
-
-		List<Lot> srcLots = txn.getLots();
-		/*
-		 * BigDecimal remainingShares = this.quantity;
-		 * 
-		 * for (Lot srcLot : srcLots) { BigDecimal shares; BigDecimal cost;
-		 * 
-		 * if (remainingShares.compareTo(srcLot.shares) <= 0) { shares =
-		 * remainingShares; cost = shares.multiply(srcLot.getPrice());
-		 * 
-		 * remainingShares = null; } else { shares = srcLot.shares; cost =
-		 * srcLot.costBasis;
-		 * 
-		 * remainingShares = remainingShares.subtract(shares); }
-		 * 
-		 * Lot lot = new Lot(srcLot, shares, cost, this);
-		 * 
-		 * addDstLot(lot);
-		 * 
-		 * if (remainingShares == null) { break; } }
-		 * 
-		 * if (remainingShares != null) { // ERROR - source share count is insufficient
-		 * }
-		 */
 	}
 
 	// does this need to be separate from createDstLot()?
@@ -328,6 +222,63 @@ public class InvestmentTxn extends GenericTxn {
 		case OTHER:
 			assert (false); // can't happen
 			return;
+		}
+	}
+
+	public List<Lot> getLots() {
+		return this.dstLots;
+	}
+
+	private void createDestinationLot() {
+		Lot lot = new Lot(getDate(), this.security.secid, this.quantity, getBuySellAmount(), this);
+
+		addDstLot(lot);
+	}
+
+	private void createTransferLot() {
+		InvestmentTxn txn;
+
+		if (this.xtxn == null) {
+			if (this.xferInv == null || this.xferInv.size() != 1) {
+				return;
+			}
+
+			txn = this.xferInv.get(0);
+		} else {
+			assert (this.xtxn instanceof InvestmentTxn);
+			txn = (InvestmentTxn) this.xtxn;
+		}
+
+		List<Lot> srcLots = txn.getLots();
+
+		BigDecimal remainingShares = this.quantity;
+
+		for (Lot srcLot : srcLots) {
+			BigDecimal shares;
+			BigDecimal cost;
+
+			if (remainingShares.compareTo(srcLot.shares) <= 0) {
+				shares = remainingShares;
+				cost = shares.multiply(srcLot.getPrice());
+
+				remainingShares = null;
+			} else {
+				shares = srcLot.shares;
+				cost = srcLot.costBasis;
+
+				remainingShares = remainingShares.subtract(shares);
+			}
+
+			Lot lot = new Lot(srcLot, shares, cost, this);
+
+			addDstLot(lot);
+
+			if (remainingShares == null) {
+				break;
+			}
+		}
+
+		if (remainingShares != null) { // ERROR - source share count is insufficient
 		}
 	}
 
