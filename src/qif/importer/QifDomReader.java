@@ -57,7 +57,7 @@ public class QifDomReader {
 
 		// Process all the QIF files
 		for (final String fn : qifFiles) {
-			rdr.load(fn);
+			rdr.load(fn, true);
 		}
 
 		// Additional processing once the data is loaded (quotes, stmts, etc)
@@ -68,7 +68,7 @@ public class QifDomReader {
 		this.qifDir = qifDir;
 	}
 
-	public void load(String fileName) {
+	public void load(String fileName, boolean doCleanup) {
 		if (!new File(fileName).exists()) {
 			if (new File("c:" + fileName).exists()) {
 				fileName = "c:" + fileName;
@@ -82,10 +82,12 @@ public class QifDomReader {
 
 		processFile();
 
-		cleanUpTransactions();
+		if (doCleanup) {
+			cleanUpTransactions();
+		}
 	}
 
-	public void cleanUpTransactions() {
+	private void cleanUpTransactions() {
 		sortTransactions();
 		cleanUpSplits();
 		calculateRunningTotals();
@@ -197,12 +199,12 @@ public class QifDomReader {
 
 		final Account a = Account.getAccountByID(-txn.catid);
 
-		findMatches(a, txn, date, true);
+		findMatchesForTransfer(a, txn, date, true);
 
 		++totalXfers;
 
 		if (this.matchingTxns.isEmpty()) {
-			findMatches(a, txn, date, false); // SellX openingBal void
+			findMatchesForTransfer(a, txn, date, false); // SellX openingBal void
 		}
 
 		if (this.matchingTxns.isEmpty()) {
@@ -225,7 +227,7 @@ public class QifDomReader {
 		xtxn.xtxn = txn;
 	}
 
-	private void findMatches(Account acct, SimpleTxn txn, QDate date, boolean strict) {
+	private void findMatchesForTransfer(Account acct, SimpleTxn txn, QDate date, boolean strict) {
 		this.matchingTxns.clear();
 
 		final int idx = Common.findLastTransactionOnOrBeforeDate(acct.transactions, date);
@@ -242,7 +244,7 @@ public class QifDomReader {
 				final GenericTxn gtxn = acct.transactions.get(idx + inc);
 				datematch = date.equals(gtxn.getDate());
 
-				final SimpleTxn match = checkMatch(txn, gtxn, strict);
+				final SimpleTxn match = checkMatchForTransfer(txn, gtxn, strict);
 				if (match != null) {
 					this.matchingTxns.add(match);
 				}
@@ -252,7 +254,7 @@ public class QifDomReader {
 				final GenericTxn gtxn = acct.transactions.get(idx - inc);
 				datematch = datematch || date.equals(gtxn.getDate());
 
-				final SimpleTxn match = checkMatch(txn, gtxn, strict);
+				final SimpleTxn match = checkMatchForTransfer(txn, gtxn, strict);
 				if (match != null) {
 					this.matchingTxns.add(match);
 				}
@@ -260,7 +262,7 @@ public class QifDomReader {
 		}
 	}
 
-	private SimpleTxn checkMatch(SimpleTxn txn, GenericTxn gtxn, boolean strict) {
+	private SimpleTxn checkMatchForTransfer(SimpleTxn txn, GenericTxn gtxn, boolean strict) {
 		assert -txn.catid == gtxn.acctid;
 
 		if (!gtxn.hasSplits()) {
@@ -280,7 +282,7 @@ public class QifDomReader {
 		return null;
 	}
 
-	public void postLoad() {
+	private void postLoad() {
 		final File d = new File(this.qifDir, "quotes");
 		loadSecurityPriceHistory(d);
 
@@ -304,7 +306,7 @@ public class QifDomReader {
 		}
 	}
 
-	public void processSecurities() {
+	private void processSecurities() {
 		processSecurities2(SecurityPortfolio.portfolio, GenericTxn.getAllTransactions());
 
 		for (Account a : Account.getAccounts()) {
@@ -366,7 +368,7 @@ public class QifDomReader {
 		}
 	}
 
-	public void fixPortfolios() {
+	private void fixPortfolios() {
 		fixPortfolio(SecurityPortfolio.portfolio);
 
 		for (Account a : Account.getAccounts()) {
@@ -417,7 +419,7 @@ public class QifDomReader {
 	private void setupSecurityLots() {
 		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
 			if (tx instanceof InvestmentTxn) {
-				// ((InvestmentTxn) tx).setupLots();
+				// TODO ((InvestmentTxn) tx).setupLots();
 			}
 		}
 	}
@@ -458,7 +460,7 @@ public class QifDomReader {
 		BigDecimal inshrs;
 		BigDecimal outshrs;
 
-		boolean isverbose = false;
+		boolean isverbose = QifDom.verbose;
 
 		while (!xins.isEmpty()) {
 			ins.clear();
@@ -478,18 +480,20 @@ public class QifDomReader {
 					Common.reportError("Mismatched security transfer");
 				}
 
-				for (final InvestmentTxn t2 : ins) {
-					t2.xferInv = outs;
+				for (final InvestmentTxn inTx : ins) {
+					inTx.xferInv = outs;
 				}
-				for (final InvestmentTxn t2 : outs) {
-					t2.xferInv = ins;
+				for (final InvestmentTxn outTx : outs) {
+					outTx.xferInv = ins;
 				}
 			}
 
-			if (isverbose) {
+			if (isverbose && !outs.isEmpty()) {
 				final String s = String.format(//
-						"%-20s : %5s(%2d) %s INSH=%s (%2d txns) OUTSH=%s (%2d txns)", //
-						t.getAccount().getName(), t.security.symbol, t.security.secid, //
+						"%-20s : %10s %8s %8s INSH=%10s (%3d txns) OUTSH=%10s (%d txns)", //
+						t.getAccount().getName(), //
+						t.getAction().toString(), //
+						t.security.symbol, //
 						t.getDate().toString(), //
 						Common.formatAmount3(inshrs), ins.size(), //
 						Common.formatAmount3(outshrs), outs.size());
@@ -497,15 +501,18 @@ public class QifDomReader {
 			}
 		}
 
-		if (isverbose) {
+		if (isverbose && !unmatched.isEmpty()) {
 			for (final InvestmentTxn t : unmatched) {
 				final String pad = (t.getAction() == TxAction.SHRS_IN) //
 						? "" //
-						: "                          ";
+						: "           ";
 
-				final String s = String.format("%-20s : %5s(%2d) %s %s SHR=%s", //
-						t.getAccount().getName(), t.security.symbol, t.security.secid, //
-						t.getDate().toString(), pad, //
+				final String s = String.format("%-20s : %10s %8s %8s SHR=%s%10s", //
+						t.getAccount().getName(), //
+						t.getAction().toString(), //
+						t.security.symbol, //
+						t.getDate().toString(), //
+						pad, //
 						Common.formatAmount3(t.getShares()));
 				System.out.println(s);
 			}
@@ -513,11 +520,13 @@ public class QifDomReader {
 	}
 
 	private BigDecimal gatherTransactionsForSecurityTransfer( //
-			List<InvestmentTxn> rettxns, //
-			List<InvestmentTxn> srctxns, //
-			List<InvestmentTxn> unmatched, //
-			Security s, //
-			QDate d) {
+			List<InvestmentTxn> rettxns, // OUT txs for xfer
+			List<InvestmentTxn> srctxns, // IN all remaining txs
+			List<InvestmentTxn> unmatched, // OUT earlier txs that don't match
+			Security s, // The security being transferred
+			QDate d) { // The date of the transfer
+		// Return number of shares collected
+
 		BigDecimal numshrs = BigDecimal.ZERO;
 
 		if (srctxns.isEmpty()) {
@@ -526,6 +535,7 @@ public class QifDomReader {
 
 		InvestmentTxn t = srctxns.get(0);
 
+		// Skip earlier Txs, gathering in unmatched
 		while (t.getDate().compareTo(d) < 0 || //
 				(t.getDate().equals(d) //
 						&& (t.security.getName().compareTo(s.getName()) < 0))) {
@@ -537,6 +547,7 @@ public class QifDomReader {
 			t = srctxns.get(0);
 		}
 
+		// Processing matching txs
 		while (!srctxns.isEmpty()) {
 			t = srctxns.get(0);
 
@@ -547,10 +558,6 @@ public class QifDomReader {
 
 			rettxns.add(t);
 			numshrs = numshrs.add(t.getShares());
-
-			if (srctxns.isEmpty()) {
-				break;
-			}
 
 			srctxns.remove(0);
 		}
@@ -686,7 +693,7 @@ public class QifDomReader {
 	 *            Account
 	 * @return True if all transactions are found
 	 */
-	public void getTransactionsFromDetails(Account a, Statement s, StatementDetails d) {
+	private void getTransactionsFromDetails(Account a, Statement s, StatementDetails d) {
 		if (s.isBalanced) {
 			return;
 		}
@@ -769,7 +776,7 @@ public class QifDomReader {
 		}
 	}
 
-	public static void loadQuoteFile(Security sec, File f) {
+	private static void loadQuoteFile(Security sec, File f) {
 		if (!f.getName().endsWith(".csv")) {
 			return;
 		}
@@ -1021,7 +1028,7 @@ public class QifDomReader {
 		}
 	}
 
-	public Category loadCategory() {
+	private Category loadCategory() {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
 		final Category cat = new Category();
@@ -1109,7 +1116,7 @@ public class QifDomReader {
 		}
 	}
 
-	public Account loadAccount() {
+	private Account loadAccount() {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
 		Account acct = new Account();
@@ -1180,7 +1187,7 @@ public class QifDomReader {
 		}
 	}
 
-	public Security loadSecurity() {
+	private Security loadSecurity() {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
 		String symbol = null;
@@ -1250,7 +1257,7 @@ public class QifDomReader {
 		}
 	}
 
-	public InvestmentTxn loadInvestmentTransaction() {
+	private InvestmentTxn loadInvestmentTransaction() {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
 		final InvestmentTxn txn = new InvestmentTxn(Account.currAccount.acctid);
@@ -1345,10 +1352,10 @@ public class QifDomReader {
 		}
 	}
 
-	public NonInvestmentTxn loadNonInvestmentTransaction() {
-		final QFileReader.QLine qline = new QFileReader.QLine();
+	private NonInvestmentTxn loadNonInvestmentTransaction() {
+		QFileReader.QLine qline = new QFileReader.QLine();
 
-		final NonInvestmentTxn txn = new NonInvestmentTxn(Account.currAccount.acctid);
+		NonInvestmentTxn txn = new NonInvestmentTxn(Account.currAccount.acctid);
 		SimpleTxn cursplit = null;
 
 		for (;;) {
@@ -1485,7 +1492,7 @@ public class QifDomReader {
 			}
 
 			try {
-				load(f.getAbsolutePath());
+				load(f.getAbsolutePath(), false);
 			} catch (final Exception e) {
 				e.printStackTrace();
 			}

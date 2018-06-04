@@ -23,7 +23,7 @@ public class QDate implements Comparable<QDate> {
 
 		this.datevalue = y * 10000 + m * 100 + d;
 
-		this.datestring = String.format("%d/%d/%d", m, d, y % 100);
+		this.datestring = String.format("%d/%d/%02d", m, d, y % 100);
 		this.longString = String.format("%02d/%02d/%04d", m, d, y);
 		this.shortString = String.format("%02d/%02d", m, d);
 		this.monthYearString = String.format("%02d/%04d", m, y);
@@ -39,7 +39,7 @@ public class QDate implements Comparable<QDate> {
 
 		this.datevalue = y * 10000 + m * 100 + d;
 
-		this.datestring = String.format("%d/%d/%d", m, d, y % 100);
+		this.datestring = String.format("%d/%d/%02d", m, d, y % 100);
 		this.longString = String.format("%02d/%02d/%04d", m, d, y);
 		this.shortString = String.format("%02d/%02d", m, d);
 		this.monthYearString = String.format("%02d/%04d", m, y);

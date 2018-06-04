@@ -8,7 +8,6 @@ import qif.data.Common;
 import qif.data.QDate;
 import qif.data.QPrice;
 import qif.data.Security;
-import qif.importer.QifDomReader;
 
 public class LoadSecurityHistory {
 
@@ -34,7 +33,7 @@ public class LoadSecurityHistory {
 			try {
 				final Security sec = new Security(f.getName());
 				securities.add(sec);
-				QifDomReader.loadQuoteFile(sec, f);
+				//TODO QifDomReader.loadQuoteFile(sec, f);
 			} catch (final Exception e) {
 				e.printStackTrace();
 			}

@@ -10,8 +10,8 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 import qif.data.Common;
-import qif.data.QifDom;
-import qif.data.QifDom.Balances;
+import qif.report.NetWorthReporter;
+import qif.report.NetWorthReporter.Balances;
 
 public class SummaryPanel extends JPanel {
 	private static final long serialVersionUID = 1L;
@@ -21,7 +21,7 @@ public class SummaryPanel extends JPanel {
 
 		setBorder(new EmptyBorder(10, 0, 10, 0));
 
-		Balances bals = QifDom.getNetWorthForDate(null);
+		Balances bals = NetWorthReporter.getNetWorthForDate(null);
 
 		Font bfont = new Font("Helvetica", Font.BOLD, 16);
 		Font font = new Font("Helvetica", Font.PLAIN, 16);

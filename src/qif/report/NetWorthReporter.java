@@ -5,14 +5,18 @@ import java.math.BigDecimal;
 import qif.data.Account;
 import qif.data.Common;
 import qif.data.QDate;
-import qif.data.QifDom;
-import qif.data.QifDom.Balances;
 import qif.data.SecurityPosition;
 import qif.report.StatusForDateModel.AccountSummary;
 import qif.report.StatusForDateModel.Section;
 import qif.report.StatusForDateModel.SecuritySummary;
 
 public class NetWorthReporter {
+
+	public static class Balances {
+		public BigDecimal netWorth = BigDecimal.ZERO;
+		public BigDecimal assets = BigDecimal.ZERO;
+		public BigDecimal liabilities = BigDecimal.ZERO;
+	}
 
 	public static void reportCurrentNetWorth() {
 		reportNetWorthForDate(QDate.today());
@@ -68,7 +72,7 @@ public class NetWorthReporter {
 
 		do {
 			d = Common.getDateForEndOfMonth(year, month);
-			final Balances b = QifDom.getNetWorthForDate(d);
+			final Balances b = getNetWorthForDate(d);
 
 			System.out.println(String.format("%s,%15.2f,%15.2f,%15.2f", //
 					d.longString, b.netWorth, b.assets, b.liabilities));
@@ -215,5 +219,27 @@ public class NetWorthReporter {
 		sb.append("\n");
 
 		return sb.toString();
+	}
+
+	public static Balances getNetWorthForDate(QDate d) {
+		final Balances b = new Balances();
+
+		if (d == null) {
+			d = QDate.today();
+		}
+
+		for (Account a : Account.accounts) {
+			final BigDecimal amt = a.getValueForDate(d);
+
+			b.netWorth = b.netWorth.add(amt);
+
+			if (a.isAsset()) {
+				b.assets = b.assets.add(amt);
+			} else if (a.isLiability()) {
+				b.liabilities = b.liabilities.add(amt);
+			}
+		}
+
+		return b;
 	}
 }
