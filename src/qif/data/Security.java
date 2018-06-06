@@ -2,6 +2,8 @@ package qif.data;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +13,10 @@ public class Security {
 	private static final List<Security> securitiesByID = new ArrayList<Security>();
 
 	private static int nextSecurityID = 1;
+
+	public static Collection<Security> getSecurities() {
+		return Collections.unmodifiableCollection(securities.values());
+	}
 
 	public static void addSecurity(Security sec) {
 		Security existingName = findSecurityByName(sec.getName());

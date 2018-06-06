@@ -6,14 +6,14 @@ import java.util.List;
 
 public class SimpleTxn {
 	private static final List<SimpleTxn> NOSPLITS = new ArrayList<SimpleTxn>();
+
 	static int cashok = 0;
 	static int cashbad = 0;
 
-	protected static int nextid = 1;
+	private static int nextid = 1;
 
+	public final int acctid;
 	public final int txid;
-
-	public int acctid;
 
 	private BigDecimal amount;
 	public String memo;

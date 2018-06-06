@@ -81,6 +81,24 @@ public class SecurityPortfolio {
 	/**
 	 * Find a position for a security. Create it if it does not exist.
 	 *
+	 * @param secid
+	 * @return The position
+	 */
+	public SecurityPosition getPosition(int secid) {
+		Security sec = Security.getSecurity(secid);
+		SecurityPosition pos = findPosition(sec);
+
+		if (pos == null) {
+			pos = new SecurityPosition(sec);
+			this.positions.add(pos);
+		}
+
+		return pos;
+	}
+
+	/**
+	 * Find a position for a security. Create it if it does not exist.
+	 *
 	 * @param sec
 	 *            The security
 	 * @return The position

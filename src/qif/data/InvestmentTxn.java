@@ -14,7 +14,7 @@ public class InvestmentTxn extends GenericTxn {
 	public BigDecimal commission;
 	public String accountForTransfer;
 	public BigDecimal amountTransferred;
-	public List<InvestmentTxn> xferInv;
+	public List<InvestmentTxn> xferTxns;
 
 	public List<Lot> srcLots = null;
 	public List<Lot> dstLots = null;
@@ -30,7 +30,7 @@ public class InvestmentTxn extends GenericTxn {
 		this.commission = null;
 		this.accountForTransfer = "";
 		this.amountTransferred = null;
-		this.xferInv = null;
+		this.xferTxns = null;
 	}
 
 	public void setAction(TxAction action) {
@@ -51,6 +51,12 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 		return this.quantity;
+	}
+
+	public BigDecimal getShareCost() {
+		BigDecimal shares = getShares();
+
+		return (shares == BigDecimal.ZERO) ? shares : shares.multiply(this.price);
 	}
 
 	public BigDecimal getSplitRatio() {
@@ -147,6 +153,156 @@ public class InvestmentTxn extends GenericTxn {
 		super.repair();
 	}
 
+	// TODO finish implementing lot tracking
+	public void setupLots() {
+		// switch (getAction()) {
+		// case BUY:
+		// case BUYX:
+		// case REINV_DIV:
+		// case REINV_INT:
+		// case REINV_LG:
+		// case REINV_SH:
+		// createLot();
+		// break;
+		//
+		// // this is a bit different - create lot(s) for this account?
+		// case SHRS_IN:
+		// if ((this.xferTxns == null) || xferTxns.isEmpty()) {
+		// createLot();
+		// } else {
+		// createTransferInLot();
+		// }
+		// break;
+		//
+		// case GRANT:
+		// // new lot - Strike price, open/close price, vest/expire date, qty
+		// break;
+		//
+		// case VEST:
+		// // Adjust lot info
+		// break;
+		//
+		// case SELL:
+		// case SELLX:
+		// // pick shares from available lots
+		// break;
+		//
+		// case EXERCISE:
+		// case EXERCISEX:
+		// // This may convert the option to shares, or cash out
+		// break;
+		//
+		// // this is the same as selling, or different?
+		// case SHRS_OUT:
+		// break;
+		//
+		// case EXPIRE:
+		// // adjust lot info
+		// break;
+		//
+		// // perhaps we need to adjust lot shares here?
+		// case STOCKSPLIT:
+		// break;
+		//
+		// // Cash-only transactions (no lots affected)
+		// case DIV:
+		// case CASH:
+		// case CONTRIBX:
+		// case INT_INC:
+		// case MISC_INCX:
+		// case WITHDRAWX:
+		// case XIN:
+		// case XOUT:
+		// case REMINDER:
+		// break;
+		//
+		// case OTHER:
+		// assert (false); // can't happen
+		// return;
+		// }
+	}
+
+	public List<Lot> getLots() {
+		return this.dstLots;
+	}
+
+	/**
+	 * This creates a lot for new shares that are entering the system via purchase,
+	 * grant, etc. rather than being derived from shares already present.
+	 */
+	private void createLot() {
+		Lot lot = new Lot(this.acctid, getDate(), this.security.secid, this.quantity, getBuySellAmount(), this);
+
+		addDstLot(lot);
+	}
+
+	/**
+	 * This creates a lot for transferring existing shares into an account. We
+	 * expect to see one transaction in the destination account (this transaction)
+	 * connected to one or more source transactions in the account the shares are
+	 * being transferred from.
+	 * 
+	 * The multiple source transactions are artifacts of the lot(s) for the shares
+	 * in the source account.
+	 */
+	private void createTransferInLot() {
+		// List<InvestmentTxn> xferTxns;
+		//
+		// if (this.xtxn instanceof InvestmentTxn) {
+		// xferTxns = new ArrayList<InvestmentTxn>();
+		// xferTxns.add((InvestmentTxn) this.xtxn);
+		// } else if (this.xferTxns != null && !this.xferTxns.isEmpty()) {
+		// xferTxns = this.xferTxns;
+		// } else {
+		// return;
+		// }
+		//
+		// for (InvestmentTxn xferTxn : xferTxns) {
+		// if (xferTxn.xferTxns == null //
+		// || xferTxn.xferTxns.size() != 1 //
+		// || xferTxn.xferTxns.get(0) != this) {
+		// Common.reportError("Investment transfer mismatch");
+		// return;
+		// }
+		// }
+		//
+		// Account srcAccount = xferTxns.get(0).getAccount();
+		//
+		// BigDecimal remainingShares = this.quantity;
+		// List<Lot> dstLot = new ArrayList<Lot>();
+		//
+		// for (InvestmentTxn xferTxn : xferTxns) {
+		// Lot srcLot = srcAccount.getLot;
+		// Lot dstLot = new Lot(this.acctid, srcLot, this.quantity, this);
+		//
+		// BigDecimal shares;
+		// BigDecimal cost;
+		//
+		// if (remainingShares.compareTo(srcLot.shares) <= 0) {
+		// shares = remainingShares;
+		// cost = shares.multiply(srcLot.getPrice());
+		//
+		// remainingShares = null;
+		// } else {
+		// shares = srcLot.shares;
+		// cost = srcLot.costBasis;
+		//
+		// remainingShares = remainingShares.subtract(shares);
+		// }
+		//
+		// Lot lot = null; // new Lot(srcLot, shares, cost, this);
+		//
+		// addDstLot(lot);
+		//
+		// if (remainingShares == null) {
+		// break;
+		// }
+		// }
+		//
+		// if (remainingShares != null) { // ERROR - source share count is insufficient
+		// }
+	}
+
 	// does this need to be separate from createDstLot()?
 	private void addDstLot(Lot lot) {
 		if (this.dstLots == null) {
@@ -156,130 +312,8 @@ public class InvestmentTxn extends GenericTxn {
 		this.dstLots.add(lot);
 
 		Collections.sort(this.dstLots, (o1, o2) -> {
-			return o1.purchaseDate.compareTo(o2.purchaseDate);
+			return o1.createDate.compareTo(o2.createDate);
 		});
-	}
-
-	// TODO finish implementing lot tracking
-	public void setupLots() {
-		switch (getAction()) {
-		case BUY:
-		case BUYX:
-		case REINV_DIV:
-		case REINV_INT:
-		case REINV_LG:
-		case REINV_SH:
-			createDestinationLot();
-			break;
-
-		// this is a bit different - create lot(s) for this account?
-		case SHRS_IN:
-			createTransferLot();
-			break;
-
-		case GRANT:
-			// new lot - Strike price, open/close price, vest/expire date, qty
-			break;
-
-		case VEST:
-			// Adjust lot info
-			break;
-
-		case SELL:
-		case SELLX:
-			// pick shares from available lots
-			break;
-
-		case EXERCISE:
-		case EXERCISEX:
-			// This may convert the option to shares, or cash out
-			break;
-
-		// this is the same as selling, or different?
-		case SHRS_OUT:
-			break;
-
-		case EXPIRE:
-			// adjust lot info
-			break;
-
-		// perhaps we need to adjust lot shares here?
-		case STOCKSPLIT:
-			break;
-
-		// Cash-only transactions (no lots affected)
-		case DIV:
-		case CASH:
-		case CONTRIBX:
-		case INT_INC:
-		case MISC_INCX:
-		case WITHDRAWX:
-		case XIN:
-		case XOUT:
-		case REMINDER:
-			break;
-
-		case OTHER:
-			assert (false); // can't happen
-			return;
-		}
-	}
-
-	public List<Lot> getLots() {
-		return this.dstLots;
-	}
-
-	private void createDestinationLot() {
-		Lot lot = new Lot(getDate(), this.security.secid, this.quantity, getBuySellAmount(), this);
-
-		addDstLot(lot);
-	}
-
-	private void createTransferLot() {
-		InvestmentTxn txn;
-
-		if (this.xtxn == null) {
-			if (this.xferInv == null || this.xferInv.size() != 1) {
-				return;
-			}
-
-			txn = this.xferInv.get(0);
-		} else {
-			assert (this.xtxn instanceof InvestmentTxn);
-			txn = (InvestmentTxn) this.xtxn;
-		}
-
-		List<Lot> srcLots = txn.getLots();
-
-		BigDecimal remainingShares = this.quantity;
-
-		for (Lot srcLot : srcLots) {
-			BigDecimal shares;
-			BigDecimal cost;
-
-			if (remainingShares.compareTo(srcLot.shares) <= 0) {
-				shares = remainingShares;
-				cost = shares.multiply(srcLot.getPrice());
-
-				remainingShares = null;
-			} else {
-				shares = srcLot.shares;
-				cost = srcLot.costBasis;
-
-				remainingShares = remainingShares.subtract(shares);
-			}
-
-			Lot lot = new Lot(srcLot, shares, cost, this);
-
-			addDstLot(lot);
-
-			if (remainingShares == null) {
-				break;
-			}
-		}
-
-		if (remainingShares != null) { // ERROR - source share count is insufficient
-		}
 	}
 
 	private void repairBuySell() {

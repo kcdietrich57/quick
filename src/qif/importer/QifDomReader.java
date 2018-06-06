@@ -20,6 +20,7 @@ import qif.data.Category;
 import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
+import qif.data.Lot;
 import qif.data.MultiSplitTxn;
 import qif.data.NonInvestmentTxn;
 import qif.data.QDate;
@@ -416,12 +417,193 @@ public class QifDomReader {
 		connectSecurityTransfers(xins, xouts);
 	}
 
-	private void setupSecurityLots() {
-		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
-			if (tx instanceof InvestmentTxn) {
-				((InvestmentTxn) tx).setupLots();
+//	private void processOriginalLots() {
+//		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
+//			if (tx instanceof InvestmentTxn) {
+//				InvestmentTxn itx = ((InvestmentTxn) tx);
+//
+//				if (itx.security != null //
+//						&& (itx.xferTxns == null || itx.xferTxns.isEmpty())) {
+//					itx.setupLots();
+//				}
+//			}
+//		}
+//	}
+//
+//	private void processTransferLots() {
+//		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
+//			if (tx instanceof InvestmentTxn) {
+//				InvestmentTxn itx = ((InvestmentTxn) tx);
+//
+//				if (itx.security != null //
+//						&& (itx.getAction() == TxAction.SHRS_IN) //
+//						&& (itx.xferTxns != null || itx.xferTxns.isEmpty())) {
+//					itx.setupLots();
+//				}
+//			}
+//		}
+//	}
+//
+//	private void processSellLots() {
+//		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
+//			if (tx instanceof InvestmentTxn) {
+//				InvestmentTxn itx = ((InvestmentTxn) tx);
+//
+//				if (itx.security != null //
+//						&& (itx.xferTxns == null || itx.xferTxns.isEmpty())) {
+//					itx.setupLots();
+//				}
+//			}
+//		}
+//	}
+
+	private static Lot getFirstOpenLot(List<Lot> lots) {
+		for (Lot lot : lots) {
+			if (lot.expireDate == null) {
+				return lot;
 			}
 		}
+
+		return null;
+	}
+
+	private String printOpenLots(List<Lot> lots) {
+		String s = "";
+		BigDecimal bal = BigDecimal.ZERO;
+		boolean addshares = false;
+		QDate curdate = null;
+		TxAction curaction = null;
+
+		for (Lot lot : lots) {
+			if (lot.expireDate != null) {
+				continue;
+			} else {
+				bal = bal.add(lot.shares);
+			}
+
+			if (curdate == null || //
+					!(addshares == lot.addshares //
+							&& curdate.equals(lot.createDate) //
+							&& curaction.equals(lot.transaction.getAction()))) {
+				s += String.format("\n%s %s %s", //
+						lot.createDate.longString, //
+						lot.transaction.getAction().toString(), //
+						Common.formatAmount(lot.shares));
+			} else {
+				s += String.format(" %s", //
+						Common.formatAmount(lot.shares));
+			}
+
+			addshares = lot.addshares;
+			curdate = lot.createDate;
+			curaction = lot.transaction.getAction();
+		}
+
+		s += "\nBalance: " + Common.formatAmount(bal);
+
+		System.out.println(s);
+
+		return s;
+	}
+
+	private void setupSecurityLots() {
+		for (Security sec : Security.getSecurities()) {
+			List<Lot> lots = new ArrayList<Lot>();
+
+			Lot lot;
+
+			List<InvestmentTxn> txns = new ArrayList<>(sec.transactions);
+			Collections.sort(txns, (t1, t2) -> {
+				return t1.getDate().compareTo(t2.getDate());
+			});
+			for (int ii = 0; ii < txns.size(); ++ii) {
+				InvestmentTxn txn = txns.get(ii);
+				if (txn.getAction() != TxAction.STOCKSPLIT) {
+					continue;
+				}
+
+				// Remove duplicate stock splits from different accounts
+				while (ii < txns.size() - 1) {
+					InvestmentTxn txn2 = txns.get(ii + 1);
+					if (txn2.getAction() != TxAction.STOCKSPLIT //
+							|| !txn.getDate().equals(txn2.getDate())) {
+						break;
+					}
+
+					txns.remove(ii + 1);
+				}
+			}
+
+			for (InvestmentTxn txn : txns) {
+				printOpenLots(lots);
+
+				switch (txn.getAction()) {
+				case BUY:
+				case SHRS_IN:
+					lot = new Lot(txn.acctid, txn.getDate(), sec.secid, //
+							txn.getShares(), txn.getShareCost(), txn);
+					lots.add(lot);
+					break;
+
+				case SELL:
+				case SHRS_OUT: {
+					BigDecimal sharesRemaining = txn.getShares().abs();
+
+					while (!Common.isEffectivelyZero(sharesRemaining)) {
+						Lot sourcelot = getFirstOpenLot(lots);
+						if (sourcelot == null) {
+							Common.reportError("Can't find lot for sale");
+							break;
+						}
+
+						if (sourcelot.shares.compareTo(sharesRemaining) > 0) {
+							lot = new Lot(sourcelot, sourcelot.shares.subtract(sharesRemaining), txn);
+							lots.add(lot);
+							sharesRemaining = BigDecimal.ZERO;
+						} else {
+							sharesRemaining = sharesRemaining.subtract(sourcelot.shares);
+						}
+
+						sourcelot.expireDate = txn.getDate();
+					}
+				}
+					break;
+
+				case STOCKSPLIT: {
+					List<Lot> newlots = new ArrayList<Lot>();
+
+					for (;;) {
+						Lot oldlot = getFirstOpenLot(lots);
+						if (oldlot == null) {
+							break;
+						}
+
+						oldlot.expireDate = txn.getDate();
+						Lot newlot = new Lot(oldlot, txn);
+						newlots.add(newlot);
+					}
+
+					lots.addAll(newlots);
+				}
+					break;
+
+				default:
+					break;
+				}
+			}
+
+			System.out.println("nlots=" + lots.size());
+		}
+
+		// processOriginalLots();
+		// processTransferLots();
+		// processSellLots();
+		//
+		// for (GenericTxn tx : GenericTxn.getAllTransactions()) {
+		// if (tx instanceof InvestmentTxn) {
+		// // ((InvestmentTxn) tx).setupLots();
+		// }
+		// }
 	}
 
 	private void connectSecurityTransfers(List<InvestmentTxn> xins, List<InvestmentTxn> xouts) {
@@ -467,6 +649,9 @@ public class QifDomReader {
 			outs.clear();
 
 			final InvestmentTxn t = xins.get(0);
+if (t.getDate().equals(new QDate(2018,2,26))) {
+	System.out.println();
+}
 			inshrs = gatherTransactionsForSecurityTransfer(ins, xins, null, t.security, t.getDate());
 			outshrs = gatherTransactionsForSecurityTransfer(outs, xouts, unmatched, t.security, t.getDate());
 
@@ -481,10 +666,16 @@ public class QifDomReader {
 				}
 
 				for (final InvestmentTxn inTx : ins) {
-					inTx.xferInv = outs;
+					if (inTx.security.secid != outs.get(0).security.secid) {
+						System.out.println();
+					}
+					inTx.xferTxns = outs;
 				}
 				for (final InvestmentTxn outTx : outs) {
-					outTx.xferInv = ins;
+					if (outTx.security.secid != ins.get(0).security.secid) {
+						System.out.println();
+					}
+					outTx.xferTxns = ins;
 				}
 			}
 

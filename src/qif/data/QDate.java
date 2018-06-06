@@ -79,6 +79,10 @@ public class QDate implements Comparable<QDate> {
 		return new QDate(d);
 	}
 
+	public boolean equals(Object obj) {
+		return (obj instanceof QDate) ? this.datevalue == ((QDate)obj).datevalue : false;
+	}
+
 	public int compareTo(QDate o) {
 		return this.datevalue - o.datevalue;
 	}

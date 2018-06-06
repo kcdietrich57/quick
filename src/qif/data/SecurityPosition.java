@@ -11,6 +11,7 @@ public class SecurityPosition {
 	public BigDecimal shares;
 
 	public List<InvestmentTxn> transactions;
+
 	/** Running share balance per transaction */
 	public List<BigDecimal> shrBalance;
 
