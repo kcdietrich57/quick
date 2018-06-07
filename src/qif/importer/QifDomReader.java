@@ -483,6 +483,8 @@ public class QifDomReader {
 				switch (txn.getAction()) {
 				case BUY:
 				case BUYX:
+				case REINV_INT:
+				case REINV_DIV:
 					lot = new Lot(txn.acctid, txn.getDate(), sec.secid, //
 							txn.getShares(), txn.getShareCost(), txn);
 					lots.add(lot);
