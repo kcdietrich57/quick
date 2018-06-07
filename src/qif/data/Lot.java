@@ -34,6 +34,8 @@ public class Lot {
 	}
 
 	public Lot(Lot srcLot, BigDecimal shares, InvestmentTxn txn) {
+		checkChildLots(srcLot, shares);
+
 		this.createDate = srcLot.createDate;
 		this.sourceLot = srcLot;
 		this.sourceLot.childLots.add(this);
@@ -43,8 +45,6 @@ public class Lot {
 		this.costBasis = shares.multiply(srcLot.getPrice());
 		this.createTransaction = txn;
 		this.expireTransaction = null;
-
-		srcLot.expireTransaction = txn;
 	}
 
 	public Lot(Lot srcLot, InvestmentTxn txn) {
@@ -59,6 +59,18 @@ public class Lot {
 		this.expireTransaction = null;
 
 		srcLot.expireTransaction = txn;
+	}
+
+	void checkChildLots(Lot lot, BigDecimal additionalShares) {
+		BigDecimal sum = BigDecimal.ZERO;
+
+		for (Lot child : lot.childLots) {
+			sum = sum.add(child.shares);
+		}
+
+		if (sum.add(additionalShares).compareTo(lot.shares) > 0) {
+			System.out.println("Oops, to much child lots");
+		}
 	}
 
 	public BigDecimal getPrice() {
@@ -76,13 +88,20 @@ public class Lot {
 		if ((this.expireTransaction != null)) {
 			s += "-" + this.expireTransaction.getDate().longString;
 			s += "(" + this.expireTransaction.getAction() //
-					+ " " + Common.formatAmount3(this.expireTransaction.getShares()) //
+					+ " " + Common.formatAmount3(this.expireTransaction.getShares()).trim() //
 					+ ")";
 		}
+
 		s += ", " + Security.getSecurity(this.secid).getSymbol();
 		s += ", " + Common.formatAmount3(this.shares).trim();
 
-		s += ")";
+		s += ") [";
+
+		for (Lot child : this.childLots) {
+			s += " " + Common.formatAmount3(child.shares).trim();
+		}
+
+		s += " ]";
 
 		return s;
 	}

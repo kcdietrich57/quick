@@ -491,7 +491,8 @@ public class QifDomReader {
 				case SHRS_IN: {
 					Lot srclot = null;
 					for (Lot xlot : lots) {
-						if ((xlot.secid == txn.security.secid) //
+						if ((xlot.expireTransaction == null) //
+								&& (xlot.secid == txn.security.secid) //
 								&& xlot.shares.equals(txn.getShares())) {
 							srclot = xlot;
 							break;
@@ -526,9 +527,10 @@ public class QifDomReader {
 							lots.add(lot);
 							sharesRemaining = BigDecimal.ZERO;
 						} else {
-							sourcelot.expireTransaction = txn;
 							sharesRemaining = sharesRemaining.subtract(sourcelot.shares);
 						}
+
+						sourcelot.expireTransaction = txn;
 					}
 				}
 					break;
