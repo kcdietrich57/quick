@@ -160,11 +160,11 @@ public class AccountListPanel extends JScrollPane {
 			}
 
 			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-				//  Auto-generated method stub
+				// Auto-generated method stub
 			}
 
 			public void popupMenuCanceled(PopupMenuEvent e) {
-				//  Auto-generated method stub
+				// Auto-generated method stub
 			}
 		});
 	}

@@ -6,7 +6,7 @@ import qif.data.GenericTxn;
 import qif.data.Statement;
 
 public class AccountReporter {
-	
+
 	public static void reportStatus(Account acct, String interval) {
 		if (acct.statements.isEmpty()) {
 			System.out.println("No statements for " + acct.getDisplayName(36));

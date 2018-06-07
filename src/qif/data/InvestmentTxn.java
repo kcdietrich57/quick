@@ -1,8 +1,6 @@
 package qif.data;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class InvestmentTxn extends GenericTxn {
@@ -226,96 +224,6 @@ public class InvestmentTxn extends GenericTxn {
 		return this.dstLots;
 	}
 
-	/**
-	 * This creates a lot for new shares that are entering the system via purchase,
-	 * grant, etc. rather than being derived from shares already present.
-	 */
-	private void createLot() {
-		Lot lot = new Lot(this.acctid, getDate(), this.security.secid, this.quantity, getBuySellAmount(), this);
-
-		addDstLot(lot);
-	}
-
-	/**
-	 * This creates a lot for transferring existing shares into an account. We
-	 * expect to see one transaction in the destination account (this transaction)
-	 * connected to one or more source transactions in the account the shares are
-	 * being transferred from.
-	 * 
-	 * The multiple source transactions are artifacts of the lot(s) for the shares
-	 * in the source account.
-	 */
-	private void createTransferInLot() {
-		// List<InvestmentTxn> xferTxns;
-		//
-		// if (this.xtxn instanceof InvestmentTxn) {
-		// xferTxns = new ArrayList<InvestmentTxn>();
-		// xferTxns.add((InvestmentTxn) this.xtxn);
-		// } else if (this.xferTxns != null && !this.xferTxns.isEmpty()) {
-		// xferTxns = this.xferTxns;
-		// } else {
-		// return;
-		// }
-		//
-		// for (InvestmentTxn xferTxn : xferTxns) {
-		// if (xferTxn.xferTxns == null //
-		// || xferTxn.xferTxns.size() != 1 //
-		// || xferTxn.xferTxns.get(0) != this) {
-		// Common.reportError("Investment transfer mismatch");
-		// return;
-		// }
-		// }
-		//
-		// Account srcAccount = xferTxns.get(0).getAccount();
-		//
-		// BigDecimal remainingShares = this.quantity;
-		// List<Lot> dstLot = new ArrayList<Lot>();
-		//
-		// for (InvestmentTxn xferTxn : xferTxns) {
-		// Lot srcLot = srcAccount.getLot;
-		// Lot dstLot = new Lot(this.acctid, srcLot, this.quantity, this);
-		//
-		// BigDecimal shares;
-		// BigDecimal cost;
-		//
-		// if (remainingShares.compareTo(srcLot.shares) <= 0) {
-		// shares = remainingShares;
-		// cost = shares.multiply(srcLot.getPrice());
-		//
-		// remainingShares = null;
-		// } else {
-		// shares = srcLot.shares;
-		// cost = srcLot.costBasis;
-		//
-		// remainingShares = remainingShares.subtract(shares);
-		// }
-		//
-		// Lot lot = null; // new Lot(srcLot, shares, cost, this);
-		//
-		// addDstLot(lot);
-		//
-		// if (remainingShares == null) {
-		// break;
-		// }
-		// }
-		//
-		// if (remainingShares != null) { // ERROR - source share count is insufficient
-		// }
-	}
-
-	// does this need to be separate from createDstLot()?
-	private void addDstLot(Lot lot) {
-		if (this.dstLots == null) {
-			this.dstLots = new ArrayList<Lot>();
-		}
-
-		this.dstLots.add(lot);
-
-		Collections.sort(this.dstLots, (o1, o2) -> {
-			return o1.createDate.compareTo(o2.createDate);
-		});
-	}
-
 	private void repairBuySell() {
 		final BigDecimal amt = getBuySellAmount();
 
@@ -461,9 +369,10 @@ public class InvestmentTxn extends GenericTxn {
 	}
 
 	public String toStringShort(boolean veryshort) {
-		String s = String.format("%s %s %s", //
+		String s = String.format("%s %s %s:%s", //
 				((this.stmtdate != null) ? "*" : " "), //
 				getDate().toString(), //
+				getAccount().getName(), //
 				this.action.toString());
 
 		if (this.action == TxAction.STOCKSPLIT) {

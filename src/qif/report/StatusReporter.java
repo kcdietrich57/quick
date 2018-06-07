@@ -139,7 +139,7 @@ public class StatusReporter {
 				Common.formatAmount(ainfo.balance), //
 				ainfo.ucount, //
 				ainfo.tcount, //
-				((ainfo.firstUnclearedTxDate != null) ? ainfo.firstUnclearedTxDate.toString(): null));
+				((ainfo.firstUnclearedTxDate != null) ? ainfo.firstUnclearedTxDate.toString() : null));
 	}
 
 	private static int appendAccountSection(StringBuilder sb, //

@@ -400,66 +400,9 @@ public class QifDomReader {
 		}
 	}
 
-	private void connectSecurityTransfers() {
-		final List<InvestmentTxn> xins = new ArrayList<InvestmentTxn>();
-		final List<InvestmentTxn> xouts = new ArrayList<InvestmentTxn>();
-
-		for (GenericTxn txn : GenericTxn.getAllTransactions()) {
-			if (txn instanceof InvestmentTxn) {
-				if ((txn.getAction() == TxAction.SHRS_IN)) {
-					xins.add((InvestmentTxn) txn);
-				} else if (txn.getAction() == TxAction.SHRS_OUT) {
-					xouts.add((InvestmentTxn) txn);
-				}
-			}
-		}
-
-		connectSecurityTransfers(xins, xouts);
-	}
-
-//	private void processOriginalLots() {
-//		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
-//			if (tx instanceof InvestmentTxn) {
-//				InvestmentTxn itx = ((InvestmentTxn) tx);
-//
-//				if (itx.security != null //
-//						&& (itx.xferTxns == null || itx.xferTxns.isEmpty())) {
-//					itx.setupLots();
-//				}
-//			}
-//		}
-//	}
-//
-//	private void processTransferLots() {
-//		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
-//			if (tx instanceof InvestmentTxn) {
-//				InvestmentTxn itx = ((InvestmentTxn) tx);
-//
-//				if (itx.security != null //
-//						&& (itx.getAction() == TxAction.SHRS_IN) //
-//						&& (itx.xferTxns != null || itx.xferTxns.isEmpty())) {
-//					itx.setupLots();
-//				}
-//			}
-//		}
-//	}
-//
-//	private void processSellLots() {
-//		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
-//			if (tx instanceof InvestmentTxn) {
-//				InvestmentTxn itx = ((InvestmentTxn) tx);
-//
-//				if (itx.security != null //
-//						&& (itx.xferTxns == null || itx.xferTxns.isEmpty())) {
-//					itx.setupLots();
-//				}
-//			}
-//		}
-//	}
-
 	private static Lot getFirstOpenLot(List<Lot> lots) {
 		for (Lot lot : lots) {
-			if (lot.expireDate == null) {
+			if (lot.expireTransaction == null) {
 				return lot;
 			}
 		}
@@ -475,19 +418,19 @@ public class QifDomReader {
 		TxAction curaction = null;
 
 		for (Lot lot : lots) {
-			if (lot.expireDate != null) {
+			if (lot.expireTransaction != null) {
 				continue;
-			} else {
-				bal = bal.add(lot.shares);
 			}
+
+			bal = bal.add(lot.shares);
 
 			if (curdate == null || //
 					!(addshares == lot.addshares //
 							&& curdate.equals(lot.createDate) //
-							&& curaction.equals(lot.transaction.getAction()))) {
+							&& curaction.equals(lot.createTransaction.getAction()))) {
 				s += String.format("\n%s %s %s", //
 						lot.createDate.longString, //
-						lot.transaction.getAction().toString(), //
+						lot.createTransaction.getAction().toString(), //
 						Common.formatAmount(lot.shares));
 			} else {
 				s += String.format(" %s", //
@@ -496,7 +439,7 @@ public class QifDomReader {
 
 			addshares = lot.addshares;
 			curdate = lot.createDate;
-			curaction = lot.transaction.getAction();
+			curaction = lot.createTransaction.getAction();
 		}
 
 		s += "\nBalance: " + Common.formatAmount(bal);
@@ -539,14 +482,36 @@ public class QifDomReader {
 
 				switch (txn.getAction()) {
 				case BUY:
-				case SHRS_IN:
+				case BUYX:
 					lot = new Lot(txn.acctid, txn.getDate(), sec.secid, //
 							txn.getShares(), txn.getShareCost(), txn);
 					lots.add(lot);
 					break;
 
+				case SHRS_IN: {
+					Lot srclot = null;
+					for (Lot xlot : lots) {
+						if ((xlot.secid == txn.security.secid) //
+								&& xlot.shares.equals(txn.getShares())) {
+							srclot = xlot;
+							break;
+						}
+					}
+
+					if (srclot != null) {
+						lot = new Lot(srclot, txn);
+					} else {
+						lot = new Lot(txn.acctid, txn.getDate(), sec.secid, //
+								txn.getShares(), txn.getShareCost(), txn);
+					}
+
+					lots.add(lot);
+				}
+					break;
+
 				case SELL:
-				case SHRS_OUT: {
+				case SELLX: {
+					// case SHRS_OUT: {
 					BigDecimal sharesRemaining = txn.getShares().abs();
 
 					while (!Common.isEffectivelyZero(sharesRemaining)) {
@@ -561,10 +526,9 @@ public class QifDomReader {
 							lots.add(lot);
 							sharesRemaining = BigDecimal.ZERO;
 						} else {
+							sourcelot.expireTransaction = txn;
 							sharesRemaining = sharesRemaining.subtract(sourcelot.shares);
 						}
-
-						sourcelot.expireDate = txn.getDate();
 					}
 				}
 					break;
@@ -578,7 +542,6 @@ public class QifDomReader {
 							break;
 						}
 
-						oldlot.expireDate = txn.getDate();
 						Lot newlot = new Lot(oldlot, txn);
 						newlots.add(newlot);
 					}
@@ -592,18 +555,64 @@ public class QifDomReader {
 				}
 			}
 
-			System.out.println("nlots=" + lots.size());
+			mapLots(lots);
+
+			sec.setLots(lots);
+		}
+	}
+
+	private void mapLots(List<Lot> origlots) {
+		if (origlots.isEmpty()) {
+			return;
 		}
 
-		// processOriginalLots();
-		// processTransferLots();
-		// processSellLots();
-		//
-		// for (GenericTxn tx : GenericTxn.getAllTransactions()) {
-		// if (tx instanceof InvestmentTxn) {
-		// // ((InvestmentTxn) tx).setupLots();
-		// }
-		// }
+		List<Lot> toplots = new ArrayList<Lot>();
+
+		for (Lot lot : origlots) {
+			if (lot.sourceLot == null) {
+				toplots.add(lot);
+			}
+		}
+
+		mapLotsRecursive(toplots, "");
+
+		System.out.println("\nOpen lots:\n");
+
+		for (Lot lot : origlots) {
+			if (lot.expireTransaction == null) {
+				System.out.println("  " + lot.toString());
+			}
+		}
+	}
+
+	private void mapLotsRecursive(List<Lot> lots, String indent) {
+		for (Lot lot : lots) {
+			System.out.println(indent + "- " + lot.toString());
+			mapLotsRecursive(lot.childLots, indent + "  ");
+		}
+	}
+
+	private void connectSecurityTransfers() {
+		final List<InvestmentTxn> xins = new ArrayList<InvestmentTxn>();
+		final List<InvestmentTxn> xouts = new ArrayList<InvestmentTxn>();
+
+		for (GenericTxn txn : GenericTxn.getAllTransactions()) {
+			if (txn instanceof InvestmentTxn) {
+				if ((txn.getAction() == TxAction.SHRS_IN)) {
+					if (txn.getDate().equals(new QDate(1991, 10, 30))) {
+						System.out.println();
+					}
+					xins.add((InvestmentTxn) txn);
+				} else if (txn.getAction() == TxAction.SHRS_OUT) {
+					if (txn.getDate().equals(new QDate(1991, 10, 30))) {
+						System.out.println();
+					}
+					xouts.add((InvestmentTxn) txn);
+				}
+			}
+		}
+
+		connectSecurityTransfers(xins, xouts);
 	}
 
 	private void connectSecurityTransfers(List<InvestmentTxn> xins, List<InvestmentTxn> xouts) {
@@ -649,9 +658,7 @@ public class QifDomReader {
 			outs.clear();
 
 			final InvestmentTxn t = xins.get(0);
-if (t.getDate().equals(new QDate(2018,2,26))) {
-	System.out.println();
-}
+
 			inshrs = gatherTransactionsForSecurityTransfer(ins, xins, null, t.security, t.getDate());
 			outshrs = gatherTransactionsForSecurityTransfer(outs, xouts, unmatched, t.security, t.getDate());
 
@@ -669,13 +676,13 @@ if (t.getDate().equals(new QDate(2018,2,26))) {
 					if (inTx.security.secid != outs.get(0).security.secid) {
 						System.out.println();
 					}
-					inTx.xferTxns = outs;
+					inTx.xferTxns = new ArrayList<InvestmentTxn>(outs);
 				}
 				for (final InvestmentTxn outTx : outs) {
 					if (outTx.security.secid != ins.get(0).security.secid) {
 						System.out.println();
 					}
-					outTx.xferTxns = ins;
+					outTx.xferTxns = new ArrayList<InvestmentTxn>(ins);
 				}
 			}
 

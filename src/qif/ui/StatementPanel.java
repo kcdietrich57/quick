@@ -167,7 +167,7 @@ public class StatementPanel extends JPanel implements AccountSelectionListener {
 			}
 		});
 	}
-	
+
 	private void addContextMenu() {
 		final JPopupMenu statPopupMenu = new JPopupMenu();
 		JMenuItem chooseStatItem = new JMenuItem("Choose Statement");
@@ -200,11 +200,11 @@ public class StatementPanel extends JPanel implements AccountSelectionListener {
 			}
 
 			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-				//  Auto-generated method stub
+				// Auto-generated method stub
 			}
 
 			public void popupMenuCanceled(PopupMenuEvent e) {
-				//  Auto-generated method stub
+				// Auto-generated method stub
 			}
 		});
 	}

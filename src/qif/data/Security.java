@@ -75,6 +75,7 @@ public class Security {
 	public String type;
 	public String goal;
 
+	private final List<Lot> lots = new ArrayList<Lot>();
 	public final List<InvestmentTxn> transactions = new ArrayList<InvestmentTxn>();
 	public final List<QPrice> prices = new ArrayList<QPrice>();
 
@@ -92,6 +93,15 @@ public class Security {
 		this.names = new ArrayList<String>();
 		this.type = "";
 		this.goal = "";
+	}
+
+	public List<Lot> getLots() {
+		return Collections.unmodifiableList(this.lots);
+	}
+
+	public void setLots(List<Lot> lots) {
+		this.lots.clear();
+		this.lots.addAll(lots);
 	}
 
 	public Object getSymbol() {
@@ -150,9 +160,9 @@ public class Security {
 		}
 	}
 
-//	private void sortPrices() {
-//		Collections.sort(this.prices, (o1, o2) -> o1.date.compareTo(o2.date));
-//	}
+	// private void sortPrices() {
+	// Collections.sort(this.prices, (o1, o2) -> o1.date.compareTo(o2.date));
+	// }
 
 	public QPrice getPriceForDate(QDate d) {
 		final int idx = getPriceIndexForDate(d);
