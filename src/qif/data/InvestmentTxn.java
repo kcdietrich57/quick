@@ -1,9 +1,14 @@
 package qif.data;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class InvestmentTxn extends GenericTxn {
+	private static final List<InvestmentTxn> NO_XFER_TXNS = //
+			Collections.unmodifiableList(new ArrayList<InvestmentTxn>());
+	
 	private TxAction action;
 	public Security security;
 	public BigDecimal price;
@@ -28,7 +33,7 @@ public class InvestmentTxn extends GenericTxn {
 		this.commission = null;
 		this.accountForTransfer = "";
 		this.amountTransferred = null;
-		this.xferTxns = null;
+		this.xferTxns = NO_XFER_TXNS;
 	}
 
 	public void setAction(TxAction action) {

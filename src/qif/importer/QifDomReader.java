@@ -410,6 +410,68 @@ public class QifDomReader {
 		return null;
 	}
 
+	private int gatherXferTransactions(List<InvestmentTxn> txns, int ii, //
+			List<InvestmentTxn> srcTxns, List<InvestmentTxn> dstTxns) {
+		InvestmentTxn starttx = txns.get(ii);
+		if (starttx.removesShares()) {
+			srcTxns.add(starttx);
+		} else {
+			dstTxns.add(starttx);
+		}
+
+		boolean complete = false;
+		while (!complete) {
+			complete = true;
+
+			for (InvestmentTxn dstTxn : dstTxns) {
+				for (InvestmentTxn srcTxn : dstTxn.xferTxns) {
+					if (!srcTxns.contains(srcTxn)) {
+						complete = false;
+						srcTxns.add(srcTxn);
+					}
+				}
+			}
+
+			for (InvestmentTxn srcTxn : srcTxns) {
+				for (InvestmentTxn dstTxn : srcTxn.xferTxns) {
+					if (!dstTxns.contains(dstTxn)) {
+						complete = false;
+						dstTxns.add(dstTxn);
+					}
+				}
+			}
+		}
+
+		int jj = ii;
+
+		while (jj < txns.size() //
+				&& (dstTxns.contains(txns.get(jj)) || srcTxns.contains(txns.get(jj)))) {
+			++jj;
+		}
+
+		if (dstTxns.size() + srcTxns.size() != (jj - ii) //
+				|| ((dstTxns.size() > 1) && (srcTxns.size() > 1))) {
+			// TODO also check share counts
+			Common.reportError(String.format( //
+					"Number of src(%d)/dst(%d) transactions does not match", //
+					srcTxns.size(), dstTxns.size()));
+		}
+
+		return jj;
+	}
+
+	private BigDecimal getAvailableShares(List<Lot> lots) {
+		BigDecimal bal = BigDecimal.ZERO;
+
+		for (Lot lot : lots) {
+			if (lot.expireTransaction == null) {
+				bal = bal.add(lot.shares);
+			}
+		}
+
+		return bal;
+	}
+
 	private String printOpenLots(List<Lot> lots) {
 		String s = "";
 		BigDecimal bal = BigDecimal.ZERO;
@@ -453,12 +515,24 @@ public class QifDomReader {
 		for (Security sec : Security.getSecurities()) {
 			List<Lot> lots = new ArrayList<Lot>();
 
-			Lot lot;
-
 			List<InvestmentTxn> txns = new ArrayList<>(sec.transactions);
 			Collections.sort(txns, (t1, t2) -> {
-				return t1.getDate().compareTo(t2.getDate());
+				int dif = t1.getDate().compareTo(t2.getDate());
+				if (dif != 0) {
+					return dif;
+				}
+
+				if (t1.removesShares() != t2.removesShares()) {
+					if (t1.getAccount().acctid != t2.getAccount().acctid) {
+						return (t1.removesShares()) ? -1 : 1;
+					} else {
+						return (t1.removesShares()) ? 1 : -1;
+					}
+				}
+
+				return 0;
 			});
+
 			for (int ii = 0; ii < txns.size(); ++ii) {
 				InvestmentTxn txn = txns.get(ii);
 				if (txn.getAction() != TxAction.STOCKSPLIT) {
@@ -477,97 +551,196 @@ public class QifDomReader {
 				}
 			}
 
-			for (InvestmentTxn txn : txns) {
-				printOpenLots(lots);
+			for (int ii = 0; ii < txns.size();) {
+				List<InvestmentTxn> srcTxns = new ArrayList<InvestmentTxn>();
+				List<InvestmentTxn> dstTxns = new ArrayList<InvestmentTxn>();
+
+				InvestmentTxn txn = txns.get(ii);
+				if ((txn.xferTxns != null) && !txn.xferTxns.isEmpty()) {
+					ii = gatherXferTransactions(txns, ii, srcTxns, dstTxns);
+				} else {
+					if (txn.removesShares()) {
+						srcTxns.add(txn);
+					} else {
+						dstTxns.add(txn);
+					}
+
+					++ii;
+				}
 
 				switch (txn.getAction()) {
 				case BUY:
 				case BUYX:
 				case REINV_INT:
 				case REINV_DIV:
-					lot = new Lot(txn.acctid, txn.getDate(), sec.secid, //
-							txn.getShares(), txn.getShareCost(), txn);
-					lots.add(lot);
+				case REINV_SH:
+				case REINV_LG:
+					addShares(lots, txn);
 					break;
 
-				case SHRS_IN: {
-					Lot srclot = null;
-					for (Lot xlot : lots) {
-						if ((xlot.expireTransaction == null) //
-								&& (xlot.secid == txn.security.secid) //
-								&& xlot.shares.equals(txn.getShares())) {
-							srclot = xlot;
-							break;
-						}
-					}
-
-					if (srclot != null) {
-						lot = new Lot(srclot, txn);
+				case SHRS_IN:
+					if (txn.xferTxns.isEmpty()) {
+						addShares(lots, txn);
 					} else {
-						lot = new Lot(txn.acctid, txn.getDate(), sec.secid, //
-								txn.getShares(), txn.getShareCost(), txn);
+						transferShares(lots, txn, srcTxns, dstTxns);
 					}
+					break;
 
-					lots.add(lot);
-				}
+				case SHRS_OUT:
+					if (txn.xferTxns.isEmpty()) {
+						removeShares(lots, txn);
+					} else {
+						// We postpone lot changes for transfer until we see where the shares go later
+					}
 					break;
 
 				case SELL:
-				case SELLX: {
-					// case SHRS_OUT: {
-					BigDecimal sharesRemaining = txn.getShares().abs();
-
-					while (!Common.isEffectivelyZero(sharesRemaining)) {
-						Lot sourcelot = getFirstOpenLot(lots);
-						if (sourcelot == null) {
-							Common.reportError("Can't find lot for sale");
-							break;
-						}
-
-						if (sourcelot.shares.compareTo(sharesRemaining) > 0) {
-							lot = new Lot(sourcelot, sourcelot.shares.subtract(sharesRemaining), txn);
-							lots.add(lot);
-							sharesRemaining = BigDecimal.ZERO;
-						} else {
-							sharesRemaining = sharesRemaining.subtract(sourcelot.shares);
-						}
-
-						sourcelot.expireTransaction = txn;
-					}
-				}
+				case SELLX:
+					removeShares(lots, txn);
 					break;
 
-				case STOCKSPLIT: {
-					List<Lot> newlots = new ArrayList<Lot>();
+				case STOCKSPLIT:
+					processSplit(lots, txn);
+					break;
 
-					for (;;) {
-						Lot oldlot = getFirstOpenLot(lots);
-						if (oldlot == null) {
-							break;
-						}
-
-						Lot newlot = new Lot(oldlot, txn);
-						newlots.add(newlot);
-					}
-
-					lots.addAll(newlots);
-				}
+				case CASH:
+				case GRANT:
+				case VEST:
+				case EXERCISE:
+				case EXERCISEX:
+				case EXPIRE:
 					break;
 
 				default:
+					System.out.println("Skipping transaction: " + txn.toString());
 					break;
 				}
 			}
 
-			mapLots(lots);
+			mapLots(sec, lots, false);
 
 			sec.setLots(lots);
 		}
+
+		summarizeLots();
 	}
 
-	private void mapLots(List<Lot> origlots) {
+	private void processSplit(List<Lot> lots, InvestmentTxn txn) {
+		List<Lot> newlots = new ArrayList<Lot>();
+
+		for (;;) {
+			Lot oldlot = getFirstOpenLot(lots);
+			if (oldlot == null) {
+				break;
+			}
+
+			Lot newlot = new Lot(oldlot, oldlot.acctid, txn);
+			newlots.add(newlot);
+		}
+
+		lots.addAll(newlots);
+	}
+
+	private void addShares(List<Lot> lots, InvestmentTxn txn) {
+		Lot lot = new Lot(txn.acctid, txn.getDate(), txn.security.secid, //
+				txn.getShares(), txn.getShareCost(), txn);
+		lots.add(lot);
+	}
+
+	private void removeShares(List<Lot> lots, InvestmentTxn txn) {
+		BigDecimal sharesRemaining = txn.getShares().abs();
+		BigDecimal sharesAvailable = getAvailableShares(lots);
+
+		if (sharesAvailable.compareTo(sharesRemaining) < 0) {
+			printOpenLots(lots);
+			Common.reportError("Insufficient shares for sale/transfer");
+		}
+
+		while (!Common.isEffectivelyZero(sharesRemaining)) {
+			Lot srcLot = getFirstOpenLot(lots);
+
+			if (srcLot.shares.compareTo(sharesRemaining) > 0) {
+				// Split source lot
+				Lot lot = new Lot(srcLot, srcLot.acctid, //
+						srcLot.shares.subtract(sharesRemaining), txn);
+				lots.add(lot);
+
+				sharesRemaining = BigDecimal.ZERO;
+			} else {
+				// Consume entire source lot
+				sharesRemaining = sharesRemaining.subtract(srcLot.shares);
+			}
+
+			srcLot.expireTransaction = txn;
+		}
+	}
+
+	private void transferShares(List<Lot> lots, InvestmentTxn txn, //
+			List<InvestmentTxn> srcTxns, List<InvestmentTxn> dstTxns) {
+		InvestmentTxn dstTxn = null;
+		BigDecimal dstSharesRemaining = BigDecimal.ZERO;
+
+		for (InvestmentTxn srcTxn : srcTxns) {
+			BigDecimal srcSharesRemaining = srcTxn.getShares();
+
+			while (srcSharesRemaining.signum() > 0) {
+				if (dstSharesRemaining.signum() <= 0) {
+					if (dstTxns.isEmpty()) {
+						Common.reportError("Transfer src/dst transactions don't match");
+						break;
+					}
+
+					dstTxn = dstTxns.remove(0);
+					dstSharesRemaining = dstTxn.getShares();
+				}
+
+				Lot srclot = getFirstOpenLot(lots);
+				if (srclot == null) {
+					Common.reportError("Can't find sufficient source lots for transfer");
+					break;
+				}
+
+				Lot newDstLot;
+
+				if (srclot.shares.compareTo(srcSharesRemaining) > 0) {
+					// Split the source lot
+					Lot remainderlot = new Lot(srclot, srcTxn.acctid, //
+							srclot.shares.subtract(srcSharesRemaining), srcTxn);
+					lots.add(remainderlot);
+
+					newDstLot = new Lot(srclot, srcTxn.acctid, srcSharesRemaining, dstTxn);
+
+					srcSharesRemaining = BigDecimal.ZERO;
+				} else {
+					// Consume the entire source lot
+					newDstLot = new Lot(srclot, srcTxn.acctid, srcTxn);
+
+					srcSharesRemaining = srcSharesRemaining.subtract(srclot.shares);
+				}
+
+				if (dstSharesRemaining.compareTo(newDstLot.shares) > 0) {
+					dstSharesRemaining = dstSharesRemaining.subtract(newDstLot.shares);
+				} else {
+					// Don't let it go negative
+					dstSharesRemaining = BigDecimal.ZERO;
+				}
+
+				lots.add(newDstLot);
+			}
+		}
+	}
+
+	private void summarizeLots() {
+		System.out.println("\nSummary of open lots:");
+
+		for (Security sec : Security.getSecurities()) {
+			mapLots(sec, sec.getLots(), true);
+		}
+	}
+
+	private BigDecimal mapLots(Security sec, List<Lot> origlots, boolean summary) {
 		if (origlots.isEmpty()) {
-			return;
+			return BigDecimal.ZERO;
 		}
 
 		List<Lot> toplots = new ArrayList<Lot>();
@@ -578,15 +751,39 @@ public class QifDomReader {
 			}
 		}
 
-		mapLotsRecursive(toplots, "");
+		if (!summary) {
+			System.out.println("\n--------------------------------");
+			System.out.println("Lots for security " + sec.getSymbol());
 
-		System.out.println("\nOpen lots:\n");
+			mapLotsRecursive(toplots, "");
+
+			System.out.println("\nOpen lots:\n");
+		}
+
+		BigDecimal balance = BigDecimal.ZERO;
+		int lotcount = 0;
 
 		for (Lot lot : origlots) {
 			if (lot.expireTransaction == null) {
-				System.out.println("  " + lot.toString());
+				balance = balance.add(lot.shares);
+				++lotcount;
+
+				if (!summary) {
+					System.out.println("  " + lot.toString() + " " + Common.formatAmount3(balance));
+				}
 			}
 		}
+
+		if (!balance.equals(BigDecimal.ZERO)) {
+			if (summary) {
+				System.out.print(String.format("  %-6s: ", sec.getSymbol()));
+			}
+
+			System.out.println(String.format("  lots=%3d  bal=%12s", //
+					lotcount, Common.formatAmount3(balance)));
+		}
+
+		return balance;
 	}
 
 	private void mapLotsRecursive(List<Lot> lots, String indent) {

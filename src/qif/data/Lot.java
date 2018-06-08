@@ -33,13 +33,13 @@ public class Lot {
 		this.expireTransaction = null;
 	}
 
-	public Lot(Lot srcLot, BigDecimal shares, InvestmentTxn txn) {
+	public Lot(Lot srcLot, int acctid, BigDecimal shares, InvestmentTxn txn) {
 		checkChildLots(srcLot, shares);
 
 		this.createDate = srcLot.createDate;
 		this.sourceLot = srcLot;
 		this.sourceLot.childLots.add(this);
-		this.acctid = srcLot.acctid;
+		this.acctid = acctid;
 		this.secid = srcLot.secid;
 		this.shares = shares;
 		this.costBasis = shares.multiply(srcLot.getPrice());
@@ -47,11 +47,11 @@ public class Lot {
 		this.expireTransaction = null;
 	}
 
-	public Lot(Lot srcLot, InvestmentTxn txn) {
+	public Lot(Lot srcLot, int acctid, InvestmentTxn txn) {
 		this.createDate = srcLot.createDate;
 		this.sourceLot = srcLot;
 		this.sourceLot.childLots.add(this);
-		this.acctid = srcLot.acctid;
+		this.acctid = acctid;
 		this.secid = srcLot.secid;
 		this.shares = srcLot.shares.multiply(txn.getSplitRatio());
 		this.costBasis = srcLot.costBasis;
