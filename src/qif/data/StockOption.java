@@ -364,12 +364,12 @@ public class StockOption {
 		if (!isLiveOn(date)) {
 			return BigDecimal.ZERO;
 		}
-		
+
 		BigDecimal shares = getAvailableShares(true);
 		QPrice qprice = Security.getSecurity(this.secid).getPriceForDate(date);
-		BigDecimal price = qprice.price;
-		
-		return shares.multiply(price);
+		BigDecimal netPrice = qprice.price.subtract(this.strikePrice);
+
+		return (netPrice.signum() > 0) ? shares.multiply(netPrice) : BigDecimal.ZERO;
 	}
 
 	public BigDecimal getAvailableShares() {
