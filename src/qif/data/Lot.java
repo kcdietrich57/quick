@@ -17,9 +17,13 @@ public class Lot {
 	public final Lot sourceLot;
 	public final List<Lot> childLots = new ArrayList<Lot>();
 
+	/** The transaction that created this lot */
 	public final InvestmentTxn createTransaction;
+
+	/** The transaction that invalidated this lot */
 	public InvestmentTxn expireTransaction;
 
+	/** True if this represents adding shares to the associated account */
 	public boolean addshares = true;
 
 	public Lot(int acctid, QDate date, int secid, BigDecimal shares, BigDecimal cost, InvestmentTxn txn) {
@@ -61,6 +65,10 @@ public class Lot {
 		srcLot.expireTransaction = txn;
 	}
 
+	public BigDecimal getPrice() {
+		return this.costBasis.divide(this.shares);
+	}
+
 	void checkChildLots(Lot lot, BigDecimal additionalShares) {
 		BigDecimal sum = BigDecimal.ZERO;
 
@@ -69,12 +77,8 @@ public class Lot {
 		}
 
 		if (sum.add(additionalShares).compareTo(lot.shares) > 0) {
-			System.out.println("Oops, to much child lots");
+			Common.reportError("Oops, to much child lots");
 		}
-	}
-
-	public BigDecimal getPrice() {
-		return this.costBasis.divide(this.shares);
 	}
 
 	public String toString() {

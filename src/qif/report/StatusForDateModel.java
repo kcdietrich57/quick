@@ -6,6 +6,7 @@ import java.util.List;
 
 import qif.data.Account;
 import qif.data.AccountType;
+import qif.data.Common;
 import qif.data.QDate;
 
 public class StatusForDateModel {
@@ -65,6 +66,14 @@ public class StatusForDateModel {
 		public BigDecimal value = BigDecimal.ZERO;
 		public BigDecimal shares = BigDecimal.ZERO;
 		public BigDecimal price = BigDecimal.ZERO;
+
+		public String toString() {
+			return String.format("%s: %s@%s %s", //
+					this.name, //
+					Common.formatAmount3(this.shares).trim(), //
+					Common.formatAmount3(this.price).trim(), //
+					Common.formatAmount3(this.value).trim());
+		}
 	};
 
 	public static class AccountSummary {

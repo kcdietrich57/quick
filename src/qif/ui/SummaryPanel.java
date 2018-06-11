@@ -21,7 +21,7 @@ public class SummaryPanel extends JPanel {
 
 		setBorder(new EmptyBorder(10, 0, 10, 0));
 
-		Balances bals = NetWorthReporter.getNetWorthForDate(null);
+		Balances bals = NetWorthReporter.getBalancesForDate(null);
 
 		Font bfont = new Font("Helvetica", Font.BOLD, 16);
 		Font font = new Font("Helvetica", Font.PLAIN, 16);

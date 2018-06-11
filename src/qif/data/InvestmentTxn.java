@@ -8,7 +8,7 @@ import java.util.List;
 public class InvestmentTxn extends GenericTxn {
 	private static final List<InvestmentTxn> NO_XFER_TXNS = //
 			Collections.unmodifiableList(new ArrayList<InvestmentTxn>());
-	
+
 	private TxAction action;
 	public Security security;
 	public BigDecimal price;
@@ -48,8 +48,24 @@ public class InvestmentTxn extends GenericTxn {
 		this.quantity = qty;
 	}
 
+	private boolean isStockOption() {
+		switch (getAction()) {
+		case GRANT:
+		case VEST:
+		case EXPIRE:
+		case EXERCISE:
+		case EXERCISEX:
+			return true;
+
+		default:
+			return false;
+		}
+	}
+
 	public BigDecimal getShares() {
-		if ((this.quantity == null) || (getAction() == TxAction.STOCKSPLIT)) {
+		if ((this.quantity == null) //
+				|| isStockOption() //
+				|| (getAction() == TxAction.STOCKSPLIT)) {
 			return BigDecimal.ZERO;
 		}
 

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import app.QifLoader;
 import qif.data.Account;
@@ -32,6 +33,7 @@ import qif.data.SecurityPortfolio;
 import qif.data.SecurityPosition;
 import qif.data.SimpleTxn;
 import qif.data.Statement;
+import qif.data.StockOption;
 import qif.data.TxAction;
 import qif.importer.QFileReader.SectionType;
 import qif.reconcile.Reconciler;
@@ -287,6 +289,7 @@ public class QifDomReader {
 		final File d = new File(this.qifDir, "quotes");
 		loadSecurityPriceHistory(d);
 
+		processStockOptions();
 		processSecurities();
 		fixPortfolios();
 
@@ -305,6 +308,97 @@ public class QifDomReader {
 		if (QifDom.loadedStatementsVersion != StatementDetails.CURRENT_VERSION) {
 			rewriteStatementLogFile();
 		}
+	}
+
+	private void processStockOptions() {
+		LineNumberReader rdr = null;
+		try {
+			File optfile = new File(QifDom.qifDir, "options.txt");
+			assert optfile.isFile() && optfile.canRead();
+
+			rdr = new LineNumberReader(new FileReader(optfile));
+
+			String line = rdr.readLine();
+			while (line != null) {
+				line = line.trim();
+				if (line.isEmpty() || line.charAt(0) == '#') {
+					line = rdr.readLine();
+					continue;
+				}
+
+				StringTokenizer toker = new StringTokenizer(line, " ");
+
+				String datestr = toker.nextToken();
+				QDate date = Common.parseQDate(datestr);
+				String op = toker.nextToken();
+				String name = toker.nextToken();
+
+				if (op.equals("GRANT")) {
+					// 05/23/91 GRANT 2656 ASCL ISI_Options 500 6.00 Y 4 10y
+					String secname = toker.nextToken();
+					Security sec = Security.findSecurity(secname);
+					String acctname = toker.nextToken().replaceAll("_", " ");
+					Account acct = Account.findAccount(acctname);
+					BigDecimal shares = new BigDecimal(toker.nextToken());
+					BigDecimal price = new BigDecimal(toker.nextToken());
+					String vestPeriod = toker.nextToken();
+					int vestPeriodMonths = (vestPeriod.charAt(0) == 'Y') ? 12 : 3;
+					int vestCount = Integer.parseInt(toker.nextToken());
+
+					StockOption opt = StockOption.grant(name, date, //
+							acct.acctid, sec.secid, //
+							shares, price, vestPeriodMonths, vestCount, 0);
+					System.out.println("Granted: " + opt.toString());
+				} else if (op.equals("VEST")) {
+					// 05/23/92 VEST 2656 1
+					int vestNumber = Integer.parseInt(toker.nextToken());
+
+					StockOption opt = StockOption.vest(name, date, vestNumber);
+					System.out.println("Vested: " + opt.toString());
+
+				} else if (op.equals("SPLIT")) {
+					// 09/16/92 SPLIT 2656 2 1 [1000/3.00]
+					int newShares = Integer.parseInt(toker.nextToken());
+					int oldShares = Integer.parseInt(toker.nextToken());
+
+					StockOption opt = StockOption.split(name, date, newShares, oldShares);
+					System.out.println("Split: " + opt.toString());
+				} else if (op.equals("EXPIRE")) {
+					// 05/23/01 EXPIRE 2656
+					StockOption opt = StockOption.expire(name, date);
+					if (opt != null) {
+						System.out.println("Expire: " + opt.toString());
+					}
+				} else if (op.equals("CANCEL")) {
+					// 05/23/01 CANCEL 2656
+					StockOption opt = StockOption.cancel(name, date);
+					if (opt != null) {
+						System.out.println("Cancel: " + opt.toString());
+					}
+				} else if (op.equals("EXERCISE")) {
+					// 09/19/95 EXERCISE 2656 2000 32.75
+					BigDecimal shares = new BigDecimal(toker.nextToken());
+					// BigDecimal price = new BigDecimal(toker.nextToken());
+
+					StockOption opt = StockOption.exercise(name, date, shares);
+					System.out.println("Exercise: " + opt.toString());
+				}
+
+				line = rdr.readLine();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (rdr != null) {
+				try {
+					rdr.close();
+				} catch (IOException e) {
+				}
+			}
+		}
+
+		List<StockOption> openOptions = StockOption.getOpenOptions();
+		System.out.println("\nOpen Stock Options:\n" + openOptions.toString());
 	}
 
 	private void processSecurities() {
@@ -337,22 +431,34 @@ public class QifDomReader {
 			case REINV_DIV:
 			case REINV_LG:
 			case REINV_SH:
-			case GRANT:
-			case EXPIRE:
 			case BUYX:
 			case REINV_INT:
-			case VEST:
 			case SHRS_OUT:
 			case SELL:
 			case SELLX:
-			case EXERCISE:
-			case EXERCISEX:
 				pos.shares = pos.shares.add(txn.getShares());
 				break;
-			// pos.shares = pos.shares.subtract(txn.quantity);
-			// break;
+
+			case GRANT:
+				StockOption.processGrant(txn);
+				break;
+
+			case VEST:
+				StockOption.processVest(txn);
+				break;
+
+			case EXERCISE:
+			case EXERCISEX:
+				StockOption.processExercise(txn);
+				break;
+
+			case EXPIRE:
+				StockOption.processExpire(txn);
+				break;
 
 			case STOCKSPLIT:
+				StockOption.processSplit(txn);
+
 				pos.shares = pos.shares.multiply(txn.getShares());
 				pos.shares = pos.shares.divide(BigDecimal.TEN);
 				break;
@@ -774,7 +880,7 @@ public class QifDomReader {
 			}
 		}
 
-		if (!balance.equals(BigDecimal.ZERO)) {
+		if (!Common.isEffectivelyZero(balance)) {
 			if (summary) {
 				System.out.print(String.format("  %-6s: ", sec.getSymbol()));
 			}

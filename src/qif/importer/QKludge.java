@@ -26,6 +26,7 @@ class QKludge {
 				|| name.equals("HEC Pension") //
 				|| name.equals("HEC 401k Profit Sharing") //
 				|| name.equals("Invest IRA") //
+				|| name.equals("TD IRA (E*Trade)") //
 				|| name.equals("TD IRA (Scottrade)") //
 				|| name.equals("GD IRA Ameritrade") //
 				|| name.equals("TD IRA Ameritrade") //
