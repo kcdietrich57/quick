@@ -165,7 +165,7 @@ public class NetWorthReporter {
 
 				ssummary.name = "Options:" + sec.getName();
 				ssummary.shares = opt.getAvailableShares(true);
-				ssummary.price = sec.getPriceForDate(d).price;
+				ssummary.price = sec.getPriceForDate(d).getPrice();
 				ssummary.value = opt.getValueForDate(d);
 
 				asummary.securities.add(ssummary);
@@ -191,7 +191,7 @@ public class NetWorthReporter {
 
 							ssummary.name = nn;
 							ssummary.value = posval;
-							ssummary.price = pos.security.getPriceForDate(d).price;
+							ssummary.price = pos.security.getPriceForDate(d).getPrice();
 
 							int idx = pos.getTransactionIndexForDate(d);
 							if (idx >= 0) {

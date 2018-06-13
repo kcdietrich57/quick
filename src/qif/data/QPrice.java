@@ -9,8 +9,8 @@ public class QPrice implements Comparable<QPrice> {
 
 	public QDate date;
 	public String symbol;
-	public BigDecimal price;
-	public BigDecimal splitAdjustedPrice;
+	private BigDecimal price;
+	private BigDecimal splitAdjustedPrice;
 
 	public QPrice() {
 		this.price = null;
@@ -18,10 +18,34 @@ public class QPrice implements Comparable<QPrice> {
 		this.date = null;
 	}
 
+	public QPrice(QDate date, String symbol, BigDecimal price, BigDecimal splitAdjPrice) {
+		this.date = date;
+		this.symbol = symbol;
+		this.price = price;
+		this.splitAdjustedPrice = splitAdjPrice;
+	}
+
 	private QPrice(BigDecimal val) {
 		this();
 
 		this.price = val;
+	}
+
+	public BigDecimal getPrice() {
+		return this.price;
+	}
+
+	public void setPrice(BigDecimal price) {
+		this.price = price;
+	}
+
+	public BigDecimal getSplitAdjustedPrice() {
+		return (this.splitAdjustedPrice != null) ? this.splitAdjustedPrice : this.price;
+	}
+
+	public void setSplitAdjustedPrice(BigDecimal saPrice, BigDecimal price) {
+		this.price = price;
+		this.splitAdjustedPrice = saPrice;
 	}
 
 	/**
@@ -108,7 +132,7 @@ public class QPrice implements Comparable<QPrice> {
 	}
 
 	public int compareTo(QPrice o) {
-		return this.splitAdjustedPrice.compareTo(o.splitAdjustedPrice);
+		return this.getSplitAdjustedPrice().compareTo(o.getSplitAdjustedPrice());
 	}
 
 	public String toString() {
@@ -117,10 +141,10 @@ public class QPrice implements Comparable<QPrice> {
 				Common.formatAmount(this.price));
 
 		if (this.splitAdjustedPrice != null) {
-			s += String.format("  splitAdj(%s)\n", //
+			s += String.format("  splitAdj(%s)", //
 					Common.formatAmount(this.splitAdjustedPrice));
 		}
 
-		return s + "\n";
+		return s;
 	}
 }

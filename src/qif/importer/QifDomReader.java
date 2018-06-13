@@ -1279,6 +1279,36 @@ public class QifDomReader {
 				loadQuoteFile(sec, f);
 			}
 		}
+
+		for (Security sec : Security.getSecurities()) {
+			String symbol = sec.getSymbol();
+
+			if (symbol != null) {
+				int warningCount = 0;
+				System.out.println("Comparing price history for " + symbol);
+
+				List<QPrice> prices = QuoteDownloader.loadPriceHistory(symbol);
+
+				if (prices != null) {
+					for (QPrice price : prices) {
+						QPrice secprice = sec.getPriceForDate(price.date);
+
+						if (secprice == null) {
+							sec.addPrice(price, false);
+						} else if (price.compareTo(secprice) != 0) {
+							sec.addPrice(price, true);
+							++warningCount;
+						}
+					}
+
+					if (warningCount > 0) {
+						Common.reportWarning( //
+								"Security price mismatches for " + symbol + ":" //
+								+ Integer.toString(warningCount));
+					}
+				}
+			}
+		}
 	}
 
 	private static void loadQuoteFile(Security sec, File f) {
@@ -1414,11 +1444,9 @@ public class QifDomReader {
 				final BigDecimal splitRatio = sec.getSplitRatioForDate(date);
 
 				if (isSplitAdjusted) {
-					p.splitAdjustedPrice = price;
-					p.price = price.multiply(splitRatio);
+					p.setSplitAdjustedPrice(price, price.multiply(splitRatio));
 				} else {
-					p.splitAdjustedPrice = price.divide(splitRatio);
-					p.price = price;
+					p.setSplitAdjustedPrice(price.divide(splitRatio), price);
 				}
 
 				prices.add(p);
@@ -1455,12 +1483,10 @@ public class QifDomReader {
 			switch (sectype) {
 			case Tag:
 			case Category:
-				// System.out.println("Loading categories");
 				loadCategories();
 				break;
 
 			case Account:
-				// System.out.println("Loading accounts");
 				loadAccounts();
 				break;
 
@@ -1469,42 +1495,31 @@ public class QifDomReader {
 			case Cash:
 			case CreditCard:
 			case Bank:
-				// System.out.println("Loading transactions for " +
-				// this.dom.currAccount.name);
 				loadNonInvestmentTransactions();
 				break;
 
 			case Investment:
-				// System.out.println("Loading transactions for " +
-				// this.dom.currAccount.name);
 				loadInvestmentTransactions();
 				break;
 
 			case Statements:
-				// System.out.println("Loading statements");
 				loadStatements(this.filerdr);
 				break;
 
 			case Security:
-				// if (this.dom.securities.isEmpty()) {
-				// System.out.println("Loading securities");
-				// }
 				loadSecurities();
 				break;
 
 			case Prices:
-				// System.out.println("Loading prices");
 				loadPrices();
 				break;
 
 			case QClass:
 				Common.reportError("TODO not implemented");
-				// dom.classes.addAll(Class.read(secbody));
 				break;
 
 			case MemorizedTransaction:
 				Common.reportError("TODO not implemented");
-				// dom.memorizedTxns.addAll(MemorizedTxn.read(secbody));
 				break;
 
 			default:
@@ -2149,7 +2164,7 @@ public class QifDomReader {
 				p.value = (valStr.equals("x")) ? null : new BigDecimal(valStr);
 				p.shares = (qtyStr.equals("x")) ? null : new BigDecimal(qtyStr);
 				BigDecimal price = (priceStr.equals("x")) ? null : new BigDecimal(priceStr);
-				final BigDecimal price4date = sec.getPriceForDate(currstmt.date).price;
+				final BigDecimal price4date = sec.getPriceForDate(currstmt.date).getPrice();
 
 				// We care primarily about the number of shares. If that is not
 				// present, the other two must be set for us to calculate the

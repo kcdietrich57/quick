@@ -104,7 +104,7 @@ public class Security {
 		this.lots.addAll(lots);
 	}
 
-	public Object getSymbol() {
+	public String getSymbol() {
 		return (this.symbol != null) ? this.symbol : getName();
 	}
 
@@ -145,7 +145,7 @@ public class Security {
 				if (replace) {
 					this.prices.set(idx, newPrice);
 				} else {
-					if (!p.splitAdjustedPrice.equals(newPrice.splitAdjustedPrice) //
+					if (!p.getSplitAdjustedPrice().equals(newPrice.getSplitAdjustedPrice()) //
 							&& QifDom.verbose) {
 						Common.reportWarning("Security price mismatch");
 					}

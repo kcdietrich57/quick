@@ -72,7 +72,7 @@ public class SecurityPosition {
 
 	public BigDecimal getSecurityPositionValueForDate(QDate d) {
 		if (this.transactions.isEmpty()) {
-			return this.shares.multiply(this.security.getPriceForDate(d).price);
+			return this.shares.multiply(this.security.getPriceForDate(d).getPrice());
 		}
 
 		final int idx = getTransactionIndexForDate(d);
@@ -82,7 +82,7 @@ public class SecurityPosition {
 
 		final InvestmentTxn txn = this.transactions.get(idx);
 		final BigDecimal tshrbal = this.shrBalance.get(idx);
-		final BigDecimal price = txn.security.getPriceForDate(d).price;
+		final BigDecimal price = txn.security.getPriceForDate(d).getPrice();
 
 		return price.multiply(tshrbal);
 	}

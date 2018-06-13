@@ -367,7 +367,7 @@ public class StockOption {
 
 		BigDecimal shares = getAvailableShares(true);
 		QPrice qprice = Security.getSecurity(this.secid).getPriceForDate(date);
-		BigDecimal netPrice = qprice.price.subtract(this.strikePrice);
+		BigDecimal netPrice = qprice.getPrice().subtract(this.strikePrice);
 
 		return (netPrice.signum() > 0) ? shares.multiply(netPrice) : BigDecimal.ZERO;
 	}

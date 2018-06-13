@@ -66,7 +66,7 @@ public class LoadSecurityHistory {
 							break;
 						}
 
-						if (pp.price.compareTo(p.price) != 0) {
+						if (pp.getPrice().compareTo(p.getPrice()) != 0) {
 							// System.out.println( //
 							// "WARNING! Price mismatch for " + //
 							// Common.getDateString(fd) + " " + //
@@ -90,7 +90,7 @@ public class LoadSecurityHistory {
 				if (pcommon == null) {
 					pcommon = pp;
 				} else if ((pp != null) && //
-						pcommon.price.compareTo(pp.price) != 0) {
+						pcommon.getPrice().compareTo(pp.getPrice()) != 0) {
 					allmatch = false;
 					break;
 				}
@@ -115,7 +115,7 @@ public class LoadSecurityHistory {
 					for (int jj = ii + 1; jj < pricesForDate.size(); ++jj) {
 						final QPrice pp = pricesForDate.get(jj);
 
-						if ((pp != null) && (p.price.compareTo(pp.price) == 0)) {
+						if ((pp != null) && (p.getPrice().compareTo(pp.getPrice()) == 0)) {
 							pricesForDate.remove(jj);
 							--jj;
 						}
@@ -125,7 +125,7 @@ public class LoadSecurityHistory {
 			for (int ii = 0; ii < extraPricesForDate.size(); ++ii) {
 				final QPrice p = extraPricesForDate.get(ii);
 				for (final QPrice pp : pricesForDate) {
-					if ((pp != null) && (p.price.compareTo(pp.price) == 0)) {
+					if ((pp != null) && (p.getPrice().compareTo(pp.getPrice()) == 0)) {
 						extraPricesForDate.remove(ii);
 						--ii;
 					}
@@ -134,13 +134,13 @@ public class LoadSecurityHistory {
 
 			for (final QPrice p : pricesForDate) {
 				if (p != null) {
-					s += "  " + Common.formatAmount3(p.price);
+					s += "  " + Common.formatAmount3(p.getPrice());
 				} else {
 					s += "            ";
 				}
 			}
 			for (final QPrice p : extraPricesForDate) {
-				s += " *" + Common.formatAmount3(p.price);
+				s += " *" + Common.formatAmount3(p.getPrice());
 			}
 			extraPricesForDate.clear();
 
