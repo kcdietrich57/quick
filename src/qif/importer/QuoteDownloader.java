@@ -83,8 +83,7 @@ public class QuoteDownloader {
 
 	private static JSONObject loadQuoteHistory(String symbol, String function, boolean full) {
 		StringBuilder sb = new StringBuilder();
-		String json = null;
-
+		String json = "No quotes";
 		File outdir = new File(QifDom.qifDir, "quotes");
 		File outfile = new File(outdir, symbol + ".quote");
 
@@ -127,12 +126,8 @@ public class QuoteDownloader {
 				}
 
 				json = sb.toString();
-
-				PrintWriter writer = new PrintWriter(outfile);
-				writer.print(json);
-				writer.close();
 			} catch (Exception e) {
-				// e.printStackTrace();
+				//e.printStackTrace();
 			} finally {
 				try {
 					if (response != null) {
@@ -141,10 +136,20 @@ public class QuoteDownloader {
 				} catch (Exception e) {
 				}
 			}
+
+			try {
+				PrintWriter writer = new PrintWriter(outfile);
+				writer.print(json);
+				writer.close();
+			} catch (Exception e) {
+
+			}
 		}
 
 		try {
-			return new JSONObject(json);
+			if (!json.startsWith("No quotes")) {
+				return new JSONObject(json);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
