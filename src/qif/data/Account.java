@@ -226,6 +226,15 @@ public class Account {
 		return null;
 	}
 
+	public Statement getUnclearedStatement() {
+		Statement stat = new Statement(this.acctid);
+
+		stat.date = QDate.today();
+		stat.addTransactions(getUnclearedTransactions());
+
+		return stat;
+	}
+
 	public int getUnclearedTransactionCount() {
 		int count = 0;
 
@@ -247,13 +256,41 @@ public class Account {
 	}
 
 	public QDate getFirstUnclearedTransactionDate() {
-		final GenericTxn t = getFirstUnclearedTransaction();
+		GenericTxn t = getFirstUnclearedTransaction();
 
 		return (t == null) ? null : t.getDate();
 	}
 
+	public int getFirstUnclearedTransactionIndex() {
+		for (int ii = 0; ii < this.transactions.size(); ++ii) {
+			GenericTxn t = this.transactions.get(ii);
+
+			if ((t != null) && (t.stmtdate == null)) {
+				return ii;
+			}
+		}
+
+		return -1;
+	}
+
+	public List<GenericTxn> getUnclearedTransactions() {
+		List<GenericTxn> txns = new ArrayList<GenericTxn>();
+
+		for (int txidx = getFirstUnclearedTransactionIndex(); //
+				txidx < this.transactions.size(); //
+				++txidx) {
+			GenericTxn t = this.transactions.get(txidx);
+
+			if ((t != null) && (t.stmtdate == null)) {
+				txns.add(t);
+			}
+		}
+
+		return txns;
+	}
+
 	public GenericTxn getFirstUnclearedTransaction() {
-		for (final GenericTxn t : this.transactions) {
+		for (GenericTxn t : this.transactions) {
 			if ((t != null) && (t.stmtdate == null)) {
 				return t;
 			}

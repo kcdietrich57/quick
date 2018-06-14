@@ -3,6 +3,7 @@ package qif.data;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class Statement {
@@ -85,6 +86,10 @@ public class Statement {
 		}
 
 		return db;
+	}
+
+	public void addTransactions(Collection<GenericTxn> txns) {
+		this.transactions.addAll(txns);
 	}
 
 	public void addTransaction(GenericTxn txn) {

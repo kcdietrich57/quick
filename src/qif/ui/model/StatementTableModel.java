@@ -43,6 +43,9 @@ public class StatementTableModel extends AbstractTableModel {
 
 		if (a != null) {
 			statements = new ArrayList<Statement>(a.statements);
+			if (a.getUnclearedTransactionCount() > 0) {
+				statements.add(a.getUnclearedStatement());
+			}
 		} else {
 			statements.clear();
 		}
