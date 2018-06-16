@@ -60,7 +60,7 @@ public class ReviewDialog extends JFrame {
 		this.txlist = new JList<String>();
 		this.txlist.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-		final JScrollPane txscroll = new JScrollPane(this.txlist);
+		JScrollPane txscroll = new JScrollPane(this.txlist);
 
 		getContentPane().add(txscroll, BorderLayout.CENTER);
 
@@ -121,28 +121,25 @@ public class ReviewDialog extends JFrame {
 					} else {
 						super.addSelectionInterval(index0, index1);
 					}
-
-					return;
+				} else {
+					super.setSelectionInterval(index0, index1);
 				}
-
-				super.setSelectionInterval(index0, index1);
 			}
 
 			public void addSelectionInterval(int index0, int index1) {
 				if (index0 == index1) {
 					if (isSelectedIndex(index0)) {
 						removeSelectionInterval(index0, index0);
-						return;
+					} else {
+						super.addSelectionInterval(index0, index1);
 					}
-
-					super.addSelectionInterval(index0, index1);
 				}
 			}
 		});
 
 		this.txlist.addListSelectionListener(e -> {
-			final int[] sel1 = this.txlist.getSelectedIndices();
-			final String statusMsg1 = buildStatusString(this.stmt, sel1);
+			int[] sel1 = this.txlist.getSelectedIndices();
+			String statusMsg1 = buildStatusString(this.stmt, sel1);
 
 			this.status.setText(statusMsg1);
 		});
@@ -158,34 +155,35 @@ public class ReviewDialog extends JFrame {
 
 		this.uncleared.addAll(this.txns);
 
-		String statusMsg = "No Statement!";
+		if (this.stmt == null) {
+			return "No Statement!";
+		}
 
-		if (this.stmt != null) {
-			BigDecimal clearedBalance = stmt.getOpeningCashBalance();
+		BigDecimal clearedBalance = stmt.getOpeningCashBalance();
 
-			for (final int idx : sel) {
-				final GenericTxn t = this.txns.get(idx);
-				clearedBalance = clearedBalance.add(t.getCashAmount());
+		for (int idx : sel) {
+			GenericTxn t = this.txns.get(idx);
+			clearedBalance = clearedBalance.add(t.getCashAmount());
 
-				this.uncleared.remove(t);
-				this.cleared.add(t);
-			}
+			this.uncleared.remove(t);
+			this.cleared.add(t);
+		}
 
-			final Account a = Account.getAccountByID(stmt.acctid);
-			statusMsg = a.getName() + ": " + stmt.date.toString() + "\n";
-			statusMsg += String.format( //
-					"Opening Balance:\t%s\nClosing Balance:\t%s\nCleared Balance:\t%s", //
-					Common.formatAmount(stmt.getOpeningCashBalance()), //
-					Common.formatAmount(stmt.cashBalance), //
-					Common.formatAmount(clearedBalance));
+		Account acct = Account.getAccountByID(stmt.acctid);
 
-			final BigDecimal diff = clearedBalance.subtract(stmt.cashBalance);
+		String statusMsg = acct.getName() + ": " + stmt.date.toString() + "\n";
+		statusMsg += String.format( //
+				"Opening Balance:\t%s\nClosing Balance:\t%s\nCleared Balance:\t%s", //
+				Common.formatAmount(stmt.getOpeningCashBalance()), //
+				Common.formatAmount(stmt.cashBalance), //
+				Common.formatAmount(clearedBalance));
 
-			statusMsg += " " + Common.formatAmount(diff);
+		BigDecimal diff = clearedBalance.subtract(stmt.cashBalance);
 
-			if (Common.isEffectivelyZero(diff)) {
-				statusMsg += " OK";
-			}
+		statusMsg += " " + Common.formatAmount(diff);
+
+		if (Common.isEffectivelyZero(diff)) {
+			statusMsg += " OK";
 		}
 
 		return statusMsg;

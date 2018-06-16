@@ -21,6 +21,7 @@ public class AccountPanel extends JPanel {
 	public JSplitPane statementViewSplit;
 	StatementPanel statementPanel;
 	StatementDetailsPanel statementDetails;
+	ReconcilePanel reconcilePanel;
 
 	TransactionPanel transactionPanel;
 
@@ -36,9 +37,12 @@ public class AccountPanel extends JPanel {
 
 		statementViewSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, statementPanel, statementDetails);
 
+		reconcilePanel = new ReconcilePanel();
+
 		acctTabbedPane = new JTabbedPane();
-		acctTabbedPane.addTab("Register View", transactionPanel);
-		acctTabbedPane.add("Statement View", statementViewSplit);
+		acctTabbedPane.addTab("Register", transactionPanel);
+		acctTabbedPane.add("Statements", statementViewSplit);
+		acctTabbedPane.add("Reconcile", reconcilePanel);
 
 		add(acctInfoPanel, BorderLayout.NORTH);
 		add(acctTabbedPane, BorderLayout.CENTER);

@@ -40,6 +40,8 @@ public class QifLoader {
 	public static void main(String[] args) {
 		scn = new Scanner(System.in);
 
+		QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
+
 		for (;;) {
 			QifReporter.showStatistics();
 
