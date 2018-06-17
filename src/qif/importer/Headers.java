@@ -39,6 +39,8 @@ public interface Headers {
 	public static final char ACCT_STMTDATE = '/';
 	public static final char ACCT_STMTBAL = '$';
 	public static final char ACCT_CLOSEDATE = 'C';
+	public static final char ACCT_STMTFREQ = 'F';
+	public static final char ACCT_STMTDAY = 'G';
 
 	public static final char TXN_Date = 'D';
 	public static final char TXN_Amount = 'T';

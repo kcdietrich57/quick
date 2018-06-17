@@ -1634,6 +1634,9 @@ public class QifDomReader {
 		if (oldacct.type == null) {
 			oldacct.type = newacct.type;
 		}
+
+		oldacct.statementFrequency = newacct.statementFrequency;
+		oldacct.statementDayOfMonth = newacct.statementDayOfMonth;
 	}
 
 	private Account loadAccount() {
@@ -1656,7 +1659,7 @@ public class QifDomReader {
 				}
 				break;
 			case AcctCreditLimit:
-				acct.creditLimit = Common.getDecimal(qline.value);
+				// acct.creditLimit = Common.getDecimal(qline.value);
 				break;
 			case AcctDescription:
 				acct.description = qline.value;
@@ -1672,6 +1675,12 @@ public class QifDomReader {
 				break;
 			case AcctCloseDate:
 				acct.closeDate = Common.parseQDate(qline.value);
+				break;
+			case AcctStmtFrequency:
+				acct.statementFrequency = Integer.parseInt(qline.value);
+				break;
+			case AcctStmtDay:
+				acct.statementDayOfMonth = Integer.parseInt(qline.value);
 				break;
 
 			default:
@@ -2107,7 +2116,7 @@ public class QifDomReader {
 
 					final BigDecimal bal = new BigDecimal(balStr);
 					final QDate d = (day == 0) //
-							? Common.getDateForEndOfMonth(year, month) //
+							? QDate.getDateForEndOfMonth(year, month) //
 							: new QDate(year, month, day);
 
 					final Statement prevstmt = (stmts.isEmpty() ? null : stmts.get(stmts.size() - 1));

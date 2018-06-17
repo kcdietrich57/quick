@@ -89,7 +89,19 @@ public class Statement {
 	}
 
 	public void addTransactions(Collection<GenericTxn> txns) {
-		this.transactions.addAll(txns);
+		addTransactions(txns, false);
+	}
+
+	public void addTransactions(Collection<GenericTxn> txns, boolean checkDate) {
+		if (!checkDate) {
+			this.transactions.addAll(txns);
+		} else {
+			for (GenericTxn t : txns) {
+				if (t.getDate().compareTo(this.date) <= 0) {
+					this.transactions.add(t);
+				}
+			}
+		}
 	}
 
 	public void addTransaction(GenericTxn txn) {

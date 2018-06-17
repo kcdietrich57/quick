@@ -3,6 +3,8 @@ package qif.importer;
 import static qif.importer.Headers.ACCT_CLOSEDATE;
 import static qif.importer.Headers.ACCT_CREDITLIMIT;
 import static qif.importer.Headers.ACCT_DESCRIPTION;
+import static qif.importer.Headers.ACCT_STMTFREQ;
+import static qif.importer.Headers.ACCT_STMTDAY;
 import static qif.importer.Headers.ACCT_NAME;
 import static qif.importer.Headers.ACCT_STMTBAL;
 import static qif.importer.Headers.ACCT_STMTDATE;
@@ -367,6 +369,10 @@ public class QFileReader {
 			return FieldType.AcctStmtBal;
 		case ACCT_CLOSEDATE:
 			return FieldType.AcctCloseDate;
+		case ACCT_STMTFREQ:
+			return FieldType.AcctStmtFrequency;
+		case ACCT_STMTDAY:
+			return FieldType.AcctStmtDay;
 
 		default:
 			Common.reportError("Bad field type for account: " + key);

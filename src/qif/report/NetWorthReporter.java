@@ -76,7 +76,7 @@ public class NetWorthReporter {
 		int month = d.getMonth();
 
 		do {
-			d = Common.getDateForEndOfMonth(year, month);
+			d = QDate.getDateForEndOfMonth(year, month);
 			StatusForDateModel b = buildReportStatusForDate(d);
 
 			balances.add(b);
@@ -105,7 +105,7 @@ public class NetWorthReporter {
 				"Date", "NetWorth", "Assets", "Liabilities"));
 
 		do {
-			d = Common.getDateForEndOfMonth(year, month);
+			d = QDate.getDateForEndOfMonth(year, month);
 			final Balances b = getBalancesForDate(d);
 
 			System.out.println(String.format("%s,%15.2f,%15.2f,%15.2f", //
@@ -127,7 +127,7 @@ public class NetWorthReporter {
 		QDate lastTxDate = getLastTransactionDate();
 
 		for (int year = firstTxDate.getYear(); year <= lastTxDate.getYear(); ++year) {
-			NetWorthReporter.reportNetWorthForDate(Common.getDateForEndOfMonth(year, 12));
+			NetWorthReporter.reportNetWorthForDate(QDate.getDateForEndOfMonth(year, 12));
 		}
 	}
 

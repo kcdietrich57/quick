@@ -133,9 +133,10 @@ public class Account {
 	public AccountType type;
 	public String description;
 	public QDate closeDate;
-	public BigDecimal creditLimit;
 	public BigDecimal balance;
 	public BigDecimal clearedBalance;
+	public int statementFrequency = 30;
+	public int statementDayOfMonth = 30;
 
 	public List<GenericTxn> transactions;
 	public List<Statement> statements;
@@ -147,7 +148,6 @@ public class Account {
 		this.name = "";
 		this.type = null;
 		this.description = "";
-		this.creditLimit = null;
 		this.balance = this.clearedBalance = BigDecimal.ZERO;
 
 		this.transactions = new ArrayList<GenericTxn>();
@@ -191,6 +191,22 @@ public class Account {
 				: this.statements.get(this.statements.size() - 1).date;
 	}
 
+	public QDate getLastBalancedStatementDate() {
+		if (this.statements.isEmpty()) {
+			return null;
+		}
+
+		for (int ii = this.statements.size() - 1; ii >= 0; --ii) {
+			Statement stmt = this.statements.get(ii);
+
+			if (stmt.isBalanced) {
+				return stmt.date;
+			}
+		}
+
+		return null;
+	}
+
 	public Statement getLastStatement() {
 		return (this.statements.isEmpty()) //
 				? null //
@@ -224,6 +240,42 @@ public class Account {
 				+ date.toString() + " " //
 				+ Common.formatAmount(balance));
 		return null;
+	}
+
+	public QDate getNextStatementDate() {
+		QDate laststat = getLastBalancedStatementDate();
+
+		if (laststat == null) {
+			QDate today = QDate.today();
+			return new QDate(today.getYear(), //
+					today.getMonth(), //
+					(this.statementDayOfMonth > 0) ? this.statementDayOfMonth : 31);
+		}
+
+		QDate nextstmt = laststat.addDays( //
+				(this.statementFrequency > 0) //
+						? this.statementFrequency //
+						: 30);
+
+		if (this.statementDayOfMonth > 0) {
+			nextstmt = nextstmt.getDateNearestTo(this.statementDayOfMonth);
+		}
+
+		return nextstmt;
+	}
+
+	public Statement createNextStatementToReconcile() {
+		QDate laststmtdate = getLastBalancedStatementDate();
+		Statement laststmt = getStatement(laststmtdate);
+		Statement stat = new Statement(this.acctid);
+
+		stat.date = getNextStatementDate();
+		stat.prevStatement = laststmt;
+
+		// NB. Only transactions up to the statement date
+		stat.addTransactions(getUnclearedTransactions(), true);
+
+		return stat;
 	}
 
 	public Statement getUnclearedStatement() {
@@ -277,7 +329,7 @@ public class Account {
 		List<GenericTxn> txns = new ArrayList<GenericTxn>();
 
 		for (int txidx = getFirstUnclearedTransactionIndex(); //
-				txidx < this.transactions.size(); //
+				(txidx >= 0) && (txidx < this.transactions.size()); //
 				++txidx) {
 			GenericTxn t = this.transactions.get(txidx);
 
@@ -464,7 +516,6 @@ public class Account {
 				+ " clbal=" + this.clearedBalance //
 				+ " bal=" + this.balance //
 				+ " desc=" + this.description //
-				+ " limit=" + this.creditLimit //
 				+ " #tx= " + this.transactions.size() //
 				+ "\n";
 

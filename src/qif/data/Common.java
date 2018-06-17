@@ -125,20 +125,10 @@ public class Common {
 		return null;
 	}
 
-	private static int MONTH_DAYS[] = { //
-			31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 //
-	};
-
 	public static Date getDate(int year, int month, int day) {
 		final String datestr = "" + month + "/" + day + "/" + year;
 
 		return parseDate(datestr);
-	}
-
-	public static QDate getDateForEndOfMonth(int year, int month) {
-		return (month == 2) //
-				? new QDate(year, 3, 1).addDays(-1) //
-				: new QDate(year, month, MONTH_DAYS[(month + 11) % 12]);
 	}
 
 	public static String stringValue(Object o) {

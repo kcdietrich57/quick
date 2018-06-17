@@ -54,6 +54,7 @@ public class AccountPanel extends JPanel {
 		accountListPanel.addAccountSelectionListener(this.acctInfoPanel);
 		accountListPanel.addAccountSelectionListener(this.statementPanel);
 		accountListPanel.addAccountSelectionListener(this.transactionPanel);
+		accountListPanel.addAccountSelectionListener(this.reconcilePanel);
 	}
 
 	public void setSplitPosition() {

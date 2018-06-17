@@ -18,8 +18,55 @@ public class QDate implements Comparable<QDate> {
 		this(new Date(time));
 	}
 
+	private static final int MONTH_DAYS[] = { //
+			31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 //
+	};
+
+	public static QDate getDateForEndOfMonth(int year, int month) {
+		return (month == 2) //
+				? new QDate(year, 3, 1).addDays(-1) //
+				: new QDate(year, month, MONTH_DAYS[(month + 11) % 12]);
+	}
+
+	public QDate getDateNearestTo(int day) {
+		int diff = getDay() - day;
+
+		if (diff == 0) {
+			return this;
+		}
+
+		int adjust = 0;
+
+		if (diff > 15) {
+			adjust = 30 - diff;
+			diff = -1;
+		} else if (diff > -15) {
+			adjust = -diff;
+		} else {
+			adjust = -(30 + diff);
+			diff = 1;
+		}
+
+		// TODO could have off by one errors here?
+		if (adjust == 0) {
+			adjust = (diff < 0) ? 1 : -1;
+			return this;
+		}
+
+		QDate d2 = addDays(adjust).getDateNearestTo(day);
+		return d2;
+	}
+
 	public QDate(int y, int m, int d) {
 		y = adjustYear(y);
+
+		if (m == 2 && d > 28) {
+			QDate qd = new QDate(y, m, 28).addDays(d - 28);
+
+			y = qd.getYear();
+			m = qd.getMonth();
+			d = qd.getDay();
+		}
 
 		this.datevalue = y * 10000 + m * 100 + d;
 
@@ -99,5 +146,12 @@ public class QDate implements Comparable<QDate> {
 
 	public String toString() {
 		return this.datestring;
+	}
+
+	public static void main(String[] args) {
+		QDate estimate = new QDate(2016, 3, 4);
+
+		QDate exact = estimate.getDateNearestTo(29);
+		System.out.println(exact.toString());
 	}
 }

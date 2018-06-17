@@ -1,5 +1,7 @@
 !Account
 NGreg Cash
+F30
+G31
 ^
 !Statements
 M12/1994 58.20
@@ -34,6 +36,8 @@ M01/2018 70 25 50 70
 ^
 !Account
 NTerry Cash
+F30
+G31
 ^
 !Statements
 M12/1994 0.00
