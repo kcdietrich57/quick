@@ -121,6 +121,8 @@ class ReconcileStatusPanel //
 		} catch (Exception ex) {
 			this.closingBalance = null;
 		}
+		
+		updateValues();
 	}
 
 	public void setStatement(Statement stmt) {
