@@ -5,6 +5,7 @@ import java.awt.GridBagConstraints;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 class GridBagUtility {
 	public static Font bold12 = new Font("Helvetica", Font.BOLD, 12);
@@ -21,6 +22,11 @@ class GridBagUtility {
 	public static JLabel addValue(JPanel panel, GridBagConstraints gbc, //
 			int row, int col) {
 		return addValue(panel, gbc, row, col, plain12);
+	}
+
+	public static JTextField addTextField(JPanel panel, GridBagConstraints gbc, //
+			int row, int col) {
+		return addTextField(panel, gbc, row, col, plain12);
 	}
 
 	public static JLabel addLabeledValue(JPanel panel, GridBagConstraints gbc, //
@@ -56,6 +62,18 @@ class GridBagUtility {
 	public static JLabel addValue(JPanel panel, GridBagConstraints gbc, //
 			int row, int col, Font valueFont) {
 		JLabel value = new JLabel("---");
+		value.setFont(valueFont);
+
+		gbc.gridy = row;
+		gbc.gridx = col;
+		panel.add(value, gbc);
+
+		return value;
+	}
+
+	public static JTextField addTextField(JPanel panel, GridBagConstraints gbc, //
+			int row, int col, Font valueFont) {
+		JTextField value = new JTextField("---");
 		value.setFont(valueFont);
 
 		gbc.gridy = row;

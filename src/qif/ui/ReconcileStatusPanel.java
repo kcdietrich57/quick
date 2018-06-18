@@ -6,10 +6,12 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.math.BigDecimal;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 import qif.data.Common;
 import qif.data.GenericTxn;
@@ -25,20 +27,26 @@ class ReconcileStatusPanel //
 
 	JLabel lastStmt;
 	JLabel date;
-	JLabel close;
 	JLabel open;
 	JLabel credits;
 	JLabel debits;
 	JLabel reconciledBalance;
 	JLabel difference;
 
+	JTextField close;
+	BigDecimal clearedBalance;
+	BigDecimal closingBalance;
+
 	ReconcileTransactionsPanel reconcileTransactionsPanel;
-	
+
 	public ReconcileStatusPanel(ReconcileTransactionsPanel rtp) {
 		super(new BorderLayout());
 
+		this.reconciledBalance = null;
+		this.closingBalance = null;
+
 		reconcileTransactionsPanel = rtp;
-		
+
 		JPanel innerPanel = new JPanel(new GridBagLayout());
 		add(innerPanel, BorderLayout.WEST);
 
@@ -49,7 +57,7 @@ class ReconcileStatusPanel //
 		gbc.gridwidth = 2;
 		this.date = GridBagUtility.addValue(innerPanel, gbc, 0, 0, //
 				GridBagUtility.bold20);
-		this.close = GridBagUtility.addValue(innerPanel, gbc, 0, 1, //
+		this.close = GridBagUtility.addTextField(innerPanel, gbc, 0, 1, //
 				GridBagUtility.bold12);
 		this.lastStmt = GridBagUtility.addLabeledValue(innerPanel, gbc, 0, 1, //
 				"Last Stmt", 12);
@@ -98,6 +106,21 @@ class ReconcileStatusPanel //
 				updateValues();
 			}
 		});
+
+		this.close.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				setClosingValue();
+			}
+		});
+	}
+
+	private void setClosingValue() {
+		try {
+			BigDecimal val = new BigDecimal(close.getText());
+			this.closingBalance = val;
+		} catch (Exception ex) {
+			this.closingBalance = null;
+		}
 	}
 
 	public void setStatement(Statement stmt) {
@@ -110,7 +133,9 @@ class ReconcileStatusPanel //
 
 	private void updateValues() {
 		this.date.setText((this.stmt != null) ? this.stmt.date.longString : "---");
-		this.close.setText("CloseValue");
+		this.close.setText((this.closingBalance != null) //
+				? Common.formatAmount(this.closingBalance) //
+				: "Enter closing balance");
 		Statement laststmt = (stmt != null) ? stmt.prevStatement : null;
 		this.lastStmt.setText((laststmt != null) //
 				? laststmt.date.longString //
@@ -118,17 +143,26 @@ class ReconcileStatusPanel //
 		this.open.setText((this.stmt != null) //
 				? Common.formatAmount(this.stmt.getOpeningCashBalance()) //
 				: "---");
-		
+
 		ReconcileTransactionTableModel model = reconcileTransactionsPanel.transactionTableModel;
-		
+
 		this.credits.setText((this.stmt != null) //
 				? Common.formatAmount(model.getCredits()) //
 				: "---");
 		this.debits.setText((this.stmt != null) //
 				? Common.formatAmount(model.getDebits()) //
 				: "---");
+
+		this.clearedBalance = model.getClearedCashBalance();
 		this.reconciledBalance.setText((this.stmt != null) //
-				? Common.formatAmount(model.getClearedCashBalance()) //
+				? Common.formatAmount(this.clearedBalance) //
+				: "---");
+
+		BigDecimal diff = (this.closingBalance != null) //
+				? this.closingBalance.subtract(this.clearedBalance) //
+				: null;
+		this.difference.setText((diff != null) //
+				? Common.formatAmount(diff) //
 				: "---");
 	}
 

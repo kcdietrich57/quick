@@ -46,7 +46,6 @@ public class Common {
 			return new BigDecimal(s);
 		} catch (final Exception e) {
 			e.printStackTrace();
-
 			reportError("Bad decimal string: " + s);
 		}
 
