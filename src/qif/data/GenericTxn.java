@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class GenericTxn extends SimpleTxn {
+public abstract class GenericTxn //
+		extends SimpleTxn //
+		implements Comparable<GenericTxn> {
 
 	private static List<GenericTxn> allTransactionsByID = new ArrayList<GenericTxn>();
 	private static List<GenericTxn> allTransactionsByID_readonly = null;
@@ -98,4 +100,18 @@ public abstract class GenericTxn extends SimpleTxn {
 				getCashAmount());
 		return s;
 	}
-};
+
+	public int compareTo(GenericTxn other) {
+		int diff = this.date.compareTo(other.date);
+		if (diff != 0) {
+			return diff;
+		}
+
+		diff = this.getCheckNumber() - other.getCheckNumber();
+		if (diff != 0) {
+			return diff;
+		}
+
+		return 0;
+	}
+}

@@ -29,6 +29,10 @@ public class QDate implements Comparable<QDate> {
 	}
 
 	public QDate getDateNearestTo(int day) {
+		return getDateNearestTo(day, 0);
+	}
+
+	public QDate getDateNearestTo(int day, int recurse) {
 		int diff = getDay() - day;
 
 		if (diff == 0) {
@@ -53,7 +57,12 @@ public class QDate implements Comparable<QDate> {
 			return this;
 		}
 
-		QDate d2 = addDays(adjust).getDateNearestTo(day);
+		if (recurse > 5) {
+			//System.out.println("recursing: " + this.longString + " : " + day);
+			return this;
+		}
+
+		QDate d2 = addDays(adjust).getDateNearestTo(day, recurse + 1);
 		return d2;
 	}
 

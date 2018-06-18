@@ -11,7 +11,7 @@ class GridBagUtility {
 	public static Font plain12 = new Font("Helvetica", Font.PLAIN, 12);
 	public static Font bold16 = new Font("Helvetica", Font.BOLD, 16);
 	public static Font plain16 = new Font("Helvetica", Font.PLAIN, 16);
-	public static Font bold20 = new Font("Helvetica", Font.BOLD, 20);
+	public static Font bold20 = new Font("Helvetica", Font.BOLD, 16);
 
 	public static JLabel addLabeledValue(JPanel panel, GridBagConstraints gbc, //
 			int row, int col, String text) {

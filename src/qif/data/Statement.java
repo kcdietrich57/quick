@@ -60,6 +60,16 @@ public class Statement {
 		return openingBalance;
 	}
 
+	public BigDecimal getClearedCashBalance() {
+		BigDecimal bal = getOpeningCashBalance();
+
+		for (GenericTxn txn : this.transactions) {
+			bal = bal.add(txn.getCashAmount());
+		}
+
+		return bal;
+	}
+
 	public BigDecimal getCredits() {
 		BigDecimal cr = new BigDecimal(0);
 
@@ -106,6 +116,34 @@ public class Statement {
 
 	public void addTransaction(GenericTxn txn) {
 		this.transactions.add(txn);
+	}
+
+	public List<GenericTxn> getTransactionsForReconcile() {
+		List<GenericTxn> txns = new ArrayList<GenericTxn>(this.transactions);
+		txns.addAll(this.unclearedTransactions);
+		return txns;
+	}
+
+	public void toggleCleared(GenericTxn txn) {
+		if (this.unclearedTransactions.contains(txn)) {
+			clearTransaction(txn);
+		} else {
+			unclearTransaction(txn);
+		}
+	}
+
+	public void clearTransaction(GenericTxn txn) {
+		txn.stmtdate = this.date;
+
+		this.transactions.add(txn);
+		this.unclearedTransactions.remove(txn);
+	}
+
+	public void unclearTransaction(GenericTxn txn) {
+		txn.stmtdate = null;
+
+		this.transactions.remove(txn);
+		this.unclearedTransactions.add(txn);
 	}
 
 	public void clearTransactions( //
