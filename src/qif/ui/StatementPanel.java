@@ -39,9 +39,8 @@ import qif.data.Account;
 import qif.data.Statement;
 import qif.ui.model.StatementTableModel;
 
+@SuppressWarnings("serial")
 public class StatementPanel extends JPanel implements AccountSelectionListener {
-	private static final long serialVersionUID = 1L;
-
 	public StatementTableModel statementTableModel;
 	private JTable statementTable;
 	private JScrollPane scroller;
@@ -88,40 +87,30 @@ public class StatementPanel extends JPanel implements AccountSelectionListener {
 
 		TableColumnModel stmtColumnModel = statementTable.getColumnModel();
 		stmtColumnModel.getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
-			private static final long serialVersionUID = 1L;
-
 			{
 				setHorizontalAlignment(JLabel.RIGHT);
 			}
 		});
 
 		stmtColumnModel.getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
-			private static final long serialVersionUID = 1L;
-
 			{
 				setHorizontalAlignment(JLabel.RIGHT);
 			}
 		});
 
 		stmtColumnModel.getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
-			private static final long serialVersionUID = 1L;
-
 			{
 				setHorizontalAlignment(JLabel.RIGHT);
 			}
 		});
 
 		stmtColumnModel.getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
-			private static final long serialVersionUID = 1L;
-
 			{
 				setHorizontalAlignment(JLabel.RIGHT);
 			}
 		});
 
 		stmtColumnModel.getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
-			private static final long serialVersionUID = 1L;
-
 			{
 				setHorizontalAlignment(JLabel.RIGHT);
 			}
@@ -130,7 +119,10 @@ public class StatementPanel extends JPanel implements AccountSelectionListener {
 		statementSelectionModel.addListSelectionListener( //
 				new ListSelectionListener() {
 					public void valueChanged(ListSelectionEvent e) {
-						selectStatementHandler(e);
+						if (e.getValueIsAdjusting())
+							return;
+
+						selectStatementHandler();
 					}
 				});
 
@@ -149,9 +141,7 @@ public class StatementPanel extends JPanel implements AccountSelectionListener {
 	private void setActions() {
 		this.statementTableModel.addTableModelListener(new TableModelListener() {
 			public void tableChanged(TableModelEvent e) {
-				for (StatementSelectionListener listener : stmtSelListeners) {
-					listener.statementSelected(null);
-				}
+				selectStatementHandler();
 			}
 		});
 
@@ -217,23 +207,19 @@ public class StatementPanel extends JPanel implements AccountSelectionListener {
 		return rowIndex;
 	}
 
-	protected void selectStatementHandler(ListSelectionEvent e) {
-		if (e.getValueIsAdjusting())
-			return;
+	private Statement getSelectedStatement() {
+		Statement stmt = null;
 
-		int selectedRow = -1;
-
-		try {
-			String strSource = e.getSource().toString();
-			int start = strSource.indexOf("{") + 1;
-			int stop = strSource.length() - 1;
-
-			selectedRow = Integer.parseInt(strSource.substring(start, stop));
-		} catch (Exception e2) {
-
+		if (this.statementTable.getSelectedRowCount() > 0) {
+			int[] selidx = this.statementTable.getSelectedRows();
+			stmt = this.statementTableModel.getStatementAt(selidx[0]);
 		}
 
-		Statement s = statementTableModel.getStatementAt(selectedRow);
+		return stmt;
+	}
+
+	protected void selectStatementHandler() {
+		Statement s = getSelectedStatement();
 
 		for (StatementSelectionListener l : this.stmtSelListeners) {
 			l.statementSelected(s);

@@ -18,11 +18,11 @@ public class ReconcilePanel //
 	ReconcileStatusPanel reconcileStatus;
 	ReconcileTransactionsPanel reconcileTransactions;
 
-	public ReconcilePanel() {
+	public ReconcilePanel(StatementPanel statementPanel) {
 		super(new BorderLayout());
 
 		this.reconcileTransactions = new ReconcileTransactionsPanel();
-		this.reconcileStatus = new ReconcileStatusPanel(this.reconcileTransactions);
+		this.reconcileStatus = new ReconcileStatusPanel(statementPanel, this.reconcileTransactions);
 
 		add(reconcileStatus, BorderLayout.NORTH);
 		add(reconcileTransactions, BorderLayout.CENTER);
@@ -38,7 +38,7 @@ public class ReconcilePanel //
 					? account.createNextStatementToReconcile() //
 					: null;
 
-			//this.reconcileTransactions.accountSelected(account);
+			// this.reconcileTransactions.accountSelected(account);
 			this.reconcileTransactions.statementSelected(stmt);
 			this.reconcileStatus.setStatement(stmt);
 		}

@@ -44,7 +44,7 @@ public class MainWindow extends JPanel {
 
 		accountNavigationPanel = new AccountNavigationPanel();
 		accountPanel = new AccountPanel();
-		// AccountPanel responds to selections in the AccountList
+
 		accountPanel.addAccountSelectionListeners(this.accountNavigationPanel.accountListPanel);
 
 		accountViewSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, accountNavigationPanel, accountPanel);

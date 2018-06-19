@@ -37,7 +37,7 @@ public class AccountPanel extends JPanel {
 
 		statementViewSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, statementPanel, statementDetails);
 
-		reconcilePanel = new ReconcilePanel();
+		reconcilePanel = new ReconcilePanel(statementPanel);
 
 		acctTabbedPane = new JTabbedPane();
 		acctTabbedPane.addTab("Register", transactionPanel);

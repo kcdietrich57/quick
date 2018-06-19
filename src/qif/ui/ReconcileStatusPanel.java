@@ -20,7 +20,9 @@ import qif.ui.model.ReconcileTransactionTableModel;
 
 class ReconcileStatusPanel //
 		extends JPanel //
-		implements TransactionSelectionListener {
+		implements TransactionSelectionListener
+		// TODO add listeners (really just driven by ReconcileTransactions?)
+		{
 	private static final long serialVersionUID = 1L;
 
 	Statement stmt;
@@ -33,19 +35,21 @@ class ReconcileStatusPanel //
 	JLabel reconciledBalance;
 	JLabel difference;
 
-	JTextField close;
-	BigDecimal clearedBalance;
-	BigDecimal closingBalance;
+	JTextField closingCashField;
+	BigDecimal clearedCashBalance;
+	BigDecimal closingCashBalance;
 
 	ReconcileTransactionsPanel reconcileTransactionsPanel;
+	StatementPanel statementPanel;
 
-	public ReconcileStatusPanel(ReconcileTransactionsPanel rtp) {
+	public ReconcileStatusPanel(StatementPanel statementPanel, ReconcileTransactionsPanel rtp) {
 		super(new BorderLayout());
 
 		this.reconciledBalance = null;
-		this.closingBalance = null;
+		this.closingCashBalance = null;
 
-		reconcileTransactionsPanel = rtp;
+		this.statementPanel = statementPanel;
+		this.reconcileTransactionsPanel = rtp;
 
 		JPanel innerPanel = new JPanel(new GridBagLayout());
 		add(innerPanel, BorderLayout.WEST);
@@ -57,7 +61,7 @@ class ReconcileStatusPanel //
 		gbc.gridwidth = 2;
 		this.date = GridBagUtility.addValue(innerPanel, gbc, 0, 0, //
 				GridBagUtility.bold20);
-		this.close = GridBagUtility.addTextField(innerPanel, gbc, 0, 1, //
+		this.closingCashField = GridBagUtility.addTextField(innerPanel, gbc, 0, 1, //
 				GridBagUtility.bold12);
 		this.lastStmt = GridBagUtility.addLabeledValue(innerPanel, gbc, 0, 1, //
 				"Last Stmt", 12);
@@ -107,21 +111,39 @@ class ReconcileStatusPanel //
 			}
 		});
 
-		this.close.addActionListener(new ActionListener() {
+		finishButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				finishStatement();
+			}
+		});
+
+		this.closingCashField.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				setClosingValue();
 			}
 		});
 	}
 
+	private void finishStatement() {
+		ReconcileTransactionTableModel model = this.reconcileTransactionsPanel.transactionTableModel;
+
+		model.finishStatement();
+
+		Statement stmt = model.curAccount.createNextStatementToReconcile();
+		this.reconcileTransactionsPanel.statementSelected(stmt);
+		this.statementPanel.statementTableModel.fireTableDataChanged();
+	}
+
 	private void setClosingValue() {
 		try {
-			BigDecimal val = new BigDecimal(close.getText());
-			this.closingBalance = val;
+			BigDecimal val = new BigDecimal(closingCashField.getText());
+			this.closingCashBalance = val;
+			this.stmt.closingBalance = val;
+			this.stmt.cashBalance = val;
 		} catch (Exception ex) {
-			this.closingBalance = null;
+			this.closingCashBalance = null;
 		}
-		
+
 		updateValues();
 	}
 
@@ -134,9 +156,11 @@ class ReconcileStatusPanel //
 	}
 
 	private void updateValues() {
-		this.date.setText((this.stmt != null) ? this.stmt.date.longString : "---");
-		this.close.setText((this.closingBalance != null) //
-				? Common.formatAmount(this.closingBalance) //
+		String datestr = (this.stmt != null) ? this.stmt.date.longString : "---";
+		System.out.println("Setting statement date to " + datestr);
+		this.date.setText(datestr);
+		this.closingCashField.setText((this.closingCashBalance != null) //
+				? Common.formatAmount(this.closingCashBalance) //
 				: "Enter closing balance");
 		Statement laststmt = (stmt != null) ? stmt.prevStatement : null;
 		this.lastStmt.setText((laststmt != null) //
@@ -155,13 +179,13 @@ class ReconcileStatusPanel //
 				? Common.formatAmount(model.getDebits()) //
 				: "---");
 
-		this.clearedBalance = model.getClearedCashBalance();
+		this.clearedCashBalance = model.getClearedCashBalance();
 		this.reconciledBalance.setText((this.stmt != null) //
-				? Common.formatAmount(this.clearedBalance) //
+				? Common.formatAmount(this.clearedCashBalance) //
 				: "---");
 
-		BigDecimal diff = (this.closingBalance != null) //
-				? this.closingBalance.subtract(this.clearedBalance) //
+		BigDecimal diff = (this.closingCashBalance != null) //
+				? this.closingCashBalance.subtract(this.clearedCashBalance) //
 				: null;
 		this.difference.setText((diff != null) //
 				? Common.formatAmount(diff) //

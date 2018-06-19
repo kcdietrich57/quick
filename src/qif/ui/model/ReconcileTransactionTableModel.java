@@ -31,9 +31,9 @@ public class ReconcileTransactionTableModel //
 			"Balance"//
 	};
 
-	Object curObject;
-	Account curAccount;
-	Statement curStatement;
+	public Object curObject;
+	public Account curAccount;
+	public Statement curStatement;
 
 	public final List<GenericTxn> allTransactions;
 	public final List<GenericTxn> clearedTransactions;
@@ -60,6 +60,22 @@ public class ReconcileTransactionTableModel //
 
 	public void setStatement(Statement stmt) {
 		setObject(stmt);
+	}
+
+	public void finishStatement() {
+		if (this.curStatement != null) {
+			this.curStatement.unclearAllTransactions();
+			this.curStatement.clearTransactions(this.clearedTransactions);
+
+			if ((this.curStatement.getClearedCashBalance() != null) //
+					&& this.curStatement.getClearedCashBalance().equals(//
+							this.curStatement.cashBalance)) {
+				this.curStatement.isBalanced = true;
+				this.curAccount.statements.add(this.curStatement);
+			} else {
+				System.out.println("Can't finish statement");
+			}
+		}
 	}
 
 	private void setTransactions() {

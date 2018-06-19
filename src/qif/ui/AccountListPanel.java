@@ -35,6 +35,7 @@ public class AccountListPanel extends JScrollPane {
 
 	private List<AccountSelectionListener> acctSelListeners;
 
+	@SuppressWarnings("serial")
 	public AccountListPanel(boolean showOpenAccounts) {
 		super(new JTable(new AccountTableModel()));
 
@@ -55,8 +56,6 @@ public class AccountListPanel extends JScrollPane {
 		}
 
 		acctColumnModel.getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
-			private static final long serialVersionUID = 1L;
-
 			{
 				setHorizontalAlignment(JLabel.RIGHT);
 			}
@@ -98,23 +97,24 @@ public class AccountListPanel extends JScrollPane {
 			return;
 		}
 
-		int selectedRow = -1;
+		setAccount(getSelectedAccount());
+	}
 
-		try {
-			String strSource = e.getSource().toString();
-			int start = strSource.indexOf("{") + 1;
-			int stop = strSource.length() - 1;
-
-			selectedRow = Integer.parseInt(strSource.substring(start, stop));
-		} catch (Exception e2) {
-
-		}
-
-		Account acct = accountTableModel.getAccountAt(selectedRow);
-
+	public void setAccount(Account acct) {
 		for (AccountSelectionListener l : this.acctSelListeners) {
 			l.accountSelected(acct);
 		}
+	}
+
+	private Account getSelectedAccount() {
+		Account acct = null;
+
+		if (this.accountTable.getSelectedRowCount() > 0) {
+			int[] rows = this.accountTable.getSelectedRows();
+			acct = accountTableModel.getAccountAt(rows[0]);
+		}
+
+		return acct;
 	}
 
 	private void createContextMenu() {
@@ -123,19 +123,11 @@ public class AccountListPanel extends JScrollPane {
 
 		chooseAcctItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				int idx = accountTable.getSelectionModel().getMinSelectionIndex();
-				Account a = accountTableModel.getAccountAt(idx);
-
-				String aname = (a != null) ? a.getName() : null;
-
-				// JOptionPane.showMessageDialog(MainFrame.frame, //
-				// "DELETE for account " + a.toString());
-				// JDialog dlg = new JDialog(MainFrame.frame, "Account Properties", false);
-				// dlg.setVisible(true);
+				Account a = getSelectedAccount();
 
 				ChooseAccountDialog dialog = new ChooseAccountDialog(new JFrame(), //
 						"Account Information", //
-						"This is about account " + aname);
+						"This is about account " + a.getName());
 
 				dialog.setSize(300, 150);
 				dialog.setVisible(true);
