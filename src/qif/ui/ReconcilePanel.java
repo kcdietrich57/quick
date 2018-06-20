@@ -7,27 +7,29 @@ import javax.swing.JPanel;
 import qif.data.Account;
 import qif.data.Statement;
 
+/**
+ * This panel contains the UI for reconciling a statement (status/control +
+ * transactions). Contents are driven by account selection.
+ */
+@SuppressWarnings("serial")
 public class ReconcilePanel //
 		extends JPanel //
 		implements AccountSelectionListener {
-	private static final long serialVersionUID = 1L;
+	private Account account;
 
-	Account account;
-	Statement stmt;
-
-	ReconcileStatusPanel reconcileStatus;
-	ReconcileTransactionsPanel reconcileTransactions;
+	private ReconcileStatusPanel reconcileStatusPanel;
+	private ReconcileTransactionsPanel reconcileTransactionsPanel;
 
 	public ReconcilePanel(StatementPanel statementPanel) {
 		super(new BorderLayout());
 
-		this.reconcileTransactions = new ReconcileTransactionsPanel();
-		this.reconcileStatus = new ReconcileStatusPanel(statementPanel, this.reconcileTransactions);
+		this.reconcileTransactionsPanel = new ReconcileTransactionsPanel();
+		this.reconcileStatusPanel = new ReconcileStatusPanel(statementPanel, this.reconcileTransactionsPanel);
 
-		add(reconcileStatus, BorderLayout.NORTH);
-		add(reconcileTransactions, BorderLayout.CENTER);
+		add(reconcileStatusPanel, BorderLayout.NORTH);
+		add(reconcileTransactionsPanel, BorderLayout.CENTER);
 
-		this.reconcileTransactions.addTransactionSelectionListener(this.reconcileStatus);
+		this.reconcileTransactionsPanel.addTransactionSelectionListener(this.reconcileStatusPanel);
 	}
 
 	public void accountSelected(Account account) {
@@ -38,9 +40,8 @@ public class ReconcilePanel //
 					? account.createNextStatementToReconcile() //
 					: null;
 
-			// this.reconcileTransactions.accountSelected(account);
-			this.reconcileTransactions.statementSelected(stmt);
-			this.reconcileStatus.setStatement(stmt);
+			this.reconcileTransactionsPanel.statementSelected(stmt);
+			this.reconcileStatusPanel.statementSelected(stmt);
 		}
 	}
 }

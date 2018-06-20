@@ -13,9 +13,9 @@ import qif.data.Common;
 import qif.report.NetWorthReporter;
 import qif.report.NetWorthReporter.Balances;
 
+/** This panel displays a short summary of the overall status */
+@SuppressWarnings("serial")
 public class SummaryPanel extends JPanel {
-	private static final long serialVersionUID = 1L;
-
 	public SummaryPanel() {
 		super(new GridBagLayout());
 
@@ -26,6 +26,7 @@ public class SummaryPanel extends JPanel {
 		Font bfont = new Font("Helvetica", Font.BOLD, 16);
 		Font font = new Font("Helvetica", Font.PLAIN, 16);
 
+		// TODO use GridBagUtil
 		JLabel assLabel = new JLabel("Assets");
 		assLabel.setFont(bfont);
 		JLabel assValue = new JLabel(Common.formatAmount(bals.assets));

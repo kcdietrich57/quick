@@ -9,52 +9,55 @@ import javax.swing.SwingUtilities;
 
 import qif.data.Account;
 
-public class AccountPanel extends JPanel {
-	private static final long serialVersionUID = 1L;
+/**
+ * This panel contains views/operations based on selected account (register,
+ * statements, reconcile)
+ */
+@SuppressWarnings("serial")
+public class AccountPanel //
+		extends JPanel //
+		implements AccountSelectionListener {
+	private AccountInfoPanel acctInfoPanel;
 
-	Account account;
+	private JSplitPane statementViewSplit;
+	private StatementPanel statementPanel;
+	private StatementDetailsPanel statementDetailsPanel;
 
-	JTabbedPane acctTabbedPane;
+	private ReconcilePanel reconcilePanel;
 
-	AccountInfoPanel acctInfoPanel;
-
-	public JSplitPane statementViewSplit;
-	StatementPanel statementPanel;
-	StatementDetailsPanel statementDetails;
-	ReconcilePanel reconcilePanel;
-
-	TransactionPanel transactionPanel;
+	private TransactionPanel registerTransactionPanel;
 
 	public AccountPanel() {
 		setLayout(new BorderLayout());
 
 		acctInfoPanel = new AccountInfoPanel();
 
-		transactionPanel = new TransactionPanel(true);
+		registerTransactionPanel = new TransactionPanel(true);
 
 		statementPanel = new StatementPanel();
-		statementDetails = new StatementDetailsPanel();
+		statementDetailsPanel = new StatementDetailsPanel();
 
-		statementViewSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, statementPanel, statementDetails);
+		statementViewSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, //
+				statementPanel, statementDetailsPanel);
 
 		reconcilePanel = new ReconcilePanel(statementPanel);
 
-		acctTabbedPane = new JTabbedPane();
-		acctTabbedPane.addTab("Register", transactionPanel);
+		JTabbedPane acctTabbedPane = new JTabbedPane();
+		acctTabbedPane.addTab("Register", registerTransactionPanel);
 		acctTabbedPane.add("Statements", statementViewSplit);
 		acctTabbedPane.add("Reconcile", reconcilePanel);
 
 		add(acctInfoPanel, BorderLayout.NORTH);
 		add(acctTabbedPane, BorderLayout.CENTER);
 
-		this.statementPanel.addStatementSelectionListener(this.statementDetails);
+		this.statementPanel.addStatementSelectionListener(this.statementDetailsPanel);
 	}
 
-	public void addAccountSelectionListeners(AccountListPanel accountListPanel) {
-		accountListPanel.addAccountSelectionListener(this.acctInfoPanel);
-		accountListPanel.addAccountSelectionListener(this.statementPanel);
-		accountListPanel.addAccountSelectionListener(this.transactionPanel);
-		accountListPanel.addAccountSelectionListener(this.reconcilePanel);
+	public void accountSelected(Account acct) {
+		this.acctInfoPanel.accountSelected(acct);
+		this.statementPanel.accountSelected(acct);
+		this.registerTransactionPanel.accountSelected(acct);
+		this.reconcilePanel.accountSelected(acct);
 	}
 
 	public void setSplitPosition() {

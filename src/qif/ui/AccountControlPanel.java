@@ -10,11 +10,11 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+/** This panel contains controls affecting the account list */
+@SuppressWarnings("serial")
 public class AccountControlPanel extends JPanel {
-	private static final long serialVersionUID = 1L;
-
-	public JButton openButton;
-	public JButton closedButton;
+	private JButton openButton;
+	private JButton closedButton;
 
 	public AccountControlPanel(AccountNavigationPanel anp) {
 		super(new GridBagLayout());

@@ -25,13 +25,15 @@ import qif.data.QDate;
 import qif.data.Statement;
 import qif.ui.model.TransactionTableModel;
 
+/** This panel displays transactions in an account or statement */
+@SuppressWarnings("serial")
 public class TransactionPanel //
 		extends JPanel //
 		implements AccountSelectionListener, StatementSelectionListener {
-	private static final long serialVersionUID = 1L;
-
+	
+	// TODO make this private
 	TransactionTableModel transactionTableModel;
-	JTable transactionTable;
+	private JTable transactionTable;
 
 	public TransactionPanel(boolean highlighting) {
 		setLayout(new BorderLayout());

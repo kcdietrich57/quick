@@ -19,8 +19,9 @@ import qif.report.StatusForDateModel;
 import qif.report.StatusReporter;
 import qif.report.StatusReporter.ReportStatusModel;
 
+/** This panel displays overall information */
+@SuppressWarnings("serial")
 public class Dashboard extends JPanel {
-	private static final long serialVersionUID = 1L;
 	private static QDate displayDate = QDate.today();
 
 	public Dashboard() {

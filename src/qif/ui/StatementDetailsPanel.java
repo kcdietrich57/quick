@@ -13,31 +13,32 @@ import javax.swing.JPanel;
 
 import qif.data.Statement;
 
+/** This panel displays details about the selected statement */
+@SuppressWarnings("serial")
 public class StatementDetailsPanel //
 		extends JPanel //
 		implements StatementSelectionListener {
-	private static final long serialVersionUID = 1L;
 
-	Statement s;
+	private JLabel dateValue;
+	private JLabel numTransactionsValue;
 
-	JLabel date;
-	JLabel ntx;
-
-	TransactionPanel transactionPanel;
+	private TransactionPanel transactionPanel;
 
 	public StatementDetailsPanel() {
 		setLayout(new BorderLayout());
 
 		JPanel infoPanel = new JPanel(new BorderLayout());
 		JPanel infoPanel2 = new JPanel(new GridBagLayout());
+
 		infoPanel2.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 		infoPanel.setBorder(BorderFactory.createLineBorder(new Color(16, 16, 16)));
 
+		// TODO use GridBagUtility
 		JLabel dateLabel = new JLabel("Date:");
 		JLabel ntxLabel = new JLabel("Number of transactions:");
 
-		date = new JLabel("<date>");
-		ntx = new JLabel("<ntx>");
+		dateValue = new JLabel("<date>");
+		numTransactionsValue = new JLabel("<ntx>");
 
 		Font bfont = new Font("Helvetica", Font.BOLD, 16);
 		Font font = new Font("Helvetica", Font.PLAIN, 16);
@@ -51,8 +52,8 @@ public class StatementDetailsPanel //
 		infoPanel2.add(dateLabel, gbc);
 
 		gbc.gridx = 1;
-		date.setFont(font);
-		infoPanel2.add(date, gbc);
+		dateValue.setFont(font);
+		infoPanel2.add(dateValue, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 1;
@@ -60,8 +61,8 @@ public class StatementDetailsPanel //
 		infoPanel2.add(ntxLabel, gbc);
 
 		gbc.gridx = 1;
-		ntx.setFont(font);
-		infoPanel2.add(ntx, gbc);
+		numTransactionsValue.setFont(font);
+		infoPanel2.add(numTransactionsValue, gbc);
 
 		infoPanel.add(infoPanel2, BorderLayout.WEST);
 		add(infoPanel, BorderLayout.NORTH);
@@ -77,13 +78,13 @@ public class StatementDetailsPanel //
 
 	private void setStatement(Statement stmt) {
 		if (stmt == null) {
-			date.setText("");
-			ntx.setText("");
+			dateValue.setText("");
+			numTransactionsValue.setText("");
 
 			transactionPanel.transactionTableModel.setStatement(null);
 		} else {
-			date.setText(stmt.date.toString());
-			ntx.setText(Integer.toString(stmt.transactions.size()));
+			dateValue.setText(stmt.date.toString());
+			numTransactionsValue.setText(Integer.toString(stmt.transactions.size()));
 
 			transactionPanel.transactionTableModel.setStatement(stmt);
 		}

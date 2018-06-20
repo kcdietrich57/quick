@@ -39,9 +39,17 @@ import qif.data.Account;
 import qif.data.Statement;
 import qif.ui.model.StatementTableModel;
 
+/**
+ * This panel displays statements for the current account and supports selection
+ */
 @SuppressWarnings("serial")
-public class StatementPanel extends JPanel implements AccountSelectionListener {
+public class StatementPanel //
+		extends JPanel //
+		implements AccountSelectionListener {
+
+	// TODO make this private
 	public StatementTableModel statementTableModel;
+
 	private JTable statementTable;
 	private JScrollPane scroller;
 

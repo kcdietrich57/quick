@@ -25,9 +25,9 @@ import javax.swing.table.TableColumnModel;
 import qif.data.Account;
 import qif.ui.model.AccountTableModel;
 
+/** This panel displays accounts, and drives the content of AccountPanel */
+@SuppressWarnings("serial")
 public class AccountListPanel extends JScrollPane {
-	private static final long serialVersionUID = 1L;
-
 	private AccountTableModel accountTableModel;
 	private JTable accountTable;
 
@@ -35,13 +35,12 @@ public class AccountListPanel extends JScrollPane {
 
 	private List<AccountSelectionListener> acctSelListeners;
 
-	@SuppressWarnings("serial")
 	public AccountListPanel(boolean showOpenAccounts) {
 		super(new JTable(new AccountTableModel()));
 
-		acctSelListeners = new ArrayList<AccountSelectionListener>();
-
 		this.showOpenAccounts = showOpenAccounts;
+
+		acctSelListeners = new ArrayList<AccountSelectionListener>();
 
 		accountTable = (JTable) getViewport().getView();
 		accountTable.setFillsViewportHeight(true);
@@ -73,7 +72,11 @@ public class AccountListPanel extends JScrollPane {
 		accountSelectionModel.addListSelectionListener( //
 				new ListSelectionListener() {
 					public void valueChanged(ListSelectionEvent e) {
-						selectAccountHandler(e);
+						if (e.getValueIsAdjusting()) {
+							return;
+						}
+
+						accountSelected();
 					}
 				});
 
@@ -92,15 +95,9 @@ public class AccountListPanel extends JScrollPane {
 		}
 	}
 
-	protected void selectAccountHandler(ListSelectionEvent e) {
-		if (e.getValueIsAdjusting()) {
-			return;
-		}
+	protected void accountSelected() {
+		Account acct = getSelectedAccount();
 
-		setAccount(getSelectedAccount());
-	}
-
-	public void setAccount(Account acct) {
 		for (AccountSelectionListener l : this.acctSelListeners) {
 			l.accountSelected(acct);
 		}
@@ -118,7 +115,7 @@ public class AccountListPanel extends JScrollPane {
 	}
 
 	private void createContextMenu() {
-		final JPopupMenu acctPopupMenu = new JPopupMenu();
+		JPopupMenu acctPopupMenu = new JPopupMenu();
 		JMenuItem chooseAcctItem = new JMenuItem("Choose Account");
 
 		chooseAcctItem.addActionListener(new ActionListener() {

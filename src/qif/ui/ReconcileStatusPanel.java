@@ -18,29 +18,34 @@ import qif.data.GenericTxn;
 import qif.data.Statement;
 import qif.ui.model.ReconcileTransactionTableModel;
 
+/**
+ * This panel shows info about the reconcile process, and has controls to
+ * perform actions
+ */
+@SuppressWarnings("serial")
 class ReconcileStatusPanel //
 		extends JPanel //
-		implements TransactionSelectionListener
-		// TODO add listeners (really just driven by ReconcileTransactions?)
-		{
-	private static final long serialVersionUID = 1L;
+		implements StatementSelectionListener, TransactionSelectionListener {
+	private Statement stmt;
 
-	Statement stmt;
+	private JLabel lastStmt;
+	private JLabel date;
+	private JLabel open;
+	private JLabel credits;
+	private JLabel debits;
+	private JLabel reconciledBalance;
+	private JLabel difference;
 
-	JLabel lastStmt;
-	JLabel date;
-	JLabel open;
-	JLabel credits;
-	JLabel debits;
-	JLabel reconciledBalance;
-	JLabel difference;
+	private JTextField closingCashField;
+	private BigDecimal clearedCashBalance;
+	private BigDecimal closingCashBalance;
 
-	JTextField closingCashField;
-	BigDecimal clearedCashBalance;
-	BigDecimal closingCashBalance;
+	private JButton selectAllButton;
+	private JButton deselectAllButton;
+	private JButton finishButton;
 
-	ReconcileTransactionsPanel reconcileTransactionsPanel;
-	StatementPanel statementPanel;
+	private ReconcileTransactionsPanel reconcileTransactionsPanel;
+	private StatementPanel statementPanel;
 
 	public ReconcileStatusPanel(StatementPanel statementPanel, ReconcileTransactionsPanel rtp) {
 		super(new BorderLayout());
@@ -84,9 +89,9 @@ class ReconcileStatusPanel //
 		this.difference = GridBagUtility.addLabeledValue(innerPanel, gbc, 2, 1, //
 				"Difference", 14);
 
-		JButton selectAllButton = new JButton("Select All");
-		JButton deselectAllButton = new JButton("Deselect All");
-		JButton finishButton = new JButton("Finish");
+		this.selectAllButton = new JButton("Select All");
+		this.deselectAllButton = new JButton("Deselect All");
+		this.finishButton = new JButton("Finish");
 
 		gbc.insets = new Insets(0, 0, 0, 0);
 		gbc.gridy = 0;
@@ -147,7 +152,7 @@ class ReconcileStatusPanel //
 		updateValues();
 	}
 
-	public void setStatement(Statement stmt) {
+	public void statementSelected(Statement stmt) {
 		if (stmt != this.stmt) {
 			this.stmt = stmt;
 
@@ -157,7 +162,6 @@ class ReconcileStatusPanel //
 
 	private void updateValues() {
 		String datestr = (this.stmt != null) ? this.stmt.date.longString : "---";
-		System.out.println("Setting statement date to " + datestr);
 		this.date.setText(datestr);
 		this.closingCashField.setText((this.closingCashBalance != null) //
 				? Common.formatAmount(this.closingCashBalance) //

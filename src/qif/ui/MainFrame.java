@@ -14,13 +14,11 @@ public class MainFrame extends JFrame {
 		frame = new MainFrame("Money Manager");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		// Create and set up the content pane.
 		MainWindow mainWindow = new MainWindow();
 		mainWindow.setOpaque(true);
 		frame.setContentPane(mainWindow);
 		frame.mainWindow = mainWindow;
 
-		// Display the window.
 		frame.pack();
 		frame.setVisible(true);
 
@@ -33,11 +31,6 @@ public class MainFrame extends JFrame {
 				createAndShowGUI();
 			}
 		});
-
-		// TODO testing chart stuff
-//		NetWorthChart.showISIOptions();
-//		NetWorthChart.showBalances();
-//		NetWorthChart.showNetWorth();
 	}
 
 	public MainFrame(String name) {

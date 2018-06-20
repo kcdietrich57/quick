@@ -11,11 +11,11 @@ import javax.swing.JPanel;
 import qif.data.Account;
 import qif.data.Common;
 
+/** This panel displays summary information about the selected account */
+@SuppressWarnings("serial")
 public class AccountInfoPanel //
 		extends JPanel //
 		implements AccountSelectionListener {
-	private static final long serialVersionUID = 1L;
-
 	Account account = null;
 
 	JLabel accountName;

@@ -29,13 +29,18 @@ import qif.data.GenericTxn;
 import qif.data.Statement;
 import qif.ui.model.ReconcileTransactionTableModel;
 
+/**
+ * This panel shows transactions for a statement being reconciled and lets the
+ * user include/exclude the transactions
+ */
+@SuppressWarnings("serial")
 class ReconcileTransactionsPanel //
 		extends JPanel //
 		implements AccountSelectionListener, StatementSelectionListener {
-	private static final long serialVersionUID = 1L;
 
-	ReconcileTransactionTableModel transactionTableModel;
-	JTable transactionTable;
+	private JTable transactionTable;
+	// TODO make this private
+	public ReconcileTransactionTableModel transactionTableModel;
 
 	private List<TransactionSelectionListener> txnSelListeners;
 
