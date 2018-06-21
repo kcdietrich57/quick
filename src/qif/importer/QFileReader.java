@@ -231,7 +231,7 @@ public class QFileReader {
 				line.type = statementsFieldType(line.typechar);
 				return;
 			}
-		} catch (final Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 

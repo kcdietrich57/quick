@@ -14,6 +14,7 @@ import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
 import qif.data.QDate;
 import qif.data.Statement;
+import qif.reconcile.Reconciler;
 import qif.ui.AccountSelectionListener;
 import qif.ui.StatementSelectionListener;
 
@@ -34,7 +35,7 @@ public class ReconcileTransactionTableModel //
 
 	private Object curObject;
 	private Account account;
-	private Statement curStatement;
+	private Statement statement;
 
 	private final List<GenericTxn> allTransactions;
 	private final List<GenericTxn> clearedTransactions;
@@ -42,7 +43,7 @@ public class ReconcileTransactionTableModel //
 	public ReconcileTransactionTableModel() {
 		this.curObject = null;
 		this.account = null;
-		this.curStatement = null;
+		this.statement = null;
 		this.allTransactions = new ArrayList<GenericTxn>();
 		this.clearedTransactions = new ArrayList<GenericTxn>();
 	}
@@ -68,15 +69,26 @@ public class ReconcileTransactionTableModel //
 	}
 
 	public void finishStatement() {
-		if (this.curStatement != null) {
-			this.curStatement.unclearAllTransactions();
-			this.curStatement.clearTransactions(this.clearedTransactions);
+		if (this.statement != null) {
+			this.statement.unclearAllTransactions();
+			this.statement.clearTransactions(this.clearedTransactions);
 
-			if ((this.curStatement.getClearedCashBalance() != null) //
-					&& this.curStatement.getClearedCashBalance().equals(//
-							this.curStatement.cashBalance)) {
-				this.curStatement.isBalanced = true;
-				this.account.statements.add(this.curStatement);
+			if ((this.statement.getClearedCashBalance() != null) //
+					&& this.statement.getClearedCashBalance().equals(//
+							this.statement.cashBalance)) {
+				this.statement.isBalanced = true;
+
+				if (!this.account.statements.contains(this.statement)) {
+					this.account.statements.add(this.statement);
+				}
+
+				//TODO update statements file
+				System.out.println("Need to update statements for " //
+						+ this.account.getName() + ": " //
+						+ this.account.statementFile.getName());
+				
+				this.statement.dirty = true;
+				Reconciler.saveReconciledStatement(this.statement);
 			} else {
 				System.out.println("Can't finish statement");
 			}
@@ -87,11 +99,11 @@ public class ReconcileTransactionTableModel //
 		this.allTransactions.clear();
 		this.clearedTransactions.clear();
 
-		if (this.curStatement != null) {
-			this.clearedTransactions.addAll(this.curStatement.transactions);
+		if (this.statement != null) {
+			this.clearedTransactions.addAll(this.statement.transactions);
 
 			this.allTransactions.addAll(this.clearedTransactions);
-			this.allTransactions.addAll(this.curStatement.unclearedTransactions);
+			this.allTransactions.addAll(this.statement.unclearedTransactions);
 
 			sortTransactionsForDisplay();
 		}
@@ -138,11 +150,11 @@ public class ReconcileTransactionTableModel //
 	}
 
 	public BigDecimal getClearedCashBalance() {
-		if (this.curStatement == null) {
+		if (this.statement == null) {
 			return BigDecimal.ZERO;
 		}
 
-		BigDecimal tot = curStatement.getOpeningBalance();
+		BigDecimal tot = statement.getOpeningBalance();
 
 		for (GenericTxn txn : this.clearedTransactions) {
 			tot = tot.add(txn.getCashAmount());
@@ -157,13 +169,13 @@ public class ReconcileTransactionTableModel //
 		}
 
 		if (obj == null) {
-			this.curStatement = null;
+			this.statement = null;
 			this.account = null;
 
 			setTransactions();
 		} else if (obj instanceof Statement) {
-			this.curStatement = (Statement) obj;
-			this.account = Account.getAccountByID(curStatement.acctid);
+			this.statement = (Statement) obj;
+			this.account = Account.getAccountByID(statement.acctid);
 
 			setTransactions();
 		} else {
@@ -180,7 +192,7 @@ public class ReconcileTransactionTableModel //
 
 		Statement s = account.getStatement(date, null);
 		if (s != null) {
-			this.curStatement = s;
+			this.statement = s;
 			setTransactions();
 		}
 	}

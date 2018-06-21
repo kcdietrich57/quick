@@ -19,13 +19,44 @@ import qif.ui.ReviewDialog;
 
 public class Reconciler {
 
+	public static void saveReconciledStatement(Statement stat) {
+		PrintWriter pw = null;
+		try {
+			pw = openStatementsLogFile();
+
+			if (stat.dirty) {
+				String logStr = StatementDetails.formatStatementForSave(stat);
+				pw.println(logStr);
+				pw.flush();
+
+				stat.dirty = false;
+			}
+		} catch (Exception e) {
+
+		} finally {
+			if (pw != null) {
+				pw.close();
+			}
+		}
+	}
+
+	private static PrintWriter openStatementsLogFile() {
+		try {
+			return new PrintWriter(new FileWriter(Statement.stmtLogFile, true));
+		} catch (final Exception e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
 	// Process unreconciled statements for each account, matching statements
 	// with transactions and logging the results.
 	public static void reconcileStatements() {
 		PrintWriter pw = null;
 
 		try {
-			pw = new PrintWriter(new FileWriter(Statement.stmtLogFile, true));
+			pw = openStatementsLogFile();
 
 			for (Account a : Account.accounts) {
 				Reconciler.reconcileStatements(a, pw);
@@ -39,7 +70,7 @@ public class Reconciler {
 		}
 	}
 
-	public static void reconcileStatements(Account a, PrintWriter pw) {
+	private static void reconcileStatements(Account a, PrintWriter pw) {
 		if (a.statements.isEmpty()) {
 			return;
 		}

@@ -48,6 +48,7 @@ public class QifDomReader {
 	private int totalXfers = 0;
 	private int failedXfers = 0;
 
+	private File curFile = null;
 	private QFileReader filerdr = null;
 	private File qifDir = null;
 
@@ -1469,6 +1470,7 @@ public class QifDomReader {
 			Common.reportError("File '" + filename + "' does not exist");
 		}
 
+		this.curFile = f;
 		this.filerdr = new QFileReader(f);
 
 		this.nextAccountID = Account.getNextAccountID();
@@ -1503,7 +1505,7 @@ public class QifDomReader {
 				break;
 
 			case Statements:
-				loadStatements(this.filerdr);
+				loadStatements(this.filerdr, this.curFile);
 				break;
 
 			case Security:
@@ -2042,16 +2044,17 @@ public class QifDomReader {
 		}
 	}
 
-	private void loadStatements(QFileReader qfr) {
+	private void loadStatements(QFileReader qfr, File file) {
 		for (;;) {
-			final String s = qfr.peekLine();
+			String s = qfr.peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			final List<Statement> stmts = loadStatementsSection(qfr);
-			for (final Statement stmt : stmts) {
+			List<Statement> stmts = loadStatementsSection(qfr);
+			for (Statement stmt : stmts) {
 				Account.currAccount.statements.add(stmt);
+				Account.currAccount.statementFile = file;
 			}
 		}
 	}

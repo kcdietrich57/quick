@@ -39,7 +39,6 @@ class ReconcileStatusPanel //
 
 	private JTextField closingCashField;
 	private BigDecimal clearedCashBalance;
-	private BigDecimal closingCashBalance;
 
 	private JButton selectAllButton;
 	private JButton deselectAllButton;
@@ -56,7 +55,6 @@ class ReconcileStatusPanel //
 		super(new BorderLayout());
 
 		this.reconciledBalance = null;
-		this.closingCashBalance = null;
 
 		this.accountPanel = accountPanel;
 		this.statementPanel = statementPanel;
@@ -152,11 +150,10 @@ class ReconcileStatusPanel //
 	private void setClosingValue() {
 		try {
 			BigDecimal val = new BigDecimal(closingCashField.getText());
-			this.closingCashBalance = val;
 			this.stmt.closingBalance = val;
 			this.stmt.cashBalance = val;
 		} catch (Exception ex) {
-			this.closingCashBalance = null;
+			ex.printStackTrace();
 		}
 
 		updateValues();
@@ -173,8 +170,8 @@ class ReconcileStatusPanel //
 	private void updateValues() {
 		String datestr = (this.stmt != null) ? this.stmt.date.longString : "---";
 		this.date.setText(datestr);
-		this.closingCashField.setText((this.closingCashBalance != null) //
-				? Common.formatAmount(this.closingCashBalance) //
+		this.closingCashField.setText(((this.stmt != null) && (this.stmt.cashBalance != null))//
+				? Common.formatAmount(this.stmt.cashBalance) //
 				: "Enter closing balance");
 		Statement laststmt = (stmt != null) ? stmt.prevStatement : null;
 		this.lastStmt.setText((laststmt != null) //
@@ -198,8 +195,8 @@ class ReconcileStatusPanel //
 				? Common.formatAmount(this.clearedCashBalance) //
 				: "---");
 
-		BigDecimal diff = (this.closingCashBalance != null) //
-				? this.closingCashBalance.subtract(this.clearedCashBalance) //
+		BigDecimal diff = ((this.stmt != null) && (this.stmt.cashBalance != null)) //
+				? this.stmt.cashBalance.subtract(this.clearedCashBalance) //
 				: null;
 		this.difference.setText((diff != null) //
 				? Common.formatAmount(diff) //

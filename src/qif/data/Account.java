@@ -1,5 +1,6 @@
 package qif.data;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -142,6 +143,8 @@ public class Account {
 	public List<Statement> statements;
 	public SecurityPortfolio securities;
 
+	public File statementFile;
+
 	public Account() {
 		this.acctid = 0;
 
@@ -153,6 +156,8 @@ public class Account {
 		this.transactions = new ArrayList<GenericTxn>();
 		this.statements = new ArrayList<Statement>();
 		this.securities = new SecurityPortfolio();
+		
+		this.statementFile = null;
 	}
 
 	public QDate getOpenDate() {
@@ -189,6 +194,22 @@ public class Account {
 		return (this.statements.isEmpty()) //
 				? null //
 				: this.statements.get(this.statements.size() - 1).date;
+	}
+
+	public Statement getFirstUnbalancedStatement() {
+		if (this.statements.isEmpty()) {
+			return null;
+		}
+
+		for (int ii = 0; ii < this.statements.size(); ++ii) {
+			Statement stmt = this.statements.get(ii);
+
+			if (!stmt.isBalanced) {
+				return stmt;
+			}
+		}
+
+		return null;
 	}
 
 	public QDate getLastBalancedStatementDate() {
@@ -265,12 +286,15 @@ public class Account {
 	}
 
 	public Statement createNextStatementToReconcile() {
-		QDate laststmtdate = getLastBalancedStatementDate();
-		Statement laststmt = getStatement(laststmtdate);
-		Statement stat = new Statement(this.acctid);
+		Statement stat = getFirstUnbalancedStatement();
+		if (stat == null) {
+			QDate laststmtdate = getLastBalancedStatementDate();
+			Statement laststmt = getStatement(laststmtdate);
+			stat = new Statement(this.acctid);
 
-		stat.date = getNextStatementDate();
-		stat.prevStatement = laststmt;
+			stat.date = getNextStatementDate();
+			stat.prevStatement = laststmt;
+		}
 
 		// NB. Only transactions up to the statement date
 		stat.addTransactions(getUnclearedTransactions(), true);
