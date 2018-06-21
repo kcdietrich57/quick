@@ -45,10 +45,12 @@ class ReconcileStatusPanel //
 	private JButton deselectAllButton;
 	private JButton finishButton;
 
+	private AccountPanel accountPanel;
 	private ReconcileTransactionsPanel reconcileTransactionsPanel;
 	private StatementPanel statementPanel;
 
 	public ReconcileStatusPanel( //
+			AccountPanel accountPanel, //
 			StatementPanel statementPanel, //
 			ReconcileTransactionsPanel reconcileTransactionsPanel) {
 		super(new BorderLayout());
@@ -56,6 +58,7 @@ class ReconcileStatusPanel //
 		this.reconciledBalance = null;
 		this.closingCashBalance = null;
 
+		this.accountPanel = accountPanel;
 		this.statementPanel = statementPanel;
 		this.reconcileTransactionsPanel = reconcileTransactionsPanel;
 
@@ -107,14 +110,14 @@ class ReconcileStatusPanel //
 
 		selectAllButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				reconcileTransactionsPanel.transactionTableModel.clearAll();
+				reconcileTransactionsPanel.reconcileTransactionTableModel.clearAll();
 				updateValues();
 			}
 		});
 
 		deselectAllButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				reconcileTransactionsPanel.transactionTableModel.unclearAll();
+				reconcileTransactionsPanel.reconcileTransactionTableModel.unclearAll();
 				updateValues();
 			}
 		});
@@ -133,7 +136,7 @@ class ReconcileStatusPanel //
 	}
 
 	private void finishStatement() {
-		ReconcileTransactionTableModel model = this.reconcileTransactionsPanel.transactionTableModel;
+		ReconcileTransactionTableModel model = this.reconcileTransactionsPanel.reconcileTransactionTableModel;
 
 		model.finishStatement();
 
@@ -142,7 +145,8 @@ class ReconcileStatusPanel //
 
 		// Update list of statements to include the new statement
 		this.statementPanel.accountSelected(acct, true);
-		this.reconcileTransactionsPanel.statementSelected(stmt);
+
+		this.accountPanel.accountSelected(acct, true);
 	}
 
 	private void setClosingValue() {
@@ -180,7 +184,7 @@ class ReconcileStatusPanel //
 				? Common.formatAmount(this.stmt.getOpeningCashBalance()) //
 				: "---");
 
-		ReconcileTransactionTableModel model = reconcileTransactionsPanel.transactionTableModel;
+		ReconcileTransactionTableModel model = reconcileTransactionsPanel.reconcileTransactionTableModel;
 
 		this.credits.setText((this.stmt != null) //
 				? Common.formatAmount(model.getCredits()) //

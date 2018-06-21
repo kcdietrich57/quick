@@ -20,11 +20,12 @@ public class ReconcilePanel //
 	private ReconcileStatusPanel reconcileStatusPanel;
 	private ReconcileTransactionsPanel reconcileTransactionsPanel;
 
-	public ReconcilePanel(StatementPanel statementPanel) {
+	public ReconcilePanel(AccountPanel accountPanel, StatementPanel statementPanel) {
 		super(new BorderLayout());
 
 		this.reconcileTransactionsPanel = new ReconcileTransactionsPanel();
-		this.reconcileStatusPanel = new ReconcileStatusPanel(statementPanel, this.reconcileTransactionsPanel);
+		this.reconcileStatusPanel = new ReconcileStatusPanel( //
+				accountPanel, statementPanel, this.reconcileTransactionsPanel);
 
 		add(reconcileStatusPanel, BorderLayout.NORTH);
 		add(reconcileTransactionsPanel, BorderLayout.CENTER);

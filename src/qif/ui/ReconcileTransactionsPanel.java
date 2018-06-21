@@ -40,7 +40,7 @@ class ReconcileTransactionsPanel //
 
 	private JTable transactionTable;
 	// TODO make this private
-	public ReconcileTransactionTableModel transactionTableModel;
+	public ReconcileTransactionTableModel reconcileTransactionTableModel;
 
 	private List<TransactionSelectionListener> txnSelListeners;
 
@@ -65,8 +65,8 @@ class ReconcileTransactionsPanel //
 
 		add(titlePanel, BorderLayout.NORTH);
 
-		this.transactionTableModel = new ReconcileTransactionTableModel();
-		this.transactionTable = new JTable(transactionTableModel);
+		this.reconcileTransactionTableModel = new ReconcileTransactionTableModel();
+		this.transactionTable = new JTable(reconcileTransactionTableModel);
 		JScrollPane transactionScrollPane = new JScrollPane(this.transactionTable);
 
 		add(transactionScrollPane, BorderLayout.CENTER);
@@ -139,11 +139,11 @@ class ReconcileTransactionsPanel //
 	}
 
 	protected void clickTransactionHandler(int row) {
-		GenericTxn txn = transactionTableModel.getTransactionAt(row);
+		GenericTxn txn = reconcileTransactionTableModel.getTransactionAt(row);
 
-		transactionTableModel.toggleTransactionCleared(txn);
-		transactionTableModel.fireTableRowsUpdated( //
-				0, transactionTableModel.getRowCount() - 1);
+		reconcileTransactionTableModel.toggleTransactionCleared(txn);
+		reconcileTransactionTableModel.fireTableRowsUpdated( //
+				0, reconcileTransactionTableModel.getRowCount() - 1);
 
 		for (TransactionSelectionListener l : this.txnSelListeners) {
 			l.transactionSelected(txn);
@@ -178,7 +178,7 @@ class ReconcileTransactionsPanel //
 	}
 
 	public void statementSelected(Statement statement) {
-		this.transactionTableModel.statementSelected(statement);
+		this.reconcileTransactionTableModel.statementSelected(statement);
 	}
 }
 
