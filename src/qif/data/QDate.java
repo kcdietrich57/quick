@@ -51,14 +51,14 @@ public class QDate implements Comparable<QDate> {
 			diff = 1;
 		}
 
-		// TODO could have off by one errors here?
+		// FIXME could have off by one errors here?
 		if (adjust == 0) {
 			adjust = (diff < 0) ? 1 : -1;
 			return this;
 		}
 
 		if (recurse > 5) {
-			//System.out.println("recursing: " + this.longString + " : " + day);
+			// System.out.println("recursing: " + this.longString + " : " + day);
 			return this;
 		}
 

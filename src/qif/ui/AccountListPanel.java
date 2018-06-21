@@ -99,7 +99,7 @@ public class AccountListPanel extends JScrollPane {
 		Account acct = getSelectedAccount();
 
 		for (AccountSelectionListener l : this.acctSelListeners) {
-			l.accountSelected(acct);
+			l.accountSelected(acct, false);
 		}
 	}
 

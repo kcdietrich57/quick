@@ -32,12 +32,12 @@ public class ReconcilePanel //
 		this.reconcileTransactionsPanel.addTransactionSelectionListener(this.reconcileStatusPanel);
 	}
 
-	public void accountSelected(Account account) {
-		if (this.account != account) {
-			this.account = account;
+	public void accountSelected(Account acct, boolean update) {
+		if (update || (this.account != acct)) {
+			this.account = acct;
 
-			Statement stmt = (account != null) //
-					? account.createNextStatementToReconcile() //
+			Statement stmt = (acct != null) //
+					? acct.createNextStatementToReconcile() //
 					: null;
 
 			this.reconcileTransactionsPanel.statementSelected(stmt);

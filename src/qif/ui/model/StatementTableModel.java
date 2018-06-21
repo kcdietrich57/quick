@@ -9,15 +9,15 @@ import javax.swing.table.AbstractTableModel;
 import qif.data.Account;
 import qif.data.Common;
 import qif.data.Statement;
-import qif.ui.StatementDetailsPanel;
+import qif.ui.AccountSelectionListener;
 
-public class StatementTableModel extends AbstractTableModel {
-	private static final long serialVersionUID = 1L;
+/** Model for statement table displaying the statements for an account */
+@SuppressWarnings("serial")
+public class StatementTableModel //
+		extends AbstractTableModel //
+		implements AccountSelectionListener {
 
-	private Account curAccount = null;
-	public StatementDetailsPanel detailsPanel;
-
-	String[] columnNames = { //
+	private static final String[] columnNames = { //
 			"Date", //
 			"Balance", //
 			"Cash", //
@@ -26,31 +26,25 @@ public class StatementTableModel extends AbstractTableModel {
 			"Debits", //
 			"NumTx" };
 
-	List<Statement> statements = new ArrayList<Statement>();
+	private Account account = null;
 
-	public Account getAccount() {
-		return this.curAccount;
-	}
+	private final List<Statement> statements = new ArrayList<Statement>();
 
-	public void setAccount(Account acct) {
-		if (acct == curAccount) {
-			return;
-		}
+	public void accountSelected(Account acct, boolean update) {
+		if (update || (acct != this.account)) {
+			this.account = acct;
+			this.statements.clear();
 
-		curAccount = acct;
+			if (acct != null) {
+				this.statements.addAll(acct.statements);
 
-		Account a = (Account) curAccount;
-
-		if (a != null) {
-			statements = new ArrayList<Statement>(a.statements);
-			if (a.getUnclearedTransactionCount() > 0) {
-				statements.add(a.getUnclearedStatement());
+				if (acct.getUnclearedTransactionCount() > 0) {
+					this.statements.add(acct.getUnclearedStatement());
+				}
 			}
-		} else {
-			statements.clear();
-		}
 
-		fireTableDataChanged();
+			fireTableDataChanged();
+		}
 	}
 
 	public Statement getStatementAt(int row) {

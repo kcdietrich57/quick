@@ -49,16 +49,18 @@ public class AccountInfoPanel //
 		this.accountBalance = GridBagUtility.addLabeledValue(innerPanel, gbc, 2, 2, "Balance");
 	}
 
-	public void accountSelected(Account account) {
-		this.account = account;
+	public void accountSelected(Account acct, boolean update) {
+		if (update || (acct != this.account)) {
+			this.account = acct;
 
-		this.accountName.setText((account != null) ? account.getName() : "---");
+			this.accountName.setText((acct != null) ? acct.getName() : "---");
 
-		this.accountType.setText((account != null) ? account.type.toString() : "---");
-		this.accountDescription.setText((account != null) ? account.description : "---");
-		this.accountOpen.setText((account != null) ? account.getOpenDate().toString() : "---");
-		String close = (account != null) && account.isOpenOn(null) ? "No" : "Yes";
-		this.accountClose.setText((account != null) ? close : "---");
-		this.accountBalance.setText((account != null) ? Common.formatAmount(account.balance) : "---");
+			this.accountType.setText((acct != null) ? acct.type.toString() : "---");
+			this.accountDescription.setText((acct != null) ? acct.description : "---");
+			this.accountOpen.setText((acct != null) ? acct.getOpenDate().toString() : "---");
+			String close = (acct != null) && acct.isOpenOn(null) ? "No" : "Yes";
+			this.accountClose.setText((acct != null) ? close : "---");
+			this.accountBalance.setText((acct != null) ? Common.formatAmount(acct.balance) : "---");
+		}
 	}
 }

@@ -13,6 +13,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import qif.data.Account;
 import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.Statement;
@@ -47,22 +48,24 @@ class ReconcileStatusPanel //
 	private ReconcileTransactionsPanel reconcileTransactionsPanel;
 	private StatementPanel statementPanel;
 
-	public ReconcileStatusPanel(StatementPanel statementPanel, ReconcileTransactionsPanel rtp) {
+	public ReconcileStatusPanel( //
+			StatementPanel statementPanel, //
+			ReconcileTransactionsPanel reconcileTransactionsPanel) {
 		super(new BorderLayout());
 
 		this.reconciledBalance = null;
 		this.closingCashBalance = null;
 
 		this.statementPanel = statementPanel;
-		this.reconcileTransactionsPanel = rtp;
+		this.reconcileTransactionsPanel = reconcileTransactionsPanel;
 
 		JPanel innerPanel = new JPanel(new GridBagLayout());
 		add(innerPanel, BorderLayout.WEST);
 
 		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.fill = GridBagConstraints.BOTH;
 
 		gbc.insets = new Insets(5, 2, 5, 2);
-		gbc.fill = GridBagConstraints.BOTH;
 		gbc.gridwidth = 2;
 		this.date = GridBagUtility.addValue(innerPanel, gbc, 0, 0, //
 				GridBagUtility.bold20);
@@ -104,14 +107,14 @@ class ReconcileStatusPanel //
 
 		selectAllButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				rtp.transactionTableModel.clearAll();
+				reconcileTransactionsPanel.transactionTableModel.clearAll();
 				updateValues();
 			}
 		});
 
 		deselectAllButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				rtp.transactionTableModel.unclearAll();
+				reconcileTransactionsPanel.transactionTableModel.unclearAll();
 				updateValues();
 			}
 		});
@@ -134,9 +137,12 @@ class ReconcileStatusPanel //
 
 		model.finishStatement();
 
-		Statement stmt = model.curAccount.createNextStatementToReconcile();
+		Statement stmt = model.createNextStatementToReconcile();
+		Account acct = Account.getAccountByID(stmt.acctid);
+
+		// Update list of statements to include the new statement
+		this.statementPanel.accountSelected(acct, true);
 		this.reconcileTransactionsPanel.statementSelected(stmt);
-		this.statementPanel.statementTableModel.fireTableDataChanged();
 	}
 
 	private void setClosingValue() {

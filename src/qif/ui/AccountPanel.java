@@ -53,11 +53,11 @@ public class AccountPanel //
 		this.statementPanel.addStatementSelectionListener(this.statementDetailsPanel);
 	}
 
-	public void accountSelected(Account acct) {
-		this.acctInfoPanel.accountSelected(acct);
-		this.statementPanel.accountSelected(acct);
-		this.registerTransactionPanel.accountSelected(acct);
-		this.reconcilePanel.accountSelected(acct);
+	public void accountSelected(Account acct, boolean update) {
+		this.acctInfoPanel.accountSelected(acct, update);
+		this.statementPanel.accountSelected(acct, update);
+		this.registerTransactionPanel.accountSelected(acct, update);
+		this.reconcilePanel.accountSelected(acct, update);
 	}
 
 	public void setSplitPosition() {

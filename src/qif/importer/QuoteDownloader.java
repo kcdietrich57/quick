@@ -127,7 +127,7 @@ public class QuoteDownloader {
 
 				json = sb.toString();
 			} catch (Exception e) {
-				//e.printStackTrace();
+				// e.printStackTrace();
 			} finally {
 				try {
 					if (response != null) {

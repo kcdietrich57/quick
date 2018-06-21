@@ -142,8 +142,8 @@ public class StatementPanel //
 		this.stmtSelListeners.add(listener);
 	}
 
-	public void accountSelected(Account account) {
-		this.statementTableModel.setAccount(account);
+	public void accountSelected(Account account, boolean update) {
+		this.statementTableModel.accountSelected(account, update);
 	}
 
 	private void setActions() {

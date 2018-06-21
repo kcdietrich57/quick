@@ -8,20 +8,21 @@ import javax.swing.table.AbstractTableModel;
 import qif.data.Account;
 import qif.data.Common;
 
+@SuppressWarnings("serial")
 public class AccountTableModel extends AbstractTableModel {
-	private static final long serialVersionUID = 1L;
 
-	private String[] columnNames = { "Name", "Type", "Balance" };
-	private List<Account> accounts = new ArrayList<Account>();
+	private static final String[] columnNames = { "Name", "Type", "Balance" };
+
+	private final List<Account> accounts = new ArrayList<Account>();
 
 	public void load(boolean showOpenAccounts) {
 		List<Account> accts = Account.getSortedAccounts();
 
 		this.accounts.clear();
 
-		for (Account a : accts) {
-			if (a != null && a.isOpenOn(null) == showOpenAccounts) {
-				accounts.add(a);
+		for (Account acct : accts) {
+			if ((acct != null) && (acct.isOpenOn(null) == showOpenAccounts)) {
+				accounts.add(acct);
 			}
 		}
 
@@ -29,7 +30,7 @@ public class AccountTableModel extends AbstractTableModel {
 	}
 
 	public Account getAccountAt(int row) {
-		if (row < 0 || row >= this.accounts.size()) {
+		if ((row < 0) || (row >= this.accounts.size())) {
 			return null;
 		}
 
@@ -49,7 +50,8 @@ public class AccountTableModel extends AbstractTableModel {
 	}
 
 	public Object getValueAt(int row, int col) {
-		if (row < 0 || col < 0 || col >= columnNames.length || row >= accounts.size()) {
+		if ((row < 0) || (col < 0) //
+				|| (col >= columnNames.length) || (row >= accounts.size())) {
 			return null;
 		}
 

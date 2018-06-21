@@ -30,7 +30,7 @@ import qif.ui.model.TransactionTableModel;
 public class TransactionPanel //
 		extends JPanel //
 		implements AccountSelectionListener, StatementSelectionListener {
-	
+
 	// TODO make this private
 	TransactionTableModel transactionTableModel;
 	private JTable transactionTable;
@@ -101,12 +101,12 @@ public class TransactionPanel //
 		});
 	}
 
-	public void accountSelected(Account account) {
-		this.transactionTableModel.setAccount(account);
+	public void accountSelected(Account account, boolean update) {
+		this.transactionTableModel.accountSelected(account, update);
 	}
 
 	public void statementSelected(Statement statement) {
-		this.transactionTableModel.setStatement(statement);
+		this.transactionTableModel.statementSelected(statement);
 	}
 }
 

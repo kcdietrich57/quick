@@ -1304,7 +1304,7 @@ public class QifDomReader {
 					if (warningCount > 0) {
 						Common.reportWarning( //
 								"Security price mismatches for " + symbol + ":" //
-								+ Integer.toString(warningCount));
+										+ Integer.toString(warningCount));
 					}
 				}
 			}

@@ -81,12 +81,12 @@ public class StatementDetailsPanel //
 			dateValue.setText("");
 			numTransactionsValue.setText("");
 
-			transactionPanel.transactionTableModel.setStatement(null);
+			transactionPanel.transactionTableModel.statementSelected(null);
 		} else {
 			dateValue.setText(stmt.date.toString());
 			numTransactionsValue.setText(Integer.toString(stmt.transactions.size()));
 
-			transactionPanel.transactionTableModel.setStatement(stmt);
+			transactionPanel.transactionTableModel.statementSelected(stmt);
 		}
 	}
 }

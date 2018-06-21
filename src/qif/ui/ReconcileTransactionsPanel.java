@@ -173,12 +173,12 @@ class ReconcileTransactionsPanel //
 	}
 
 	/** Respond to account selection in accountlist */
-	public void accountSelected(Account account) {
+	public void accountSelected(Account account, boolean update) {
 		// TODO this.transactionTableModel.setAccount(account);
 	}
 
 	public void statementSelected(Statement statement) {
-		this.transactionTableModel.setStatement(statement);
+		this.transactionTableModel.statementSelected(statement);
 	}
 }
 
@@ -202,7 +202,7 @@ class ReconcileTransactionTableCellRenderer extends DefaultTableCellRenderer {
 
 		GenericTxn tx = model.getTransactionAt(row);
 
-		boolean cleared = model.clearedTransactions.contains(tx);
+		boolean cleared = model.isCleared(tx);
 
 		if (cleared) {
 			c.setFont(boldFont);

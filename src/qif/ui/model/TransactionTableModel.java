@@ -14,17 +14,15 @@ import qif.data.QDate;
 import qif.data.Statement;
 import qif.ui.AccountSelectionListener;
 
+/**
+ * Model for TransactionTable - supply transactions in an account or statement
+ */
+@SuppressWarnings("serial")
 public class TransactionTableModel //
 		extends AbstractTableModel //
 		implements AccountSelectionListener {
-	private static final long serialVersionUID = 1L;
 
-	Object curObject = null;
-
-	Account curAccount = null;
-	Statement curStatement = null;
-
-	String[] columnNames = { //
+	private static final String[] columnNames = { //
 			"Date", //
 			"Type", //
 			"Payee", //
@@ -34,55 +32,54 @@ public class TransactionTableModel //
 			"Balance"//
 	};
 
-	List<GenericTxn> transations = new ArrayList<GenericTxn>();
+	private Object curObject = null;
 
-	public void accountSelected(Account account) {
-		setAccount(account);
+	private Account curAccount = null;
+	private Statement curStatement = null;
+
+	private final List<GenericTxn> transactions = new ArrayList<GenericTxn>();
+
+	public void accountSelected(Account account, boolean update) {
+		setObject(account, update);
 	}
 
-	public void setAccount(Account acct) {
-		setObject(acct);
-	}
-
-	public void setStatement(Statement stmt) {
-		setObject(stmt);
+	public void statementSelected(Statement stmt) {
+		setObject(stmt, false);
 	}
 
 	private void setTransactions(List<GenericTxn> txns) {
-		transations.clear();
+		this.transactions.clear();
 
 		if (txns != null) {
-			this.transations = new ArrayList<GenericTxn>(txns);
+			this.transactions.addAll(txns);
 		}
 
 		fireTableDataChanged();
 	}
 
-	private void setObject(Object obj) {
-		if (obj == curObject) {
-			return;
+	private void setObject(Object obj, boolean update) {
+		if (update || (obj != this.curObject)) {
+			if (obj == null) {
+				curStatement = null;
+				curAccount = null;
+
+				setTransactions(null);
+			} else if (obj instanceof Account) {
+				curAccount = (Account) obj;
+				curStatement = null;
+
+				setTransactions(curAccount.transactions);
+			} else if (obj instanceof Statement) {
+				curStatement = (Statement) obj;
+				curAccount = Account.getAccountByID(curStatement.acctid);
+
+				setTransactions(curStatement.transactions);
+			} else {
+				return;
+			}
+
+			curObject = obj;
 		}
-
-		if (obj == null) {
-			curStatement = null;
-			curAccount = null;
-
-			setTransactions(null);
-		} else if (obj instanceof Account) {
-			curAccount = (Account) obj;
-			curStatement = null;
-
-			setTransactions(curAccount.transactions);
-		} else if (obj instanceof Statement) {
-			curStatement = (Statement) obj;
-			curAccount = Account.getAccountByID(curStatement.acctid);
-
-			setTransactions(curStatement.transactions);
-		} else {
-			return;
-		}
-
-		curObject = obj;
 	}
 
 	public void setStatementDate(QDate date) {
@@ -102,7 +99,7 @@ public class TransactionTableModel //
 	}
 
 	public int getRowCount() {
-		return transations.size();
+		return transactions.size();
 	}
 
 	public String getColumnName(int col) {
@@ -110,11 +107,11 @@ public class TransactionTableModel //
 	}
 
 	public GenericTxn getTransactionAt(int row) {
-		if (row < 0 || row >= transations.size()) {
+		if (row < 0 || row >= transactions.size()) {
 			return null;
 		}
 
-		return this.transations.get(row);
+		return this.transactions.get(row);
 	}
 
 	public Object getValueAt(int row, int col) {

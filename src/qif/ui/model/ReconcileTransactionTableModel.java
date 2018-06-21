@@ -15,11 +15,12 @@ import qif.data.InvestmentTxn;
 import qif.data.QDate;
 import qif.data.Statement;
 import qif.ui.AccountSelectionListener;
+import qif.ui.StatementSelectionListener;
 
+@SuppressWarnings("serial")
 public class ReconcileTransactionTableModel //
 		extends AbstractTableModel //
-		implements AccountSelectionListener {
-	private static final long serialVersionUID = 1L;
+		implements AccountSelectionListener, StatementSelectionListener {
 
 	private static final String[] columnNames = { //
 			"Date", //
@@ -31,34 +32,38 @@ public class ReconcileTransactionTableModel //
 			"Balance"//
 	};
 
-	public Object curObject;
-	public Account curAccount;
-	public Statement curStatement;
+	private Object curObject;
+	private Account account;
+	private Statement curStatement;
 
-	public final List<GenericTxn> allTransactions;
-	public final List<GenericTxn> clearedTransactions;
+	private final List<GenericTxn> allTransactions;
+	private final List<GenericTxn> clearedTransactions;
 
 	public ReconcileTransactionTableModel() {
 		this.curObject = null;
-		this.curAccount = null;
+		this.account = null;
 		this.curStatement = null;
 		this.allTransactions = new ArrayList<GenericTxn>();
 		this.clearedTransactions = new ArrayList<GenericTxn>();
 	}
 
-	public Statement getStatement() {
-		return this.curStatement;
+	public Statement createNextStatementToReconcile() {
+		return (this.account != null) //
+				? this.account.createNextStatementToReconcile() //
+				: null;
 	}
 
-	public void accountSelected(Account account) {
-		setAccount(account);
+	public boolean isCleared(GenericTxn txn) {
+		return this.clearedTransactions.contains(txn);
 	}
 
-	public void setAccount(Account acct) {
-		setObject(acct);
+	public void accountSelected(Account acct, boolean update) {
+		if (update || (acct != this.account)) {
+			setObject(acct);
+		}
 	}
 
-	public void setStatement(Statement stmt) {
+	public void statementSelected(Statement stmt) {
 		setObject(stmt);
 	}
 
@@ -71,7 +76,7 @@ public class ReconcileTransactionTableModel //
 					&& this.curStatement.getClearedCashBalance().equals(//
 							this.curStatement.cashBalance)) {
 				this.curStatement.isBalanced = true;
-				this.curAccount.statements.add(this.curStatement);
+				this.account.statements.add(this.curStatement);
 			} else {
 				System.out.println("Can't finish statement");
 			}
@@ -153,12 +158,12 @@ public class ReconcileTransactionTableModel //
 
 		if (obj == null) {
 			this.curStatement = null;
-			this.curAccount = null;
+			this.account = null;
 
 			setTransactions();
 		} else if (obj instanceof Statement) {
 			this.curStatement = (Statement) obj;
-			this.curAccount = Account.getAccountByID(curStatement.acctid);
+			this.account = Account.getAccountByID(curStatement.acctid);
 
 			setTransactions();
 		} else {
@@ -169,11 +174,11 @@ public class ReconcileTransactionTableModel //
 	}
 
 	public void setStatementDate(QDate date) {
-		if ((date == null) || (curAccount == null)) {
+		if ((date == null) || (account == null)) {
 			return;
 		}
 
-		Statement s = curAccount.getStatement(date, null);
+		Statement s = account.getStatement(date, null);
 		if (s != null) {
 			this.curStatement = s;
 			setTransactions();
