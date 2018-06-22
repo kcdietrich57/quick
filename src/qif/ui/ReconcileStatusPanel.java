@@ -39,6 +39,7 @@ class ReconcileStatusPanel //
 
 	private JTextField closingCashField;
 	private BigDecimal clearedCashBalance;
+	private BigDecimal diffValue;
 
 	private JButton selectAllButton;
 	private JButton deselectAllButton;
@@ -195,12 +196,15 @@ class ReconcileStatusPanel //
 				? Common.formatAmount(this.clearedCashBalance) //
 				: "---");
 
-		BigDecimal diff = ((this.stmt != null) && (this.stmt.cashBalance != null)) //
+		this.diffValue = ((this.stmt != null) && (this.stmt.cashBalance != null)) //
 				? this.stmt.cashBalance.subtract(this.clearedCashBalance) //
 				: null;
-		this.difference.setText((diff != null) //
-				? Common.formatAmount(diff) //
+		this.difference.setText((this.diffValue != null) //
+				? Common.formatAmount(diffValue) //
 				: "---");
+
+		this.finishButton.setEnabled( //
+				((this.diffValue != null) && (this.diffValue.signum() == 0)));
 	}
 
 	public void transactionSelected(GenericTxn transaction) {

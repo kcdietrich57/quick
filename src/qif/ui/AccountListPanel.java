@@ -1,6 +1,8 @@
 package qif.ui;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -44,6 +46,10 @@ public class AccountListPanel extends JScrollPane {
 
 		accountTable = (JTable) getViewport().getView();
 		accountTable.setFillsViewportHeight(true);
+
+		accountTable.setDefaultRenderer(Object.class, //
+				new AccountTableCellRenderer());
+
 		accountTableModel = (AccountTableModel) accountTable.getModel();
 		accountTableModel.load(this.showOpenAccounts);
 
@@ -156,5 +162,40 @@ public class AccountListPanel extends JScrollPane {
 				// Auto-generated method stub
 			}
 		});
+	}
+}
+
+class AccountTableCellRenderer extends DefaultTableCellRenderer {
+	private static final long serialVersionUID = 1L;
+
+	private static Font normalFont = new Font("Helvetica", Font.PLAIN, 12);
+	private static Color normalColor = Color.BLACK;
+	private static Color normalBackground = Color.WHITE;
+
+	private static Font dueFont = new Font("Helvetica", Font.BOLD, 12);
+	private static Color dueColor = Color.BLUE;
+	private static Color dueBackground = Color.WHITE;
+
+	public Component getTableCellRendererComponent(//
+			JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+		Component c = super.getTableCellRendererComponent(//
+				table, value, isSelected, hasFocus, row, col);
+
+		AccountTableModel model = (AccountTableModel) table.getModel();
+		Account acct = model.getAccountAt(row);
+
+		boolean statementDue = acct.isStatementDue();
+
+		if (statementDue) {
+			c.setFont(dueFont);
+			c.setForeground(dueColor);
+			c.setBackground(dueBackground);
+		} else {
+			c.setFont(normalFont);
+			c.setForeground(normalColor);
+			c.setBackground(normalBackground);
+		}
+
+		return c;
 	}
 }

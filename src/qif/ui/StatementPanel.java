@@ -2,6 +2,7 @@ package qif.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -79,6 +80,9 @@ public class StatementPanel //
 		this.scroller = new JScrollPane(this.statementTable);
 		statementTable.setFillsViewportHeight(true);
 
+		statementTable.setDefaultRenderer(Object.class, //
+				new StatementTableCellRenderer());
+
 		add(titlePanel, BorderLayout.NORTH);
 		add(this.scroller, BorderLayout.CENTER);
 
@@ -93,36 +97,36 @@ public class StatementPanel //
 		ListSelectionModel statementSelectionModel = statementTable.getSelectionModel();
 		statementSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-		TableColumnModel stmtColumnModel = statementTable.getColumnModel();
-		stmtColumnModel.getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
-			{
-				setHorizontalAlignment(JLabel.RIGHT);
-			}
-		});
-
-		stmtColumnModel.getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
-			{
-				setHorizontalAlignment(JLabel.RIGHT);
-			}
-		});
-
-		stmtColumnModel.getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
-			{
-				setHorizontalAlignment(JLabel.RIGHT);
-			}
-		});
-
-		stmtColumnModel.getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
-			{
-				setHorizontalAlignment(JLabel.RIGHT);
-			}
-		});
-
-		stmtColumnModel.getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
-			{
-				setHorizontalAlignment(JLabel.RIGHT);
-			}
-		});
+		// TableColumnModel stmtColumnModel = statementTable.getColumnModel();
+		// stmtColumnModel.getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
+		// {
+		// setHorizontalAlignment(JLabel.RIGHT);
+		// }
+		// });
+		//
+		// stmtColumnModel.getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
+		// {
+		// setHorizontalAlignment(JLabel.RIGHT);
+		// }
+		// });
+		//
+		// stmtColumnModel.getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
+		// {
+		// setHorizontalAlignment(JLabel.RIGHT);
+		// }
+		// });
+		//
+		// stmtColumnModel.getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
+		// {
+		// setHorizontalAlignment(JLabel.RIGHT);
+		// }
+		// });
+		//
+		// stmtColumnModel.getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
+		// {
+		// setHorizontalAlignment(JLabel.RIGHT);
+		// }
+		// });
 
 		statementSelectionModel.addListSelectionListener( //
 				new ListSelectionListener() {
@@ -232,5 +236,60 @@ public class StatementPanel //
 		for (StatementSelectionListener l : this.stmtSelListeners) {
 			l.statementSelected(s);
 		}
+	}
+}
+
+@SuppressWarnings("serial")
+class StatementTableCellRenderer extends DefaultTableCellRenderer {
+	private static Font regularFont = new Font("Helvetica", Font.BOLD, 12);
+	private static Color regularColor = Color.BLACK;
+	private static Color regularBackground = new Color(250, 250, 220);
+
+	private static Font unclearedFont = new Font("Helvetica", Font.PLAIN, 12);
+	private static Color unclearedColor = Color.BLUE;
+	private static Color unclearedBackground = Color.WHITE;
+
+	private static Font futureFont = new Font("Helvetica", Font.ITALIC, 12);
+	private static Color futureColor = Color.GRAY;
+	private static Color futureBackground = Color.WHITE;
+
+	public Component getTableCellRendererComponent( //
+			JTable table, Object value, boolean isSelected, boolean hasFocus, //
+			int row, int col) {
+		Component c = super.getTableCellRendererComponent( //
+				table, value, isSelected, hasFocus, row, col);
+
+		StatementTableModel model = (StatementTableModel) table.getModel();
+		Statement stmt = model.getStatementAt(row);
+
+		boolean cleared = stmt.isBalanced;
+		// TODO distinguish between real and generated statements here
+		boolean future = !cleared && (stmt.cashBalance == null);
+
+		if (cleared) {
+			c.setFont(regularFont);
+			c.setForeground(regularColor);
+			c.setBackground(regularBackground);
+		} else if (future) {
+			c.setFont(futureFont);
+			c.setForeground(futureColor);
+			c.setBackground(futureBackground);
+		} else {
+			c.setFont(unclearedFont);
+			c.setForeground(unclearedColor);
+			c.setBackground(unclearedBackground);
+		}
+
+		switch (col) {
+		case 2:
+		case 3:
+		case 5:
+		case 6:
+		case 7:
+			setHorizontalAlignment(JLabel.RIGHT);
+			break;
+		}
+
+		return c;
 	}
 }

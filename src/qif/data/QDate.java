@@ -148,14 +148,14 @@ public class QDate implements Comparable<QDate> {
 		if (Math.abs(diff) <= 31) {
 			return diff;
 		}
-		
+
 		Calendar c1 = Calendar.getInstance();
 		c1.setTime(toDate());
 		Calendar c2 = Calendar.getInstance();
 		c2.setTime(o.toDate());
-		
+
 		long msdiff = c1.getTimeInMillis() - c2.getTimeInMillis();
-		
+
 		return Common.msToDays(msdiff);
 	}
 

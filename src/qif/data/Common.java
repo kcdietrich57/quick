@@ -21,10 +21,10 @@ public class Common {
 		throw new RuntimeException(s);
 	}
 
-	private static final long MS_PER_DAY = (long)(24 * 60 * 60 * 1000);
-	
+	private static final long MS_PER_DAY = (long) (24 * 60 * 60 * 1000);
+
 	public static int msToDays(long ms) {
-		return (int)(ms / MS_PER_DAY);
+		return (int) (ms / MS_PER_DAY);
 	}
 
 	/**

@@ -192,7 +192,7 @@ class ReconcileTransactionTableCellRenderer extends DefaultTableCellRenderer {
 	private static Color clearedColor = Color.BLUE;
 
 	private static Color unclearedBackground = Color.WHITE;
-	private static Color clearedBackground = new Color(240, 240, 240);
+	private static Color clearedBackground = new Color(245, 245, 255);
 
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
 			int row, int col) {

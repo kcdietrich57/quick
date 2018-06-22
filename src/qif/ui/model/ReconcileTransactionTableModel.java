@@ -82,11 +82,11 @@ public class ReconcileTransactionTableModel //
 					this.account.statements.add(this.statement);
 				}
 
-				//TODO update statements file
+				// TODO update statements file
 				System.out.println("Need to update statements for " //
 						+ this.account.getName() + ": " //
 						+ this.account.statementFile.getName());
-				
+
 				this.statement.dirty = true;
 				Reconciler.saveReconciledStatement(this.statement);
 			} else {

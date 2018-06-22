@@ -61,10 +61,8 @@ public class AccountTableModel extends AbstractTableModel {
 		}
 
 		switch (col) {
-		case 0:{
-			// TODO highlight accounts properly
-			return a.getName() + ((a.isStatementDue()) ? " *" : "");
-		}
+		case 0:
+			return a.getName();
 		case 1:
 			return a.type.toString();
 		case 2:
