@@ -143,6 +143,22 @@ public class QDate implements Comparable<QDate> {
 		return this.datevalue - o.datevalue;
 	}
 
+	public int subtract(QDate o) {
+		int diff = this.datevalue - o.datevalue;
+		if (Math.abs(diff) <= 31) {
+			return diff;
+		}
+		
+		Calendar c1 = Calendar.getInstance();
+		c1.setTime(toDate());
+		Calendar c2 = Calendar.getInstance();
+		c2.setTime(o.toDate());
+		
+		long msdiff = c1.getTimeInMillis() - c2.getTimeInMillis();
+		
+		return Common.msToDays(msdiff);
+	}
+
 	public Date toDate() {
 		Calendar cal = Calendar.getInstance();
 		cal.set(this.datevalue / 10000, //

@@ -84,7 +84,7 @@ public class StatementPanel //
 
 		TableColumnModel statColumnModel = statementTable.getColumnModel();
 
-		int swidths[] = { 70, 80, 80, 80, 80, 80, 40 };
+		int swidths[] = { 30, 70, 80, 80, 80, 80, 80, 40 };
 		for (int i = 0; i < swidths.length; i++) {
 			statColumnModel.getColumn(i).setMinWidth(swidths[i]);
 			statColumnModel.getColumn(i).setMaxWidth(swidths[i]);
@@ -94,19 +94,13 @@ public class StatementPanel //
 		statementSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		TableColumnModel stmtColumnModel = statementTable.getColumnModel();
-		stmtColumnModel.getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
-			{
-				setHorizontalAlignment(JLabel.RIGHT);
-			}
-		});
-
 		stmtColumnModel.getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
 			{
 				setHorizontalAlignment(JLabel.RIGHT);
 			}
 		});
 
-		stmtColumnModel.getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
+		stmtColumnModel.getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
 			{
 				setHorizontalAlignment(JLabel.RIGHT);
 			}
@@ -119,6 +113,12 @@ public class StatementPanel //
 		});
 
 		stmtColumnModel.getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
+			{
+				setHorizontalAlignment(JLabel.RIGHT);
+			}
+		});
+
+		stmtColumnModel.getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
 			{
 				setHorizontalAlignment(JLabel.RIGHT);
 			}

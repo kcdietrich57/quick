@@ -156,7 +156,7 @@ public class Account {
 		this.transactions = new ArrayList<GenericTxn>();
 		this.statements = new ArrayList<Statement>();
 		this.securities = new SecurityPortfolio();
-		
+
 		this.statementFile = null;
 	}
 
@@ -210,6 +210,20 @@ public class Account {
 		}
 
 		return null;
+	}
+
+	public boolean isStatementDue() {
+		return getStatementDaysTillDue() <= 0;
+	}
+
+	public int getStatementDaysTillDue() {
+		QDate laststmt = getLastBalancedStatementDate();
+		if ((laststmt == null) || (this.statementFrequency <= 0)) {
+			return -1;
+		}
+
+		QDate duedate = laststmt.addDays(this.statementFrequency);
+		return duedate.subtract(QDate.today());
 	}
 
 	public QDate getLastBalancedStatementDate() {
@@ -285,7 +299,7 @@ public class Account {
 		return nextstmt;
 	}
 
-	public Statement createNextStatementToReconcile() {
+	public Statement getNextStatementToReconcile() {
 		Statement stat = getFirstUnbalancedStatement();
 		if (stat == null) {
 			QDate laststmtdate = getLastBalancedStatementDate();
@@ -296,31 +310,34 @@ public class Account {
 			stat.prevStatement = laststmt;
 		}
 
-		// NB. Only transactions up to the statement date
-		stat.addTransactions(getUnclearedTransactions(), true);
+		if (stat.transactions.isEmpty()) {
+			// NB. Only transactions up to the statement date
+			stat.addTransactions(getUnclearedTransactions(), true);
+		}
 
 		return stat;
 	}
 
+	/**
+	 * Return a statement with all uncleared transactions that do not belong to a
+	 * statement already. (Null if there are none)
+	 */
 	public Statement getUnclearedStatement() {
+		// Make sure reconcile statement has its transactions
+		getNextStatementToReconcile();
+
+		List<GenericTxn> txns = getUnclearedTransactions();
+
+		if (txns.isEmpty()) {
+			return null;
+		}
+
 		Statement stat = new Statement(this.acctid);
 
 		stat.date = QDate.today();
-		stat.addTransactions(getUnclearedTransactions());
+		stat.addTransactions(txns);
 
 		return stat;
-	}
-
-	public int getUnclearedTransactionCount() {
-		int count = 0;
-
-		for (final GenericTxn t : this.transactions) {
-			if ((t != null) && (t.stmtdate == null)) {
-				++count;
-			}
-		}
-
-		return count;
 	}
 
 	public QDate getFirstTransactionDate() {
@@ -349,6 +366,23 @@ public class Account {
 		return -1;
 	}
 
+	/** Return count of all unreconciled transactions */
+	public int getUnclearedTransactionCount() {
+		int count = 0;
+
+		for (final GenericTxn t : this.transactions) {
+			if ((t != null) && (t.stmtdate == null)) {
+				++count;
+			}
+		}
+
+		return count;
+	}
+
+	/**
+	 * Return a new collection of uncleared transactions that don't belong to any
+	 * statement
+	 */
 	public List<GenericTxn> getUnclearedTransactions() {
 		List<GenericTxn> txns = new ArrayList<GenericTxn>();
 
@@ -360,6 +394,16 @@ public class Account {
 			if ((t != null) && (t.stmtdate == null)) {
 				txns.add(t);
 			}
+		}
+
+		for (int statidx = this.statements.size() - 1; statidx >= 0; --statidx) {
+			Statement stmt = this.statements.get(statidx);
+
+			if (stmt.isBalanced) {
+				break;
+			}
+
+			txns.removeAll(stmt.transactions);
 		}
 
 		return txns;

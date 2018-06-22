@@ -18,6 +18,7 @@ public class StatementTableModel //
 		implements AccountSelectionListener {
 
 	private static final String[] columnNames = { //
+			"Clr", //
 			"Date", //
 			"Balance", //
 			"Cash", //
@@ -38,8 +39,9 @@ public class StatementTableModel //
 			if (acct != null) {
 				this.statements.addAll(acct.statements);
 
-				if (acct.getUnclearedTransactionCount() > 0) {
-					this.statements.add(acct.getUnclearedStatement());
+				Statement unclearedStmt = acct.getUnclearedStatement();
+				if (unclearedStmt != null) {
+					this.statements.add(unclearedStmt);
 				}
 			}
 
@@ -82,22 +84,24 @@ public class StatementTableModel //
 
 		switch (col) {
 		case 0:
-			return s.date.toString();
+			return (s.isBalanced) ? "yes" : "no";
 		case 1:
-			return Common.stringValue(s.closingBalance);
+			return s.date.toString();
 		case 2:
-			return Common.stringValue(s.cashBalance);
+			return Common.stringValue(s.closingBalance);
 		case 3:
+			return Common.stringValue(s.cashBalance);
+		case 4:
 			if (s.holdings != null && !s.holdings.positions.isEmpty()) {
 				return Common.formatAmount(s.holdings.getPortfolioValueForDate(s.date));
 			} else {
 				return "";
 			}
-		case 4:
-			return Common.stringValue(s.getCredits());
 		case 5:
-			return Common.stringValue(s.getDebits());
+			return Common.stringValue(s.getCredits());
 		case 6:
+			return Common.stringValue(s.getDebits());
+		case 7:
 			return Integer.toString(s.transactions.size());
 		}
 

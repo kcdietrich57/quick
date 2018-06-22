@@ -38,7 +38,7 @@ public class ReconcilePanel //
 			this.account = acct;
 
 			Statement stmt = (acct != null) //
-					? acct.createNextStatementToReconcile() //
+					? acct.getNextStatementToReconcile() //
 					: null;
 
 			this.reconcileTransactionsPanel.statementSelected(stmt);

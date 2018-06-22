@@ -50,7 +50,7 @@ public class ReconcileTransactionTableModel //
 
 	public Statement createNextStatementToReconcile() {
 		return (this.account != null) //
-				? this.account.createNextStatementToReconcile() //
+				? this.account.getNextStatementToReconcile() //
 				: null;
 	}
 

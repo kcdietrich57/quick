@@ -21,6 +21,12 @@ public class Common {
 		throw new RuntimeException(s);
 	}
 
+	private static final long MS_PER_DAY = (long)(24 * 60 * 60 * 1000);
+	
+	public static int msToDays(long ms) {
+		return (int)(ms / MS_PER_DAY);
+	}
+
 	/**
 	 * Values sometimes use thousands separators ",". Delete them.
 	 * 
