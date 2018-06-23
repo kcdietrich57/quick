@@ -70,7 +70,7 @@ class ReconcileStatusPanel //
 		gbc.insets = new Insets(5, 2, 5, 2);
 		gbc.gridwidth = 2;
 		this.date = GridBagUtility.addValue(innerPanel, gbc, 0, 0, //
-				GridBagUtility.bold20);
+				GridBagUtility.bold16);
 		this.closingCashField = GridBagUtility.addTextField(innerPanel, gbc, 0, 1, //
 				GridBagUtility.bold12);
 		this.lastStmt = GridBagUtility.addLabeledValue(innerPanel, gbc, 0, 1, //
