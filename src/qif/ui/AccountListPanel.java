@@ -25,6 +25,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import qif.data.Account;
+import qif.data.Statement;
 import qif.ui.model.AccountTableModel;
 
 /** This panel displays accounts, and drives the content of AccountPanel */
@@ -59,19 +60,6 @@ public class AccountListPanel extends JScrollPane {
 		for (int i = 0; i < awidths.length; i++) {
 			acctColumnModel.getColumn(i).setPreferredWidth(awidths[i]);
 		}
-
-		acctColumnModel.getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
-			{
-				setHorizontalAlignment(JLabel.RIGHT);
-			}
-
-			public Component getTableCellRendererComponent(//
-					JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-				Component c = super.getTableCellRendererComponent(//
-						table, value, isSelected, hasFocus, row, col);
-				return c;
-			}
-		});
 
 		ListSelectionModel accountSelectionModel = accountTable.getSelectionModel();
 		accountSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -187,13 +175,25 @@ class AccountTableCellRenderer extends DefaultTableCellRenderer {
 		boolean statementDue = acct.isStatementDue();
 
 		if (statementDue) {
+			Statement stat = acct.getFirstUnbalancedStatement();
+
 			c.setFont(dueFont);
-			c.setForeground(dueColor);
-			c.setBackground(dueBackground);
+
+			if ((stat != null) && (stat.cashBalance.signum() != 0)) {
+				c.setForeground(dueColor);
+				c.setBackground(dueBackground);
+			} else {
+				c.setForeground(normalColor);
+				c.setBackground(normalBackground);
+			}
 		} else {
 			c.setFont(normalFont);
 			c.setForeground(normalColor);
 			c.setBackground(normalBackground);
+		}
+
+		if (col == 2) {
+			setHorizontalAlignment(JLabel.RIGHT);
 		}
 
 		return c;

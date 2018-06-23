@@ -35,9 +35,10 @@ public class AccountInfoPanel //
 		gbc.insets = new Insets(10, 5, 10, 5);
 		gbc.fill = GridBagConstraints.BOTH;
 		gbc.gridwidth = 2;
-		this.accountName = GridBagUtility.addValue(innerPanel, gbc, 0, 0, //
-				GridBagUtility.bold16);
-		this.accountDescription = GridBagUtility.addValue(innerPanel, gbc, 0, 2, 14);
+		this.accountName = GridBagUtility.addValue( //
+				innerPanel, gbc, 0, 0, GridBagUtility.bold16);
+		this.accountDescription = GridBagUtility.addValue( //
+				innerPanel, gbc, 0, 2, 14);
 	}
 
 	public void accountSelected(Account acct, boolean update) {
@@ -45,6 +46,7 @@ public class AccountInfoPanel //
 			this.account = acct;
 
 			this.accountName.setText((acct != null) ? acct.getName() : "---");
+			this.accountDescription.setText((acct != null) ? acct.description : "");
 		}
 	}
 }

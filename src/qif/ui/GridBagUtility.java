@@ -2,6 +2,7 @@ package qif.ui;
 
 import java.awt.Font;
 import java.awt.GridBagConstraints;
+import java.awt.GridLayout;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -46,15 +47,19 @@ class GridBagUtility {
 
 	public static JLabel addLabeledValue(JPanel panel, GridBagConstraints gbc, //
 			int row, int col, String text, Font labelFont, Font valueFont) {
+		JPanel innerPanel = new JPanel(new GridLayout(1, 2));
+
 		JLabel label = new JLabel(text);
 		label.setFont(labelFont);
+		innerPanel.add(label);
+
+		label = new JLabel("---");
+		label.setFont(valueFont);
+		innerPanel.add(label);
 
 		gbc.gridy = row;
-		gbc.gridx = col * 2;
-		panel.add(label, gbc);
-
-		label = addValue(panel, gbc, row, col * 2 + 1);
-		label.setFont(valueFont);
+		gbc.gridx = col;
+		panel.add(innerPanel, gbc);
 
 		return label;
 	}
