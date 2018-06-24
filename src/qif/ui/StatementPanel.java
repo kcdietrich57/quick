@@ -97,37 +97,6 @@ public class StatementPanel //
 		ListSelectionModel statementSelectionModel = statementTable.getSelectionModel();
 		statementSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-		// TableColumnModel stmtColumnModel = statementTable.getColumnModel();
-		// stmtColumnModel.getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
-		// {
-		// setHorizontalAlignment(JLabel.RIGHT);
-		// }
-		// });
-		//
-		// stmtColumnModel.getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
-		// {
-		// setHorizontalAlignment(JLabel.RIGHT);
-		// }
-		// });
-		//
-		// stmtColumnModel.getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
-		// {
-		// setHorizontalAlignment(JLabel.RIGHT);
-		// }
-		// });
-		//
-		// stmtColumnModel.getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
-		// {
-		// setHorizontalAlignment(JLabel.RIGHT);
-		// }
-		// });
-		//
-		// stmtColumnModel.getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
-		// {
-		// setHorizontalAlignment(JLabel.RIGHT);
-		// }
-		// });
-
 		statementSelectionModel.addListSelectionListener( //
 				new ListSelectionListener() {
 					public void valueChanged(ListSelectionEvent e) {

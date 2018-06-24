@@ -2,6 +2,9 @@ package qif.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -13,7 +16,10 @@ import java.math.BigDecimal;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 
 import qif.data.Account;
 import qif.data.Common;
@@ -33,14 +39,14 @@ class ReconcileStatusPanel //
 	private Statement stmt;
 
 	private JLabel dateLabel;
-	private JTextField closingCashField;
+	// private JTextField closingCashField;
 	private JLabel openBalanceLabel;
 	private JLabel lastStmtDateLabel;
 	private JLabel creditsLabel;
 	private JLabel debitsLabel;
 	private JLabel clearedCashBalanceLabel;
-	private JLabel cashDiffLabel;
-	private JLabel portfolioOKLabel;
+	// private JLabel cashDiffLabel;
+	// private JLabel portfolioOKLabel;
 
 	private BigDecimal clearedCashBalance;
 	private BigDecimal cashDiffValue;
@@ -53,13 +59,14 @@ class ReconcileStatusPanel //
 	private ReconcileTransactionsPanel reconcileTransactionsPanel;
 	private StatementPanel statementPanel;
 
+	private JTable holdingsTable;
+	private HoldingsTableModel holdingsTableModel;
+
 	public ReconcileStatusPanel( //
 			AccountPanel accountPanel, //
 			StatementPanel statementPanel, //
 			ReconcileTransactionsPanel reconcileTransactionsPanel) {
 		super(new BorderLayout());
-
-		this.clearedCashBalanceLabel = null;
 
 		this.accountPanel = accountPanel;
 		this.statementPanel = statementPanel;
@@ -70,35 +77,60 @@ class ReconcileStatusPanel //
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.fill = GridBagConstraints.BOTH;
 
+		// ===================================================
+		// Cash information
+		// ===================================================
 		gbc.insets = new Insets(5, 2, 5, 2);
 		gbc.gridwidth = 1;
 
 		this.dateLabel = GridBagUtility.addValue( //
 				infoPanel, gbc, 0, 0, GridBagUtility.bold16);
-		this.closingCashField = GridBagUtility.addTextField( //
-				infoPanel, gbc, 0, 1, GridBagUtility.bold12);
-		this.lastStmtDateLabel = GridBagUtility.addLabeledValue( //
-				infoPanel, gbc, 1, 1, "Last Stmt", 12);
+		// this.closingCashField = GridBagUtility.addTextField( //
+		// infoPanel, gbc, 0, 1, GridBagUtility.bold12);
 
 		gbc.insets = new Insets(0, 5, 0, 0);
 		gbc.gridwidth = 1;
 
+		this.lastStmtDateLabel = GridBagUtility.addLabeledValue( //
+				infoPanel, gbc, 1, 0, "Last Stmt", 12);
 		this.openBalanceLabel = GridBagUtility.addLabeledValue( //
-				infoPanel, gbc, 1, 0, "Open Cash Balance", 13);
+				infoPanel, gbc, 2, 0, "Open Cash Balance", 13);
 		this.creditsLabel = GridBagUtility.addLabeledValue( //
-				infoPanel, gbc, 2, 0, "Credits", 13);
+				infoPanel, gbc, 3, 0, "Credits", 13);
 		this.debitsLabel = GridBagUtility.addLabeledValue( //
-				infoPanel, gbc, 3, 0, "Debits", 13);
-		this.clearedCashBalanceLabel = GridBagUtility.addLabeledValue( //
-				infoPanel, gbc, 4, 0, "Cleared Cash Balance", 13);
+				infoPanel, gbc, 4, 0, "Debits", 13);
 
-		this.portfolioOKLabel = GridBagUtility.addLabeledValue( //
-				infoPanel, gbc, 3, 1, "Portfolio Ok", 14);
-		this.cashDiffLabel = GridBagUtility.addLabeledValue( //
-				infoPanel, gbc, 4, 1, "Cash Difference", 14);
+		gbc.insets = new Insets(5, 5, 0, 0);
+		this.clearedCashBalanceLabel = GridBagUtility.addLabeledValue( //
+				infoPanel, gbc, 5, 0, "Cleared Cash Balance", 13);
+		// this.cashDiffLabel = GridBagUtility.addLabeledValue( //
+		// infoPanel, gbc, 5, 1, "Difference", 14);
+
+		gbc.insets = new Insets(0, 5, 0, 0);
+
+		// ===================================================
+		// Portfolio
+		// ===================================================
+
+		// gbc.anchor = GridBagConstraints.EAST;
+		// this.portfolioOKLabel = GridBagUtility.addLabeledValue( //
+		// infoPanel, gbc, 3, 1, "Portfolio Ok", 14);
+
+		this.holdingsTableModel = new HoldingsTableModel();
+		this.holdingsTable = new JTable(this.holdingsTableModel);
+		this.holdingsTable.setDefaultRenderer(Object.class, new HoldingsTableCellRenderer());
+
+		JScrollPane holdingsTableScroller = new JScrollPane(this.holdingsTable);
+		holdingsTable.setMinimumSize(new Dimension(100, 50));
+		holdingsTable.setMaximumSize(new Dimension(500, 75));
+		holdingsTable.setPreferredScrollableViewportSize(new Dimension(200, 100));
+
+		// ===================================================
+		// Buttons
+		// ===================================================
 
 		JPanel buttonPanel = new JPanel(new GridLayout(0, 1));
-		
+
 		this.selectAllButton = new JButton("Select All");
 		this.deselectAllButton = new JButton("Deselect All");
 		this.finishButton = new JButton("Finish");
@@ -127,13 +159,16 @@ class ReconcileStatusPanel //
 			}
 		});
 
-		this.closingCashField.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				setClosingValue();
-			}
-		});
+		// this.closingCashField.addActionListener(new ActionListener() {
+		// public void actionPerformed(ActionEvent e) {
+		// setClosingValue();
+		// }
+		// });
+
+		// ===================================================
 
 		add(infoPanel, BorderLayout.WEST);
+		add(holdingsTableScroller, BorderLayout.CENTER);
 		add(buttonPanel, BorderLayout.EAST);
 	}
 
@@ -150,17 +185,17 @@ class ReconcileStatusPanel //
 		this.accountPanel.accountSelected(acct, true);
 	}
 
-	private void setClosingValue() {
-		try {
-			BigDecimal val = new BigDecimal(closingCashField.getText());
-			this.stmt.closingBalance = val;
-			this.stmt.cashBalance = val;
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
-
-		updateValues();
-	}
+	// private void setClosingValue() {
+	// try {
+	// BigDecimal val = new BigDecimal(closingCashField.getText());
+	// this.stmt.closingBalance = val;
+	// this.stmt.cashBalance = val;
+	// } catch (Exception ex) {
+	// ex.printStackTrace();
+	// }
+	//
+	// updateValues();
+	// }
 
 	public void statementSelected(Statement stmt) {
 		if (stmt != this.stmt) {
@@ -173,9 +208,10 @@ class ReconcileStatusPanel //
 	private void updateValues() {
 		String datestr = (this.stmt != null) ? this.stmt.date.longString : "---";
 		this.dateLabel.setText(datestr);
-		this.closingCashField.setText(((this.stmt != null) && (this.stmt.cashBalance != null))//
-				? Common.formatAmount(this.stmt.cashBalance) //
-				: "Enter closing balance");
+		// this.closingCashField.setText(((this.stmt != null) && (this.stmt.cashBalance
+		// != null))//
+		// ? Common.formatAmount(this.stmt.cashBalance) //
+		// : "Enter closing balance");
 		Statement laststmt = (stmt != null) ? stmt.prevStatement : null;
 		this.lastStmtDateLabel.setText((laststmt != null) //
 				? laststmt.date.longString //
@@ -201,22 +237,90 @@ class ReconcileStatusPanel //
 		this.cashDiffValue = ((this.stmt != null) && (this.stmt.cashBalance != null)) //
 				? this.stmt.cashBalance.subtract(this.clearedCashBalance) //
 				: null;
-		this.cashDiffLabel.setText((this.cashDiffValue != null) //
-				? Common.formatAmount(cashDiffValue) //
-				: "---");
-		
-		SecurityPortfolio delta = model.getPortfolioDelta();
-		boolean holdingsMatch = delta.equals(this.stmt.holdings);
-		this.portfolioOKLabel.setText((holdingsMatch) ? "Yes" : "No");
+		// this.cashDiffLabel.setText((this.cashDiffValue != null) //
+		// ? Common.formatAmount(cashDiffValue) //
+		// : "---");
 
 		boolean isBalanced = (this.cashDiffValue != null) && (this.cashDiffValue.signum() == 0);
+		this.clearedCashBalanceLabel.setForeground((isBalanced) ? Color.BLACK : Color.RED);
+		// this.cashDiffLabel.setForeground((isBalanced) ? Color.BLACK : Color.RED);
+
+		SecurityPortfolio.HoldingsComparison comparison = //
+				this.stmt.holdings.comparisonTo(model.getPortfolioDelta());
+		this.holdingsTableModel.holdingsComparision = comparison;
+		boolean holdingsMatch = comparison.holdingsMatch();
+		// this.portfolioOKLabel.setText((holdingsMatch) ? "Yes" : "No");
+
+		// this.portfolioOKLabel.setForeground((holdingsMatch) ? Color.BLACK :
+		// Color.RED);
+
 		this.finishButton.setEnabled(isBalanced && holdingsMatch);
-		
-		this.cashDiffLabel.setForeground((isBalanced) ? Color.BLACK : Color.RED);
-		this.portfolioOKLabel.setForeground((holdingsMatch) ? Color.BLACK : Color.RED);
+
+		this.holdingsTableModel.fireTableDataChanged();
 	}
 
 	public void transactionSelected(GenericTxn transaction) {
 		updateValues();
+	}
+}
+
+@SuppressWarnings("serial")
+class HoldingsTableModel extends AbstractTableModel {
+	private static final String headers[] = { "Security", "Desired", "Actual" };
+
+	public SecurityPortfolio.HoldingsComparison holdingsComparision;
+
+	public int getRowCount() {
+		return (this.holdingsComparision != null) //
+				? this.holdingsComparision.desiredPositions.size() //
+				: 0;
+	}
+
+	public int getColumnCount() {
+		return 3;
+	}
+
+	public String getColumnName(int col) {
+		return headers[col];
+	}
+
+	public Object getValueAt(int row, int col) {
+		switch (col) {
+		case 0:
+			return this.holdingsComparision.getSecurityName(row);
+		case 1:
+			return Common.formatAmount3(this.holdingsComparision.getDesiredShares(row));
+		case 2:
+			return Common.formatAmount3(this.holdingsComparision.getActualShares(row));
+		}
+
+		return "N/A";
+	}
+}
+
+@SuppressWarnings("serial")
+class HoldingsTableCellRenderer extends DefaultTableCellRenderer {
+	private static final Font BALANCED_FONT = new Font("Helvetica", Font.PLAIN, 12);
+	private static final Color BALANCED_COLOR = Color.BLACK;
+	private static final Font UNBALANCED_FONT = new Font("Helvetica", Font.BOLD, 14);
+	private static final Color UNBALANCED_COLOR = Color.RED;
+
+	public Component getTableCellRendererComponent( //
+			JTable table, Object value, boolean isSelected, boolean hasFocus, //
+			int row, int column) {
+		Component c = super.getTableCellRendererComponent( //
+				table, value, isSelected, hasFocus, row, column);
+
+		HoldingsTableModel model = (HoldingsTableModel) table.getModel();
+
+		if (model.getValueAt(row, 1).equals(model.getValueAt(row, 2))) {
+			c.setFont(BALANCED_FONT);
+			c.setForeground(BALANCED_COLOR);
+		} else {
+			c.setFont(UNBALANCED_FONT);
+			c.setForeground(UNBALANCED_COLOR);
+		}
+
+		return c;
 	}
 }

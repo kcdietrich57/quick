@@ -142,41 +142,86 @@ public class SecurityPortfolio {
 		return portValue;
 	}
 
-	public boolean equals(Object obj) {
-		if (!(obj instanceof SecurityPortfolio)) {
-			return false;
+	public static class HoldingsComparison {
+		public List<SecurityPosition> desiredPositions = new ArrayList<SecurityPosition>();
+		public List<SecurityPosition> actualPositions = new ArrayList<SecurityPosition>();
+
+		public void addPosition(SecurityPosition desired, SecurityPosition actual) {
+			this.desiredPositions.add(desired);
+			this.actualPositions.add(actual);
 		}
 
-		SecurityPortfolio other = (SecurityPortfolio) obj;
-		boolean match = true;
+		public String getSecurityName(int idx) {
+			if ((idx < 0) || (idx >= this.desiredPositions.size())) {
+				return "";
+			}
+
+			SecurityPosition pos = getPosition(idx);
+
+			return pos.security.getName();
+		}
+
+		public BigDecimal getDesiredShares(int idx) {
+			if ((idx < 0) || (idx >= this.desiredPositions.size())) {
+				return BigDecimal.ZERO;
+			}
+
+			SecurityPosition pos = this.desiredPositions.get(idx);
+
+			return (pos != null) ? pos.shares : BigDecimal.ZERO;
+		}
+
+		public BigDecimal getActualShares(int idx) {
+			if ((idx < 0) || (idx >= this.actualPositions.size())) {
+				return BigDecimal.ZERO;
+			}
+
+			SecurityPosition pos = this.actualPositions.get(idx);
+
+			return (pos != null) ? pos.shares : BigDecimal.ZERO;
+		}
+
+		private SecurityPosition getPosition(int idx) {
+			assert (idx >= 0) && (idx < this.desiredPositions.size());
+
+			SecurityPosition pos = this.desiredPositions.get(idx);
+			return (pos != null) ? pos : this.actualPositions.get(idx);
+		}
+
+		public boolean holdingsMatch() {
+			for (int ii = 0; ii < this.desiredPositions.size(); ++ii) {
+				SecurityPosition pos1 = this.desiredPositions.get(ii);
+				SecurityPosition pos2 = this.actualPositions.get(ii);
+
+				BigDecimal val1 = (pos1 != null) ? pos1.shares : BigDecimal.ZERO;
+				BigDecimal val2 = (pos2 != null) ? pos2.shares : BigDecimal.ZERO;
+
+				if (!Common.isEffectivelyEqual(val1, val2)) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+	}
+
+	/** Compare this (desired) holdings to actual holdings (other) */
+	public HoldingsComparison comparisonTo(SecurityPortfolio other) {
+		HoldingsComparison comp = new HoldingsComparison();
 
 		for (SecurityPosition pos : this.positions) {
-			SecurityPosition opos = other.findPosition(pos.security);
-			BigDecimal oshares = (opos != null) ? opos.shares : BigDecimal.ZERO;
-
-			if (!Common.isEffectivelyEqual(pos.shares, oshares)) {
-				// System.out.println( //
-				// "Security shares do not match: " + pos.security.getName()
-				// + " " + Common.formatAmount3(pos.shares) //
-				// + " vs " + Common.formatAmount3(oshares));
-				match = false;
-			}
+			comp.addPosition(pos, other.findPosition(pos.security));
 		}
 
 		for (SecurityPosition opos : other.positions) {
 			SecurityPosition pos = findPosition(opos.security);
-			BigDecimal shares = (pos != null) ? pos.shares : BigDecimal.ZERO;
 
-			if (!Common.isEffectivelyEqual(opos.shares, shares)) {
-				// System.out.println( //
-				// "Security shares do not match: " + opos.security.getName()
-				// + " " + Common.formatAmount3(shares) //
-				// + " vs " + Common.formatAmount3(opos.shares));
-				match = false;
+			if (pos == null) {
+				comp.addPosition(pos, opos);
 			}
 		}
 
-		return match;
+		return comp;
 	}
 
 	public String toString() {
