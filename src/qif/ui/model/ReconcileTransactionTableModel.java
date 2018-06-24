@@ -13,6 +13,7 @@ import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
 import qif.data.QDate;
+import qif.data.SecurityPortfolio;
 import qif.data.Statement;
 import qif.reconcile.Reconciler;
 import qif.ui.AccountSelectionListener;
@@ -34,23 +35,29 @@ public class ReconcileTransactionTableModel //
 	};
 
 	private Object curObject;
-	private Account account;
-	private Statement statement;
+	private Account acct;
+	private Statement stmt;
 
 	private final List<GenericTxn> allTransactions;
 	private final List<GenericTxn> clearedTransactions;
+	private SecurityPortfolio holdings;
 
 	public ReconcileTransactionTableModel() {
 		this.curObject = null;
-		this.account = null;
-		this.statement = null;
+		this.acct = null;
+		this.stmt = null;
 		this.allTransactions = new ArrayList<GenericTxn>();
 		this.clearedTransactions = new ArrayList<GenericTxn>();
+		this.holdings = null;
+	}
+
+	public boolean holdingsMatch() {
+		return false;
 	}
 
 	public Statement createNextStatementToReconcile() {
-		return (this.account != null) //
-				? this.account.getNextStatementToReconcile() //
+		return (this.acct != null) //
+				? this.acct.getNextStatementToReconcile() //
 				: null;
 	}
 
@@ -59,7 +66,7 @@ public class ReconcileTransactionTableModel //
 	}
 
 	public void accountSelected(Account acct, boolean update) {
-		if (update || (acct != this.account)) {
+		if (update || (acct != this.acct)) {
 			setObject(acct);
 		}
 	}
@@ -69,26 +76,26 @@ public class ReconcileTransactionTableModel //
 	}
 
 	public void finishStatement() {
-		if (this.statement != null) {
-			this.statement.unclearAllTransactions();
-			this.statement.clearTransactions(this.clearedTransactions);
+		if (this.stmt != null) {
+			this.stmt.unclearAllTransactions();
+			this.stmt.clearTransactions(this.clearedTransactions);
 
-			if ((this.statement.getClearedCashBalance() != null) //
-					&& this.statement.getClearedCashBalance().equals(//
-							this.statement.cashBalance)) {
-				this.statement.isBalanced = true;
+			if ((this.stmt.getClearedCashBalance() != null) //
+					&& this.stmt.getClearedCashBalance().equals(//
+							this.stmt.cashBalance)) {
+				this.stmt.isBalanced = true;
 
-				if (!this.account.statements.contains(this.statement)) {
-					this.account.statements.add(this.statement);
+				if (!this.acct.statements.contains(this.stmt)) {
+					this.acct.statements.add(this.stmt);
 				}
 
 				// TODO update statements file
 				System.out.println("Need to update statements for " //
-						+ this.account.getName() + ": " //
-						+ this.account.statementFile.getName());
+						+ this.acct.getName() + ": " //
+						+ this.acct.statementFile.getName());
 
-				this.statement.dirty = true;
-				Reconciler.saveReconciledStatement(this.statement);
+				this.stmt.dirty = true;
+				Reconciler.saveReconciledStatement(this.stmt);
 			} else {
 				System.out.println("Can't finish statement");
 			}
@@ -99,11 +106,11 @@ public class ReconcileTransactionTableModel //
 		this.allTransactions.clear();
 		this.clearedTransactions.clear();
 
-		if (this.statement != null) {
-			this.clearedTransactions.addAll(this.statement.transactions);
+		if (this.stmt != null) {
+			this.clearedTransactions.addAll(this.stmt.transactions);
 
 			this.allTransactions.addAll(this.clearedTransactions);
-			this.allTransactions.addAll(this.statement.unclearedTransactions);
+			this.allTransactions.addAll(this.stmt.unclearedTransactions);
 
 			sortTransactionsForDisplay();
 		}
@@ -150,11 +157,11 @@ public class ReconcileTransactionTableModel //
 	}
 
 	public BigDecimal getClearedCashBalance() {
-		if (this.statement == null) {
+		if (this.stmt == null) {
 			return BigDecimal.ZERO;
 		}
 
-		BigDecimal tot = statement.getOpeningBalance();
+		BigDecimal tot = stmt.getOpeningCashBalance();
 
 		for (GenericTxn txn : this.clearedTransactions) {
 			tot = tot.add(txn.getCashAmount());
@@ -169,13 +176,18 @@ public class ReconcileTransactionTableModel //
 		}
 
 		if (obj == null) {
-			this.statement = null;
-			this.account = null;
+			this.stmt = null;
+			this.acct = null;
+			this.holdings = null;
 
 			setTransactions();
 		} else if (obj instanceof Statement) {
-			this.statement = (Statement) obj;
-			this.account = Account.getAccountByID(statement.acctid);
+			this.stmt = (Statement) obj;
+			this.acct = Account.getAccountByID(stmt.acctid);
+
+			this.holdings = new SecurityPortfolio((stmt.prevStatement != null) //
+					? stmt.prevStatement.holdings //
+					: null);
 
 			setTransactions();
 		} else {
@@ -186,13 +198,13 @@ public class ReconcileTransactionTableModel //
 	}
 
 	public void setStatementDate(QDate date) {
-		if ((date == null) || (account == null)) {
+		if ((date == null) || (acct == null)) {
 			return;
 		}
 
-		Statement s = account.getStatement(date, null);
+		Statement s = acct.getStatement(date, null);
 		if (s != null) {
-			this.statement = s;
+			this.stmt = s;
 			setTransactions();
 		}
 	}

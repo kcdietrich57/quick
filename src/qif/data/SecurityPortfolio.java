@@ -17,11 +17,14 @@ public class SecurityPortfolio {
 		this.positions = new ArrayList<SecurityPosition>();
 	}
 
+	/** Build a clone of another portfolio object, minus transactions */
 	public SecurityPortfolio(SecurityPortfolio other) {
 		this();
 
-		for (final SecurityPosition p : other.positions) {
-			this.positions.add(new SecurityPosition(p));
+		if (other != null) {
+			for (SecurityPosition p : other.positions) {
+				this.positions.add(new SecurityPosition(p));
+			}
 		}
 	}
 
@@ -30,12 +33,11 @@ public class SecurityPortfolio {
 			return;
 		}
 
-		final SecurityPosition p = getPosition(itx.security);
-		if (itx.getAction() == TxAction.STOCKSPLIT) {
-			p.shares = p.shares.multiply(itx.getSplitRatio());
-		} else {
-			p.shares = p.shares.add(itx.getShares());
-		}
+		SecurityPosition p = getPosition(itx.security);
+
+		p.shares = (itx.getAction() == TxAction.STOCKSPLIT) //
+				? p.shares.multiply(itx.getSplitRatio()) //
+				: p.shares.add(itx.getShares());
 
 		p.transactions.add(itx);
 		p.shrBalance.add(p.shares);
@@ -48,15 +50,15 @@ public class SecurityPortfolio {
 	 *            Statement containing my transactions
 	 */
 	public void captureTransactions(Statement stat) {
-		final SecurityPortfolio dport = stat.getPortfolioDelta();
-		final SecurityPortfolio prevPort = (stat.prevStatement != null) //
+		SecurityPortfolio dport = stat.getPortfolioDelta();
+		SecurityPortfolio prevPort = (stat.prevStatement != null) //
 				? stat.prevStatement.holdings //
 				: new SecurityPortfolio();
 
-		for (final SecurityPosition pos : this.positions) {
-			final SecurityPosition dpos = dport.findPosition(pos.security);
+		for (SecurityPosition pos : this.positions) {
+			SecurityPosition dpos = dport.findPosition(pos.security);
 
-			final BigDecimal prevbal = prevPort.getPosition(pos.security).shares;
+			BigDecimal prevbal = prevPort.getPosition(pos.security).shares;
 			pos.setTransactions(dpos.transactions, prevbal);
 		}
 	}

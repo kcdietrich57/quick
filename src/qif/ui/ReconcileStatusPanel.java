@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -30,17 +31,18 @@ class ReconcileStatusPanel //
 		implements StatementSelectionListener, TransactionSelectionListener {
 	private Statement stmt;
 
-	private JLabel lastStmt;
-	private JLabel date;
-	private JLabel openBalance;
-	private JLabel credits;
-	private JLabel debits;
-	private JLabel reconciledBalance;
-	private JLabel difference;
-
+	private JLabel dateLabel;
 	private JTextField closingCashField;
+	private JLabel openBalanceLabel;
+	private JLabel lastStmtDateLabel;
+	private JLabel creditsLabel;
+	private JLabel debitsLabel;
+	private JLabel clearedCashBalanceLabel;
+	private JLabel cashDiffLabel;
+	private JLabel portfolioOKLabel;
+
 	private BigDecimal clearedCashBalance;
-	private BigDecimal diffValue;
+	private BigDecimal cashDiffValue;
 
 	private JButton selectAllButton;
 	private JButton deselectAllButton;
@@ -56,14 +58,13 @@ class ReconcileStatusPanel //
 			ReconcileTransactionsPanel reconcileTransactionsPanel) {
 		super(new BorderLayout());
 
-		this.reconciledBalance = null;
+		this.clearedCashBalanceLabel = null;
 
 		this.accountPanel = accountPanel;
 		this.statementPanel = statementPanel;
 		this.reconcileTransactionsPanel = reconcileTransactionsPanel;
 
-		JPanel innerPanel = new JPanel(new GridBagLayout());
-		add(innerPanel, BorderLayout.WEST);
+		JPanel infoPanel = new JPanel(new GridBagLayout());
 
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.fill = GridBagConstraints.BOTH;
@@ -71,42 +72,39 @@ class ReconcileStatusPanel //
 		gbc.insets = new Insets(5, 2, 5, 2);
 		gbc.gridwidth = 1;
 
-		this.date = GridBagUtility.addValue( //
-				innerPanel, gbc, 0, 0, GridBagUtility.bold16);
+		this.dateLabel = GridBagUtility.addValue( //
+				infoPanel, gbc, 0, 0, GridBagUtility.bold16);
 		this.closingCashField = GridBagUtility.addTextField( //
-				innerPanel, gbc, 0, 1, GridBagUtility.bold12);
-		this.lastStmt = GridBagUtility.addLabeledValue( //
-				innerPanel, gbc, 1, 1, "Last Stmt", 12);
+				infoPanel, gbc, 0, 1, GridBagUtility.bold12);
+		this.lastStmtDateLabel = GridBagUtility.addLabeledValue( //
+				infoPanel, gbc, 1, 1, "Last Stmt", 12);
 
 		gbc.insets = new Insets(0, 5, 0, 0);
 		gbc.gridwidth = 1;
 
-		this.openBalance = GridBagUtility.addLabeledValue( //
-				innerPanel, gbc, 1, 0, "Opening Balance", 13);
-		this.credits = GridBagUtility.addLabeledValue( //
-				innerPanel, gbc, 2, 0, "Credits", 13);
-		this.debits = GridBagUtility.addLabeledValue( //
-				innerPanel, gbc, 3, 0, "Debits", 13);
-		this.reconciledBalance = GridBagUtility.addLabeledValue( //
-				innerPanel, gbc, 4, 0, "Cleared Balance", 13);
+		this.openBalanceLabel = GridBagUtility.addLabeledValue( //
+				infoPanel, gbc, 1, 0, "Open Cash Balance", 13);
+		this.creditsLabel = GridBagUtility.addLabeledValue( //
+				infoPanel, gbc, 2, 0, "Credits", 13);
+		this.debitsLabel = GridBagUtility.addLabeledValue( //
+				infoPanel, gbc, 3, 0, "Debits", 13);
+		this.clearedCashBalanceLabel = GridBagUtility.addLabeledValue( //
+				infoPanel, gbc, 4, 0, "Cleared Cash Balance", 13);
 
-		this.difference = GridBagUtility.addLabeledValue( //
-				innerPanel, gbc, 4, 1, "Difference", 14);
+		this.portfolioOKLabel = GridBagUtility.addLabeledValue( //
+				infoPanel, gbc, 3, 1, "Portfolio Ok", 14);
+		this.cashDiffLabel = GridBagUtility.addLabeledValue( //
+				infoPanel, gbc, 4, 1, "Cash Difference", 14);
 
-		gbc.insets = new Insets(10, 15, 0, 0);
-
+		JPanel buttonPanel = new JPanel(new GridLayout(0, 1));
+		
 		this.selectAllButton = new JButton("Select All");
 		this.deselectAllButton = new JButton("Deselect All");
 		this.finishButton = new JButton("Finish");
 
-		gbc.insets = new Insets(0, 0, 0, 0);
-		gbc.gridy = 5;
-		gbc.gridx = 0;
-		innerPanel.add(selectAllButton, gbc);
-		gbc.gridx = 1;
-		innerPanel.add(deselectAllButton, gbc);
-		gbc.gridx = 2;
-		innerPanel.add(finishButton, gbc);
+		buttonPanel.add(selectAllButton, gbc);
+		buttonPanel.add(deselectAllButton, gbc);
+		buttonPanel.add(finishButton, gbc);
 
 		selectAllButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -133,6 +131,9 @@ class ReconcileStatusPanel //
 				setClosingValue();
 			}
 		});
+
+		add(infoPanel, BorderLayout.WEST);
+		add(buttonPanel, BorderLayout.EAST);
 	}
 
 	private void finishStatement() {
@@ -145,7 +146,6 @@ class ReconcileStatusPanel //
 
 		// Update list of statements to include the new statement
 		this.statementPanel.accountSelected(acct, true);
-
 		this.accountPanel.accountSelected(acct, true);
 	}
 
@@ -171,42 +171,45 @@ class ReconcileStatusPanel //
 
 	private void updateValues() {
 		String datestr = (this.stmt != null) ? this.stmt.date.longString : "---";
-		this.date.setText(datestr);
+		this.dateLabel.setText(datestr);
 		this.closingCashField.setText(((this.stmt != null) && (this.stmt.cashBalance != null))//
 				? Common.formatAmount(this.stmt.cashBalance) //
 				: "Enter closing balance");
 		Statement laststmt = (stmt != null) ? stmt.prevStatement : null;
-		this.lastStmt.setText((laststmt != null) //
+		this.lastStmtDateLabel.setText((laststmt != null) //
 				? laststmt.date.longString //
 				: "---");
 
 		ReconcileTransactionTableModel model = reconcileTransactionsPanel.reconcileTransactionTableModel;
 
-		this.openBalance.setText((this.stmt != null) //
+		this.openBalanceLabel.setText((this.stmt != null) //
 				? Common.formatAmount(this.stmt.getOpeningCashBalance()) //
 				: "---");
-		this.credits.setText((this.stmt != null) //
+		this.creditsLabel.setText((this.stmt != null) //
 				? Common.formatAmount(model.getCredits()) //
 				: "---");
-		this.debits.setText((this.stmt != null) //
+		this.debitsLabel.setText((this.stmt != null) //
 				? Common.formatAmount(model.getDebits()) //
 				: "---");
 
 		this.clearedCashBalance = model.getClearedCashBalance();
-		this.reconciledBalance.setText((this.stmt != null) //
+		this.clearedCashBalanceLabel.setText((this.stmt != null) //
 				? Common.formatAmount(this.clearedCashBalance) //
 				: "---");
 
-		this.diffValue = ((this.stmt != null) && (this.stmt.cashBalance != null)) //
+		this.cashDiffValue = ((this.stmt != null) && (this.stmt.cashBalance != null)) //
 				? this.stmt.cashBalance.subtract(this.clearedCashBalance) //
 				: null;
-		this.difference.setText((this.diffValue != null) //
-				? Common.formatAmount(diffValue) //
+		this.cashDiffLabel.setText((this.cashDiffValue != null) //
+				? Common.formatAmount(cashDiffValue) //
 				: "---");
+		
+		boolean holdingsMatch = model.holdingsMatch();
+		this.portfolioOKLabel.setText((holdingsMatch) ? "Yes" : "No");
 
-		boolean isBalanced = (this.diffValue != null) && (this.diffValue.signum() == 0);
+		boolean isBalanced = (this.cashDiffValue != null) && (this.cashDiffValue.signum() == 0);
 		this.finishButton.setEnabled(isBalanced);
-		this.difference.setForeground((isBalanced) ? Color.BLACK : Color.RED);
+		this.cashDiffLabel.setForeground((isBalanced) ? Color.BLACK : Color.RED);
 	}
 
 	public void transactionSelected(GenericTxn transaction) {

@@ -34,11 +34,7 @@ public class SecurityPosition {
 		this(sec, BigDecimal.ZERO);
 	}
 
-	/**
-	 * Copy constructor - does not copy transaction information
-	 *
-	 * @param other
-	 */
+	/** Build a copy of a position (minus transactions) */
 	public SecurityPosition(SecurityPosition other) {
 		this(other.security, other.shares);
 	}
@@ -50,7 +46,7 @@ public class SecurityPosition {
 		this.transactions.addAll(txns);
 		this.shrBalance.clear();
 
-		for (final InvestmentTxn t : this.transactions) {
+		for (InvestmentTxn t : this.transactions) {
 			startBal = startBal.add(t.getShares());
 			this.shrBalance.add(startBal);
 		}
