@@ -40,7 +40,6 @@ public class ReconcileTransactionTableModel //
 
 	private final List<GenericTxn> allTransactions;
 	private final List<GenericTxn> clearedTransactions;
-	private SecurityPortfolio holdings;
 
 	public ReconcileTransactionTableModel() {
 		this.curObject = null;
@@ -48,11 +47,12 @@ public class ReconcileTransactionTableModel //
 		this.stmt = null;
 		this.allTransactions = new ArrayList<GenericTxn>();
 		this.clearedTransactions = new ArrayList<GenericTxn>();
-		this.holdings = null;
 	}
 
-	public boolean holdingsMatch() {
-		return false;
+	public SecurityPortfolio getPortfolioDelta() {
+		return (this.stmt != null) //
+				? this.stmt.getPortfolioDelta(this.clearedTransactions) //
+				: null;
 	}
 
 	public Statement createNextStatementToReconcile() {
@@ -178,16 +178,11 @@ public class ReconcileTransactionTableModel //
 		if (obj == null) {
 			this.stmt = null;
 			this.acct = null;
-			this.holdings = null;
 
 			setTransactions();
 		} else if (obj instanceof Statement) {
 			this.stmt = (Statement) obj;
 			this.acct = Account.getAccountByID(stmt.acctid);
-
-			this.holdings = new SecurityPortfolio((stmt.prevStatement != null) //
-					? stmt.prevStatement.holdings //
-					: null);
 
 			setTransactions();
 		} else {

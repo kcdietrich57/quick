@@ -142,6 +142,43 @@ public class SecurityPortfolio {
 		return portValue;
 	}
 
+	public boolean equals(Object obj) {
+		if (!(obj instanceof SecurityPortfolio)) {
+			return false;
+		}
+
+		SecurityPortfolio other = (SecurityPortfolio) obj;
+		boolean match = true;
+
+		for (SecurityPosition pos : this.positions) {
+			SecurityPosition opos = other.findPosition(pos.security);
+			BigDecimal oshares = (opos != null) ? opos.shares : BigDecimal.ZERO;
+
+			if (!Common.isEffectivelyEqual(pos.shares, oshares)) {
+				// System.out.println( //
+				// "Security shares do not match: " + pos.security.getName()
+				// + " " + Common.formatAmount3(pos.shares) //
+				// + " vs " + Common.formatAmount3(oshares));
+				match = false;
+			}
+		}
+
+		for (SecurityPosition opos : other.positions) {
+			SecurityPosition pos = findPosition(opos.security);
+			BigDecimal shares = (pos != null) ? pos.shares : BigDecimal.ZERO;
+
+			if (!Common.isEffectivelyEqual(opos.shares, shares)) {
+				// System.out.println( //
+				// "Security shares do not match: " + opos.security.getName()
+				// + " " + Common.formatAmount3(shares) //
+				// + " vs " + Common.formatAmount3(opos.shares));
+				match = false;
+			}
+		}
+
+		return match;
+	}
+
 	public String toString() {
 		String s = "Securities Held:\n";
 

@@ -18,6 +18,7 @@ import javax.swing.JTextField;
 import qif.data.Account;
 import qif.data.Common;
 import qif.data.GenericTxn;
+import qif.data.SecurityPortfolio;
 import qif.data.Statement;
 import qif.ui.model.ReconcileTransactionTableModel;
 
@@ -204,12 +205,15 @@ class ReconcileStatusPanel //
 				? Common.formatAmount(cashDiffValue) //
 				: "---");
 		
-		boolean holdingsMatch = model.holdingsMatch();
+		SecurityPortfolio delta = model.getPortfolioDelta();
+		boolean holdingsMatch = delta.equals(this.stmt.holdings);
 		this.portfolioOKLabel.setText((holdingsMatch) ? "Yes" : "No");
 
 		boolean isBalanced = (this.cashDiffValue != null) && (this.cashDiffValue.signum() == 0);
-		this.finishButton.setEnabled(isBalanced);
+		this.finishButton.setEnabled(isBalanced && holdingsMatch);
+		
 		this.cashDiffLabel.setForeground((isBalanced) ? Color.BLACK : Color.RED);
+		this.portfolioOKLabel.setForeground((holdingsMatch) ? Color.BLACK : Color.RED);
 	}
 
 	public void transactionSelected(GenericTxn transaction) {

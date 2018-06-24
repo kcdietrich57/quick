@@ -295,17 +295,17 @@ public class Statement {
 	 *            The transactions
 	 * @return new portfolio holdings
 	 */
-	private SecurityPortfolio getPortfolioDelta(List<GenericTxn> txns) {
-		final SecurityPortfolio clearedPositions = (this.prevStatement != null) //
+	public SecurityPortfolio getPortfolioDelta(List<GenericTxn> txns) {
+		SecurityPortfolio clearedPositions = (this.prevStatement != null) //
 				? new SecurityPortfolio(this.prevStatement.holdings) //
 				: new SecurityPortfolio();
 
-		for (final GenericTxn t : txns) {
+		for (GenericTxn t : txns) {
 			if (!(t instanceof InvestmentTxn)) {
 				continue;
 			}
 
-			final InvestmentTxn itx = (InvestmentTxn) t;
+			InvestmentTxn itx = (InvestmentTxn) t;
 
 			clearedPositions.addTransaction(itx);
 		}
