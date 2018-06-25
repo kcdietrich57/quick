@@ -30,17 +30,19 @@ public class AccountPanel //
 	public AccountPanel() {
 		setLayout(new BorderLayout());
 
-		acctInfoPanel = new AccountInfoPanel();
+		this.acctInfoPanel = new AccountInfoPanel();
+		MainWindow.instance.acctInfoPanel = this.acctInfoPanel;
+		this.registerTransactionPanel = new TransactionPanel(true);
+		MainWindow.instance.registerTransactionPanel = this.registerTransactionPanel;
+		this.statementPanel = new StatementPanel();
+		MainWindow.instance.statementPanel = this.statementPanel;
+		this.statementDetailsPanel = new StatementDetailsPanel();
+		MainWindow.instance.statementDetailsPanel = this.statementDetailsPanel;
+		this.reconcilePanel = new ReconcilePanel();
+		MainWindow.reconcilePanel = this.reconcilePanel;
 
-		registerTransactionPanel = new TransactionPanel(true);
-
-		statementPanel = new StatementPanel();
-		statementDetailsPanel = new StatementDetailsPanel();
-
-		statementViewSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, //
+		this.statementViewSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, //
 				statementPanel, statementDetailsPanel);
-
-		reconcilePanel = new ReconcilePanel(this, statementPanel);
 
 		JTabbedPane acctTabbedPane = new JTabbedPane();
 		acctTabbedPane.addTab("Register", registerTransactionPanel);

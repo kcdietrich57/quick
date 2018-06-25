@@ -55,22 +55,11 @@ class ReconcileStatusPanel //
 	private JButton deselectAllButton;
 	private JButton finishButton;
 
-	private AccountPanel accountPanel;
-	private ReconcileTransactionsPanel reconcileTransactionsPanel;
-	private StatementPanel statementPanel;
-
 	private JTable holdingsTable;
 	private HoldingsTableModel holdingsTableModel;
 
-	public ReconcileStatusPanel( //
-			AccountPanel accountPanel, //
-			StatementPanel statementPanel, //
-			ReconcileTransactionsPanel reconcileTransactionsPanel) {
+	public ReconcileStatusPanel() {
 		super(new BorderLayout());
-
-		this.accountPanel = accountPanel;
-		this.statementPanel = statementPanel;
-		this.reconcileTransactionsPanel = reconcileTransactionsPanel;
 
 		JPanel infoPanel = new JPanel(new GridBagLayout());
 
@@ -102,7 +91,7 @@ class ReconcileStatusPanel //
 
 		gbc.insets = new Insets(5, 5, 0, 0);
 		this.clearedCashBalanceLabel = GridBagUtility.addLabeledValue( //
-				infoPanel, gbc, 5, 0, "Cleared Cash Balance", 13);
+				infoPanel, gbc, 5, 0, "Cleared Balance", 13);
 		// this.cashDiffLabel = GridBagUtility.addLabeledValue( //
 		// infoPanel, gbc, 5, 1, "Difference", 14);
 
@@ -141,14 +130,14 @@ class ReconcileStatusPanel //
 
 		selectAllButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				reconcileTransactionsPanel.reconcileTransactionTableModel.clearAll();
+				MainWindow.instance.reconcileTransactionsPanel.reconcileTransactionTableModel.clearAll();
 				updateValues();
 			}
 		});
 
 		deselectAllButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				reconcileTransactionsPanel.reconcileTransactionTableModel.unclearAll();
+				MainWindow.instance.reconcileTransactionsPanel.reconcileTransactionTableModel.unclearAll();
 				updateValues();
 			}
 		});
@@ -173,7 +162,8 @@ class ReconcileStatusPanel //
 	}
 
 	private void finishStatement() {
-		ReconcileTransactionTableModel model = this.reconcileTransactionsPanel.reconcileTransactionTableModel;
+		ReconcileTransactionTableModel model = //
+				MainWindow.instance.reconcileTransactionsPanel.reconcileTransactionTableModel;
 
 		model.finishStatement();
 
@@ -181,8 +171,10 @@ class ReconcileStatusPanel //
 		Account acct = Account.getAccountByID(stmt.acctid);
 
 		// Update list of statements to include the new statement
-		this.statementPanel.accountSelected(acct, true);
-		this.accountPanel.accountSelected(acct, true);
+		MainWindow.instance.statementPanel.accountSelected(acct, true);
+		MainWindow.instance.accountPanel.accountSelected(acct, true);
+
+		MainWindow.instance.accountListPanel.refreshAccountList(acct);
 	}
 
 	// private void setClosingValue() {
@@ -217,7 +209,8 @@ class ReconcileStatusPanel //
 				? laststmt.date.longString //
 				: "---");
 
-		ReconcileTransactionTableModel model = reconcileTransactionsPanel.reconcileTransactionTableModel;
+		ReconcileTransactionTableModel model = //
+				MainWindow.instance.reconcileTransactionsPanel.reconcileTransactionTableModel;
 
 		this.openBalanceLabel.setText((this.stmt != null) //
 				? Common.formatAmount(this.stmt.getOpeningCashBalance()) //
@@ -230,25 +223,43 @@ class ReconcileStatusPanel //
 				: "---");
 
 		this.clearedCashBalance = model.getClearedCashBalance();
-		this.clearedCashBalanceLabel.setText((this.stmt != null) //
-				? Common.formatAmount(this.clearedCashBalance) //
-				: "---");
-
 		this.cashDiffValue = ((this.stmt != null) && (this.stmt.cashBalance != null)) //
 				? this.stmt.cashBalance.subtract(this.clearedCashBalance) //
 				: null;
+
+		boolean isBalanced = (this.cashDiffValue != null) && (this.cashDiffValue.signum() == 0);
+
+		String str = "---";
+
+		if (this.stmt != null) {
+			str = Common.formatAmount(this.clearedCashBalance);
+
+			if (!isBalanced) {
+				String dval = (cashDiffValue != null) //
+						? Common.formatAmount3(cashDiffValue).trim() //
+						: "N/A";
+				str += "(" + dval + ")";
+			}
+		}
+
+		this.clearedCashBalanceLabel.setText(str);
+
 		// this.cashDiffLabel.setText((this.cashDiffValue != null) //
 		// ? Common.formatAmount(cashDiffValue) //
 		// : "---");
 
-		boolean isBalanced = (this.cashDiffValue != null) && (this.cashDiffValue.signum() == 0);
 		this.clearedCashBalanceLabel.setForeground((isBalanced) ? Color.BLACK : Color.RED);
 		// this.cashDiffLabel.setForeground((isBalanced) ? Color.BLACK : Color.RED);
 
-		SecurityPortfolio.HoldingsComparison comparison = //
-				this.stmt.holdings.comparisonTo(model.getPortfolioDelta());
-		this.holdingsTableModel.holdingsComparision = comparison;
-		boolean holdingsMatch = comparison.holdingsMatch();
+		boolean holdingsMatch = true;
+
+		if ((this.stmt != null) && (this.stmt.holdings != null)) {
+			SecurityPortfolio.HoldingsComparison comparison = //
+					this.stmt.holdings.comparisonTo(model.getPortfolioDelta());
+			this.holdingsTableModel.holdingsComparision = comparison;
+			holdingsMatch = comparison.holdingsMatch();
+		}
+
 		// this.portfolioOKLabel.setText((holdingsMatch) ? "Yes" : "No");
 
 		// this.portfolioOKLabel.setForeground((holdingsMatch) ? Color.BLACK :

@@ -20,17 +20,19 @@ public class ReconcilePanel //
 	private ReconcileStatusPanel reconcileStatusPanel;
 	private ReconcileTransactionsPanel reconcileTransactionsPanel;
 
-	public ReconcilePanel(AccountPanel accountPanel, StatementPanel statementPanel) {
+	public ReconcilePanel() {
 		super(new BorderLayout());
 
 		this.reconcileTransactionsPanel = new ReconcileTransactionsPanel();
-		this.reconcileStatusPanel = new ReconcileStatusPanel( //
-				accountPanel, statementPanel, this.reconcileTransactionsPanel);
+		this.reconcileStatusPanel = new ReconcileStatusPanel();
 
 		add(reconcileStatusPanel, BorderLayout.NORTH);
 		add(reconcileTransactionsPanel, BorderLayout.CENTER);
 
 		this.reconcileTransactionsPanel.addTransactionSelectionListener(this.reconcileStatusPanel);
+		
+		MainWindow.instance.reconcileStatusPanel = this.reconcileStatusPanel;
+		MainWindow.instance.reconcileTransactionsPanel = this.reconcileTransactionsPanel;
 	}
 
 	public void accountSelected(Account acct, boolean update) {

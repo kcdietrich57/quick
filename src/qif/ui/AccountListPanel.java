@@ -77,6 +77,15 @@ public class AccountListPanel extends JScrollPane {
 		createContextMenu();
 	}
 
+	public void refreshAccountList(Account selAcct) {
+		int selrow = this.accountTable.getSelectedRow();
+		this.accountTableModel.fireTableDataChanged();
+
+		if (selrow >= 0) {
+			this.accountTable.addRowSelectionInterval(selrow, selrow);
+		}
+	}
+
 	public void addAccountSelectionListener(AccountSelectionListener listener) {
 		this.acctSelListeners.add(listener);
 	}

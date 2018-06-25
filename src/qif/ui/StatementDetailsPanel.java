@@ -68,6 +68,7 @@ public class StatementDetailsPanel //
 		add(infoPanel, BorderLayout.NORTH);
 
 		transactionPanel = new TransactionPanel(false);
+		MainWindow.instance.statementTransactionPanel = this.transactionPanel;
 
 		add(transactionPanel, BorderLayout.CENTER);
 	}

@@ -3,7 +3,6 @@ package qif.ui;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 
-import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -16,23 +15,49 @@ import org.knowm.xchart.internal.chartpart.Chart;
 
 @SuppressWarnings("serial")
 public class MainWindow extends JPanel {
-	private JTabbedPane contentPanel;
+	public static MainWindow instance;
 
-	private Dashboard dashboardPanel;
-	private AccountPanel accountPanel;
-	private JPanel chartPanel;
+	public JTabbedPane contentPanel;
+	// content->account
+	public AccountPanel accountPanel;
+	// content->account->accountNav
+	public AccountNavigationPanel accountNavigationPanel;
+	// content->account->accountNav->summary
+	public SummaryPanel summaryPanel;
+	// content->account->accountNav->accounts
+	public AccountListPanel accountListPanel;
+	// content->account->account->accountInfo
+	public AccountInfoPanel acctInfoPanel;
+	// content->account->transactions
+	public TransactionPanel registerTransactionPanel;
+	// content->account->statements
+	public StatementPanel statementPanel;
+	// content->account->statementDetails
+	public StatementDetailsPanel statementDetailsPanel;
+	// content->account->statements->statementDetails
+	public TransactionPanel statementTransactionPanel;
+	// content->account->reconcile
+	public static ReconcilePanel reconcilePanel;
+	// content->account->reconcile->reconcileStatus
+	public ReconcileStatusPanel reconcileStatusPanel;
+	// content->account->reconcile->reconcileTransactions
+	public ReconcileTransactionsPanel reconcileTransactionsPanel;
+
+	public Dashboard dashboardPanel;
+	public JPanel chartPanel;
 
 	private JSplitPane accountViewSplit;
-	private AccountNavigationPanel accountNavigationPanel;
 
 	public MainWindow() {
 		super(new BorderLayout());
 
+		instance = this;
+
 		createContentPanel();
 
-		add(new JButton("Toolbar Goes Here"), BorderLayout.NORTH);
+		// add(new JButton("Toolbar Goes Here"), BorderLayout.NORTH);
 		add(contentPanel, BorderLayout.CENTER);
-		add(new JButton("Status Bar Goes Here"), BorderLayout.SOUTH);
+		// add(new JButton("Status Bar Goes Here"), BorderLayout.SOUTH);
 	}
 
 	private void createContentPanel() {
