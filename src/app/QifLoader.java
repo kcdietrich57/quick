@@ -8,6 +8,7 @@ import qif.data.Account;
 import qif.data.Common;
 import qif.data.QDate;
 import qif.importer.QifDomReader;
+import qif.persistence.Reconciler;
 import qif.report.AccountReporter;
 import qif.report.CashFlowReporter;
 import qif.report.NetWorthReporter;
@@ -124,7 +125,7 @@ public class QifLoader {
 				}
 			} else if (s.startsWith("r")) {
 				if (s.startsWith("relog")) {
-					QifDomReader.rewriteStatementLogFile();
+					Reconciler.rewriteStatementLogFile();
 				}
 			} else if (s.startsWith("y")) {
 				if (s.startsWith("ys")) {

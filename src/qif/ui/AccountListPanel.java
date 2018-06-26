@@ -31,6 +31,7 @@ import qif.ui.model.AccountTableModel;
 /** This panel displays accounts, and drives the content of AccountPanel */
 @SuppressWarnings("serial")
 public class AccountListPanel extends JScrollPane {
+
 	private AccountTableModel accountTableModel;
 	private JTable accountTable;
 
@@ -205,6 +206,11 @@ class AccountTableCellRenderer extends DefaultTableCellRenderer {
 			setHorizontalAlignment(JLabel.RIGHT);
 		}
 
+		if (isSelected) {
+			setBackground(UICommon.LIGHT_BLUE);
+		} else {
+			setBackground(Color.WHITE);
+		}
 		return c;
 	}
 }

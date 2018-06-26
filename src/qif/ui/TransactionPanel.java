@@ -121,7 +121,7 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 	private static Color futureColor = Color.GRAY;
 
 	private static Color defaultBackground = Color.WHITE;
-	private static Color presentBackground = new Color(240, 240, 240);
+	private static Color presentBackground = UICommon.LIGHT_GRAY;
 	private static Color futureBackground = Color.WHITE;
 
 	private boolean highlighting;

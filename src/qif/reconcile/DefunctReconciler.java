@@ -1,4 +1,3 @@
-//TODO get rid of parts of Reconciler - if no longer needed
 package qif.reconcile;
 
 import java.io.FileWriter;
@@ -18,22 +17,20 @@ import qif.data.Statement;
 import qif.importer.StatementDetails;
 import qif.ui.ReviewDialog;
 
-public class Reconciler {
-
-	public static void saveReconciledStatement(Statement stat) {
+class DefunctReconciler {
+	// Process unreconciled statements for each account, matching statements
+	// with transactions and logging the results.
+	public static void reconcileStatements() {
 		PrintWriter pw = null;
+
 		try {
 			pw = openStatementsLogFile();
 
-			if (stat.dirty) {
-				String logStr = StatementDetails.formatStatementForSave(stat);
-				pw.println(logStr);
-				pw.flush();
-
-				stat.dirty = false;
+			for (Account a : Account.accounts) {
+				reconcileStatements(a, pw);
 			}
-		} catch (Exception e) {
-
+		} catch (final Exception e) {
+			e.printStackTrace();
 		} finally {
 			if (pw != null) {
 				pw.close();
@@ -49,26 +46,6 @@ public class Reconciler {
 		}
 
 		return null;
-	}
-
-	// Process unreconciled statements for each account, matching statements
-	// with transactions and logging the results.
-	public static void reconcileStatements() {
-		PrintWriter pw = null;
-
-		try {
-			pw = openStatementsLogFile();
-
-			for (Account a : Account.accounts) {
-				Reconciler.reconcileStatements(a, pw);
-			}
-		} catch (final Exception e) {
-			e.printStackTrace();
-		} finally {
-			if (pw != null) {
-				pw.close();
-			}
-		}
 	}
 
 	private static void reconcileStatements(Account a, PrintWriter pw) {
@@ -128,7 +105,7 @@ public class Reconciler {
 		}
 
 		if (!s.isBalanced || needsReview) {
-			review(s, msg, true);
+			DefunctReconciler.review(s, msg, true);
 
 			if (s.isBalanced) {
 				s.holdings.captureTransactions(s);
@@ -153,10 +130,10 @@ public class Reconciler {
 			List<GenericTxn> alltx = new ArrayList<GenericTxn>(s.transactions);
 			List<GenericTxn> unclearedtx = new ArrayList<GenericTxn>(s.unclearedTransactions);
 
-			arrangeTransactionsForDisplay(alltx);
-			arrangeTransactionsForDisplay(unclearedtx);
+			DefunctReconciler.arrangeTransactionsForDisplay(alltx);
+			DefunctReconciler.arrangeTransactionsForDisplay(unclearedtx);
 
-			displayReviewStatus(s, msg, 1);
+			DefunctReconciler.displayReviewStatus(s, msg, 1);
 
 			if (!reconcileNeeded) {
 				return;
@@ -224,7 +201,7 @@ public class Reconciler {
 						final int[] range = new int[2];
 
 						token = ss[ssx++].trim();
-						parseRange(token, range);
+						DefunctReconciler.parseRange(token, range);
 
 						final int begin = range[0];
 						final int end = range[1];
@@ -252,45 +229,13 @@ public class Reconciler {
 		s.isBalanced = done && !abort;
 	}
 
-	private static void arrangeTransactionsForDisplay(List<GenericTxn> txns) {
-		Collections.sort(txns, (o1, o2) -> {
-			int diff = o1.getCheckNumber() - o2.getCheckNumber();
-			if (diff != 0) {
-				return diff;
-			}
-
-			diff = o1.getDate().compareTo(o1.getDate());
-			if (diff != 0) {
-				return diff;
-			}
-
-			return o1.txid - o2.txid;
-		});
-	}
-
-	private static void parseRange(String s, int[] range) {
-		range[0] = range[1] = 0;
-		final int dash = s.indexOf('-');
-
-		final String s1 = (dash >= 0) ? s.substring(0, dash) : s;
-		final String s2 = (dash >= 0) ? s.substring(dash + 1) : s1;
-
-		if ((s1.length() == 0) || !Character.isDigit(s1.charAt(0)) || //
-				(s2.length() == 0) || !Character.isDigit(s2.charAt(0))) {
-			return;
-		}
-
-		range[0] = Integer.parseInt(s1);
-		range[1] = Integer.parseInt(s2);
-	}
-
 	private static void displayReviewStatus(Statement s, String msg, int columns) {
 		System.out.println();
 		System.out.println("-------------------------------------------------------");
 		System.out.println(msg);
 		System.out.println("-------------------------------------------------------");
 		System.out.println(s.toString());
-		displayHoldingsComparison(s);
+		DefunctReconciler.displayHoldingsComparison(s);
 		System.out.println("-------------------------------------------------------");
 
 		int rows = (s.transactions.size() + columns - 1) / columns;
@@ -413,4 +358,35 @@ public class Reconciler {
 		}
 	}
 
+	private static void arrangeTransactionsForDisplay(List<GenericTxn> txns) {
+		Collections.sort(txns, (o1, o2) -> {
+			int diff = o1.getCheckNumber() - o2.getCheckNumber();
+			if (diff != 0) {
+				return diff;
+			}
+
+			diff = o1.getDate().compareTo(o1.getDate());
+			if (diff != 0) {
+				return diff;
+			}
+
+			return o1.txid - o2.txid;
+		});
+	}
+
+	private static void parseRange(String s, int[] range) {
+		range[0] = range[1] = 0;
+		final int dash = s.indexOf('-');
+
+		final String s1 = (dash >= 0) ? s.substring(0, dash) : s;
+		final String s2 = (dash >= 0) ? s.substring(dash + 1) : s1;
+
+		if ((s1.length() == 0) || !Character.isDigit(s1.charAt(0)) || //
+				(s2.length() == 0) || !Character.isDigit(s2.charAt(0))) {
+			return;
+		}
+
+		range[0] = Integer.parseInt(s1);
+		range[1] = Integer.parseInt(s2);
+	}
 }

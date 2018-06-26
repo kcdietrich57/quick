@@ -1,6 +1,5 @@
 package qif.ui;
 
-import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -22,7 +21,7 @@ public class AccountControlPanel extends JPanel {
 		openButton = new JButton("Open Accounts");
 		closedButton = new JButton("Closed Accounts");
 
-		setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(16, 16, 16)));
+		setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, UICommon.DARK_GRAY));
 
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.gridx = 0;

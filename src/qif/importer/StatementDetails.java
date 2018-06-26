@@ -7,12 +7,11 @@ import java.util.List;
 import qif.data.Account;
 import qif.data.Common;
 import qif.data.GenericTxn;
-import qif.data.InvestmentTxn;
-import qif.data.NonInvestmentTxn;
 import qif.data.QDate;
 import qif.data.Security;
 import qif.data.SecurityPosition;
 import qif.data.Statement;
+import qif.persistence.Reconciler.TxInfo;
 
 // StatementDetails represents a reconciled statement as stored in the
 // statements log file.
@@ -181,62 +180,62 @@ public class StatementDetails {
 
 // This represents the information stored in the statementLog file for each
 // transaction that is part of a statement.
-class TxInfo {
-	QDate date;
-	String action;
-	int cknum;
-	BigDecimal cashAmount;
-	Security security;
-	BigDecimal shares;
-
-	public static TxInfo factory(GenericTxn tx) {
-		if (tx instanceof NonInvestmentTxn) {
-			return new TxInfo((NonInvestmentTxn) tx);
-		}
-
-		if (tx instanceof InvestmentTxn) {
-			return new TxInfo((InvestmentTxn) tx);
-		}
-
-		return null;
-	}
-
-	public TxInfo() {
-		this.cknum = 0;
-		this.action = null;
-		this.security = null;
-		this.shares = null;
-	}
-
-	private TxInfo(GenericTxn tx) {
-		this();
-
-		this.cashAmount = tx.getCashAmount();
-	}
-
-	public TxInfo(NonInvestmentTxn tx) {
-		this((GenericTxn) tx);
-
-		this.cknum = tx.getCheckNumber();
-	}
-
-	public TxInfo(InvestmentTxn tx) {
-		this((GenericTxn) tx);
-
-		this.action = tx.getAction().toString();
-
-		if (tx.security != null) {
-			this.security = tx.security;
-			this.shares = tx.getShares();
-		}
-	}
-
-	public String toString() {
-		return String.format("%s %5d %s", //
-				this.date.toString(), this.cknum, //
-				Common.formatAmount(this.cashAmount));
-	}
-}
+//class TxInfo {
+//	QDate date;
+//	String action;
+//	int cknum;
+//	BigDecimal cashAmount;
+//	Security security;
+//	BigDecimal shares;
+//
+//	public static TxInfo factory(GenericTxn tx) {
+//		if (tx instanceof NonInvestmentTxn) {
+//			return new TxInfo((NonInvestmentTxn) tx);
+//		}
+//
+//		if (tx instanceof InvestmentTxn) {
+//			return new TxInfo((InvestmentTxn) tx);
+//		}
+//
+//		return null;
+//	}
+//
+//	public TxInfo() {
+//		this.cknum = 0;
+//		this.action = null;
+//		this.security = null;
+//		this.shares = null;
+//	}
+//
+//	private TxInfo(GenericTxn tx) {
+//		this();
+//
+//		this.cashAmount = tx.getCashAmount();
+//	}
+//
+//	public TxInfo(NonInvestmentTxn tx) {
+//		this((GenericTxn) tx);
+//
+//		this.cknum = tx.getCheckNumber();
+//	}
+//
+//	public TxInfo(InvestmentTxn tx) {
+//		this((GenericTxn) tx);
+//
+//		this.action = tx.getAction().toString();
+//
+//		if (tx.security != null) {
+//			this.security = tx.security;
+//			this.shares = tx.getShares();
+//		}
+//	}
+//
+//	public String toString() {
+//		return String.format("%s %5d %s", //
+//				this.date.toString(), this.cknum, //
+//				Common.formatAmount(this.cashAmount));
+//	}
+//}
 
 // [name;numtx[;txidx;shrbal]]
 class StatementPositionTx {

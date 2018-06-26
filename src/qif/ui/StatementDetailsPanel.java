@@ -1,7 +1,6 @@
 package qif.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -30,7 +29,7 @@ public class StatementDetailsPanel //
 		JPanel infoPanel2 = new JPanel(new GridBagLayout());
 
 		infoPanel2.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-		infoPanel.setBorder(BorderFactory.createLineBorder(new Color(16, 16, 16)));
+		infoPanel.setBorder(BorderFactory.createLineBorder(UICommon.DARK_GRAY));
 
 		Font bfont = new Font("Helvetica", Font.BOLD, 16);
 		Font font = new Font("Helvetica", Font.PLAIN, 16);
