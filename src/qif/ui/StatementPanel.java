@@ -210,7 +210,7 @@ public class StatementPanel //
 class StatementTableCellRenderer extends DefaultTableCellRenderer {
 	private static Font regularFont = new Font("Helvetica", Font.BOLD, 12);
 	private static Color regularColor = Color.BLACK;
-	private static Color regularBackground = UICommon.LIGHT_YELLOW;
+	private static Color regularBackground = UICommon.LIGHT_BLUE;
 
 	private static Font unclearedFont = new Font("Helvetica", Font.PLAIN, 12);
 	private static Color unclearedColor = Color.BLUE;
@@ -244,6 +244,10 @@ class StatementTableCellRenderer extends DefaultTableCellRenderer {
 			c.setFont(unclearedFont);
 			c.setForeground(unclearedColor);
 			c.setBackground(unclearedBackground);
+		}
+
+		if (isSelected) {
+			c.setBackground(UICommon.LIGHT_YELLOW);
 		}
 
 		switch (col) {

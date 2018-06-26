@@ -236,7 +236,7 @@ class ReconcileStatusPanel //
 
 			if (!isBalanced) {
 				String dval = (cashDiffValue != null) //
-						? Common.formatAmount3(cashDiffValue).trim() //
+						? Common.formatAmount(cashDiffValue).trim() //
 						: "N/A";
 				str += "(" + dval + ")";
 			}

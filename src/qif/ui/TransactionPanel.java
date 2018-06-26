@@ -127,7 +127,7 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 	private boolean highlighting;
 
 	public TransactionTableCellRenderer(boolean highlighting) {
-		this.highlighting = highlighting;
+		this.highlighting = true; //TODO highlighting;
 	}
 
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
