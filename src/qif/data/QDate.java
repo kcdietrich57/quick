@@ -51,7 +51,6 @@ public class QDate implements Comparable<QDate> {
 			diff = 1;
 		}
 
-		// FIXME could have off by one errors here?
 		if (adjust == 0) {
 			adjust = (diff < 0) ? 1 : -1;
 			return this;

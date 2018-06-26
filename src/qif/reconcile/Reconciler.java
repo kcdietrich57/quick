@@ -1,3 +1,4 @@
+//TODO get rid of parts of Reconciler - if no longer needed
 package qif.reconcile;
 
 import java.io.FileWriter;
@@ -192,7 +193,7 @@ public class Reconciler {
 
 			case 'q':
 				if (s.cashMatches() //
-				// FIXME && holdingsMatch()
+				// && holdingsMatch()
 				) {
 					done = true;
 				}
@@ -390,7 +391,7 @@ public class Reconciler {
 					expectedValue.subtract(pValue));
 
 			if (!Common.isEffectivelyEqual(p.shares, expectedShares) //
-			// FIXME || !Common.isEffectivelyEqual(pValue, opValue)
+			// || !Common.isEffectivelyEqual(pValue, opValue)
 			) {
 				s += " ********";
 			}

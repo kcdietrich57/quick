@@ -48,10 +48,8 @@ public class StatementPanel //
 		extends JPanel //
 		implements AccountSelectionListener {
 
-	// TODO make this private
-	public StatementTableModel statementTableModel;
-
 	private JTable statementTable;
+	private StatementTableModel statementTableModel;
 	private JScrollPane scroller;
 
 	private List<StatementSelectionListener> stmtSelListeners;
@@ -232,7 +230,6 @@ class StatementTableCellRenderer extends DefaultTableCellRenderer {
 		Statement stmt = model.getStatementAt(row);
 
 		boolean cleared = stmt.isBalanced;
-		// TODO distinguish between real and generated statements here
 		boolean future = !cleared && (stmt.cashBalance == null);
 
 		if (cleared) {

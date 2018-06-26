@@ -106,7 +106,7 @@ public class QPrice implements Comparable<QPrice> {
 
 		p.symbol = sym;
 		p.price = price;
-		// FIXME figure out splitAdjustedPrice (or ignore quicken price history?)
+		// figure out splitAdjustedPrice (or ignore quicken price history?)
 		p.splitAdjustedPrice = null;
 		p.date = date;
 

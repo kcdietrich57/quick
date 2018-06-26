@@ -125,7 +125,7 @@ public class Security {
 			// The price for a transaction doesn't replace the price in the
 			// history. It is intra-day, and in the case of ESPP/options,
 			// may be discounted.
-			// FIXME add prices from txns after loading price history, if at all.
+			// N.B. add prices from txns after loading price history, if at all.
 			// addPrice(new Price(txn.price, txn.getDate()), false);
 		}
 	}

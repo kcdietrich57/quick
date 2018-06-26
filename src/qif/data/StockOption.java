@@ -74,7 +74,7 @@ public class StockOption {
 
 	// CANCEL Name Date
 	public static StockOption cancel(String name, QDate date) {
-		// TODO Currently no need to distinguish this from expiring
+		// No apparent need to distinguish this from expiring
 		return expire(name, date);
 	}
 
@@ -234,7 +234,6 @@ public class StockOption {
 	/** Remaining shares after partial exercise */
 	public final BigDecimal sharesRemaining;
 
-	// TODO connect to creating transaction
 	public InvestmentTxn transaction;
 
 	public QDate cancelDate;

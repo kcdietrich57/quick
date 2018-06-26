@@ -24,7 +24,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
-import qif.data.Account;
 import qif.data.GenericTxn;
 import qif.data.Statement;
 import qif.ui.model.ReconcileTransactionTableModel;
@@ -36,7 +35,7 @@ import qif.ui.model.ReconcileTransactionTableModel;
 @SuppressWarnings("serial")
 class ReconcileTransactionsPanel //
 		extends JPanel //
-		implements AccountSelectionListener, StatementSelectionListener {
+		implements StatementSelectionListener {
 
 	private JTable transactionTable;
 	// TODO make this private
@@ -170,11 +169,6 @@ class ReconcileTransactionsPanel //
 		} catch (Exception e2) {
 			e2.printStackTrace();
 		}
-	}
-
-	/** Respond to account selection in accountlist */
-	public void accountSelected(Account account, boolean update) {
-		// TODO this.transactionTableModel.setAccount(account);
 	}
 
 	public void statementSelected(Statement statement) {

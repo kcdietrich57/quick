@@ -637,7 +637,7 @@ public class Account {
 		return apos;
 	}
 
-	// FIXME unused, unfinished
+	// FIXME account status for period unused, unfinished
 	public void getPositionsForDate(Date d) {
 		this.securities.getPositionsForDate(d);
 	}

@@ -15,7 +15,7 @@ import qif.data.InvestmentTxn;
 import qif.data.QDate;
 import qif.data.SecurityPortfolio;
 import qif.data.Statement;
-import qif.reconcile.Reconciler;
+import qif.persistence.Reconciler;
 import qif.ui.AccountSelectionListener;
 import qif.ui.StatementSelectionListener;
 
@@ -88,11 +88,6 @@ public class ReconcileTransactionTableModel //
 				if (!this.acct.statements.contains(this.stmt)) {
 					this.acct.statements.add(this.stmt);
 				}
-
-				// TODO update statements file
-				System.out.println("Need to update statements for " //
-						+ this.acct.getName() + ": " //
-						+ this.acct.statementFile.getName());
 
 				this.stmt.dirty = true;
 				Reconciler.saveReconciledStatement(this.stmt);

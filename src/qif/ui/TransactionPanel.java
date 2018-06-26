@@ -31,8 +31,7 @@ public class TransactionPanel //
 		extends JPanel //
 		implements AccountSelectionListener, StatementSelectionListener {
 
-	// TODO make this private
-	TransactionTableModel transactionTableModel;
+	private TransactionTableModel transactionTableModel;
 	private JTable transactionTable;
 
 	public TransactionPanel(boolean highlighting) {

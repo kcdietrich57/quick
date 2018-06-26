@@ -126,7 +126,6 @@ public class SimpleTxn {
 	// This is a compact, single-line version of the transaction, such as would
 	// appear in a list for displaying and/or selecting transactions.
 	public String toStringShort(boolean veryshort) {
-		// FIXME implement SimpleTxn::toStringShort()
 		return "Tx" + this.txid;
 	}
 
@@ -138,7 +137,6 @@ public class SimpleTxn {
 		s += " amt=" + this.amount;
 		s += " memo=" + this.memo;
 
-		// TODO why have negative cat and xacct to represent the same thing?
 		if (this.xacctid < (short) 0) {
 			s += " xacct=" + Account.getAccountByID(-this.xacctid).getName();
 		} else if (this.catid < (short) 0) {

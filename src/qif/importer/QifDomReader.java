@@ -223,7 +223,6 @@ public class QifDomReader {
 			xtxn = this.matchingTxns.get(0);
 		} else {
 			Common.reportWarning("Multiple matching transactions - using the first one.");
-			// FIXME choose one more deliberately
 			xtxn = this.matchingTxns.get(0);
 		}
 
@@ -558,7 +557,6 @@ public class QifDomReader {
 
 		if (dstTxns.size() + srcTxns.size() != (jj - ii) //
 				|| ((dstTxns.size() > 1) && (srcTxns.size() > 1))) {
-			// TODO also check share counts
 			Common.reportError(String.format( //
 					"Number of src(%d)/dst(%d) transactions does not match", //
 					srcTxns.size(), dstTxns.size()));
@@ -1231,14 +1229,6 @@ public class QifDomReader {
 						break;
 					}
 				}
-
-				// FIXME txinfos are not sorted by date - should they be?
-				// final long infoms = info.date.getTime();
-				// final long tranms = t.getDate().getTime();
-				//
-				// if (infoms < tranms) {
-				// break;
-				// }
 			}
 
 			if (!found) {
@@ -1436,7 +1426,7 @@ public class QifDomReader {
 				final QPrice p = new QPrice();
 
 				if (isWeekly) {
-					// FIXME I don't get this - go to middle of the week?
+					// I am suspicious of this - go to middle of the week?
 					date = date.addDays(4);
 				}
 
@@ -1708,7 +1698,6 @@ public class QifDomReader {
 					: Security.findSecurityByName(sec.getName());
 
 			if (existing != null) {
-				// FIXME verify security details
 				if (!existing.names.contains(sec.getName())) {
 					existing.names.add(sec.getName());
 				}
@@ -1851,7 +1840,6 @@ public class QifDomReader {
 				break;
 			case InvXferAcct:
 				txn.accountForTransfer = qline.value;
-				// FIXME - this is never meaningfully used
 				txn.xacctid = findCategoryID(qline.value);
 				break;
 

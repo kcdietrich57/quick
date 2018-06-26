@@ -4,6 +4,7 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
 
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -47,7 +48,11 @@ class GridBagUtility {
 
 	public static JLabel addLabeledValue(JPanel panel, GridBagConstraints gbc, //
 			int row, int col, String text, Font labelFont, Font valueFont) {
-		JPanel innerPanel = new JPanel(new GridLayout(1, 2));
+		GridLayout layout = new GridLayout(1, 2);
+		JPanel innerPanel = new JPanel(layout);
+
+		layout.setHgap(10);
+		innerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		JLabel label = new JLabel(text);
 		label.setFont(labelFont);

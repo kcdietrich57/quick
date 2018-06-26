@@ -104,7 +104,6 @@ public class StatementDetails {
 			} catch (Exception e) {
 				System.out.println("*** ERROR: parsing statement details");
 			}
-			final boolean isInvestmentTx = txtypeStr.equals("I");
 
 			String tdateStr;
 			String actStr = "";
@@ -112,17 +111,19 @@ public class StatementDetails {
 			String shrStr = "";
 			String cknumStr = "0";
 
-			if (isInvestmentTx) {
+			if (txtypeStr.equals("I")) {
 				// I;12/27/1999;BUY;ETMMTD;7024.50;-7024.50;
 				tdateStr = ss[ssx++].trim();
 				actStr = ss[ssx++].trim();
 				secStr = ss[ssx++].trim();
 				shrStr = ss[ssx++].trim();
+			} else if (txtypeStr.equals("T")) {
+				// T;5/12/18;0;-35.19;
+				tdateStr = shrStr = ss[ssx++].trim();
+				cknumStr = ss[ssx++].trim();
 			} else {
-				// FIXME this makes no sense? It is always "T"
-				tdateStr = (txtypeStr.equals("T")) //
-						? shrStr = ss[ssx++].trim() //
-						: txtypeStr;
+				// TODO statment log file format? <date>;cknum
+				tdateStr = txtypeStr;
 				cknumStr = ss[ssx++].trim();
 			}
 
