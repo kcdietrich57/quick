@@ -13,11 +13,18 @@ import java.util.List;
 public class Common {
 	public static final BigDecimal CLOSE_ENOUGH_TO_ZERO = new BigDecimal(0.005);
 
+	public static void reportInfo(String s) {
+		if (QifDom.verbose) {
+			System.out.println("**** Info: " + s);
+		}
+	}
+
 	public static void reportWarning(String s) {
-		System.out.println("**** Warning!" + s);
+		System.out.println("**** Warning! " + s);
 	}
 
 	public static void reportError(String s) {
+		System.out.println("**** ERROR! " + s);
 		throw new RuntimeException(s);
 	}
 

@@ -5,7 +5,7 @@ import java.io.File;
 public class QifDom {
 	public static File qifDir = null;
 
-	public static boolean verbose = true;
+	public static boolean verbose = false;
 
 	/** Pay attention to version of the loaded QIF file format */
 	public static int loadedStatementsVersion = -1;
