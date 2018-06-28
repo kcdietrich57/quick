@@ -53,7 +53,7 @@ public class AccountListPanel extends JScrollPane {
 				new AccountTableCellRenderer());
 
 		accountTableModel = (AccountTableModel) accountTable.getModel();
-		accountTableModel.load(this.showOpenAccounts);
+		accountTableModel.reload(this.showOpenAccounts);
 
 		TableColumnModel acctColumnModel = accountTable.getColumnModel();
 
@@ -95,7 +95,7 @@ public class AccountListPanel extends JScrollPane {
 		if (this.showOpenAccounts != yesno) {
 			this.showOpenAccounts = yesno;
 
-			accountTableModel.load(this.showOpenAccounts);
+			accountTableModel.reload(this.showOpenAccounts);
 		}
 	}
 

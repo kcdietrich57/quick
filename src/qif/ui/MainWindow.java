@@ -13,6 +13,8 @@ import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.internal.chartpart.Chart;
 
+import qif.data.QDate;
+
 @SuppressWarnings("serial")
 public class MainWindow extends JPanel {
 	public static MainWindow instance;
@@ -42,6 +44,10 @@ public class MainWindow extends JPanel {
 	public ReconcileStatusPanel reconcileStatusPanel;
 	// content->account->reconcile->reconcileTransactions
 	public ReconcileTransactionsPanel reconcileTransactionsPanel;
+
+	// TODO testing
+	public QDate asOfDate = new QDate(1990, 1, 1);
+	asOfDate = QDate.today();
 
 	public Dashboard dashboardPanel;
 	public JPanel chartPanel;

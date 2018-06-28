@@ -7,6 +7,7 @@ import javax.swing.table.AbstractTableModel;
 
 import qif.data.Account;
 import qif.data.Common;
+import qif.ui.MainWindow;
 
 @SuppressWarnings("serial")
 public class AccountTableModel extends AbstractTableModel {
@@ -15,13 +16,28 @@ public class AccountTableModel extends AbstractTableModel {
 
 	private final List<Account> accounts = new ArrayList<Account>();
 
-	public void load(boolean showOpenAccounts) {
+	private boolean showOpenAccounts = true;
+
+	public void reload(boolean showOpenAccounts) {
+		this.showOpenAccounts = showOpenAccounts;
+
+		reload();
+	}
+
+	private void reload() {
 		List<Account> accts = Account.getSortedAccounts();
 
 		this.accounts.clear();
 
 		for (Account acct : accts) {
-			if ((acct != null) && (acct.isOpenOn(null) == showOpenAccounts)) {
+			if (acct == null) {
+				continue;
+			}
+
+			if ((this.showOpenAccounts && acct.isOpenOn(MainWindow.instance.asOfDate)) //
+					|| (!this.showOpenAccounts //
+							&& !acct.isOpenOn(MainWindow.instance.asOfDate) //
+							&& (acct.getOpenDate().compareTo(MainWindow.instance.asOfDate) <= 0))) {
 				accounts.add(acct);
 			}
 		}
@@ -66,7 +82,7 @@ public class AccountTableModel extends AbstractTableModel {
 		case 1:
 			return a.type.toString();
 		case 2:
-			return Common.formatAmount0(a.getCurrentValue());
+			return Common.formatAmount0(a.getValueForDate(MainWindow.instance.asOfDate));
 		}
 
 		return null;

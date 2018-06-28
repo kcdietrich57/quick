@@ -138,20 +138,21 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 		GenericTxn tx = model.getTransactionAt(row);
 
 		boolean cleared = (tx != null && tx.isCleared());
-		boolean future = (tx != null && tx.getDate().compareTo(QDate.today()) > 0);
+		boolean future = ((tx != null) //
+				&& (tx.getDate().compareTo(MainWindow.instance.asOfDate) > 0));
 
 		if (!this.highlighting) {
 			c.setFont(regularFont);
 			c.setForeground(defaultColor);
 			c.setBackground(defaultBackground);
-		} else if (cleared) {
-			c.setFont(boldFont);
-			c.setForeground(presentColor);
-			c.setBackground(presentBackground);
 		} else if (future) {
 			c.setFont(italicFont);
 			c.setForeground(futureColor);
 			c.setBackground(futureBackground);
+		} else if (cleared) {
+			c.setFont(boldFont);
+			c.setForeground(presentColor);
+			c.setBackground(presentBackground);
 		} else {
 			c.setFont(regularFont);
 			c.setForeground(presentColor);
