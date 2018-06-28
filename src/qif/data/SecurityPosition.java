@@ -8,7 +8,8 @@ import java.util.List;
 
 public class SecurityPosition {
 	public Security security;
-	public BigDecimal shares;
+	private BigDecimal startShares;
+	public BigDecimal endingShares;
 
 	public List<InvestmentTxn> transactions;
 
@@ -20,7 +21,7 @@ public class SecurityPosition {
 
 	public SecurityPosition(Security sec, BigDecimal shares, BigDecimal value) {
 		this.security = sec;
-		this.shares = shares;
+		this.endingShares = shares;
 		this.transactions = new ArrayList<InvestmentTxn>();
 		this.shrBalance = new ArrayList<BigDecimal>();
 		this.value = value;
@@ -36,7 +37,15 @@ public class SecurityPosition {
 
 	/** Build a copy of a position (minus transactions) */
 	public SecurityPosition(SecurityPosition other) {
-		this(other.security, other.shares);
+		this(other.security, other.endingShares);
+	}
+
+	public BigDecimal getStartingShares() {
+		return this.startShares;
+	}
+
+	public BigDecimal getEndingShares() {
+		return this.endingShares;
 	}
 
 	public void setTransactions(List<InvestmentTxn> txns, BigDecimal startBal) {
@@ -45,6 +54,8 @@ public class SecurityPosition {
 		this.transactions.clear();
 		this.transactions.addAll(txns);
 		this.shrBalance.clear();
+
+		this.startShares = startBal;
 
 		for (InvestmentTxn t : this.transactions) {
 			startBal = startBal.add(t.getShares());
@@ -56,7 +67,7 @@ public class SecurityPosition {
 		String s = String.format( //
 				"%-20s   %s shrs  %d txns", //
 				this.security.getName(), //
-				Common.formatAmount3(this.shares), //
+				Common.formatAmount3(this.endingShares), //
 				this.transactions.size());
 
 		if (this.value != null) {
@@ -68,7 +79,7 @@ public class SecurityPosition {
 
 	public BigDecimal getSecurityPositionValueForDate(QDate d) {
 		if (this.transactions.isEmpty()) {
-			return this.shares.multiply(this.security.getPriceForDate(d).getPrice());
+			return this.endingShares.multiply(this.security.getPriceForDate(d).getPrice());
 		}
 
 		final int idx = getTransactionIndexForDate(d);

@@ -3,6 +3,7 @@ package qif.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -33,10 +34,14 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import qif.data.Account;
+import qif.data.Common;
+import qif.data.SecurityPortfolio;
+import qif.data.SecurityPosition;
 import qif.data.Statement;
 import qif.ui.model.StatementTableModel;
 
@@ -53,6 +58,9 @@ public class StatementPanel //
 	private JScrollPane scroller;
 
 	private List<StatementSelectionListener> stmtSelListeners;
+
+	private JTable statementHoldingsTable;
+	private StatementHoldingsTableModel statementHoldingsTableModel;
 
 	public StatementPanel() {
 		setLayout(new BorderLayout());
@@ -73,6 +81,17 @@ public class StatementPanel //
 		gbc.insets = new Insets(3, 3, 3, 3);
 		titlePanel.add(title, gbc);
 
+		this.statementHoldingsTableModel = new StatementHoldingsTableModel();
+		this.statementHoldingsTable = new JTable(this.statementHoldingsTableModel);
+//		this.statementHoldingsTable.setDefaultRenderer( //
+//				Object.class, new StatementHoldingsTableCellRenderer());
+
+		JScrollPane statementHoldingsTableScroller = //
+				new JScrollPane(this.statementHoldingsTable);
+		this.statementHoldingsTable.setMinimumSize(new Dimension(200, 50));
+		this.statementHoldingsTable.setMaximumSize(new Dimension(500, 75));
+		this.statementHoldingsTable.setPreferredScrollableViewportSize(new Dimension(200, 100));
+
 		statementTableModel = new StatementTableModel();
 		statementTable = new JTable(statementTableModel);
 		this.scroller = new JScrollPane(this.statementTable);
@@ -82,6 +101,7 @@ public class StatementPanel //
 				new StatementTableCellRenderer());
 
 		add(titlePanel, BorderLayout.NORTH);
+		add(statementHoldingsTableScroller, BorderLayout.EAST);
 		add(this.scroller, BorderLayout.CENTER);
 
 		TableColumnModel statColumnModel = statementTable.getColumnModel();
@@ -198,10 +218,13 @@ public class StatementPanel //
 	}
 
 	protected void selectStatementHandler() {
-		Statement s = getSelectedStatement();
+		Statement stmt = getSelectedStatement();
+
+		this.statementHoldingsTableModel.setStatement(stmt);
+		this.statementHoldingsTableModel.fireTableDataChanged();
 
 		for (StatementSelectionListener l : this.stmtSelListeners) {
-			l.statementSelected(s);
+			l.statementSelected(stmt);
 		}
 	}
 }
@@ -263,3 +286,72 @@ class StatementTableCellRenderer extends DefaultTableCellRenderer {
 		return c;
 	}
 }
+
+@SuppressWarnings("serial")
+class StatementHoldingsTableModel extends AbstractTableModel {
+	private static final String headers[] = { "Security", "Start", "End" };
+
+	private Statement stmt;
+
+	public SecurityPortfolio.HoldingsComparison holdingsComparision;
+
+	public void setStatement(Statement stmt) {
+		this.stmt = stmt;
+	}
+
+	public int getRowCount() {
+		return ((this.stmt != null) && (this.stmt.holdings != null)) //
+				? this.stmt.holdings.positions.size() //
+				: 0;
+	}
+
+	public int getColumnCount() {
+		return 3;
+	}
+
+	public String getColumnName(int col) {
+		return headers[col];
+	}
+
+	public Object getValueAt(int row, int col) {
+		SecurityPosition pos = this.stmt.holdings.positions.get(row);
+
+		switch (col) {
+		case 0:
+			return pos.security.getName();
+		case 1:
+			return Common.formatAmount3(pos.getStartingShares());
+		case 2:
+			return Common.formatAmount3(pos.getEndingShares());
+		}
+
+		return "N/A";
+	}
+}
+
+//@SuppressWarnings("serial")
+//class StatementHoldingsTableCellRenderer extends DefaultTableCellRenderer {
+//	private static final Font BALANCED_FONT = new Font("Helvetica", Font.PLAIN, 12);
+//	private static final Color BALANCED_COLOR = Color.BLACK;
+//	private static final Font UNBALANCED_FONT = new Font("Helvetica", Font.BOLD, 14);
+//	private static final Color UNBALANCED_COLOR = Color.RED;
+//
+//	public Component getTableCellRendererComponent( //
+//			JTable table, Object value, boolean isSelected, boolean hasFocus, //
+//			int row, int column) {
+//		Component c = super.getTableCellRendererComponent( //
+//				table, value, isSelected, hasFocus, row, column);
+//
+//		StatementHoldingsTableModel model = (StatementHoldingsTableModel) table.getModel();
+//
+//		if (model.getValueAt(row, 1).equals(model.getValueAt(row, 2))) {
+//			c.setFont(BALANCED_FONT);
+//			c.setForeground(BALANCED_COLOR);
+//		} else {
+//			c.setFont(UNBALANCED_FONT);
+//			c.setForeground(UNBALANCED_COLOR);
+//		}
+//
+//		return c;
+//	}
+//}

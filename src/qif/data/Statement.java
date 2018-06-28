@@ -272,16 +272,16 @@ public class Statement {
 		for (final SecurityPosition p : this.holdings.positions) {
 			final SecurityPosition op = delta.getPosition(p.security);
 
-			return Common.isEffectivelyEqual(p.shares, //
-					(op != null) ? op.shares : BigDecimal.ZERO);
+			return Common.isEffectivelyEqual(p.endingShares, //
+					(op != null) ? op.endingShares : BigDecimal.ZERO);
 		}
 
 		for (final SecurityPosition p : delta.positions) {
 			final SecurityPosition op = this.holdings.getPosition(p.security);
 
 			return (op != null) //
-					? Common.isEffectivelyEqual(p.shares, op.shares) //
-					: Common.isEffectivelyZero(p.shares);
+					? Common.isEffectivelyEqual(p.endingShares, op.endingShares) //
+					: Common.isEffectivelyZero(p.endingShares);
 		}
 
 		return true;

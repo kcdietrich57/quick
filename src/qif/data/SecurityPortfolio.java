@@ -33,14 +33,14 @@ public class SecurityPortfolio {
 			return;
 		}
 
-		SecurityPosition p = getPosition(itx.security);
+		SecurityPosition pos = getPosition(itx.security);
 
-		p.shares = (itx.getAction() == TxAction.STOCKSPLIT) //
-				? p.shares.multiply(itx.getSplitRatio()) //
-				: p.shares.add(itx.getShares());
+		pos.endingShares = (itx.getAction() == TxAction.STOCKSPLIT) //
+				? pos.endingShares.multiply(itx.getSplitRatio()) //
+				: pos.endingShares.add(itx.getShares());
 
-		p.transactions.add(itx);
-		p.shrBalance.add(p.shares);
+		pos.transactions.add(itx);
+		pos.shrBalance.add(pos.endingShares);
 	}
 
 	/**
@@ -58,7 +58,7 @@ public class SecurityPortfolio {
 		for (SecurityPosition pos : this.positions) {
 			SecurityPosition dpos = dport.findPosition(pos.security);
 
-			BigDecimal prevbal = prevPort.getPosition(pos.security).shares;
+			BigDecimal prevbal = prevPort.getPosition(pos.security).endingShares;
 			pos.setTransactions(dpos.transactions, prevbal);
 		}
 	}
@@ -120,7 +120,7 @@ public class SecurityPortfolio {
 		for (final Iterator<SecurityPosition> iter = this.positions.iterator(); iter.hasNext();) {
 			final SecurityPosition p = iter.next();
 
-			if (Common.isEffectivelyZero(p.shares)) {
+			if (Common.isEffectivelyZero(p.endingShares)) {
 				iter.remove();
 			}
 		}
@@ -168,7 +168,7 @@ public class SecurityPortfolio {
 
 			SecurityPosition pos = this.desiredPositions.get(idx);
 
-			return (pos != null) ? pos.shares : BigDecimal.ZERO;
+			return (pos != null) ? pos.endingShares : BigDecimal.ZERO;
 		}
 
 		public BigDecimal getActualShares(int idx) {
@@ -178,7 +178,7 @@ public class SecurityPortfolio {
 
 			SecurityPosition pos = this.actualPositions.get(idx);
 
-			return (pos != null) ? pos.shares : BigDecimal.ZERO;
+			return (pos != null) ? pos.endingShares : BigDecimal.ZERO;
 		}
 
 		private SecurityPosition getPosition(int idx) {
@@ -193,8 +193,8 @@ public class SecurityPortfolio {
 				SecurityPosition pos1 = this.desiredPositions.get(ii);
 				SecurityPosition pos2 = this.actualPositions.get(ii);
 
-				BigDecimal val1 = (pos1 != null) ? pos1.shares : BigDecimal.ZERO;
-				BigDecimal val2 = (pos2 != null) ? pos2.shares : BigDecimal.ZERO;
+				BigDecimal val1 = (pos1 != null) ? pos1.endingShares : BigDecimal.ZERO;
+				BigDecimal val2 = (pos2 != null) ? pos2.endingShares : BigDecimal.ZERO;
 
 				if (!Common.isEffectivelyEqual(val1, val2)) {
 					return false;

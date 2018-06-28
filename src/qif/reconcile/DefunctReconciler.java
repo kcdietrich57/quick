@@ -319,8 +319,8 @@ class DefunctReconciler {
 		for (final SecurityPosition p : newHoldings.positions) {
 			final SecurityPosition posExpected = stmt.holdings.getPosition(p.security);
 			final BigDecimal expectedShares = //
-					((posExpected != null) && (posExpected.shares != null)) //
-							? posExpected.shares //
+					((posExpected != null) && (posExpected.endingShares != null)) //
+							? posExpected.endingShares //
 							: BigDecimal.ZERO;
 			final BigDecimal expectedValue = //
 					((posExpected != null) && (posExpected.value != null)) //
@@ -330,12 +330,12 @@ class DefunctReconciler {
 
 			s = String.format("  %-25s %s(%5.2f) %s(%5.2f)", //
 					p.security.getName(), //
-					Common.formatAmount(p.shares), //
-					expectedShares.subtract(p.shares), //
+					Common.formatAmount(p.endingShares), //
+					expectedShares.subtract(p.endingShares), //
 					Common.formatAmount(pValue), //
 					expectedValue.subtract(pValue));
 
-			if (!Common.isEffectivelyEqual(p.shares, expectedShares) //
+			if (!Common.isEffectivelyEqual(p.endingShares, expectedShares) //
 			// || !Common.isEffectivelyEqual(pValue, opValue)
 			) {
 				s += " ********";
@@ -353,7 +353,7 @@ class DefunctReconciler {
 				}
 
 				System.out.println(String.format("  %s %s", //
-						p.security.getName(), Common.formatAmount(p.shares)));
+						p.security.getName(), Common.formatAmount(p.endingShares)));
 			}
 		}
 	}

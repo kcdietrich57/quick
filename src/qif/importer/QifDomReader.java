@@ -439,7 +439,7 @@ class SecurityProcessor {
 			case SHRS_OUT:
 			case SELL:
 			case SELLX:
-				pos.shares = pos.shares.add(txn.getShares());
+				pos.endingShares = pos.endingShares.add(txn.getShares());
 				break;
 
 			case GRANT:
@@ -452,8 +452,8 @@ class SecurityProcessor {
 			case STOCKSPLIT:
 				StockOption.processSplit(txn);
 
-				pos.shares = pos.shares.multiply(txn.getShares());
-				pos.shares = pos.shares.divide(BigDecimal.TEN);
+				pos.endingShares = pos.endingShares.multiply(txn.getShares());
+				pos.endingShares = pos.endingShares.divide(BigDecimal.TEN);
 				break;
 
 			case CASH:
@@ -1660,7 +1660,7 @@ class StatementProcessor {
 				final SecurityPosition p = new SecurityPosition(sec);
 
 				p.value = (valStr.equals("x")) ? null : new BigDecimal(valStr);
-				p.shares = (qtyStr.equals("x")) ? null : new BigDecimal(qtyStr);
+				p.endingShares = (qtyStr.equals("x")) ? null : new BigDecimal(qtyStr);
 				BigDecimal price = (priceStr.equals("x")) ? null : new BigDecimal(priceStr);
 				final BigDecimal price4date = sec.getPriceForDate(currstmt.date).getPrice();
 
@@ -1669,27 +1669,27 @@ class StatementProcessor {
 				// number of shares. If the price is not present, we can use the
 				// price on the day of the statement.
 				// If we know two of the values, we can calculate the third.
-				if (p.shares == null) {
+				if (p.endingShares == null) {
 					if (p.value != null) {
 						if (price == null) {
 							price = price4date;
 						}
 
-						p.shares = p.value.divide(price, RoundingMode.HALF_UP);
+						p.endingShares = p.value.divide(price, RoundingMode.HALF_UP);
 					}
 				} else if (p.value == null) {
-					if (p.shares != null) {
+					if (p.endingShares != null) {
 						if (price == null) {
 							price = price4date;
 						}
 
-						p.value = price.multiply(p.shares);
+						p.value = price.multiply(p.endingShares);
 					}
 				} else if (price == null) {
 					price = price4date;
 				}
 
-				if (p.shares == null) {
+				if (p.endingShares == null) {
 					Common.reportError("Missing security info in stmt");
 				}
 

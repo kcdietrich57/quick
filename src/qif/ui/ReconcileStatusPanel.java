@@ -74,8 +74,6 @@ class ReconcileStatusPanel //
 
 		this.dateLabel = GridBagUtility.addValue( //
 				infoPanel, gbc, 0, 0, GridBagUtility.bold16);
-		// this.closingCashField = GridBagUtility.addTextField( //
-		// infoPanel, gbc, 0, 1, GridBagUtility.bold12);
 
 		gbc.insets = new Insets(0, 5, 0, 0);
 		gbc.gridwidth = 1;
@@ -101,18 +99,14 @@ class ReconcileStatusPanel //
 		// Portfolio
 		// ===================================================
 
-		// gbc.anchor = GridBagConstraints.EAST;
-		// this.portfolioOKLabel = GridBagUtility.addLabeledValue( //
-		// infoPanel, gbc, 3, 1, "Portfolio Ok", 14);
-
 		this.holdingsTableModel = new HoldingsTableModel();
 		this.holdingsTable = new JTable(this.holdingsTableModel);
 		this.holdingsTable.setDefaultRenderer(Object.class, new HoldingsTableCellRenderer());
 
 		JScrollPane holdingsTableScroller = new JScrollPane(this.holdingsTable);
-		holdingsTable.setMinimumSize(new Dimension(100, 50));
-		holdingsTable.setMaximumSize(new Dimension(500, 75));
-		holdingsTable.setPreferredScrollableViewportSize(new Dimension(200, 100));
+		this.holdingsTable.setMinimumSize(new Dimension(100, 50));
+		this.holdingsTable.setMaximumSize(new Dimension(500, 75));
+		this.holdingsTable.setPreferredScrollableViewportSize(new Dimension(200, 100));
 
 		// ===================================================
 		// Buttons
@@ -127,6 +121,8 @@ class ReconcileStatusPanel //
 		buttonPanel.add(selectAllButton, gbc);
 		buttonPanel.add(deselectAllButton, gbc);
 		buttonPanel.add(finishButton, gbc);
+
+		updateValues();
 
 		selectAllButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -147,12 +143,6 @@ class ReconcileStatusPanel //
 				finishStatement();
 			}
 		});
-
-		// this.closingCashField.addActionListener(new ActionListener() {
-		// public void actionPerformed(ActionEvent e) {
-		// setClosingValue();
-		// }
-		// });
 
 		// ===================================================
 
@@ -177,18 +167,6 @@ class ReconcileStatusPanel //
 		MainWindow.instance.accountListPanel.refreshAccountList(acct);
 	}
 
-	// private void setClosingValue() {
-	// try {
-	// BigDecimal val = new BigDecimal(closingCashField.getText());
-	// this.stmt.closingBalance = val;
-	// this.stmt.cashBalance = val;
-	// } catch (Exception ex) {
-	// ex.printStackTrace();
-	// }
-	//
-	// updateValues();
-	// }
-
 	public void statementSelected(Statement stmt) {
 		if (stmt != this.stmt) {
 			this.stmt = stmt;
@@ -209,25 +187,29 @@ class ReconcileStatusPanel //
 				? laststmt.date.longString //
 				: "---");
 
-		ReconcileTransactionTableModel model = //
-				MainWindow.instance.reconcileTransactionsPanel.reconcileTransactionTableModel;
+		ReconcileTransactionTableModel model = (this.stmt != null) //
+				? MainWindow.instance.reconcileTransactionsPanel.reconcileTransactionTableModel //
+				: null;
 
 		this.openBalanceLabel.setText((this.stmt != null) //
 				? Common.formatAmount(this.stmt.getOpeningCashBalance()) //
 				: "---");
-		this.creditsLabel.setText((this.stmt != null) //
+		this.creditsLabel.setText((model != null) //
 				? Common.formatAmount(model.getCredits()) //
 				: "---");
-		this.debitsLabel.setText((this.stmt != null) //
+		this.debitsLabel.setText((model != null) //
 				? Common.formatAmount(model.getDebits()) //
 				: "---");
 
-		this.clearedCashBalance = model.getClearedCashBalance();
+		this.clearedCashBalance = (model != null) //
+				? model.getClearedCashBalance() //
+				: BigDecimal.ZERO;
 		this.cashDiffValue = ((this.stmt != null) && (this.stmt.cashBalance != null)) //
 				? this.stmt.cashBalance.subtract(this.clearedCashBalance) //
 				: null;
 
-		boolean isBalanced = (this.cashDiffValue != null) && (this.cashDiffValue.signum() == 0);
+		boolean isBalanced = (this.cashDiffValue != null) //
+				&& (this.cashDiffValue.signum() == 0);
 
 		String str = "---";
 
@@ -243,13 +225,7 @@ class ReconcileStatusPanel //
 		}
 
 		this.clearedCashBalanceLabel.setText(str);
-
-		// this.cashDiffLabel.setText((this.cashDiffValue != null) //
-		// ? Common.formatAmount(cashDiffValue) //
-		// : "---");
-
 		this.clearedCashBalanceLabel.setForeground((isBalanced) ? Color.BLACK : Color.RED);
-		// this.cashDiffLabel.setForeground((isBalanced) ? Color.BLACK : Color.RED);
 
 		boolean holdingsMatch = true;
 
@@ -260,12 +236,24 @@ class ReconcileStatusPanel //
 			holdingsMatch = comparison.holdingsMatch();
 		}
 
-		// this.portfolioOKLabel.setText((holdingsMatch) ? "Yes" : "No");
+		if ((this.stmt != null) && isBalanced && holdingsMatch) {
+			this.finishButton.setText("Finish");
+			this.finishButton.setEnabled(true);
+			this.finishButton.setForeground(Color.BLACK);
+		} else {
+			if (this.stmt == null) {
+				this.finishButton.setText("No Statement");
+			} else if (!isBalanced && !holdingsMatch) {
+				this.finishButton.setText("Cash/Holdings not balanced");
+			} else if (!isBalanced) {
+				this.finishButton.setText("Cash not balanced");
+			} else if (!holdingsMatch) {
+				this.finishButton.setText("Holdings not balanced");
+			}
 
-		// this.portfolioOKLabel.setForeground((holdingsMatch) ? Color.BLACK :
-		// Color.RED);
-
-		this.finishButton.setEnabled(isBalanced && holdingsMatch);
+			this.finishButton.setEnabled(false);
+			this.finishButton.setForeground(Color.RED);
+		}
 
 		this.holdingsTableModel.fireTableDataChanged();
 	}
