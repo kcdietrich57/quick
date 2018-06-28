@@ -28,41 +28,34 @@ public class QDate implements Comparable<QDate> {
 				: new QDate(year, month, MONTH_DAYS[(month + 11) % 12]);
 	}
 
-	public QDate getDateNearestTo(int day) {
-		return getDateNearestTo(day, 0);
+	public QDate getLastDayOfMonth() {
+		return (getMonth() != 2) //
+				? new QDate(getYear(), getMonth(), MONTH_DAYS[getMonth() - 1])
+				: new QDate(getYear(), 3, 1).addDays(-1);
 	}
 
-	public QDate getDateNearestTo(int day, int recurse) {
-		int diff = getDay() - day;
-
-		if (diff == 0) {
+	public QDate getDateNearestTo(int day) {
+		if (day == getDay()) {
 			return this;
 		}
 
-		int adjust = 0;
+		if (day - getDay() > 15) {
+			QDate lastMonth = new QDate(getYear(), getMonth(), 1).addDays(-1);
 
-		if (diff > 15) {
-			adjust = 30 - diff;
-			diff = -1;
-		} else if (diff > -15) {
-			adjust = -diff;
-		} else {
-			adjust = -(30 + diff);
-			diff = 1;
+			return lastMonth.getDateNearestTo(day);
 		}
 
-		if (adjust == 0) {
-			adjust = (diff < 0) ? 1 : -1;
-			return this;
+		if (getDay() - day > 15) {
+			QDate nextMonth = getLastDayOfMonth().addDays(1);
+
+			return nextMonth.getDateNearestTo(day);
 		}
 
-		if (recurse > 5) {
-			// System.out.println("recursing: " + this.longString + " : " + day);
-			return this;
+		if (day < MONTH_DAYS[getMonth() - 1]) {
+			return new QDate(getYear(), getMonth(), day);
 		}
 
-		QDate d2 = addDays(adjust).getDateNearestTo(day, recurse + 1);
-		return d2;
+		return getLastDayOfMonth();
 	}
 
 	public QDate(int y, int m, int d) {
@@ -160,10 +153,7 @@ public class QDate implements Comparable<QDate> {
 
 	public Date toDate() {
 		Calendar cal = Calendar.getInstance();
-		cal.set(this.datevalue / 10000, //
-				(this.datevalue / 100) % 100 - 1, //
-				this.datevalue % 100, //
-				0, 0, 1);
+		cal.set(getYear(), getMonth() - 1, getDay(), 0, 0, 1);
 
 		return cal.getTime();
 	}
@@ -173,9 +163,17 @@ public class QDate implements Comparable<QDate> {
 	}
 
 	public static void main(String[] args) {
-		QDate estimate = new QDate(2016, 3, 4);
+		for (int month = 1; month <= 12; ++month) {
+			QDate estimate;
+			QDate exact;
 
-		QDate exact = estimate.getDateNearestTo(29);
-		System.out.println(exact.toString());
+			estimate = new QDate(2016, month, 3);
+			exact = estimate.getDateNearestTo(31);
+			System.out.println(estimate.toString() + " - " + exact.toString());
+
+			estimate = new QDate(2016, month, 27);
+			exact = estimate.getDateNearestTo(1);
+			System.out.println("  " + estimate.toString() + " - " + exact.toString());
+		}
 	}
 }
