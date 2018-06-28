@@ -46,8 +46,8 @@ public class MainWindow extends JPanel {
 	public ReconcileTransactionsPanel reconcileTransactionsPanel;
 
 	// TODO testing
-	public QDate asOfDate = new QDate(1990, 1, 1);
-	asOfDate = QDate.today();
+	public QDate asOfDate = //new QDate(1990, 1, 1);
+	 QDate.today();
 
 	public Dashboard dashboardPanel;
 	public JPanel chartPanel;
