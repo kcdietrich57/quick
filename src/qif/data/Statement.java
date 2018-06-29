@@ -103,6 +103,7 @@ public class Statement {
 	}
 
 	public void addTransactions(Collection<GenericTxn> txns, boolean checkDate) {
+		// TODO should some/all txns go into unclearedTransactions?
 		if (!checkDate) {
 			this.transactions.addAll(txns);
 		} else {

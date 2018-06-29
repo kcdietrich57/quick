@@ -45,9 +45,7 @@ public class MainWindow extends JPanel {
 	// content->account->reconcile->reconcileTransactions
 	public ReconcileTransactionsPanel reconcileTransactionsPanel;
 
-	// TODO testing
-	public QDate asOfDate = //new QDate(1990, 1, 1);
-	 QDate.today();
+	public QDate asOfDate = QDate.today();
 
 	public Dashboard dashboardPanel;
 	public JPanel chartPanel;
@@ -64,6 +62,14 @@ public class MainWindow extends JPanel {
 		// add(new JButton("Toolbar Goes Here"), BorderLayout.NORTH);
 		add(contentPanel, BorderLayout.CENTER);
 		// add(new JButton("Status Bar Goes Here"), BorderLayout.SOUTH);
+	}
+
+	public void setAsOfDate(QDate date) {
+		this.asOfDate = date;
+
+		// TODO use AsOfDateListeners to update UI
+		this.accountNavigationPanel.refreshAccountList();
+		this.summaryPanel.updateValues();
 	}
 
 	private void createContentPanel() {

@@ -8,8 +8,10 @@ import javax.swing.table.AbstractTableModel;
 
 import qif.data.Account;
 import qif.data.Common;
+import qif.data.QDate;
 import qif.data.Statement;
 import qif.ui.AccountSelectionListener;
+import qif.ui.MainWindow;
 
 /** Model for statement table displaying the statements for an account */
 @SuppressWarnings("serial")
@@ -36,10 +38,26 @@ public class StatementTableModel //
 			this.account = acct;
 			this.statements.clear();
 
-			if (acct != null) {
-				this.statements.addAll(acct.statements);
+			Statement unclearedStmt = null;
 
-				Statement unclearedStmt = acct.getUnclearedStatement();
+			if (acct != null) {
+				if (MainWindow.instance.asOfDate.compareTo(QDate.today()) < 0) {
+					Statement laststmt = null;
+
+					for (Statement stmt : acct.statements) {
+						if (MainWindow.instance.asOfDate.compareTo(stmt.date) >= 0) {
+							this.statements.add(stmt);
+							laststmt = stmt;
+						}
+					}
+
+					unclearedStmt = acct.getUnclearedStatement(laststmt);
+				} else {
+					this.statements.addAll(acct.statements);
+
+					unclearedStmt = acct.getUnclearedStatement();
+				}
+
 				if (unclearedStmt != null) {
 					this.statements.add(unclearedStmt);
 				}
@@ -68,7 +86,7 @@ public class StatementTableModel //
 	}
 
 	public int getRowCount() {
-		return statements.size();
+		return this.statements.size();
 	}
 
 	public String getColumnName(int col) {
@@ -80,7 +98,7 @@ public class StatementTableModel //
 			return null;
 		}
 
-		Statement s = statements.get(row);
+		Statement s = this.statements.get(row);
 
 		switch (col) {
 		case 0:

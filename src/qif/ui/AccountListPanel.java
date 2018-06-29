@@ -25,6 +25,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import qif.data.Account;
+import qif.data.QDate;
 import qif.data.Statement;
 import qif.ui.model.AccountTableModel;
 
@@ -78,11 +79,13 @@ public class AccountListPanel extends JScrollPane {
 		createContextMenu();
 	}
 
-	public void refreshAccountList(Account selAcct) {
+	public void refreshAccountList() {
 		int selrow = this.accountTable.getSelectedRow();
-		this.accountTableModel.fireTableDataChanged();
+		this.accountTableModel.reload();
 
 		if (selrow >= 0) {
+			// TODO we should select the same account, even if it moves - deselect if no
+			// longer present
 			this.accountTable.addRowSelectionInterval(selrow, selrow);
 		}
 	}
@@ -174,6 +177,9 @@ class AccountTableCellRenderer extends DefaultTableCellRenderer {
 	private static Color dueColor = Color.BLUE;
 	private static Color dueBackground = Color.WHITE;
 
+	private static Font closedFont = new Font("Helvetica", Font.ITALIC, 12);
+	private static Color closedColor = Color.GRAY;
+
 	public Component getTableCellRendererComponent(//
 			JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
 		Component c = super.getTableCellRendererComponent(//
@@ -184,7 +190,10 @@ class AccountTableCellRenderer extends DefaultTableCellRenderer {
 
 		boolean statementDue = acct.isStatementDue();
 
-		if (statementDue) {
+		if (!acct.isOpenOn(QDate.today())) {
+			c.setFont(closedFont);
+			c.setForeground(closedColor);
+		} else if (statementDue) {
 			Statement stat = acct.getFirstUnbalancedStatement();
 
 			c.setFont(dueFont);

@@ -164,7 +164,7 @@ class ReconcileStatusPanel //
 		MainWindow.instance.statementPanel.accountSelected(acct, true);
 		MainWindow.instance.accountPanel.accountSelected(acct, true);
 
-		MainWindow.instance.accountListPanel.refreshAccountList(acct);
+		MainWindow.instance.accountListPanel.refreshAccountList();
 	}
 
 	public void statementSelected(Statement stmt) {

@@ -21,7 +21,6 @@ import javax.swing.table.TableColumnModel;
 
 import qif.data.Account;
 import qif.data.GenericTxn;
-import qif.data.QDate;
 import qif.data.Statement;
 import qif.ui.model.TransactionTableModel;
 

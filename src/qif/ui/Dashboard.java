@@ -22,7 +22,9 @@ import qif.report.StatusReporter.ReportStatusModel;
 /** This panel displays overall information */
 @SuppressWarnings("serial")
 public class Dashboard extends JPanel {
-	private static QDate displayDate = QDate.today();
+	private QDate displayDate = MainWindow.instance.asOfDate;
+
+	private JTextArea textarea;
 
 	public Dashboard() {
 		super(new BorderLayout());
@@ -34,9 +36,9 @@ public class Dashboard extends JPanel {
 		JDatePicker datePicker = new JDatePicker(displayDate.toDate());
 		JPanel datePane = new JPanel(new BorderLayout());
 
-		JTextArea textarea = new JTextArea();
+		this.textarea = new JTextArea();
 		textarea.setFont(new Font("Courier", Font.PLAIN, 12));
-		JScrollPane scroller = new JScrollPane(textarea);
+		JScrollPane scroller = new JScrollPane(this.textarea);
 
 		datePane.add(datePicker, BorderLayout.WEST);
 
@@ -57,13 +59,7 @@ public class Dashboard extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 				Object selObj = datePicker.getModel().getValue();
 				if (selObj instanceof Date) {
-					QDate selDate = new QDate((Date) selObj);
-
-					if (!displayDate.equals(selDate)) {
-						displayDate = selDate;
-						StatusForDateModel model = NetWorthReporter.buildReportStatusForDate(displayDate);
-						textarea.setText(NetWorthReporter.generateReportStatusForDate(model));
-					}
+					setDate(new QDate((Date) selObj));
 				}
 			}
 		});
@@ -73,5 +69,15 @@ public class Dashboard extends JPanel {
 
 		ReportStatusModel model2 = StatusReporter.buildReportStatusModel();
 		textarea2.setText(StatusReporter.generateReportStatus(model2));
+	}
+
+	public void setDate(QDate date) {
+		if (!this.displayDate.equals(date)) {
+			this.displayDate = date;
+			StatusForDateModel model = NetWorthReporter.buildReportStatusForDate(this.displayDate);
+			textarea.setText(NetWorthReporter.generateReportStatusForDate(model));
+			
+			MainWindow.instance.setAsOfDate(date);
+		}
 	}
 }

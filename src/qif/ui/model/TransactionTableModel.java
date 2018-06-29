@@ -13,6 +13,7 @@ import qif.data.InvestmentTxn;
 import qif.data.QDate;
 import qif.data.Statement;
 import qif.ui.AccountSelectionListener;
+import qif.ui.MainWindow;
 
 /**
  * Model for TransactionTable - supply transactions in an account or statement
@@ -50,8 +51,16 @@ public class TransactionTableModel //
 	private void setTransactions(List<GenericTxn> txns) {
 		this.transactions.clear();
 
-		if (txns != null) {
-			this.transactions.addAll(txns);
+		if ((txns != null) && !txns.isEmpty()) {
+			if (MainWindow.instance.asOfDate.compareTo(QDate.today()) < 0) {
+				for (GenericTxn txn : txns) {
+					if (MainWindow.instance.asOfDate.compareTo(txn.getDate()) >= 0) {
+						this.transactions.add(txn);
+					}
+				}
+			} else {
+				this.transactions.addAll(txns);
+			}
 		}
 
 		fireTableDataChanged();
@@ -68,7 +77,7 @@ public class TransactionTableModel //
 				curAccount = (Account) obj;
 				curStatement = null;
 
-				setTransactions(curAccount.transactions);
+				setTransactions(this.curAccount.transactions);
 			} else if (obj instanceof Statement) {
 				curStatement = (Statement) obj;
 				curAccount = Account.getAccountByID(curStatement.acctid);
@@ -87,10 +96,10 @@ public class TransactionTableModel //
 			return;
 		}
 
-		Statement s = curAccount.getStatement(date, null);
-		if (s != null) {
-			this.curStatement = s;
-			setTransactions(s.transactions);
+		Statement stmt = curAccount.getStatement(date, null);
+		if (stmt != null) {
+			this.curStatement = stmt;
+			setTransactions(stmt.transactions);
 		}
 	}
 

@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 
 import javax.swing.JPanel;
 
-import qif.data.Account;
-
 /** This panel displays accounts and selection drives AccountPanel */
 @SuppressWarnings("serial")
 public class AccountNavigationPanel extends JPanel {
@@ -28,8 +26,8 @@ public class AccountNavigationPanel extends JPanel {
 		add(summaryPanel, BorderLayout.SOUTH);
 	}
 
-	public void refreshAccountList(Account selAcct) {
-		this.accountListPanel.refreshAccountList(selAcct);
+	public void refreshAccountList() {
+		this.accountListPanel.refreshAccountList();
 	}
 
 	public void showOpenAccounts(boolean yesno) {

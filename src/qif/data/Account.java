@@ -9,6 +9,8 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import qif.ui.MainWindow;
+
 public class Account {
 	/**
 	 * This list of accounts may not contain nulls, size == numAccounts, index is
@@ -43,13 +45,22 @@ public class Account {
 
 	// Sort on isOpen|type|name
 	public static List<Account> getSortedAccounts() {
-		List<Account> ret = new ArrayList<>(accounts);
+		List<Account> accts = new ArrayList<Account>();
 
-		Collections.sort(ret, new Comparator<Account>() {
+		for (Account acct : accounts) {
+			if (acct == null) {
+				continue;
+			}
+
+			if (acct.isOpenOn(MainWindow.instance.asOfDate) //
+					|| (acct.getOpenDate().compareTo(MainWindow.instance.asOfDate) <= 0)) {
+				accts.add(acct);
+			}
+		}
+
+		Collections.sort(accts, new Comparator<Account>() {
 			public int compare(Account a1, Account a2) {
-				if (a1.isOpenOn(null) != a2.isOpenOn(null)) {
-					return a1.isOpenOn(null) ? 1 : -1;
-				} else if (a1.type != a2.type) {
+				if (a1.type != a2.type) {
 					return a1.type.compareTo(a2.type);
 				}
 
@@ -57,7 +68,7 @@ public class Account {
 			}
 		});
 
-		return ret;
+		return accts;
 	}
 
 	public static void addAccount(Account acct) {
@@ -242,6 +253,18 @@ public class Account {
 		return null;
 	}
 
+	private Statement getFirstStatementAfter(QDate date) {
+		for (int ii = this.statements.size() - 1; ii >= 0; --ii) {
+			Statement stmt = this.statements.get(ii);
+
+			if (date.compareTo(stmt.date) > 0) {
+				return stmt;
+			}
+		}
+
+		return null;
+	}
+
 	public Statement getLastStatement() {
 		return (this.statements.isEmpty()) //
 				? null //
@@ -323,21 +346,62 @@ public class Account {
 	 * statement already. (Null if there are none)
 	 */
 	public Statement getUnclearedStatement() {
-		// Make sure reconcile statement has its transactions
+		// Make sure statement(s) needing reconcile have their transactions
 		getNextStatementToReconcile();
 
-		List<GenericTxn> txns = getUnclearedTransactions();
+		Statement stat = null;
 
-		if (txns.isEmpty()) {
-			return null;
+		if (MainWindow.instance.asOfDate.compareTo(QDate.today()) < 0) {
+			stat = getFirstStatementAfter(MainWindow.instance.asOfDate);
+			if (stat == null) {
+				stat = new Statement(this.acctid);
+			}
+		} else {
+			List<GenericTxn> txns = getUnclearedTransactions();
+
+			if (txns.isEmpty()) {
+				return null;
+			}
+
+			stat = new Statement(this.acctid);
+			stat.date = QDate.today();
+			stat.addTransactions(txns);
 		}
 
-		Statement stat = new Statement(this.acctid);
-
-		stat.date = QDate.today();
-		stat.addTransactions(txns);
-
 		return stat;
+	}
+
+	public Statement getUnclearedStatement(Statement laststmt) {
+		List<GenericTxn> txns = new ArrayList<GenericTxn>();
+
+		if (laststmt != null) {
+			int laststmtidx = this.statements.indexOf(laststmt);
+
+			addTransactionsToAsOfDate(txns, laststmt.unclearedTransactions);
+			if (laststmtidx < this.statements.size() - 1) {
+				Statement nextstmt = this.statements.get(laststmtidx + 1);
+				addTransactionsToAsOfDate(txns, nextstmt.transactions);
+				addTransactionsToAsOfDate(txns, nextstmt.unclearedTransactions);
+			}
+		} else {
+			addTransactionsToAsOfDate(txns, this.transactions);
+		}
+
+		Statement stmt = new Statement(this.acctid);
+		Common.sortTransactionsByDate(txns);
+		stmt.addTransactions(txns);
+		stmt.date = MainWindow.instance.asOfDate;
+
+		return stmt;
+	}
+
+	private void addTransactionsToAsOfDate(List<GenericTxn> txns, List<GenericTxn> srctxns) {
+		for (GenericTxn txn : srctxns) {
+			if ((txn.getDate().compareTo(MainWindow.instance.asOfDate) <= 0) //
+					&& !txns.contains(txn)) {
+				txns.add(txn);
+			}
+		}
 	}
 
 	public QDate getFirstTransactionDate() {
@@ -383,7 +447,7 @@ public class Account {
 	 * Return a new collection of uncleared transactions that don't belong to any
 	 * statement
 	 */
-	public List<GenericTxn> getUnclearedTransactions() {
+	private List<GenericTxn> getUnclearedTransactions() {
 		List<GenericTxn> txns = new ArrayList<GenericTxn>();
 
 		for (int txidx = getFirstUnclearedTransactionIndex(); //

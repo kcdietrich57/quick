@@ -24,21 +24,16 @@ public class AccountTableModel extends AbstractTableModel {
 		reload();
 	}
 
-	private void reload() {
-		List<Account> accts = Account.getSortedAccounts();
-
+	public void reload() {
 		this.accounts.clear();
 
-		for (Account acct : accts) {
-			if (acct == null) {
-				continue;
-			}
-
-			if ((this.showOpenAccounts && acct.isOpenOn(MainWindow.instance.asOfDate)) //
+		for (Account acct : Account.getSortedAccounts()) {
+			if ((this.showOpenAccounts //
+					&& acct.isOpenOn(MainWindow.instance.asOfDate)) //
 					|| (!this.showOpenAccounts //
 							&& !acct.isOpenOn(MainWindow.instance.asOfDate) //
 							&& (acct.getOpenDate().compareTo(MainWindow.instance.asOfDate) <= 0))) {
-				accounts.add(acct);
+				this.accounts.add(acct);
 			}
 		}
 
