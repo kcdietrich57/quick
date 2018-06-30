@@ -127,6 +127,43 @@ public class QDate implements Comparable<QDate> {
 		return new QDate(d);
 	}
 
+	public QDate addMonths(int months) {
+		int year = getYear();
+		int month = getMonth();
+
+		while (months >= 12) {
+			++year;
+			months -= 12;
+		}
+		while (-months >= 12) {
+			--year;
+			months += 12;
+		}
+
+		if (months > 0) {
+			if (month + months <= 12) {
+				month += months;
+			} else {
+				++year;
+				month = (month + months) - 12;
+			}
+
+			months = 0;
+		}
+		if (months < 0) {
+			if (month > -months) {
+				month -= months;
+			} else {
+				--year;
+				month = (month + months) + 12;
+			}
+
+			months = 0;
+		}
+
+		return QDate.getDateForEndOfMonth(year, month);
+	}
+
 	public boolean equals(Object obj) {
 		return (obj instanceof QDate) ? this.datevalue == ((QDate) obj).datevalue : false;
 	}

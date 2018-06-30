@@ -12,6 +12,9 @@ public abstract class GenericTxn //
 	private static List<GenericTxn> allTransactionsByID = new ArrayList<GenericTxn>();
 	private static List<GenericTxn> allTransactionsByID_readonly = null;
 
+	private static GenericTxn firstTransaction = null;
+	private static GenericTxn lastTransaction = null;
+
 	public static List<GenericTxn> getAllTransactions() {
 		if (allTransactionsByID_readonly == null) {
 			allTransactionsByID_readonly = Collections.unmodifiableList(allTransactionsByID);
@@ -27,6 +30,14 @@ public abstract class GenericTxn //
 
 		allTransactionsByID.set(txn.txid, txn);
 		allTransactionsByID_readonly = null;
+	}
+
+	public static QDate getFirstTransactionDate() {
+		return (firstTransaction != null) ? firstTransaction.getDate() : QDate.today();
+	}
+
+	public static QDate getLastTransactionDate() {
+		return (lastTransaction != null) ? lastTransaction.getDate() : QDate.today();
 	}
 
 	private QDate date;
@@ -87,6 +98,16 @@ public abstract class GenericTxn //
 
 	public void setDate(QDate date) {
 		this.date = date;
+
+		if ((firstTransaction == null) //
+				|| (firstTransaction.getDate().compareTo(date) > 0)) {
+			firstTransaction = this;
+		}
+
+		if ((lastTransaction == null) //
+				|| (lastTransaction.getDate().compareTo(date) < 0)) {
+			lastTransaction = this;
+		}
 	}
 
 	public QDate getDate() {

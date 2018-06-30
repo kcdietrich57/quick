@@ -3,7 +3,9 @@ package qif.ui;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
@@ -13,6 +15,7 @@ import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.internal.chartpart.Chart;
 
+import qif.data.GenericTxn;
 import qif.data.QDate;
 
 @SuppressWarnings("serial")
@@ -44,6 +47,8 @@ public class MainWindow extends JPanel {
 	public ReconcileStatusPanel reconcileStatusPanel;
 	// content->account->reconcile->reconcileTransactions
 	public ReconcileTransactionsPanel reconcileTransactionsPanel;
+	// AsOfDatePanel
+	public TimeSliderPanel asOfDatePanel;
 
 	public QDate asOfDate = QDate.today();
 
@@ -57,19 +62,37 @@ public class MainWindow extends JPanel {
 
 		instance = this;
 
+		createTimeSlider();
 		createContentPanel();
 
-		// add(new JButton("Toolbar Goes Here"), BorderLayout.NORTH);
 		add(contentPanel, BorderLayout.CENTER);
+		add(this.asOfDatePanel, BorderLayout.SOUTH);
 		// add(new JButton("Status Bar Goes Here"), BorderLayout.SOUTH);
 	}
 
-	public void setAsOfDate(QDate date) {
-		this.asOfDate = date;
+	private void createTimeSlider() {
+		this.asOfDatePanel = new TimeSliderPanel();
+	}
 
-		// TODO use AsOfDateListeners to update UI
-		this.accountNavigationPanel.refreshAccountList();
-		this.summaryPanel.updateValues();
+	public void setSliderPosition(QDate date) {
+		this.asOfDatePanel.setSliderPosition(date);
+	}
+
+	public void setAsOfDate(QDate date) {
+		if (date.compareTo(GenericTxn.getFirstTransactionDate()) < 0) {
+			date = GenericTxn.getFirstTransactionDate();
+		}
+		if (date.compareTo(QDate.today()) > 0) {
+			date = QDate.today();
+		}
+
+		if (!date.equals(asOfDate)) {
+			this.asOfDate = date;
+
+			// TODO use AsOfDateListeners to update UI
+			this.accountNavigationPanel.refreshAccountList();
+			this.summaryPanel.updateValues();
+		}
 	}
 
 	private void createContentPanel() {
