@@ -50,6 +50,10 @@ public class SimpleTxn {
 		return Account.getAccountByID(this.acctid);
 	}
 
+	public void setDate(QDate date) {
+		// simpletxn inherits its date from containing txn
+	}
+
 	public boolean removesShares() {
 		switch (getAction()) {
 		case BUY:
@@ -120,7 +124,7 @@ public class SimpleTxn {
 	}
 
 	public String toString() {
-		return toStringShort(false);
+		return toStringLong();
 	}
 
 	// This is a compact, single-line version of the transaction, such as would

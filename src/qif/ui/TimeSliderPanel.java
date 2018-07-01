@@ -35,7 +35,6 @@ public class TimeSliderPanel extends JPanel {
 		int years = end.getYear() - start.getYear() + 1;
 		int months = years * 12;
 
-		System.out.println("slider bounds: [0-" + (months + 1) + "]");
 		BoundedRangeModel timeModel = new DefaultBoundedRangeModel(months, 0, 0, months + 1);
 
 		this.asOfDateSlider = new JSlider(timeModel);
@@ -105,11 +104,9 @@ public class TimeSliderPanel extends JPanel {
 	}
 
 	private QDate convertMonthsToDate(int months) {
-		System.out.println("Slider value changed to " + months + " (months)");
 		int startyear = GenericTxn.getFirstTransactionDate().getYear();
 		QDate date = new QDate(startyear, 1, 1);
 		QDate sdate = date.addMonths(months);
-		System.out.println("Corresponding date is " + sdate.toString());
 
 		return sdate;
 	}

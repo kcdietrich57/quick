@@ -51,7 +51,7 @@ public class Common {
 			sb.deleteCharAt(comma);
 		}
 
-		return new BigDecimal(sb.toString());
+		return new BigDecimal(sb.toString().trim());
 	}
 
 	public static BigDecimal parseDecimal(String s) {
