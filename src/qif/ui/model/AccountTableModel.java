@@ -40,6 +40,10 @@ public class AccountTableModel extends AbstractTableModel {
 		fireTableDataChanged();
 	}
 
+	public int getAccountIndex(Account acct) {
+		return this.accounts.indexOf(acct);
+	}
+
 	public Account getAccountAt(int row) {
 		if ((row < 0) || (row >= this.accounts.size())) {
 			return null;

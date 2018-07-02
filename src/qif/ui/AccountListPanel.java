@@ -80,13 +80,15 @@ public class AccountListPanel extends JScrollPane {
 	}
 
 	public void refreshAccountList() {
-		int selrow = this.accountTable.getSelectedRow();
+		// int selrow = this.accountTable.getSelectedRow();
+		Account acct = this.getSelectedAccount();
 		this.accountTableModel.reload();
 
-		if (selrow >= 0) {
-			// TODO we should select the same account, even if it moves - deselect if no
-			// longer present
-			this.accountTable.addRowSelectionInterval(selrow, selrow);
+		if (acct != null) {
+			int idx = this.accountTableModel.getAccountIndex(acct);
+			if (idx >= 0) {
+				this.accountTable.addRowSelectionInterval(idx, idx);
+			}
 		}
 	}
 
