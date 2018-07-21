@@ -29,6 +29,8 @@ public class QuoteDownloader {
 	private static final String NAME_DAILY = "Time Series (Daily)";
 	private static final String API_KEY = "O7JYIMJXJOWQB9BY";
 
+	static List<String> securitiesNotDownlaoded = new ArrayList<String>();
+
 	public static List<QPrice> loadPriceHistory(String symbol) {
 		JSONObject quotes = loadQuoteHistory(symbol, FUNC_DAILY, true);
 
@@ -47,7 +49,12 @@ public class QuoteDownloader {
 		try {
 			quoteObj = quotes.getJSONObject(NAME_DAILY);
 		} catch (Exception e) {
-			Common.reportWarning("Couldn't get quotes for " + symbol);
+			if (QifDom.verbose) {
+				Common.reportWarning("Couldn't get quotes for " + symbol);
+			}
+
+			securitiesNotDownlaoded.add(symbol);
+
 			return null;
 		}
 

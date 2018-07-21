@@ -80,9 +80,10 @@ public class ReconcileTransactionTableModel //
 			this.stmt.unclearAllTransactions();
 			this.stmt.clearTransactions(this.clearedTransactions);
 
-			if ((this.stmt.getClearedCashBalance() != null) //
-					&& this.stmt.getClearedCashBalance().equals(//
-							this.stmt.cashBalance)) {
+			BigDecimal clearedbal = this.stmt.getClearedCashBalance();
+
+			if ((clearedbal != null) //
+					&& Common.isEffectivelyEqual(clearedbal, this.stmt.cashBalance)) {
 				this.stmt.isBalanced = true;
 
 				if (!this.acct.statements.contains(this.stmt)) {

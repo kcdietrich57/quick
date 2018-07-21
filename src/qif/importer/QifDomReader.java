@@ -506,7 +506,7 @@ class SecurityProcessor {
 						}
 					}
 
-					if (warningCount > 0) {
+					if (QifDom.verbose && (warningCount > 0)) {
 						Common.reportWarning( //
 								"Security price mismatches for " + symbol + ":" //
 										+ Integer.toString(warningCount));

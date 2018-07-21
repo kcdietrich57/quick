@@ -10,6 +10,7 @@ import qif.data.Account;
 import qif.data.Common;
 import qif.data.InvestmentTxn;
 import qif.data.NonInvestmentTxn;
+import qif.data.QifDom;
 import qif.data.SimpleTxn;
 import qif.importer.CSVImport;
 import qif.importer.QifDomReader;
@@ -17,6 +18,18 @@ import qif.ui.MainFrame;
 
 public class MoneyMgrApp {
 	public static Scanner scn;
+
+	private static void infoMessage(String msg) {
+		if (QifDom.verbose) {
+			infoMessageNoln(msg + "\n");
+		}
+	}
+
+	private static void infoMessageNoln(String msg) {
+		if (QifDom.verbose) {
+			System.out.print(msg);
+		}
+	}
 
 	public static void importCSV() {
 		String[] fieldnames = null;
@@ -62,18 +75,18 @@ public class MoneyMgrApp {
 				continue;
 			}
 
-			System.out.println(entry.getKey());
+			infoMessage(entry.getKey());
 
 			for (String[] tuple : entry.getValue()) {
-				System.out.print("  [");
+				infoMessage("  [");
 				for (String field : tuple) {
-					System.out.print("'" + field + "', ");
+					infoMessageNoln("'" + field + "', ");
 				}
-				System.out.println("]");
+				infoMessage("]");
 
 				SimpleTxn txn = createTransaction(fieldnames, tuple);
 				if (txn != null) {
-					System.out.println(txn.toString());
+					infoMessage(txn.toString());
 				}
 			}
 		}

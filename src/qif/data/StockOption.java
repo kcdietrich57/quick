@@ -108,7 +108,9 @@ public class StockOption {
 			}
 		}
 
-		Common.reportWarning("Can't find match for option grant transaction " + txn.security.getSymbol());
+		if (QifDom.verbose) {
+			Common.reportWarning("Can't find match for option grant transaction " + txn.security.getSymbol());
+		}
 	}
 
 	public static void processVest(InvestmentTxn txn) {
@@ -122,8 +124,10 @@ public class StockOption {
 			}
 		}
 
-		Common.reportWarning("Can't find match for option vest transaction " //
-				+ txn.toString());
+		if (QifDom.verbose) {
+			Common.reportWarning("Can't find match for option vest transaction " //
+					+ txn.toString());
+		}
 	}
 
 	public static void processSplit(InvestmentTxn txn) {
@@ -140,7 +144,7 @@ public class StockOption {
 			}
 		}
 
-		if (!found) {
+		if (!found && QifDom.verbose) {
 			Common.reportWarning("Can't find match for option split transaction " //
 					+ txn.toString());
 		}
@@ -159,8 +163,10 @@ public class StockOption {
 			}
 		}
 
-		Common.reportWarning("Can't find match for option exercise transaction " //
-				+ txn.toString());
+		if (QifDom.verbose) {
+			Common.reportWarning("Can't find match for option exercise transaction " //
+					+ txn.toString());
+		}
 	}
 
 	public static void processExpire(InvestmentTxn txn) {
@@ -176,8 +182,10 @@ public class StockOption {
 			}
 		}
 
-		Common.reportWarning("Can't find match for option expire transaction " //
-				+ txn.toString());
+		if (QifDom.verbose) {
+			Common.reportWarning("Can't find match for option expire transaction " //
+					+ txn.toString());
+		}
 	}
 
 	public static StockOption getOpenOption(String name) {

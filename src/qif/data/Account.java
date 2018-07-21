@@ -294,7 +294,7 @@ public class Account {
 		}
 
 		Common.reportError("Can't find statement: " //
-				+ this.name //
+				+ this.name + " " //
 				+ date.toString() + " " //
 				+ Common.formatAmount(balance));
 		return null;
