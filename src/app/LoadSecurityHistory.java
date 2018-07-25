@@ -33,7 +33,7 @@ public class LoadSecurityHistory {
 			try {
 				final Security sec = new Security(f.getName());
 				securities.add(sec);
-				//  QifDomReader.loadQuoteFile(sec, f);
+				// QifDomReader.loadQuoteFile(sec, f);
 			} catch (final Exception e) {
 				e.printStackTrace();
 			}

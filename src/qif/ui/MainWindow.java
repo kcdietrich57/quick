@@ -2,10 +2,13 @@ package qif.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Properties;
 
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
@@ -17,6 +20,7 @@ import org.knowm.xchart.internal.chartpart.Chart;
 
 import qif.data.GenericTxn;
 import qif.data.QDate;
+import qif.data.QifDom;
 
 @SuppressWarnings("serial")
 public class MainWindow extends JPanel {
@@ -62,12 +66,46 @@ public class MainWindow extends JPanel {
 
 		instance = this;
 
+		loadProperties();
+
 		createTimeSlider();
 		createContentPanel();
 
 		add(contentPanel, BorderLayout.CENTER);
 		add(this.asOfDatePanel, BorderLayout.SOUTH);
 		// add(new JButton("Status Bar Goes Here"), BorderLayout.SOUTH);
+	}
+
+	public void loadProperties() {
+		File propfile = new File(QifDom.qifDir, "properties");
+
+		Properties p = new Properties();
+
+		if (propfile.isFile() && propfile.canRead()) {
+			try {
+				p.load(new FileInputStream(propfile));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		QifDom.qifProperties = p;
+	}
+
+	public void saveProperties() {
+		if (QifDom.qifProperties == null) {
+			QifDom.qifProperties = new Properties();
+		}
+
+		this.statementTransactionPanel.updateQifProperties();
+
+		File cwfile = new File(QifDom.qifDir, "properties");
+
+		try {
+			QifDom.qifProperties.store(new FileOutputStream(cwfile), "QIF properties");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void createTimeSlider() {

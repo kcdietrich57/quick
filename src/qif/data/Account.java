@@ -634,7 +634,7 @@ public class Account {
 		BigDecimal portValue = BigDecimal.ZERO;
 
 		for (final SecurityPosition pos : this.securities.positions) {
-			BigDecimal posamt = pos.getSecurityPositionValueForDate(d);
+			BigDecimal posamt = pos.getValueForDate(d);
 
 			portValue = portValue.add(posamt);
 		}

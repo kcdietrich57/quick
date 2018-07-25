@@ -1,5 +1,8 @@
 package qif.ui;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
@@ -18,6 +21,14 @@ public class MainFrame extends JFrame {
 		mainWindow.setOpaque(true);
 		frame.setContentPane(mainWindow);
 		frame.mainWindow = mainWindow;
+
+		frame.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent winEvt) {
+				mainWindow.saveProperties();
+
+				System.exit(0);
+			}
+		});
 
 		frame.pack();
 		frame.setVisible(true);

@@ -77,7 +77,7 @@ public class TimeSliderPanel extends JPanel {
 
 		add(datePanel, BorderLayout.WEST);
 		add(this.asOfDateSlider, BorderLayout.CENTER);
-		
+
 		updateValues();
 	}
 

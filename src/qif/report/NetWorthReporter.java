@@ -178,7 +178,7 @@ public class NetWorthReporter {
 					asummary.cashBalance = amt.subtract(portValue);
 
 					for (SecurityPosition pos : a.securities.positions) {
-						BigDecimal posval = pos.getSecurityPositionValueForDate(d);
+						BigDecimal posval = pos.getValueForDate(d);
 
 						if (!Common.isEffectivelyZero(posval)) {
 							StatusForDateModel.SecuritySummary ssummary = new StatusForDateModel.SecuritySummary();

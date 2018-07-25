@@ -1,6 +1,7 @@
 package qif.data;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,7 +67,7 @@ public class Lot {
 	}
 
 	public BigDecimal getPrice() {
-		return this.costBasis.divide(this.shares);
+		return this.costBasis.divide(this.shares, 3, RoundingMode.HALF_UP);
 	}
 
 	void checkChildLots(Lot lot, BigDecimal additionalShares) {

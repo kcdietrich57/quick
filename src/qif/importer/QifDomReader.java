@@ -1485,10 +1485,10 @@ class Cleaner {
 }
 
 class PortfolioProcessor {
-	//private QifDomReader qrdr;
+	// private QifDomReader qrdr;
 
 	public PortfolioProcessor(QifDomReader qrdr) {
-		//this.qrdr = qrdr;
+		// this.qrdr = qrdr;
 	}
 
 	public void fixPortfolios() {

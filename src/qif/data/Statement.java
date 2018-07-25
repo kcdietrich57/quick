@@ -201,8 +201,7 @@ public class Statement {
 	/**
 	 * Check cleared transactions against expected cash balance
 	 *
-	 * @param txns
-	 *            The transactions to check
+	 * @param txns The transactions to check
 	 * @return True if balance matches
 	 */
 	public boolean cashMatches(List<GenericTxn> txns) {
@@ -221,8 +220,7 @@ public class Statement {
 	/**
 	 * Check list of transactions against expected cash balance
 	 *
-	 * @param txns
-	 *            The transactions to check
+	 * @param txns The transactions to check
 	 * @return Difference from expected balance
 	 */
 	private BigDecimal getCashDifference(List<GenericTxn> txns) {
@@ -240,8 +238,7 @@ public class Statement {
 	 * Calculate the resulting cash position from the previous balance and a list of
 	 * transactions
 	 *
-	 * @param txns
-	 *            The transactions
+	 * @param txns The transactions
 	 * @return The new cash balance
 	 */
 	public BigDecimal getCashDelta(List<GenericTxn> txns) {
@@ -292,8 +289,7 @@ public class Statement {
 	 * Build a Portfolio position from the previous holdings and a list of
 	 * transactions
 	 *
-	 * @param txns
-	 *            The transactions
+	 * @param txns The transactions
 	 * @return new portfolio holdings
 	 */
 	public SecurityPortfolio getPortfolioDelta(List<GenericTxn> txns) {

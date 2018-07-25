@@ -76,7 +76,7 @@ public class Dashboard extends JPanel {
 			this.displayDate = date;
 			StatusForDateModel model = NetWorthReporter.buildReportStatusForDate(this.displayDate);
 			textarea.setText(NetWorthReporter.generateReportStatusForDate(model));
-			
+
 			MainWindow.instance.setAsOfDate(date);
 		}
 	}

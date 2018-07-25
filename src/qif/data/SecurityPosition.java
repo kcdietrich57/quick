@@ -77,7 +77,18 @@ public class SecurityPosition {
 		return s;
 	}
 
-	public BigDecimal getSecurityPositionValueForDate(QDate d) {
+	public BigDecimal getValueForTransaction(InvestmentTxn tx) {
+		int idx = this.transactions.indexOf(tx);
+
+		if (idx >= 0) {
+			return this.shrBalance.get(idx).multiply( //
+					this.security.getPriceForDate(tx.getDate()).getPrice());
+		}
+
+		return BigDecimal.ZERO;
+	}
+
+	public BigDecimal getValueForDate(QDate d) {
 		if (this.transactions.isEmpty()) {
 			return this.endingShares.multiply(this.security.getPriceForDate(d).getPrice());
 		}

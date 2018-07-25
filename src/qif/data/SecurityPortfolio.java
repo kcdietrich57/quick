@@ -46,8 +46,7 @@ public class SecurityPortfolio {
 	/**
 	 * Build state from transactions
 	 *
-	 * @param stat
-	 *            Statement containing my transactions
+	 * @param stat Statement containing my transactions
 	 */
 	public void captureTransactions(Statement stat) {
 		SecurityPortfolio dport = stat.getPortfolioDelta();
@@ -66,8 +65,7 @@ public class SecurityPortfolio {
 	/**
 	 * Find a position for a security, if it exists
 	 *
-	 * @param sec
-	 *            The security
+	 * @param sec The security
 	 * @return The position, null if nonexistent
 	 */
 	public SecurityPosition findPosition(Security sec) {
@@ -101,8 +99,7 @@ public class SecurityPortfolio {
 	/**
 	 * Find a position for a security. Create it if it does not exist.
 	 *
-	 * @param sec
-	 *            The security
+	 * @param sec The security
 	 * @return The position
 	 */
 	public SecurityPosition getPosition(Security sec) {
@@ -136,7 +133,7 @@ public class SecurityPortfolio {
 		BigDecimal portValue = BigDecimal.ZERO;
 
 		for (final SecurityPosition pos : this.positions) {
-			portValue = portValue.add(pos.getSecurityPositionValueForDate(d));
+			portValue = portValue.add(pos.getValueForDate(d));
 		}
 
 		return portValue;

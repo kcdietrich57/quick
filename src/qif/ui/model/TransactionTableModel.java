@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumnModel;
 
 import qif.data.Account;
 import qif.data.Category;
@@ -11,6 +12,7 @@ import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
 import qif.data.QDate;
+import qif.data.QifDom;
 import qif.data.Statement;
 import qif.ui.AccountSelectionListener;
 import qif.ui.MainWindow;
@@ -30,8 +32,47 @@ public class TransactionTableModel //
 			"Amount", //
 			"Category", //
 			"Memo", //
-			"Balance"//
+			"Shares", //
+			"Cash Balance" //
 	};
+
+	private static int twidths[] = { 60, 50, 150, 80, 80, 90, 90, 90 };
+
+	public static void setColumnWidth(int idx, int value) {
+		twidths[idx] = value;
+	}
+
+	public void loadQifProperties(TableColumnModel tranColumnModel) {
+		loadColumnWidths();
+	}
+
+	public void updateQifProperties(TableColumnModel tranColumnModel) {
+		String widths = "";
+
+		for (int idx = 0; idx < tranColumnModel.getColumnCount(); ++idx) {
+			if (!widths.isEmpty()) {
+				widths += ",";
+			}
+
+			// int cw = tranColumnModel.getColumn(idx).getWidth();
+			int cw = twidths[idx];
+			widths += Integer.toString(cw);
+		}
+
+		QifDom.qifProperties.setProperty("transactionTable.columnWidths", widths);
+	}
+
+	public void loadColumnWidths() {
+		String widthStr = QifDom.qifProperties.getProperty("transactionTable.columnWidths");
+
+		if (widthStr != null) {
+			String[] widths = widthStr.split(",");
+
+			for (int ii = 0; ii < twidths.length && ii < widths.length; ++ii) {
+				twidths[ii] = Integer.parseInt(widths[ii]);
+			}
+		}
+	}
 
 	private Object curObject = null;
 
@@ -39,6 +80,12 @@ public class TransactionTableModel //
 	private Statement curStatement = null;
 
 	private final List<GenericTxn> transactions = new ArrayList<GenericTxn>();
+
+	public void setColumnWidths(TableColumnModel tranColumnModel) {
+		for (int i = 0; i < twidths.length; i++) {
+			tranColumnModel.getColumn(i).setPreferredWidth(twidths[i]);
+		}
+	}
 
 	public void accountSelected(Account account, boolean update) {
 		setObject(account, update);
@@ -175,6 +222,18 @@ public class TransactionTableModel //
 			return Common.stringValue(tx.memo);
 
 		case 6:
+			if (tx instanceof InvestmentTxn) {
+				InvestmentTxn itx = (InvestmentTxn) tx;
+
+				if (itx.security != null) {
+					return Common.formatAmount3(itx.getShares()) + "@" //
+							+ Common.formatAmount3(itx.getShareCost());
+				}
+			}
+
+			return ""; // Common.stringValue(tx.runningTotal);
+
+		case 7:
 			return Common.stringValue(tx.runningTotal);
 		}
 

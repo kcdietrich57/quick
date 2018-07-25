@@ -1,6 +1,7 @@
 package qif.data;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -75,7 +76,13 @@ public class InvestmentTxn extends GenericTxn {
 	public BigDecimal getShareCost() {
 		BigDecimal shares = getShares();
 
-		return (shares == BigDecimal.ZERO) ? shares : shares.multiply(this.price);
+		try {
+			return (shares == BigDecimal.ZERO) //
+					? shares //
+					: this.getAmount().divide(shares, 3, RoundingMode.HALF_UP);
+		} catch (Exception e) {
+			return BigDecimal.ZERO;
+		}
 	}
 
 	public BigDecimal getSplitRatio() {

@@ -10,6 +10,8 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -17,7 +19,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableColumn;
 
 import qif.data.Account;
 import qif.data.GenericTxn;
@@ -63,38 +65,42 @@ public class TransactionPanel //
 		transactionTable.setDefaultRenderer(Object.class, //
 				new TransactionTableCellRenderer(highlighting));
 
-		TableColumnModel tranColumnModel = transactionTable.getColumnModel();
+		this.transactionTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		this.transactionTableModel.loadColumnWidths();
+		transactionTableModel.setColumnWidths(transactionTable.getColumnModel());
 
-		int twidths[] = { 60, 50, 100, 80, 80, 90, 90 };
+		PropertyChangeListener colWidthListener = new PropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent e) {
+				if (e.getPropertyName().equals("preferredWidth")) {
+					TableColumn tableColumn = (TableColumn) e.getSource();
+					int index = transactionTable.getColumnModel().getColumnIndex(tableColumn.getHeaderValue());
 
-		for (int i = 0; i < twidths.length; i++) {
-			switch (i) {
-			case 0:
-			case 1:
-			case 3:
-			case 6:
-				tranColumnModel.getColumn(i).setMinWidth(twidths[i]);
-				tranColumnModel.getColumn(i).setMaxWidth(twidths[i]);
-				break;
-
-			case 2:
-			case 4:
-			case 5:
-				tranColumnModel.getColumn(i).setMinWidth(twidths[i]);
-				break;
-
-			default:
-				tranColumnModel.getColumn(i).setPreferredWidth(twidths[i]);
-				break;
+					TransactionTableModel.setColumnWidth(index, //
+							((Integer) e.getNewValue()).intValue());
+				}
 			}
+		};
+
+		for (int colnum = 0; colnum < transactionTable.getColumnCount(); ++colnum) {
+			TableColumn col = transactionTable.getColumnModel().getColumn(colnum);
+			col.addPropertyChangeListener(colWidthListener);
 		}
 
 		// Scroll to display the last (most recent) transaction
 		transactionTable.addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent e) {
+				super.componentResized(e);
+
 				Rectangle lastRow = transactionTable.getCellRect( //
 						transactionTable.getRowCount() - 1, 0, true);
 				transactionTable.scrollRectToVisible(lastRow);
+			}
+
+			// TODO componentShown() does not seem to fire
+			public void componentShown(ComponentEvent e) {
+				super.componentShown(e);
+
+				transactionTableModel.setColumnWidths(transactionTable.getColumnModel());
 			}
 		});
 	}
@@ -105,6 +111,14 @@ public class TransactionPanel //
 
 	public void statementSelected(Statement statement) {
 		this.transactionTableModel.statementSelected(statement);
+	}
+
+	public void loadQifProperties() {
+		this.transactionTableModel.loadQifProperties(transactionTable.getColumnModel());
+	}
+
+	public void updateQifProperties() {
+		this.transactionTableModel.updateQifProperties(transactionTable.getColumnModel());
 	}
 }
 
@@ -126,7 +140,7 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 	private boolean highlighting;
 
 	public TransactionTableCellRenderer(boolean highlighting) {
-		this.highlighting = true; //TODO highlighting;
+		this.highlighting = true; // TODO highlighting;
 	}
 
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,

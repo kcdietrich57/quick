@@ -51,8 +51,7 @@ public class QPrice implements Comparable<QPrice> {
 	/**
 	 * Read/parse QIF security price (symbol/price/date)
 	 * 
-	 * @param qfr
-	 *            File reader
+	 * @param qfr File reader
 	 * @return Price object
 	 */
 	public static QPrice load(QFileReader qfr) {
