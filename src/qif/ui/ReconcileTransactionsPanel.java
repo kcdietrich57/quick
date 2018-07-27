@@ -75,6 +75,7 @@ class ReconcileTransactionsPanel //
 		transactionTable.setDefaultRenderer(Object.class, //
 				new ReconcileTransactionTableCellRenderer());
 
+		// TODO repair this?
 		TableColumnModel tranColumnModel = transactionTable.getColumnModel();
 
 		int twidths[] = { 60, 50, 100, 80, 80, 90, 90 };

@@ -13,16 +13,20 @@ import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
 import qif.data.QDate;
+import qif.data.QifDom;
 import qif.data.SecurityPortfolio;
 import qif.data.Statement;
 import qif.persistence.Reconciler;
 import qif.ui.AccountSelectionListener;
 import qif.ui.StatementSelectionListener;
+import qif.ui.model.TableProperties.ColumnProperties;
 
 @SuppressWarnings("serial")
 public class ReconcileTransactionTableModel //
 		extends AbstractTableModel //
 		implements AccountSelectionListener, StatementSelectionListener {
+
+	private static TableProperties properties = null;
 
 	private static final String[] columnNames = { //
 			"Date", //
@@ -47,6 +51,15 @@ public class ReconcileTransactionTableModel //
 		this.stmt = null;
 		this.allTransactions = new ArrayList<GenericTxn>();
 		this.clearedTransactions = new ArrayList<GenericTxn>();
+
+		if (properties == null) {
+			properties = new TableProperties(new String[] { //
+					"Date", "Type", "Payee", "Amount", //
+					"Category", "Memo", "Shares", "Cash Balance" //
+			});
+
+			properties.load("transactionTable");
+		}
 	}
 
 	public SecurityPortfolio getPortfolioDelta() {

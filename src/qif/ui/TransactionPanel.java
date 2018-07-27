@@ -66,7 +66,6 @@ public class TransactionPanel //
 				new TransactionTableCellRenderer(highlighting));
 
 		this.transactionTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		this.transactionTableModel.loadColumnProperties();
 		transactionTableModel.setColumnWidths(transactionTable.getColumnModel());
 
 		PropertyChangeListener colWidthListener = new PropertyChangeListener() {

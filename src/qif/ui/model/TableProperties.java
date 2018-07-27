@@ -3,6 +3,8 @@ package qif.ui.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import qif.data.QifDom;
+
 public class TableProperties {
 	public class ColumnProperties {
 		public String name;
@@ -21,6 +23,40 @@ public class TableProperties {
 	}
 
 	private List<ColumnProperties> columns = new ArrayList<ColumnProperties>();
+
+	public TableProperties(String[] columnNames) {
+		for (String cname : columnNames) {
+			addColumn(cname, 100);
+		}
+	}
+
+	public void load(String keyroot) {
+		for (ColumnProperties cprop : columns) {
+			String key = String.format("%s.%s", keyroot, cprop.name);
+
+			String propstr = QifDom.qifProperties.getProperty(key);
+
+			if (propstr != null) {
+				String[] props = propstr.split(",");
+
+				cprop.position = Integer.parseInt(props[1]);
+				cprop.width = Integer.parseInt(props[2]);
+				cprop.visible = props[3].charAt(0) == 'y';
+			}
+		}
+	}
+
+	public void save(String keyroot) {
+		for (ColumnProperties cprop : columns) {
+			String key = String.format("%s.%s", keyroot, cprop.name);
+
+			String propstr = String.format("%d,%d,%d,%s", //
+					cprop.id, cprop.position, cprop.width, //
+					((cprop.visible) ? "y" : "n"));
+
+			QifDom.qifProperties.setProperty(key, propstr);
+		}
+	}
 
 	public int getNumColumns() {
 		return this.columns.size();

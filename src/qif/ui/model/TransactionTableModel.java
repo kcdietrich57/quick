@@ -30,21 +30,17 @@ public class TransactionTableModel //
 
 	public TransactionTableModel() {
 		if (properties == null) {
-			properties = new TableProperties();
+			properties = new TableProperties(new String[] { //
+					"Date", "Type", "Payee", "Amount", //
+					"Category", "Memo", "Shares", "Cash Balance" //
+			});
 
-			properties.addColumn("Date", 100);
-			properties.addColumn("Type", 100);
-			properties.addColumn("Payee", 100);
-			properties.addColumn("Amount", 100);
-			properties.addColumn("Category", 100);
-			properties.addColumn("Memo", 100);
-			properties.addColumn("Shares", 100);
-			properties.addColumn("Cash Balance", 100);
+			properties.load("transactionTable");
 		}
 	}
 
 	public void setColumnWidth(int idx, int value) {
-		TableProperties.ColumnProperties cprop = properties.getColumnProperties(idx);
+		ColumnProperties cprop = properties.getColumnProperties(idx);
 
 		if (cprop != null) {
 			cprop.width = value;
@@ -52,33 +48,7 @@ public class TransactionTableModel //
 	}
 
 	public void updateQifColumnProperties() {
-		for (int idx = 0; idx < properties.getNumColumns(); ++idx) {
-			ColumnProperties cprop = properties.getColumnProperties(idx);
-			String key = "transactionTable." + cprop.name;
-
-			String propstr = String.format("%d,%d,%d,%s", //
-					cprop.id, cprop.position, cprop.width, //
-					((cprop.visible) ? "y" : "n"));
-
-			QifDom.qifProperties.setProperty(key, propstr);
-		}
-	}
-
-	public void loadColumnProperties() {
-		for (int idx = 0; idx < properties.getNumColumns(); ++idx) {
-			ColumnProperties cprop = properties.getColumnProperties(idx);
-			String key = "transactionTable." + cprop.name;
-
-			String propstr = QifDom.qifProperties.getProperty(key);
-
-			if (propstr != null) {
-				String[] props = propstr.split(",");
-
-				cprop.position = Integer.parseInt(props[1]);
-				cprop.width = Integer.parseInt(props[2]);
-				cprop.visible = props[3].charAt(0) == 'y';
-			}
-		}
+		properties.save("transactionTable");
 	}
 
 	private Object curObject = null;
