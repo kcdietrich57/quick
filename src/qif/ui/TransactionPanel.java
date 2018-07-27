@@ -66,7 +66,7 @@ public class TransactionPanel //
 				new TransactionTableCellRenderer(highlighting));
 
 		this.transactionTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		this.transactionTableModel.loadColumnWidths();
+		this.transactionTableModel.loadColumnProperties();
 		transactionTableModel.setColumnWidths(transactionTable.getColumnModel());
 
 		PropertyChangeListener colWidthListener = new PropertyChangeListener() {
@@ -75,7 +75,7 @@ public class TransactionPanel //
 					TableColumn tableColumn = (TableColumn) e.getSource();
 					int index = transactionTable.getColumnModel().getColumnIndex(tableColumn.getHeaderValue());
 
-					TransactionTableModel.setColumnWidth(index, //
+					transactionTableModel.setColumnWidth(index, //
 							((Integer) e.getNewValue()).intValue());
 				}
 			}
@@ -113,12 +113,8 @@ public class TransactionPanel //
 		this.transactionTableModel.statementSelected(statement);
 	}
 
-	public void loadQifProperties() {
-		this.transactionTableModel.loadQifProperties(transactionTable.getColumnModel());
-	}
-
 	public void updateQifProperties() {
-		this.transactionTableModel.updateQifProperties(transactionTable.getColumnModel());
+		this.transactionTableModel.updateQifColumnProperties();
 	}
 }
 

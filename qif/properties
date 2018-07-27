@@ -1,3 +1,10 @@
 #QIF properties
-#Wed Jul 25 07:56:14 CDT 2018
-transactionTable.columnWidths=57,56,207,75,76,154,123,75
+#Fri Jul 27 07:25:01 CDT 2018
+transactionTable.Payee=2,2,226,y
+transactionTable.Memo=5,5,165,y
+transactionTable.Date=0,0,58,y
+transactionTable.Amount=3,3,70,y
+transactionTable.Shares=6,6,103,y
+transactionTable.Type=1,1,48,y
+transactionTable.Category=4,4,100,y
+transactionTable.Cash\ Balance=7,7,70,y
