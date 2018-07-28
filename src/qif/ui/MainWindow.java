@@ -97,7 +97,10 @@ public class MainWindow extends JPanel {
 			QifDom.qifProperties = new Properties();
 		}
 
-		this.statementTransactionPanel.updateQifProperties();
+		// TODO give statment transactions table its own model
+		// this.statementTransactionPanel.updateQifProperties();
+		this.reconcileTransactionsPanel.updateQifProperties();
+		this.registerTransactionPanel.updateQifProperties();
 
 		File cwfile = new File(QifDom.qifDir, "properties");
 

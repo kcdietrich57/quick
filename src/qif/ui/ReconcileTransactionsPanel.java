@@ -22,7 +22,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumnModel;
 
 import qif.data.GenericTxn;
 import qif.data.Statement;
@@ -37,7 +36,7 @@ class ReconcileTransactionsPanel //
 		extends JPanel //
 		implements StatementSelectionListener {
 
-	private JTable transactionTable;
+	private JTable reconcileTransactionTable;
 	// TODO make this private
 	public ReconcileTransactionTableModel reconcileTransactionTableModel;
 
@@ -65,67 +64,34 @@ class ReconcileTransactionsPanel //
 		add(titlePanel, BorderLayout.NORTH);
 
 		this.reconcileTransactionTableModel = new ReconcileTransactionTableModel();
-		this.transactionTable = new JTable(reconcileTransactionTableModel);
-		JScrollPane transactionScrollPane = new JScrollPane(this.transactionTable);
+		this.reconcileTransactionTable = new JTable(reconcileTransactionTableModel);
+		JScrollPane transactionScrollPane = new JScrollPane(this.reconcileTransactionTable);
 
 		add(transactionScrollPane, BorderLayout.CENTER);
 
-		transactionTable.setFillsViewportHeight(true);
+		reconcileTransactionTable.setFillsViewportHeight(true);
 
-		transactionTable.setDefaultRenderer(Object.class, //
+		this.reconcileTransactionTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		this.reconcileTransactionTableModel.setColumnWidths(reconcileTransactionTable.getColumnModel());
+		this.reconcileTransactionTableModel.addColumnWidthListeners(this.reconcileTransactionTable);
+
+		reconcileTransactionTable.setDefaultRenderer(Object.class, //
 				new ReconcileTransactionTableCellRenderer());
-
-		// TODO repair this?
-		TableColumnModel tranColumnModel = transactionTable.getColumnModel();
-
-		int twidths[] = { 60, 50, 100, 80, 80, 90, 90 };
-
-		for (int i = 0; i < twidths.length; i++) {
-			switch (i) {
-			case 0:
-			case 1:
-			case 3:
-			case 6:
-				tranColumnModel.getColumn(i).setMinWidth(twidths[i]);
-				tranColumnModel.getColumn(i).setMaxWidth(twidths[i]);
-				break;
-
-			case 2:
-			case 4:
-			case 5:
-				tranColumnModel.getColumn(i).setMinWidth(twidths[i]);
-				break;
-
-			default:
-				tranColumnModel.getColumn(i).setPreferredWidth(twidths[i]);
-				break;
-			}
-		}
 
 		this.txnSelListeners = new ArrayList<TransactionSelectionListener>();
 
 		// Scroll to display the last (most recent) transaction
-		transactionTable.addComponentListener(new ComponentAdapter() {
+		reconcileTransactionTable.addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent e) {
-				Rectangle lastRow = transactionTable.getCellRect( //
-						transactionTable.getRowCount() - 1, 0, true);
-				transactionTable.scrollRectToVisible(lastRow);
+				Rectangle lastRow = reconcileTransactionTable.getCellRect( //
+						reconcileTransactionTable.getRowCount() - 1, 0, true);
+				reconcileTransactionTable.scrollRectToVisible(lastRow);
 			}
 		});
 
-		// ListSelectionModel transactionSelectionModel =
-		// transactionTable.getSelectionModel();
-		// transactionSelectionModel.addListSelectionListener( //
-		// new ListSelectionListener() {
-		// public void valueChanged(ListSelectionEvent e) {
-		// selectTransactionHandler(e);
-		// }
-		// });
-
-		this.transactionTable.addMouseListener(new MouseAdapter() {
+		this.reconcileTransactionTable.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent evt) {
-				int row = transactionTable.rowAtPoint(evt.getPoint());
-				// int col = transactionTable.columnAtPoint(evt.getPoint());
+				int row = reconcileTransactionTable.rowAtPoint(evt.getPoint());
 
 				if (row >= 0) {
 					clickTransactionHandler(row);
@@ -174,6 +140,10 @@ class ReconcileTransactionsPanel //
 
 	public void statementSelected(Statement statement) {
 		this.reconcileTransactionTableModel.statementSelected(statement);
+	}
+
+	public void updateQifProperties() {
+		this.reconcileTransactionTableModel.updateQifColumnProperties();
 	}
 }
 

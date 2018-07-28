@@ -10,8 +10,6 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -19,7 +17,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumn;
 
 import qif.data.Account;
 import qif.data.GenericTxn;
@@ -67,23 +64,7 @@ public class TransactionPanel //
 
 		this.transactionTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		transactionTableModel.setColumnWidths(transactionTable.getColumnModel());
-
-		PropertyChangeListener colWidthListener = new PropertyChangeListener() {
-			public void propertyChange(PropertyChangeEvent e) {
-				if (e.getPropertyName().equals("preferredWidth")) {
-					TableColumn tableColumn = (TableColumn) e.getSource();
-					int index = transactionTable.getColumnModel().getColumnIndex(tableColumn.getHeaderValue());
-
-					transactionTableModel.setColumnWidth(index, //
-							((Integer) e.getNewValue()).intValue());
-				}
-			}
-		};
-
-		for (int colnum = 0; colnum < transactionTable.getColumnCount(); ++colnum) {
-			TableColumn col = transactionTable.getColumnModel().getColumn(colnum);
-			col.addPropertyChangeListener(colWidthListener);
-		}
+		transactionTableModel.addColumnWidthListeners(this.transactionTable);
 
 		// Scroll to display the last (most recent) transaction
 		transactionTable.addComponentListener(new ComponentAdapter() {

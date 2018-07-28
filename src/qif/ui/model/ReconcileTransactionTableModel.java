@@ -5,38 +5,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.swing.table.AbstractTableModel;
-
 import qif.data.Account;
 import qif.data.Category;
 import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
 import qif.data.QDate;
-import qif.data.QifDom;
 import qif.data.SecurityPortfolio;
 import qif.data.Statement;
 import qif.persistence.Reconciler;
 import qif.ui.AccountSelectionListener;
 import qif.ui.StatementSelectionListener;
-import qif.ui.model.TableProperties.ColumnProperties;
 
 @SuppressWarnings("serial")
 public class ReconcileTransactionTableModel //
-		extends AbstractTableModel //
+		extends GenericTableModel //
 		implements AccountSelectionListener, StatementSelectionListener {
-
-	private static TableProperties properties = null;
-
-	private static final String[] columnNames = { //
-			"Date", //
-			"Type", //
-			"Payee", //
-			"Amount", //
-			"Category", //
-			"Memo", //
-			"Balance"//
-	};
 
 	private Object curObject;
 	private Account acct;
@@ -46,20 +30,13 @@ public class ReconcileTransactionTableModel //
 	private final List<GenericTxn> clearedTransactions;
 
 	public ReconcileTransactionTableModel() {
+		super("reconcileTransactionTable");
+
 		this.curObject = null;
 		this.acct = null;
 		this.stmt = null;
 		this.allTransactions = new ArrayList<GenericTxn>();
 		this.clearedTransactions = new ArrayList<GenericTxn>();
-
-		if (properties == null) {
-			properties = new TableProperties(new String[] { //
-					"Date", "Type", "Payee", "Amount", //
-					"Category", "Memo", "Shares", "Cash Balance" //
-			});
-
-			properties.load("transactionTable");
-		}
 	}
 
 	public SecurityPortfolio getPortfolioDelta() {
@@ -213,16 +190,8 @@ public class ReconcileTransactionTableModel //
 		}
 	}
 
-	public int getColumnCount() {
-		return columnNames.length;
-	}
-
 	public int getRowCount() {
 		return allTransactions.size();
-	}
-
-	public String getColumnName(int col) {
-		return columnNames[col];
 	}
 
 	public GenericTxn getTransactionAt(int row) {
@@ -265,7 +234,7 @@ public class ReconcileTransactionTableModel //
 	public Object getValueAt(int row, int col) {
 		GenericTxn tx = getTransactionAt(row);
 
-		if (tx == null || col < 0 || col >= columnNames.length) {
+		if ((tx == null) || (col < 0) || (col >= getColumnCount())) {
 			return null;
 		}
 
@@ -314,6 +283,18 @@ public class ReconcileTransactionTableModel //
 			return Common.stringValue(tx.memo);
 
 		case 6:
+			if (tx instanceof InvestmentTxn) {
+				InvestmentTxn itx = (InvestmentTxn) tx;
+
+				if (itx.security != null) {
+					return Common.formatAmount3(itx.getShares()).trim() + "@" //
+							+ Common.formatAmount3(itx.getShareCost()).trim();
+				}
+			}
+
+			return "";
+
+		case 7:
 			return Common.stringValue(tx.runningTotal);
 		}
 

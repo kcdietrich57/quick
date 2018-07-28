@@ -3,53 +3,22 @@ package qif.ui.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumnModel;
-
 import qif.data.Account;
 import qif.data.Category;
 import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
 import qif.data.QDate;
-import qif.data.QifDom;
 import qif.data.Statement;
 import qif.ui.AccountSelectionListener;
 import qif.ui.MainWindow;
-import qif.ui.model.TableProperties.ColumnProperties;
 
 /**
  * Model for TransactionTable - supply transactions in an account or statement
  */
 @SuppressWarnings("serial")
 public class TransactionTableModel //
-		extends AbstractTableModel //
-		implements AccountSelectionListener {
-
-	private static TableProperties properties = null;
-
-	public TransactionTableModel() {
-		if (properties == null) {
-			properties = new TableProperties(new String[] { //
-					"Date", "Type", "Payee", "Amount", //
-					"Category", "Memo", "Shares", "Cash Balance" //
-			});
-
-			properties.load("transactionTable");
-		}
-	}
-
-	public void setColumnWidth(int idx, int value) {
-		ColumnProperties cprop = properties.getColumnProperties(idx);
-
-		if (cprop != null) {
-			cprop.width = value;
-		}
-	}
-
-	public void updateQifColumnProperties() {
-		properties.save("transactionTable");
-	}
+		extends GenericTableModel implements AccountSelectionListener {
 
 	private Object curObject = null;
 
@@ -58,11 +27,8 @@ public class TransactionTableModel //
 
 	private final List<GenericTxn> transactions = new ArrayList<GenericTxn>();
 
-	public void setColumnWidths(TableColumnModel tranColumnModel) {
-		for (int idx = 0; idx < properties.getNumVisibleColumns(); ++idx) {
-			ColumnProperties cprop = properties.getVisibleColumnProperties(idx);
-			tranColumnModel.getColumn(cprop.position).setPreferredWidth(cprop.width);
-		}
+	public TransactionTableModel() {
+		super("transactionTable");
 	}
 
 	public void accountSelected(Account account, boolean update) {
@@ -128,18 +94,8 @@ public class TransactionTableModel //
 		}
 	}
 
-	public int getColumnCount() {
-		return properties.getNumVisibleColumns();
-	}
-
 	public int getRowCount() {
 		return transactions.size();
-	}
-
-	public String getColumnName(int col) {
-		ColumnProperties cprop = properties.getVisibleColumnProperties(col);
-
-		return (cprop != null) ? cprop.name : "???";
 	}
 
 	public GenericTxn getTransactionAt(int row) {
@@ -153,7 +109,7 @@ public class TransactionTableModel //
 	public Object getValueAt(int row, int col) {
 		GenericTxn tx = getTransactionAt(row);
 
-		if (tx == null || col < 0 || col >= properties.getNumVisibleColumns()) {
+		if (tx == null || col < 0 || col >= getColumnCount()) {
 			return null;
 		}
 

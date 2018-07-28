@@ -1,10 +1,18 @@
 #QIF properties
-#Fri Jul 27 07:25:01 CDT 2018
-transactionTable.Payee=2,2,226,y
-transactionTable.Memo=5,5,165,y
+#Sat Jul 28 09:44:25 CDT 2018
+reconcileTransactionTable.Shares=6,6,100,y
+reconcileTransactionTable.Payee=2,2,258,y
+reconcileTransactionTable.Date=0,0,60,y
 transactionTable.Date=0,0,58,y
+transactionTable.Cash\ Balance=7,7,70,y
+reconcileTransactionTable.Cash\ Balance=7,7,100,y
+reconcileTransactionTable.Type=1,1,28,y
 transactionTable.Amount=3,3,70,y
 transactionTable.Shares=6,6,103,y
+reconcileTransactionTable.Memo=5,5,100,y
 transactionTable.Type=1,1,48,y
+reconcileTransactionTable.Category=4,4,100,y
+transactionTable.Payee=2,2,373,y
+transactionTable.Memo=5,5,165,y
 transactionTable.Category=4,4,100,y
-transactionTable.Cash\ Balance=7,7,70,y
+reconcileTransactionTable.Amount=3,3,100,y
