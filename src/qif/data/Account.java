@@ -656,6 +656,20 @@ public class Account {
 		return s;
 	}
 
+	public List<SimpleTxn> findMatchingTransactions(SimpleTxn tx) {
+		List<SimpleTxn> txns = new ArrayList<SimpleTxn>();
+
+		BigDecimal amt = tx.getAmount().abs();
+
+		for (SimpleTxn t : this.transactions) {
+			if (t.getAmount().abs().equals(amt)) {
+				txns.add(t);
+			}
+		}
+
+		return txns;
+	}
+
 	public List<GenericTxn> gatherTransactionsForStatement(Statement s) {
 		final List<GenericTxn> txns = new ArrayList<GenericTxn>();
 

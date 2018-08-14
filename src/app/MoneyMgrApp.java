@@ -86,6 +86,9 @@ public class MoneyMgrApp {
 
 				SimpleTxn txn = createTransaction(fieldnames, tuple);
 				if (txn != null) {
+					Account acct = Account.getAccountByID(txn.acctid);
+					List<SimpleTxn> txns = acct.findMatchingTransactions(txn);
+
 					infoMessage(txn.toString());
 				}
 			}
