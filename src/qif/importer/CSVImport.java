@@ -80,7 +80,8 @@ public class CSVImport {
 					tokenend = endidx;
 				}
 
-				fields.add(line.substring(tokenstart, tokenend));
+				String field = line.substring(tokenstart, tokenend);
+				fields.add(field);
 
 				if ((startidx < endidx) && (line.charAt(startidx) != ',')) {
 					Common.reportError("Missing comma at " + startidx + " in CSV: " + line);

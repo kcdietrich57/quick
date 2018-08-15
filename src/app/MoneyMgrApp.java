@@ -1,15 +1,21 @@
 package app;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import org.omg.CORBA.COMM_FAILURE;
+
 import qif.data.Account;
+import qif.data.Category;
 import qif.data.Common;
+import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
 import qif.data.NonInvestmentTxn;
+import qif.data.QDate;
 import qif.data.QifDom;
 import qif.data.SimpleTxn;
 import qif.importer.CSVImport;
@@ -66,9 +72,15 @@ public class MoneyMgrApp {
 					record.add("");
 				}
 
-				accttxns.add(record.toArray(new String[0]));
+				String[] tuple = record.toArray(new String[0]);
+				accttxns.add(tuple);
 			}
 		}
+
+		int totaltx = 0;
+		int nomatch = 0;
+		int multimatch = 0;
+		int match = 0;
 
 		for (Map.Entry<String, List<String[]>> entry : transactionsMap.entrySet()) {
 			if (entry.getKey().equals("FieldNames")) {
@@ -84,15 +96,36 @@ public class MoneyMgrApp {
 				}
 				infoMessage("]");
 
-				SimpleTxn txn = createTransaction(fieldnames, tuple);
+				SimpleTxn txn = createTransaction(tuple);
+				QDate txdate = dateFromTuple(tuple);
+
 				if (txn != null) {
 					Account acct = Account.getAccountByID(txn.acctid);
-					List<SimpleTxn> txns = acct.findMatchingTransactions(txn);
+					List<SimpleTxn> txns = acct.findMatchingTransactions(txn, txdate);
 
 					infoMessage(txn.toString());
+
+					++totaltx;
+					
+					if (txns.size() == 1) {
+						//System.out.println("size=" + txns.size());
+						++match;
+					} else if (txns.isEmpty()) {
+						//System.out.println("NO MATCH");
+						++nomatch;
+					} else {
+						//System.out.println("" + txns.size() + " MATCHES");
+						++multimatch;
+					}
 				}
 			}
 		}
+
+		System.out.println("\nSummary:");		
+		System.out.println(" Exact matches: " + match);
+		System.out.println(" Multi matches: " + multimatch);
+		System.out.println(" Unmatched:     " + nomatch);
+		System.out.println(" Total:         " + totaltx);
 	}
 
 	// 'Amount', '', ]
@@ -142,8 +175,13 @@ public class MoneyMgrApp {
 		MEMO_IDX = getFieldIndex("Memo/Notes", fieldnames);
 	}
 
-	private static SimpleTxn createTransaction(String[] fieldnames, String[] tuple) {
+	private static QDate dateFromTuple(String[] tuple) {
+		return Common.parseQDate(tuple[DATE_IDX]);
+	}
+
+	private static SimpleTxn createTransaction(String[] tuple) {
 		String acctname = tuple[ACCOUNT_IDX];
+
 		Account acct = Account.findAccount(acctname);
 		if (acct == null) {
 			acct = new Account();
@@ -151,12 +189,24 @@ public class MoneyMgrApp {
 			Account.addAccount(acct);
 		}
 
+		SimpleTxn txn = null;
+		QDate txdate = Common.parseQDate(tuple[DATE_IDX]);
+		String payee = tuple[PAYEE_IDX];
+		BigDecimal amount = Common.getDecimal(tuple[AMOUNT_IDX]);
+
 		String split = tuple[SPLIT_IDX];
 		String type = tuple[TYPE_IDX];
+		String memo = tuple[MEMO_IDX];
+		String cknum = tuple[CHECKNUM_IDX];
+		String sec = tuple[SECURITY_IDX];
+		String cat = tuple[CATEGORY_IDX];
+		String fees = tuple[FEES_IDX];
+		String shares = tuple[SHARES_IDX];
 
-		SimpleTxn txn = null;
+		Category c = (!cat.isEmpty()) ? Category.findCategory(cat) : null;
 
 		if (split.equals("S")) {
+			// TODO assemble splits into transaction
 			txn = new SimpleTxn(acct.acctid);
 		} else {
 			switch (acct.type) {
@@ -167,6 +217,7 @@ public class MoneyMgrApp {
 			case Liability:
 				txn = new NonInvestmentTxn(acct.acctid);
 				break;
+
 			case Inv401k:
 			case Invest:
 			case InvMutual:
@@ -176,9 +227,37 @@ public class MoneyMgrApp {
 			}
 		}
 
-		txn.setDate(Common.parseQDate(tuple[DATE_IDX]));
-		txn.setAmount(Common.getDecimal(tuple[AMOUNT_IDX]));
-		txn.memo = tuple[MEMO_IDX];
+		txn.setDate(txdate);
+		txn.setAmount(amount);
+		txn.memo = memo;
+		txn.xacctid = 0;
+		txn.xtxn = null;
+		txn.catid = (c != null) ? c.catid : 0;
+
+		if (txn instanceof GenericTxn) {
+			GenericTxn gtxn = (GenericTxn) txn;
+			gtxn.setPayee(payee);
+		}
+
+		if (txn instanceof NonInvestmentTxn) {
+			NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
+			nitxn.chkNumber = cknum;
+			nitxn.split = new ArrayList<SimpleTxn>();
+		}
+
+		if (txn instanceof InvestmentTxn) {
+			InvestmentTxn itxn = (InvestmentTxn) txn;
+			itxn.accountForTransfer = null;
+			itxn.amountTransferred = BigDecimal.ZERO;
+			itxn.catid = 0;
+			itxn.commission = BigDecimal.ZERO;
+			itxn.dstLots = null;
+			itxn.price = BigDecimal.ZERO;
+			itxn.security = null;
+			itxn.srcLots = null;
+			itxn.textFirstLine = null;
+			itxn.xferTxns = null;
+		}
 
 //		public int xacctid;
 //		public int catid; // >0: CategoryID; <0 AccountID

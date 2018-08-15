@@ -656,13 +656,35 @@ public class Account {
 		return s;
 	}
 
-	public List<SimpleTxn> findMatchingTransactions(SimpleTxn tx) {
+	public List<SimpleTxn> findMatchingTransactions(SimpleTxn tx, QDate date) {
 		List<SimpleTxn> txns = new ArrayList<SimpleTxn>();
 
 		BigDecimal amt = tx.getAmount().abs();
 
-		for (SimpleTxn t : this.transactions) {
+		for (GenericTxn t : this.transactions) {
+			if (Math.abs(t.getDate().subtract(date)) > 3) {
+				continue;
+			}
+
+			boolean match = false;
+
 			if (t.getAmount().abs().equals(amt)) {
+				match = true;
+			} else if (t.hasSplits()) {
+				for (SimpleTxn st : t.getSplits()) {
+					if (st instanceof MultiSplitTxn) {
+						for (SimpleTxn mst : ((MultiSplitTxn) st).subsplits) {
+							if (mst.getAmount().abs().equals(amt)) {
+								match = true;
+							}
+						}
+					} else if (st.getAmount().abs().equals(amt)) {
+						match = true;
+					}
+				}
+			}
+
+			if (match) {
 				txns.add(t);
 			}
 		}
