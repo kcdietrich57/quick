@@ -8,12 +8,11 @@ import java.util.List;
 import qif.data.Common;
 
 public class CSVImport {
-	public String filename = "/Users/greg/Documents/workspace/Quicken/qif/import20180630.csv";
 	public LineNumberReader rdr;
 
-	public CSVImport() {
+	public CSVImport(String filename) {
 		try {
-			this.rdr = new LineNumberReader(new FileReader(this.filename));
+			this.rdr = new LineNumberReader(new FileReader(filename));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

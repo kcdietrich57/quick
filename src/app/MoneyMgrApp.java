@@ -7,9 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-import org.omg.CORBA.COMM_FAILURE;
-
 import qif.data.Account;
+import qif.data.AccountType;
 import qif.data.Category;
 import qif.data.Common;
 import qif.data.GenericTxn;
@@ -37,11 +36,13 @@ public class MoneyMgrApp {
 		}
 	}
 
-	public static void importCSV() {
+	public static void importCSV(String filename) {
 		String[] fieldnames = null;
 		Map<String, List<String[]>> transactionsMap = new HashMap<String, List<String[]>>();
 
-		CSVImport csvimp = new CSVImport();
+		CSVImport csvimp = new CSVImport(filename);
+		ACCOUNT_IDX = -1;
+
 		for (;;) {
 			List<String> record = csvimp.readRecord();
 			if (record == null) {
@@ -49,6 +50,10 @@ public class MoneyMgrApp {
 			}
 
 			// System.out.println(record.toString());
+			String f0 = (!record.isEmpty()) ? record.get(0) : "";
+			if (f0.length() == 1 && f0.charAt(0) == 65279) {
+				f0 = "";
+			}
 
 			if ((fieldnames == null) //
 					&& record.contains("Account") && record.contains("Date")) {
@@ -58,7 +63,7 @@ public class MoneyMgrApp {
 				transactionsMap.put("FieldNames", fnlist);
 
 				setFieldIndexes(fieldnames);
-			} else if ((fieldnames != null) && record.get(0).isEmpty()) {
+			} else if ((fieldnames != null) && f0.isEmpty()) {
 				String acctname = record.get(ACCOUNT_IDX);
 
 				List<String[]> accttxns = transactionsMap.get(acctname);
@@ -77,10 +82,11 @@ public class MoneyMgrApp {
 			}
 		}
 
-		int totaltx = 0;
-		int nomatch = 0;
-		int multimatch = 0;
 		int match = 0;
+		int multimatch = 0;
+		int nomatch = 0;
+		int zero = 0;
+		int totaltx = 0;
 
 		for (Map.Entry<String, List<String[]>> entry : transactionsMap.entrySet()) {
 			if (entry.getKey().equals("FieldNames")) {
@@ -106,29 +112,32 @@ public class MoneyMgrApp {
 					infoMessage(txn.toString());
 
 					++totaltx;
-					
+
 					if (txns.size() == 1) {
-						//System.out.println("size=" + txns.size());
+						// System.out.println("size=" + txns.size());
 						++match;
 					} else if (txns.isEmpty()) {
-						//System.out.println("NO MATCH");
-						++nomatch;
+						// System.out.println("NO MATCH");
+						if (Common.isEffectivelyZero(txn.getAmount())) {
+							++zero;
+						} else {
+							++nomatch;
+						}
 					} else {
-						//System.out.println("" + txns.size() + " MATCHES");
+						// System.out.println("" + txns.size() + " MATCHES");
 						++multimatch;
 					}
 				}
 			}
 		}
 
-		System.out.println("\nSummary:");		
+		System.out.println("\nSummary for : " + filename);
 		System.out.println(" Exact matches: " + match);
 		System.out.println(" Multi matches: " + multimatch);
 		System.out.println(" Unmatched:     " + nomatch);
+		System.out.println(" Unmatched zero:" + zero);
 		System.out.println(" Total:         " + totaltx);
 	}
-
-	// 'Amount', '', ]
 
 	private static int SPLIT_IDX = -1;
 	private static int ACCOUNT_IDX = -1;
@@ -186,6 +195,7 @@ public class MoneyMgrApp {
 		if (acct == null) {
 			acct = new Account();
 			acct.setName(acctname);
+			acct.type = AccountType.Bank;
 			Account.addAccount(acct);
 		}
 
@@ -272,6 +282,10 @@ public class MoneyMgrApp {
 
 		MainFrame.createUI();
 
-		importCSV();
+		String importDir = "/Users/greg/Documents/workspace/Quicken/qif/";
+
+		importCSV(importDir + "import20180630.csv");
+		importCSV(importDir + "export-20171231.csv");
+		importCSV(importDir + "export-20180815.csv");
 	}
 }
