@@ -569,8 +569,33 @@ public class Account {
 		}
 	}
 
+	int getTransactionIndexForDate(QDate date) {
+		GenericTxn t = new NonInvestmentTxn(1);
+		t.setDate(date);
+
+		return getTransactionIndexForDate(t);
+	}
+
+	int getTransactionIndexForDate(GenericTxn tx) {
+		Comparator<GenericTxn> c = new Comparator<GenericTxn>() {
+			public int compare(GenericTxn o1, GenericTxn o2) {
+				return o1.getDate().subtract(o2.getDate());
+			}
+		};
+
+		int idx = Collections.binarySearch(this.transactions, tx, c);
+
+		if (idx < 0) {
+			idx = -idx - 1;
+		}
+
+		return idx;
+	}
+
 	public void addTransaction(GenericTxn txn) {
-		this.transactions.add(txn);
+		int idx = getTransactionIndexForDate(txn);
+
+		this.transactions.add(idx, txn);
 	}
 
 	private int findFirstNonClearedTransaction() {
@@ -656,13 +681,25 @@ public class Account {
 		return s;
 	}
 
-	public List<SimpleTxn> findMatchingTransactions(SimpleTxn tx, QDate date) {
-		List<SimpleTxn> txns = new ArrayList<SimpleTxn>();
+	public List<GenericTxn> findMatchingTransactions(SimpleTxn tx, QDate date) {
+		List<GenericTxn> txns = new ArrayList<GenericTxn>();
 
 		BigDecimal amt = tx.getAmount().abs();
 
-		for (GenericTxn t : this.transactions) {
-			if (Math.abs(t.getDate().subtract(date)) > 3) {
+		int idx = getTransactionIndexForDate(date);
+		for (; idx > 0; --idx) {
+			if (date.subtract(this.transactions.get(idx - 1).getDate()) > 5) {
+				break;
+			}
+		}
+
+		for (; idx < this.transactions.size(); ++idx) {
+			GenericTxn t = this.transactions.get(idx);
+			int diff = t.getDate().subtract(date);
+			if (diff > 5) {
+				break;
+			}
+			if (-diff > 5) {
 				continue;
 			}
 
@@ -688,6 +725,15 @@ public class Account {
 				txns.add(t);
 			}
 		}
+
+		txns.sort(new Comparator<GenericTxn>() {
+			public int compare(GenericTxn o1, GenericTxn o2) {
+				int diff1 = Math.abs(o1.getDate().subtract(date));
+				int diff2 = Math.abs(o2.getDate().subtract(date));
+
+				return diff1 - diff2;
+			}
+		});
 
 		return txns;
 	}

@@ -1131,6 +1131,7 @@ class Cleaner {
 	}
 
 	public void cleanUpTransactions() {
+		// TODO transactions should already be sorted?
 		sortAccountTransactionsByDate();
 		cleanUpSplits();
 		calculateRunningTotals();

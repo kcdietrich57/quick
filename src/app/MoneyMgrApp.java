@@ -82,10 +82,10 @@ public class MoneyMgrApp {
 			}
 		}
 
-		int match = 0;
-		int multimatch = 0;
-		int nomatch = 0;
-		int zero = 0;
+		Map<SimpleTxn, GenericTxn> match = new HashMap<SimpleTxn, GenericTxn>();
+		Map<SimpleTxn, List<GenericTxn>> multimatch = new HashMap<SimpleTxn, List<GenericTxn>>();
+		List<SimpleTxn> nomatch = new ArrayList<SimpleTxn>();
+		List<SimpleTxn> zero = new ArrayList<SimpleTxn>();
 		int totaltx = 0;
 
 		for (Map.Entry<String, List<String[]>> entry : transactionsMap.entrySet()) {
@@ -107,35 +107,43 @@ public class MoneyMgrApp {
 
 				if (txn != null) {
 					Account acct = Account.getAccountByID(txn.acctid);
-					List<SimpleTxn> txns = acct.findMatchingTransactions(txn, txdate);
+					List<GenericTxn> txns = acct.findMatchingTransactions(txn, txdate);
 
 					infoMessage(txn.toString());
 
 					++totaltx;
 
-					if (txns.size() == 1) {
+					if (Common.isEffectivelyZero(txn.getAmount())) {
+						zero.add(txn);
+					} else if (txns.size() == 1) {
 						// System.out.println("size=" + txns.size());
-						++match;
+						match.put(txn, txns.get(0));
 					} else if (txns.isEmpty()) {
 						// System.out.println("NO MATCH");
-						if (Common.isEffectivelyZero(txn.getAmount())) {
-							++zero;
-						} else {
-							++nomatch;
-						}
+						nomatch.add(txn);
 					} else {
 						// System.out.println("" + txns.size() + " MATCHES");
-						++multimatch;
+						while (!txns.isEmpty() && match.containsValue(txns.get(0))) {
+							txns.remove(0);
+						}
+
+						if (txns.isEmpty()) {
+							nomatch.add(txn);
+						} else {
+							match.put(txn, txns.get(0));
+						}
+
+//						multimatch.put(txn, txns);
 					}
 				}
 			}
 		}
 
 		System.out.println("\nSummary for : " + filename);
-		System.out.println(" Exact matches: " + match);
-		System.out.println(" Multi matches: " + multimatch);
-		System.out.println(" Unmatched:     " + nomatch);
-		System.out.println(" Unmatched zero:" + zero);
+		System.out.println(" Exact matches: " + match.size());
+		System.out.println(" Multi matches: " + multimatch.size());
+		System.out.println(" Unmatched:     " + nomatch.size());
+		System.out.println(" Unmatched zero:" + zero.size());
 		System.out.println(" Total:         " + totaltx);
 	}
 
@@ -213,7 +221,15 @@ public class MoneyMgrApp {
 		String fees = tuple[FEES_IDX];
 		String shares = tuple[SHARES_IDX];
 
-		Category c = (!cat.isEmpty()) ? Category.findCategory(cat) : null;
+		Account xferAcct = null;
+		Category c = null;
+
+		if (cat.startsWith("Transfer:[")) {
+			cat = cat.substring(10, cat.length() - 1);
+			xferAcct = Account.findAccount(cat);
+		} else {
+			c = (!cat.isEmpty()) ? Category.findCategory(cat) : null;
+		}
 
 		if (split.equals("S")) {
 			// TODO assemble splits into transaction
@@ -243,6 +259,7 @@ public class MoneyMgrApp {
 		txn.xacctid = 0;
 		txn.xtxn = null;
 		txn.catid = (c != null) ? c.catid : 0;
+		txn.xacctid = (xferAcct != null) ? xferAcct.acctid : 0;
 
 		if (txn instanceof GenericTxn) {
 			GenericTxn gtxn = (GenericTxn) txn;
@@ -284,7 +301,7 @@ public class MoneyMgrApp {
 
 		String importDir = "/Users/greg/Documents/workspace/Quicken/qif/";
 
-		importCSV(importDir + "import20180630.csv");
+		// importCSV(importDir + "import20180630.csv");
 		importCSV(importDir + "export-20171231.csv");
 		importCSV(importDir + "export-20180815.csv");
 	}

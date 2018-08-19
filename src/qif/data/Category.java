@@ -19,9 +19,11 @@ public class Category {
 	}
 
 	public static Category findCategory(String name) {
-		for (Category cat : categories) {
-			if ((cat != null) && cat.name.equals(name)) {
-				return cat;
+		if (!name.isEmpty()) {
+			for (Category cat : categories) {
+				if ((cat != null) && cat.name.equals(name)) {
+					return cat;
+				}
 			}
 		}
 
