@@ -121,7 +121,7 @@ public class QifLoader {
 					 * 
 					 * dom.reportMonthlyActivity(d1, d2);
 					 */ } else if (s.startsWith("mnw")) {
-					NetWorthReporter.reportMonthlyNetWorth();
+					//NetWorthReporter.reportMonthlyNetWorth();
 				}
 			} else if (s.startsWith("r")) {
 				if (s.startsWith("relog")) {
@@ -129,7 +129,7 @@ public class QifLoader {
 				}
 			} else if (s.startsWith("y")) {
 				if (s.startsWith("ys")) {
-					NetWorthReporter.reportYearlyNetWorth();
+					//NetWorthReporter.reportYearlyNetWorth();
 				}
 			} else {
 				final QDate d = Common.parseQDate(s);

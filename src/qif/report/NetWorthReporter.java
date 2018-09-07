@@ -134,8 +134,7 @@ public class NetWorthReporter {
 	// ===============================================================
 
 	public static StatusForDateModel buildReportStatusForDate(QDate d) {
-		StatusForDateModel model = new StatusForDateModel();
-		model.d = d;
+		StatusForDateModel model = new StatusForDateModel(d);
 
 		for (Account a : Account.getAccounts()) {
 			BigDecimal amt = a.getValueForDate(d);
@@ -220,7 +219,7 @@ public class NetWorthReporter {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("\n");
-		sb.append(String.format("Global status for date: %s\n", model.d.toString()));
+		sb.append(String.format("Global status for date: %s\n", model.date.toString()));
 		sb.append("--------------------------------------------------------\n");
 		sb.append(String.format("  %-36s : %10s\n", "Account", "Balance\n"));
 
@@ -423,8 +422,7 @@ public class NetWorthReporter {
 	// ===============================================================
 
 	public static StatusForDateModel buildReportStatusForDate(QDate d) {
-		StatusForDateModel model = new StatusForDateModel();
-		model.d = d;
+		StatusForDateModel model = new StatusForDateModel(d);
 
 		for (Account a : Account.getAccounts()) {
 			BigDecimal amt = a.getValueForDate(d);
@@ -509,7 +507,7 @@ public class NetWorthReporter {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("\n");
-		sb.append(String.format("Global status for date: %s\n", model.d.toString()));
+		sb.append(String.format("Global status for date: %s\n", model.date.toString()));
 		sb.append("--------------------------------------------------------\n");
 		sb.append(String.format("  %-36s : %10s\n", "Account", "Balance\n"));
 
