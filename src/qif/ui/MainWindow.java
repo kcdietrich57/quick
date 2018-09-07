@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -144,6 +145,7 @@ public class MainWindow extends JPanel {
 		contentPanel = new JTabbedPane();
 
 		contentPanel.add("Accounts", accountViewSplit);
+		contentPanel.add("Investments", new JButton("Investments go here"));
 		contentPanel.add("Dashboard", dashboardPanel);
 		contentPanel.add("Charts", chartPanel);
 	}
