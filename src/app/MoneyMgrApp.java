@@ -2,8 +2,10 @@ package app;
 
 import java.util.Scanner;
 
+import qif.data.QDate;
 import qif.importer.CSVImport;
 import qif.importer.QifDomReader;
+import qif.report.InvestmentPerformanceModel;
 import qif.ui.MainFrame;
 
 public class MoneyMgrApp {
@@ -24,6 +26,12 @@ public class MoneyMgrApp {
 	public static void main(String[] args) {
 		MoneyMgrApp.scn = new Scanner(System.in);
 		QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
+
+		InvestmentPerformanceModel model = new InvestmentPerformanceModel( //
+				new QDate(2018, 1, 1), //
+				QDate.today());
+
+		System.out.println(model.toString());
 
 		MainFrame.createUI();
 

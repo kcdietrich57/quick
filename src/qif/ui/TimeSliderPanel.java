@@ -39,9 +39,9 @@ public class TimeSliderPanel extends JPanel {
 
 		this.asOfDateSlider = new JSlider(timeModel);
 		this.asOfDateSlider.setOrientation(JSlider.HORIZONTAL);
-		asOfDateSlider.setMajorTickSpacing(12);
-		asOfDateSlider.setPaintTicks(true);
-		asOfDateSlider.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
+		this.asOfDateSlider.setMajorTickSpacing(12);
+		this.asOfDateSlider.setPaintTicks(true);
+		this.asOfDateSlider.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
 
 		this.asOfDateSlider.addChangeListener(e -> {
 			if (this.asOfDateSlider.getValueIsAdjusting()) {

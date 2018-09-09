@@ -132,6 +132,7 @@ public class MainWindow extends JPanel {
 			this.asOfDate = date;
 
 			// TODO use AsOfDateListeners to update UI
+			this.dashboardPanel.changeDate();
 			this.accountNavigationPanel.refreshAccountList();
 			this.summaryPanel.updateValues();
 		}

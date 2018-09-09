@@ -8,6 +8,9 @@ import qif.data.Account;
 import qif.data.AccountType;
 import qif.data.Common;
 import qif.data.QDate;
+import qif.data.Security;
+import qif.data.SecurityPosition;
+import qif.data.StockOption;
 
 /** This captures a point in time snapshot of account values */
 public class StatusForDateModel {
@@ -122,6 +125,8 @@ public class StatusForDateModel {
 	public StatusForDateModel(QDate date) {
 		this.date = date;
 		this.sections = Section.getSections();
+
+		build();
 	}
 
 	public StatusForDateModel.Section getSectionForAccount(Account acct) {
@@ -133,151 +138,78 @@ public class StatusForDateModel {
 
 		return null;
 	}
-}
 
-/**
- * This models investment performance for a period.
- * 
- * Summary details are available for the entire portfolio, individual account,
- * account category, and individual security.
- */
-class InvestmentPerformanceModel {
+	private void build() {
+		for (Account a : Account.getAccounts()) {
+			BigDecimal amt = a.getValueForDate(this.date);
 
-	/** Defines account categories for itemized status */
-	public static class SectionInfo {
-		public static final SectionInfo[] sectionInfo = {
-				new SectionInfo("Investment", new AccountType[] { AccountType.Invest, AccountType.InvPort }, true), //
-				new SectionInfo("Retirement", new AccountType[] { AccountType.InvMutual, AccountType.Inv401k }, true) //
-		};
+			if (!a.isOpenOn(this.date) //
+					&& Common.isEffectivelyZero(amt) //
+					&& (a.getFirstUnclearedTransaction() == null) //
+					&& a.securities.isEmptyForDate(this.date)) {
+				continue;
+			}
 
-		private static AccountType[] allAcctTypes = { //
-				AccountType.Invest, AccountType.InvPort, //
-				AccountType.InvMutual, AccountType.Inv401k //
-		};
+			StatusForDateModel.Section modelsect = getSectionForAccount(a);
 
-		public AccountType[] atypes;
-		public String label;
+			StatusForDateModel.AccountSummary asummary = new StatusForDateModel.AccountSummary();
+			modelsect.accounts.add(asummary);
+			modelsect.subtotal = modelsect.subtotal.add(amt);
 
-		public SectionInfo(String label, AccountType[] atypes, boolean isAsset) {
-			this.label = label;
-			this.atypes = atypes;
-		}
+			asummary.name = a.getDisplayName(36);
+			asummary.balance = asummary.cashBalance = amt;
 
-		public static SectionInfo getSectionInfoForAccount(Account a) {
-			for (SectionInfo sinfo : sectionInfo) {
-				if (sinfo.contains(a.type)) {
-					return sinfo;
+			List<StockOption> opts = StockOption.getOpenOptions(a, this.date);
+			if (!opts.isEmpty()) {
+				StatusForDateModel.SecuritySummary ssummary = new StatusForDateModel.SecuritySummary();
+
+				StockOption opt = opts.get(0);
+				Security sec = Security.getSecurity(opt.secid);
+
+				ssummary.name = "Options:" + sec.getName();
+				ssummary.shares = opt.getAvailableShares(true);
+				ssummary.price = sec.getPriceForDate(this.date).getPrice();
+				ssummary.value = opt.getValueForDate(this.date);
+
+				asummary.securities.add(ssummary);
+			}
+
+			if (!a.securities.isEmptyForDate(this.date)) {
+				BigDecimal portValue = a.getSecuritiesValueForDate(this.date);
+
+				if (!Common.isEffectivelyZero(portValue)) {
+					asummary.cashBalance = amt.subtract(portValue);
+
+					for (SecurityPosition pos : a.securities.positions) {
+						BigDecimal posval = pos.getValueForDate(this.date);
+
+						if (!Common.isEffectivelyZero(posval)) {
+							StatusForDateModel.SecuritySummary ssummary = new StatusForDateModel.SecuritySummary();
+							asummary.securities.add(ssummary);
+
+							String nn = pos.security.getName();
+							if (nn.length() > 34) {
+								nn = nn.substring(0, 31) + "...";
+							}
+
+							ssummary.name = nn;
+							ssummary.value = posval;
+							ssummary.price = pos.security.getPriceForDate(this.date).getPrice();
+							ssummary.shares = pos.getSharesForDate(this.date);
+						}
+					}
 				}
 			}
 
-			return null;
-		}
+			modelsect.subtotal.add(amt);
 
-		public static AccountType[] getAccountTypes() {
-			return allAcctTypes;
-		}
-
-		public boolean contains(AccountType at) {
-			for (final AccountType myat : this.atypes) {
-				if (myat == at) {
-					return true;
-				}
+			if (modelsect.info.isAsset) {
+				this.assets = this.assets.add(amt);
+			} else {
+				this.liabilities = this.liabilities.add(amt);
 			}
 
-			return false;
+			this.netWorth = this.netWorth.add(amt);
 		}
-	};
-
-	/**
-	 * Describes a security's performance for the period (global or account)
-	 */
-	public static class SecuritySummary {
-		public String name;
-		public BigDecimal startValue = BigDecimal.ZERO;
-		public BigDecimal startShares = BigDecimal.ZERO;
-		public BigDecimal startPrice = BigDecimal.ZERO;
-		public BigDecimal endValue = BigDecimal.ZERO;
-		public BigDecimal endShares = BigDecimal.ZERO;
-		public BigDecimal endPrice = BigDecimal.ZERO;
-
-		public BigDecimal contributions = BigDecimal.ZERO;
-		public BigDecimal matchingContributions = BigDecimal.ZERO;
-		public BigDecimal dividendValue = BigDecimal.ZERO;
-		public BigDecimal dividendShares = BigDecimal.ZERO;
-
-		// Calculated as (value-costBasis) for holdings at end
-		public BigDecimal gainLoss = BigDecimal.ZERO;
-
-		public String toString() {
-			return String.format("%s: %s@%s %s", //
-					this.name, //
-					Common.formatAmount3(this.endShares).trim(), //
-					Common.formatAmount3(this.endPrice).trim(), //
-					Common.formatAmount3(this.endValue).trim());
-		}
-	};
-
-	/** Describes an account's performance for the period */
-	public static class AccountSummary {
-		public String name;
-
-		public BigDecimal startBalance = BigDecimal.ZERO;
-		public BigDecimal startCashBalance = BigDecimal.ZERO;
-		public BigDecimal endBalance = BigDecimal.ZERO;
-		public BigDecimal endCashBalance = BigDecimal.ZERO;
-
-		public List<SecuritySummary> securities = new ArrayList<SecuritySummary>();
-	};
-
-	/** Accumulates info for a section (account category) */
-	public static class Section {
-		public static Section[] getSections() {
-			Section[] sections = new Section[SectionInfo.sectionInfo.length];
-
-			for (int ii = 0; ii < SectionInfo.sectionInfo.length; ++ii) {
-				sections[ii] = new Section(SectionInfo.sectionInfo[ii]);
-			}
-
-			return sections;
-		}
-
-		public final SectionInfo info;
-		public BigDecimal subtotal = BigDecimal.ZERO;
-
-		public List<AccountSummary> accounts = new ArrayList<AccountSummary>();
-
-		public Section(SectionInfo info) {
-			this.info = info;
-		}
-	};
-
-	public final QDate startDate;
-	public final QDate endDate;
-
-	public final Section[] sections;
-	public AccountSummary[] accounts;
-	public SecuritySummary[] securities;
-
-	// TODO create appropriate summary info variables
-	// Is this an accumulation of account info? or security info?
-	// i.e. does it include cash positions in investment accounts?
-	public BigDecimal assets = BigDecimal.ZERO;
-	public BigDecimal liabilities = BigDecimal.ZERO;
-	public BigDecimal netWorth = BigDecimal.ZERO;
-
-	public InvestmentPerformanceModel(QDate startDate, QDate endDate) {
-		this.startDate = startDate;
-		this.endDate = endDate;
-		this.sections = Section.getSections();
-	}
-
-	public Section getSectionForAccount(Account acct) {
-		for (Section s : this.sections) {
-			if (s.info.contains(acct.type)) {
-				return s;
-			}
-		}
-
-		return null;
 	}
 }

@@ -13,7 +13,7 @@ import qif.report.AccountReporter;
 import qif.report.CashFlowReporter;
 import qif.report.NetWorthReporter;
 import qif.report.QifReporter;
-import qif.report.StatusReporter;
+import qif.report.ReconcileStatusReporter;
 
 public class QifLoader {
 	public static Scanner scn;
@@ -55,7 +55,7 @@ public class QifLoader {
 			if (s.startsWith("u")) {
 				usage();
 			} else if (s.startsWith("s")) {
-				StatusReporter.reportStatus();
+				ReconcileStatusReporter.reportStatus();
 			} else if (s.startsWith("a")) {
 				if (s.startsWith("act")) {
 					StringTokenizer toker = new StringTokenizer(s);
@@ -121,7 +121,7 @@ public class QifLoader {
 					 * 
 					 * dom.reportMonthlyActivity(d1, d2);
 					 */ } else if (s.startsWith("mnw")) {
-					//NetWorthReporter.reportMonthlyNetWorth();
+					// NetWorthReporter.reportMonthlyNetWorth();
 				}
 			} else if (s.startsWith("r")) {
 				if (s.startsWith("relog")) {
@@ -129,7 +129,7 @@ public class QifLoader {
 				}
 			} else if (s.startsWith("y")) {
 				if (s.startsWith("ys")) {
-					//NetWorthReporter.reportYearlyNetWorth();
+					// NetWorthReporter.reportYearlyNetWorth();
 				}
 			} else {
 				final QDate d = Common.parseQDate(s);

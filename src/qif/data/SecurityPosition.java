@@ -3,7 +3,6 @@ package qif.data;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 public class SecurityPosition {
@@ -105,8 +104,15 @@ public class SecurityPosition {
 		return price.multiply(tshrbal);
 	}
 
-	public void getPositionForDate(Date d) {
+	public BigDecimal getSharesForDate(QDate date) {
+		int idx = getTransactionIndexForDate(date);
 
+		return (idx >= 0) ? shrBalance.get(idx) : BigDecimal.ZERO;
+	}
+
+	public void getPositionForDate(QDate d) {
+		// FIXME implement getPositionForDate
+		// throw new Exception("not implemented");
 	}
 
 	/**

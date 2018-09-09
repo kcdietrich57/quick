@@ -763,6 +763,7 @@ public class Account {
 		return txns;
 	}
 
+	// TODO not implemented
 	class AccountPosition {
 		Account acct;
 		BigDecimal cashBefore;
@@ -784,7 +785,7 @@ public class Account {
 	}
 
 	// FIXME account status for period unused, unfinished
-	public void getPositionsForDate(Date d) {
+	public void getPositionsForDate(QDate d) {
 		this.securities.getPositionsForDate(d);
 	}
 }
