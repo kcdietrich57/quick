@@ -49,20 +49,6 @@ public class NetWorthReporter {
 		return retdate;
 	}
 
-	private static QDate getLastTransactionDate() {
-		QDate retdate = null;
-
-		for (final Account a : Account.getAccounts()) {
-			QDate d = a.getLastTransactionDate();
-
-			if ((d != null) && ((retdate == null) || d.compareTo(retdate) > 0)) {
-				retdate = d;
-			}
-		}
-
-		return retdate;
-	}
-
 	public static List<StatusForDateModel> getMonthlyNetWorth() {
 		List<StatusForDateModel> balances = new ArrayList<StatusForDateModel>();
 
@@ -87,45 +73,6 @@ public class NetWorthReporter {
 		} while (d.compareTo(lastTxDate) <= 0);
 
 		return balances;
-	}
-
-	private static void reportMonthlyNetWorth() {
-		System.out.println();
-
-		QDate d = getFirstTransactionDate();
-		QDate lastTxDate = getLastTransactionDate();
-
-		int year = d.getYear();
-		int month = d.getMonth();
-
-		System.out.println(String.format("  %-10s %-15s %-15s %-15s", //
-				"Date", "NetWorth", "Assets", "Liabilities"));
-
-		do {
-			d = QDate.getDateForEndOfMonth(year, month);
-			final Balances b = getBalancesForDate(d);
-
-			System.out.println(String.format("%s,%15.2f,%15.2f,%15.2f", //
-					d.longString, b.netWorth, b.assets, b.liabilities));
-
-			if (month == 12) {
-				++year;
-				month = 1;
-			} else {
-				++month;
-			}
-		} while (d.compareTo(lastTxDate) <= 0);
-	}
-
-	private static void reportYearlyNetWorth() {
-		System.out.println();
-
-		QDate firstTxDate = getFirstTransactionDate();
-		QDate lastTxDate = getLastTransactionDate();
-
-		for (int year = firstTxDate.getYear(); year <= lastTxDate.getYear(); ++year) {
-			NetWorthReporter.reportNetWorthForDate(QDate.getDateForEndOfMonth(year, 12));
-		}
 	}
 
 	// ===============================================================

@@ -1275,7 +1275,7 @@ class Cleaner {
 	private void findMatchesForTransfer(Account acct, SimpleTxn txn, QDate date, boolean strict) {
 		matchingTxns.clear();
 
-		final int idx = Common.findLastTransactionOnOrBeforeDate(acct.transactions, date);
+		final int idx = GenericTxn.getTransactionIndexByDate(acct.transactions, date, true);
 		if (idx < 0) {
 			return;
 		}

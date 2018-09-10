@@ -28,7 +28,7 @@ public class MoneyMgrApp {
 		QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
 
 		InvestmentPerformanceModel model = new InvestmentPerformanceModel( //
-				new QDate(2018, 1, 1), //
+				new QDate(2018, 8, 1), //
 				QDate.today());
 
 		System.out.println(model.toString());

@@ -21,55 +21,12 @@ public class InvestmentPerformanceReporter {
 		public BigDecimal liabilities = BigDecimal.ZERO;
 	}
 
-	private static void reportCurrentInvestments() {
-		reportInvestmentsForDate(QDate.today());
-	}
-
 	public static void reportInvestmentsForDate(QDate d) {
 //		StatusForDateModel model = buildReportStatusForDate(d);
 //
 //		String s = generateReportStatusForDate(model);
 //
 //		System.out.println(s);
-	}
-
-	private static QDate getFirstTransactionDate() {
-		QDate retdate = null;
-
-		for (final Account a : Account.getAccounts()) {
-			final QDate d = a.getFirstTransactionDate();
-
-			if ((d != null) && ((retdate == null) || d.compareTo(retdate) < 0)) {
-				retdate = d;
-			}
-		}
-
-		return retdate;
-	}
-
-	private static QDate getLastTransactionDate() {
-		QDate retdate = null;
-
-		for (final Account a : Account.getAccounts()) {
-			QDate d = a.getLastTransactionDate();
-
-			if ((d != null) && ((retdate == null) || d.compareTo(retdate) > 0)) {
-				retdate = d;
-			}
-		}
-
-		return retdate;
-	}
-
-	private static void reportYearlyNetWorth() {
-		System.out.println();
-
-		QDate firstTxDate = getFirstTransactionDate();
-		QDate lastTxDate = getLastTransactionDate();
-
-		for (int year = firstTxDate.getYear(); year <= lastTxDate.getYear(); ++year) {
-			NetWorthReporter.reportNetWorthForDate(QDate.getDateForEndOfMonth(year, 12));
-		}
 	}
 
 	// ===============================================================

@@ -233,9 +233,10 @@ public class SecurityPortfolio {
 
 	public boolean isEmptyForDate(QDate d) {
 		for (final SecurityPosition p : this.positions) {
-			final int ii = p.getTransactionIndexForDate(d);
+			int ii = GenericTxn.getTransactionIndexByDate(p.transactions, d, true);
 
-			if ((ii >= 0) && !Common.isEffectivelyZero(p.shrBalance.get(ii))) {
+			if ((ii >= 0) && (ii < p.transactions.size()) //
+					&& !Common.isEffectivelyZero(p.shrBalance.get(ii))) {
 				return false;
 			}
 		}

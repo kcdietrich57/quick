@@ -72,6 +72,12 @@ public abstract class GenericTxn //
 
 	private static final GenericTxn SEARCH = new NonInvestmentTxn(0);
 
+	public static int getTransactionIndexByDate(List<? extends GenericTxn> txns, QDate date, boolean before) {
+		SEARCH.setDate(date);
+
+		return getTransactionIndexByDate(txns, SEARCH, before);
+	}
+
 	private static int getTransactionIndexByDate(QDate date, boolean before) {
 		SEARCH.setDate(date);
 
@@ -87,7 +93,11 @@ public abstract class GenericTxn //
 	 * @return Index for insert
 	 */
 	private static int getTransactionIndexByDate(GenericTxn txn, boolean before) {
-		int idx = Collections.binarySearch(allTransactionsByDate, txn, c);
+		return getTransactionIndexByDate(allTransactionsByDate, txn, before);
+	}
+	
+	private static int getTransactionIndexByDate(List<? extends GenericTxn> txns, GenericTxn txn, boolean before) {
+		int idx = Collections.binarySearch(txns, txn, c);
 
 		if (idx < 0) {
 			idx = (-idx) - 1;
@@ -95,13 +105,13 @@ public abstract class GenericTxn //
 
 		while (before //
 				&& (idx > 0) //
-				&& allTransactionsByDate.get(idx - 1).getDate().equals(txn.getDate())) {
+				&& txns.get(idx - 1).getDate().equals(txn.getDate())) {
 			--idx;
 		}
 
 		while (!before //
 				&& (idx + 1 < allTransactionsByDate.size()) //
-				&& allTransactionsByDate.get(idx + 1).getDate().equals(txn.getDate())) {
+				&& txns.get(idx + 1).getDate().equals(txn.getDate())) {
 			++idx;
 		}
 

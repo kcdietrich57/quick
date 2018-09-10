@@ -5,7 +5,86 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.sun.javafx.geom.transform.GeneralTransform3D;
+
 public class SecurityPosition {
+	public static class SecurityPerformance {
+		private final SecurityPosition pos;
+
+		public final QDate start;
+		public final QDate end;
+		public final BigDecimal startShares;
+		public final BigDecimal endShares;
+
+		public BigDecimal contribution = BigDecimal.ZERO;
+		public BigDecimal match = BigDecimal.ZERO;
+		public BigDecimal dividend = BigDecimal.ZERO;
+		// public BigDecimal dividendShares = BigDecimal.ZERO;
+
+		public SecurityPerformance(SecurityPosition pos, QDate start, QDate end) {
+			this.pos = pos;
+			this.start = start;
+			this.end = end;
+
+			this.startShares = this.pos.getSharesForDate(this.start);
+			this.endShares = this.pos.getSharesForDate(this.end);
+
+			build();
+		}
+
+		private void build() {
+			for (int idx = GenericTxn.getTransactionIndexByDate( //
+					this.pos.transactions, start, true); idx < this.pos.transactions.size(); //
+					++idx) {
+				InvestmentTxn txn = this.pos.transactions.get(idx);
+
+				switch (txn.getAction()) {
+				case XIN:
+					this.contribution = this.contribution.add(txn.getAmount());
+					break;
+
+				case BUY:
+				case SELL:
+				case GRANT:
+				case VEST:
+				case EXERCISE:
+				case STOCKSPLIT:
+				case SHRS_IN:
+				case SHRS_OUT:
+					// These don't fit into any performance category (neutral)
+					break;
+
+				case REINV_DIV:
+				case REINV_INT:
+				case REINV_LG:
+				case REINV_SH:
+					this.dividend = this.dividend.add(txn.getAmount());
+					break;
+
+				default:
+					System.out.println();
+					break;
+				}
+			}
+		}
+
+		public BigDecimal getStartPrice() {
+			return pos.security.getPriceForDate(this.start).getPrice();
+		}
+
+		public BigDecimal getStartValue() {
+			return this.startShares.multiply(getStartPrice());
+		}
+
+		public BigDecimal getEndPrice() {
+			return pos.security.getPriceForDate(this.end).getPrice();
+		}
+
+		public BigDecimal getEndValue() {
+			return this.endShares.multiply(getEndPrice());
+		}
+	}
+
 	public Security security;
 	private BigDecimal startShares;
 	public BigDecimal endingShares;
@@ -92,8 +171,8 @@ public class SecurityPosition {
 			return this.endingShares.multiply(this.security.getPriceForDate(d).getPrice());
 		}
 
-		final int idx = getTransactionIndexForDate(d);
-		if (idx < 0) {
+		int idx = GenericTxn.getTransactionIndexByDate(this.transactions, d, true);
+		if ((idx < 0) || (idx >= this.transactions.size())) {
 			return BigDecimal.ZERO;
 		}
 
@@ -105,34 +184,16 @@ public class SecurityPosition {
 	}
 
 	public BigDecimal getSharesForDate(QDate date) {
-		int idx = getTransactionIndexForDate(date);
+		int idx = GenericTxn.getTransactionIndexByDate(this.transactions, date, true);
 
-		return (idx >= 0) ? shrBalance.get(idx) : BigDecimal.ZERO;
+		return ((idx >= 0) && (idx < this.transactions.size())) //
+				? shrBalance.get(idx) //
+				: BigDecimal.ZERO;
 	}
 
 	public void getPositionForDate(QDate d) {
 		// FIXME implement getPositionForDate
 		// throw new Exception("not implemented");
-	}
-
-	/**
-	 * Return the index of the last transaction within this position on or before a
-	 * given date.
-	 *
-	 * @param d
-	 * @return The index; -1 if no such transaction exists
-	 */
-	public int getTransactionIndexForDate(QDate d) {
-		final int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
-		if (idx < 0) {
-			return -1;
-		}
-
-		final BigDecimal tshrbal = this.shrBalance.get(idx);
-
-		return (Common.isEffectivelyZero(tshrbal)) //
-				? -1 //
-				: idx;
 	}
 
 	// name;numtx[;txid;shrbal]

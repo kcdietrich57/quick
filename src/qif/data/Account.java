@@ -633,9 +633,14 @@ public class Account {
 	private BigDecimal getCashValueForDate(QDate d) {
 		BigDecimal cashBal = null;
 
-		int idx = Common.findLastTransactionOnOrBeforeDate(this.transactions, d);
+		int idx = GenericTxn.getTransactionIndexByDate(this.transactions, d, true);
+
+		if (idx >= this.transactions.size()) {
+			idx = this.transactions.size() - 1;
+		}
+
 		while ((cashBal == null) && (idx >= 0)) {
-			final GenericTxn tx = this.transactions.get(idx);
+			GenericTxn tx = this.transactions.get(idx);
 			--idx;
 
 			cashBal = tx.runningTotal;

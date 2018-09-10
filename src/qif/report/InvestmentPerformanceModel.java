@@ -152,12 +152,7 @@ public class InvestmentPerformanceModel {
 	public static class SecuritySummary {
 		public final String name;
 
-		public BigDecimal startShares = BigDecimal.ZERO;
-		public BigDecimal startPrice = BigDecimal.ZERO;
-		public BigDecimal startValue = BigDecimal.ZERO;
-		public BigDecimal endShares = BigDecimal.ZERO;
-		public BigDecimal endPrice = BigDecimal.ZERO;
-		public BigDecimal endValue = BigDecimal.ZERO;
+		public final SecurityPosition.SecurityPerformance perf;
 
 		public BigDecimal contributions = BigDecimal.ZERO;
 		public BigDecimal matchingContributions = BigDecimal.ZERO;
@@ -167,34 +162,35 @@ public class InvestmentPerformanceModel {
 		// Calculated as (value-costBasis) for holdings at end
 		public BigDecimal gainLoss = BigDecimal.ZERO;
 
-		public SecuritySummary(Security sec) {
-			this.name = sec.getName();
+		public SecuritySummary(SecurityPosition pos, QDate start, QDate end) {
+			this.name = pos.security.getName();
+			this.perf = new SecurityPosition.SecurityPerformance(pos, start, end);
 		}
 
 		public BigDecimal diffShares() {
-			return this.endShares.subtract(this.startShares);
+			return this.perf.endShares.subtract(this.perf.startShares);
 		}
 
 		public BigDecimal diffPrice() {
-			return this.endPrice.subtract(this.startPrice);
+			return this.perf.getEndPrice().subtract(this.perf.getStartPrice());
 		}
 
 		public BigDecimal diffValue() {
-			return this.endValue.subtract(this.startValue);
+			return this.perf.getEndValue().subtract(this.perf.getStartValue());
 		}
 
 		public String toString() {
 			StringBuilder sb = new StringBuilder();
 
 			String start = String.format("%10s @%8s %10s", //
-					Common.formatAmount3(this.startShares).trim(), //
-					Common.formatAmount3(this.startPrice).trim(), //
-					Common.formatAmount(this.startValue).trim());
+					Common.formatAmount3(this.perf.startShares).trim(), //
+					Common.formatAmount3(this.perf.getStartPrice()).trim(), //
+					Common.formatAmount(this.perf.getStartValue()).trim());
 
 			String end = String.format("%10s @%8s %10s", //
-					Common.formatAmount3(this.endShares).trim(), //
-					Common.formatAmount3(this.endPrice).trim(), //
-					Common.formatAmount(this.endValue).trim());
+					Common.formatAmount3(this.perf.endShares).trim(), //
+					Common.formatAmount3(this.perf.getEndPrice()).trim(), //
+					Common.formatAmount(this.perf.getEndValue()).trim());
 
 			String diff = String.format("%10s @%8s %10s", //
 					Common.formatAmount3(this.diffShares()).trim(), //
@@ -287,8 +283,8 @@ public class InvestmentPerformanceModel {
 		sb.append("\n");
 
 		for (SecuritySummary ssum : this.securities) {
-			if (Common.isEffectivelyZero(ssum.startShares) //
-					&& Common.isEffectivelyZero(ssum.endShares)) {
+			if (Common.isEffectivelyZero(ssum.perf.startShares) //
+					&& Common.isEffectivelyZero(ssum.perf.endShares)) {
 				continue;
 			}
 
@@ -299,8 +295,8 @@ public class InvestmentPerformanceModel {
 		sb.append("\n");
 
 		for (SecuritySummary ssum : this.securities) {
-			if (!Common.isEffectivelyZero(ssum.startShares) //
-					|| !Common.isEffectivelyZero(ssum.endShares)) {
+			if (!Common.isEffectivelyZero(ssum.perf.startShares) //
+					|| !Common.isEffectivelyZero(ssum.perf.endShares)) {
 				continue;
 			}
 
@@ -447,17 +443,9 @@ public class InvestmentPerformanceModel {
 		for (SecurityPosition pos : SecurityPortfolio.portfolio.positions) {
 			SecuritySummary sum = ssums.get(pos.security);
 			if (sum == null) {
-				sum = new SecuritySummary(pos.security);
+				sum = new SecuritySummary(pos, startDate(), endDate());
 				ssums.put(pos.security, sum);
-
-				sum.startPrice = pos.security.getPriceForDate(startDate()).getPrice();
-				sum.endPrice = pos.security.getPriceForDate(endDate()).getPrice();
 			}
-
-			sum.startShares = sum.startShares.add(pos.getSharesForDate(startDate()));
-			sum.endShares = sum.endShares.add(pos.getSharesForDate(endDate()));
-			sum.startValue = sum.startValue.add(pos.getValueForDate(startDate()));
-			sum.endValue = sum.endValue.add(pos.getValueForDate(endDate()));
 		}
 
 		this.accounts = asums.toArray(new AccountSummary[0]);
