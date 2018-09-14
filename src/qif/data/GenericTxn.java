@@ -39,8 +39,16 @@ public abstract class GenericTxn //
 	}
 
 	public static List<GenericTxn> getTransactions(QDate start, QDate end) {
-		int idx1 = getTransactionIndexByDate(start, true);
-		int idx2 = getTransactionIndexByDate(end, false);
+		int idx1 = getTransactionIndexByDate(start);
+		int idx2 = getTransactionIndexByDate(end);
+
+		if (idx1 < 0) {
+			idx1 = -idx1 - 1;
+		}
+
+		if (idx2 < 0) {
+			idx2 = -idx2 - 1;
+		}
 
 		return allTransactionsByDate.subList(idx1, idx2);
 	}
@@ -59,7 +67,7 @@ public abstract class GenericTxn //
 	}
 
 	public static void addTransactionDate(GenericTxn txn) {
-		int idx = getTransactionIndexByDate(txn, false);
+		int idx = getTransactionInsertIndexByDate(txn);
 
 		allTransactionsByDate.add(idx, txn);
 	}
@@ -72,47 +80,160 @@ public abstract class GenericTxn //
 
 	private static final GenericTxn SEARCH = new NonInvestmentTxn(0);
 
-	public static int getTransactionIndexByDate(List<? extends GenericTxn> txns, QDate date, boolean before) {
-		SEARCH.setDate(date);
-
-		return getTransactionIndexByDate(txns, SEARCH, before);
+	/**
+	 * Indicate which transaction index to return from get by date.
+	 * 
+	 * @value INSERT The index at which to insert a new transaction
+	 * @value FIRST The first transaction on the date
+	 * @value LAST The last transaction on the date
+	 */
+	public static enum TxIndexType {
+		INSERT, FIRST, LAST
 	}
 
-	private static int getTransactionIndexByDate(QDate date, boolean before) {
+	public static int getLastTransactionIndexOnOrBeforeDate( //
+			List<? extends GenericTxn> txns, QDate d) {
+		SEARCH.date = d;
+		int idx = getTransactionIndexByDate(txns, SEARCH, TxIndexType.LAST);
+
+		int n = (idx < 0) ? -idx - 1 : idx;
+		if (n >= txns.size()) {
+			n = txns.size() - 1;
+		}
+
+		GenericTxn tx = txns.get(n);
+
+		if (tx.getDate().equals(d)) {
+			return n;
+		}
+
+		return (n != 0) ? n : -1;
+	}
+
+	/**
+	 * Return the first transaction on a date.
+	 * 
+	 * @return -1 if no such transaction exists
+	 */
+	private static int getTransactionIndexByDate(QDate date) {
 		SEARCH.setDate(date);
 
-		return getTransactionIndexByDate(SEARCH, before);
+		return getTransactionIndexByDate(allTransactionsByDate, SEARCH, TxIndexType.FIRST);
+	}
+
+	/**
+	 * Return the first transaction on a transaction's date.
+	 * 
+	 * @return -1 if no such transaction exists
+	 */
+	private static int getTransactionIndexByDate(GenericTxn txn) {
+		return getTransactionIndexByDate(allTransactionsByDate, txn, TxIndexType.FIRST);
+	}
+
+	/**
+	 * Return the first transaction on a date in a sorted list.
+	 * 
+	 * @return -1 if no such transaction exists
+	 */
+	private static int getTransactionIndexByDate(List<? extends GenericTxn> txns, //
+			QDate date, TxIndexType which) {
+		SEARCH.setDate(date);
+
+		return getTransactionIndexByDate(txns, SEARCH, which);
 	}
 
 	/**
 	 * Return the index for inserting a transaction by date
 	 * 
 	 * @param txn
-	 * @param before If true, the insertion point before other txns on the date
+	 * @param before If true, the insertion point before the first txn on the date
 	 *               otherwise, the point after all txns on the date.
 	 * @return Index for insert
 	 */
-	private static int getTransactionIndexByDate(GenericTxn txn, boolean before) {
-		return getTransactionIndexByDate(allTransactionsByDate, txn, before);
+	private static int getTransactionInsertIndexByDate(QDate date) {
+		SEARCH.setDate(date);
+
+		return getTransactionIndexByDate(allTransactionsByDate, SEARCH, TxIndexType.INSERT);
 	}
-	
-	private static int getTransactionIndexByDate(List<? extends GenericTxn> txns, GenericTxn txn, boolean before) {
+
+	/**
+	 * Return the index for inserting a transaction by a transaction's date
+	 * 
+	 * @param txn
+	 * @param before If true, the insertion point before the first txn on the date
+	 *               otherwise, the point after all txns on the date.
+	 * @return Index for insert
+	 */
+	private static int getTransactionInsertIndexByDate(GenericTxn txn) {
+		return getTransactionIndexByDate(allTransactionsByDate, txn, TxIndexType.INSERT);
+	}
+
+	/**
+	 * Return the index for inserting a transaction into a sorted list by date
+	 * 
+	 * @param txn
+	 * @param before If true, the insertion point before the first txn on the date
+	 *               otherwise, the point after all txns on the date.
+	 * @return Index for insert
+	 */
+	private static int getTransactionInsertIndexByDate(List<? extends GenericTxn> txns, QDate date) {
+		SEARCH.setDate(date);
+
+		return getTransactionIndexByDate(txns, SEARCH, TxIndexType.INSERT);
+	}
+
+	/**
+	 * Return the index of a transaction in a list sorted by date
+	 * 
+	 * @param txn
+	 * @param TxIndexType If FIRST/LAST, the index of the first/last txn on that
+	 *                    date; If INSERT the index after all txns on or before the
+	 *                    date.
+	 * @return Index; -(insert index + 1) if FIRST/LAST and no match exists
+	 */
+	private static int getTransactionIndexByDate(List<? extends GenericTxn> txns, GenericTxn txn, TxIndexType which) {
 		int idx = Collections.binarySearch(txns, txn, c);
 
 		if (idx < 0) {
-			idx = (-idx) - 1;
+			int n = -idx - 1;
+			if (which == TxIndexType.INSERT) {
+				return n;
+			}
+
+			if (n >= txns.size()) {
+				n = txns.size() - 1;
+			}
+
+			if (!txns.get(n).getDate().equals(txn.getDate())) {
+				return idx;
+			}
+
+			idx = n;
 		}
 
-		while (before //
-				&& (idx > 0) //
-				&& txns.get(idx - 1).getDate().equals(txn.getDate())) {
-			--idx;
-		}
+		int sz = txns.size();
 
-		while (!before //
-				&& (idx + 1 < allTransactionsByDate.size()) //
-				&& txns.get(idx + 1).getDate().equals(txn.getDate())) {
-			++idx;
+		switch (which) {
+		case FIRST:
+			while ((idx > 0) //
+					&& txns.get(idx - 1).getDate().equals(txn.getDate())) {
+				--idx;
+			}
+			break;
+
+		case LAST:
+			while (((idx + 1) < sz) //
+					&& txns.get(idx + 1).getDate().equals(txn.getDate())) {
+				++idx;
+			}
+			break;
+
+		case INSERT:
+			while ((idx < sz) //
+					&& txns.get(idx).getDate().equals(txn.getDate())) {
+				++idx;
+			}
+			break;
 		}
 
 		return idx;

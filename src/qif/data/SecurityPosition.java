@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.sun.javafx.geom.transform.GeneralTransform3D;
-
 public class SecurityPosition {
 	public static class SecurityPerformance {
 		private final SecurityPosition pos;
@@ -33,10 +31,14 @@ public class SecurityPosition {
 		}
 
 		private void build() {
-			for (int idx = GenericTxn.getTransactionIndexByDate( //
-					this.pos.transactions, start, true); idx < this.pos.transactions.size(); //
-					++idx) {
-				InvestmentTxn txn = this.pos.transactions.get(idx);
+			int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate( //
+					this.pos.transactions, start);
+			if (idx < 0) {
+				return;
+			}
+
+			while (idx < this.pos.transactions.size()) {
+				InvestmentTxn txn = this.pos.transactions.get(idx++);
 
 				switch (txn.getAction()) {
 				case XIN:
@@ -171,8 +173,9 @@ public class SecurityPosition {
 			return this.endingShares.multiply(this.security.getPriceForDate(d).getPrice());
 		}
 
-		int idx = GenericTxn.getTransactionIndexByDate(this.transactions, d, true);
-		if ((idx < 0) || (idx >= this.transactions.size())) {
+		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(this.transactions, d);
+
+		if (idx < 0) {
 			return BigDecimal.ZERO;
 		}
 
@@ -184,11 +187,9 @@ public class SecurityPosition {
 	}
 
 	public BigDecimal getSharesForDate(QDate date) {
-		int idx = GenericTxn.getTransactionIndexByDate(this.transactions, date, true);
+		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(this.transactions, date);
 
-		return ((idx >= 0) && (idx < this.transactions.size())) //
-				? shrBalance.get(idx) //
-				: BigDecimal.ZERO;
+		return (idx >= 0) ? shrBalance.get(idx) : BigDecimal.ZERO;
 	}
 
 	public void getPositionForDate(QDate d) {

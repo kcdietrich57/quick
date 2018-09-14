@@ -85,8 +85,10 @@ public class NonInvestmentTxn extends GenericTxn {
 
 	public String toStringLong() {
 		String s = ((this.stmtdate != null) ? "*" : " ") + "Tx" + this.txid + ":";
-		s += " date=" + getDate().toString();
-		s += " acct=" + Account.getAccountByID(this.acctid).getName();
+		QDate d = getDate();
+		s += " date=" + ((d != null) ? getDate().toString() : "null");
+		Account a = Account.getAccountByID(this.acctid);
+		s += " acct=" + ((a != null) ? a.getName() : "null");
 		s += " clr:" + this.clearedStatus;
 		s += " num=" + this.chkNumber;
 		s += " payee=" + getPayee();
@@ -101,14 +103,14 @@ public class NonInvestmentTxn extends GenericTxn {
 
 		s += " bal=" + this.runningTotal;
 
-		if (!this.address.isEmpty()) {
+		if ((this.address != null) && !this.address.isEmpty()) {
 			s += "\n  addr= ";
-			for (final String a : this.address) {
-				s += "\n  " + a;
+			for (final String addr : this.address) {
+				s += "\n  " + addr;
 			}
 		}
 
-		if (!this.split.isEmpty()) {
+		if ((this.split != null) && !this.split.isEmpty()) {
 			s += "\n  splits \n";
 
 			for (final SimpleTxn txn : this.split) {

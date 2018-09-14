@@ -11,6 +11,12 @@ import java.util.List;
 
 import qif.ui.MainWindow;
 
+class Foo {
+	public enum InvCategory {
+		Contribution, Match, Grant, Dividend,
+	}
+}
+
 public class Account {
 	/**
 	 * This list of accounts may not contain nulls, size == numAccounts, index is
@@ -71,6 +77,10 @@ public class Account {
 		return accts;
 	}
 
+	public static void setCurrAccount(Account a) {
+		currAccount = a;
+	}
+
 	public static void addAccount(Account acct) {
 		if (acct.acctid == 0) {
 			acct.acctid = getNextAccountID();
@@ -83,7 +93,7 @@ public class Account {
 		accountsByID.set(acct.acctid, acct);
 		accounts.add(acct);
 
-		currAccount = acct;
+		setCurrAccount(acct);
 
 		Collections.sort(accounts, (a1, a2) -> {
 			if (a1 == null) {
@@ -175,7 +185,7 @@ public class Account {
 		return (this.transactions != null) ? this.transactions.get(0).getDate() : QDate.today();
 	}
 
-	private boolean isOpenAsOf(QDate d) {
+	public boolean isOpenAsOf(QDate d) {
 		QDate openDate = getOpenDate();
 
 		return (openDate != null) && (openDate.compareTo(d) <= 0);
@@ -633,15 +643,10 @@ public class Account {
 	private BigDecimal getCashValueForDate(QDate d) {
 		BigDecimal cashBal = null;
 
-		int idx = GenericTxn.getTransactionIndexByDate(this.transactions, d, true);
+		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(this.transactions, d);
 
-		if (idx >= this.transactions.size()) {
-			idx = this.transactions.size() - 1;
-		}
-
-		while ((cashBal == null) && (idx >= 0)) {
-			GenericTxn tx = this.transactions.get(idx);
-			--idx;
+		while ((idx >= 0) && (cashBal == null)) {
+			GenericTxn tx = this.transactions.get(idx--);
 
 			cashBal = tx.runningTotal;
 		}

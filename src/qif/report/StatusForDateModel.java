@@ -141,12 +141,16 @@ public class StatusForDateModel {
 
 	private void build() {
 		for (Account a : Account.getAccounts()) {
+			if (!a.isOpenAsOf(this.date)) {
+				continue;
+			}
+
 			BigDecimal amt = a.getValueForDate(this.date);
 
 			if (!a.isOpenOn(this.date) //
-					&& Common.isEffectivelyZero(amt) //
-					&& (a.getFirstUnclearedTransaction() == null) //
-					&& a.securities.isEmptyForDate(this.date)) {
+					|| (Common.isEffectivelyZero(amt) //
+							&& (a.getFirstUnclearedTransaction() == null) //
+							&& a.securities.isEmptyForDate(this.date))) {
 				continue;
 			}
 

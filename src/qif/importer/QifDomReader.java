@@ -1275,7 +1275,7 @@ class Cleaner {
 	private void findMatchesForTransfer(Account acct, SimpleTxn txn, QDate date, boolean strict) {
 		matchingTxns.clear();
 
-		final int idx = GenericTxn.getTransactionIndexByDate(acct.transactions, date, true);
+		final int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(acct.transactions, date);
 		if (idx < 0) {
 			return;
 		}
@@ -1763,7 +1763,7 @@ class AccountProcessor {
 
 			if (existing != null) {
 				updateAccount(existing, acct);
-				Account.currAccount = existing;
+				Account.setCurrAccount(existing);
 			} else {
 				acct.acctid = this.nextAccountID++;
 				Account.addAccount(acct);
