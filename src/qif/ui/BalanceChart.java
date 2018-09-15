@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.knowm.xchart.CategoryChart;
 import org.knowm.xchart.CategoryChartBuilder;
-import org.knowm.xchart.SwingWrapper;
 import org.knowm.xchart.style.CategoryStyler;
 import org.knowm.xchart.style.Styler.LegendPosition;
 
@@ -27,7 +26,8 @@ public class BalanceChart {
 		double[][] yData;
 
 		public BalanceChartData(QDate start, QDate end) {
-			List<StatusForDateModel> balances = NetWorthReporter.getMonthlyNetWorth(start, end);
+			List<StatusForDateModel> balances = NetWorthReporter.getNetWorthData( //
+					start, end, MainWindow.instance.reportUnit);
 
 			setModel(balances);
 		}
@@ -56,21 +56,17 @@ public class BalanceChart {
 	public CategoryChart chart = null;
 
 	public void create() {
-		QDate end = MainWindow.instance.asOfDate;
-		QDate start = end.addDays(-3650);
+		QDate start = MainWindow.instance.getIntervalStart();
+		QDate end = MainWindow.instance.getIntervalEnd();
 
 		create(start, end);
 	}
 
 	public void update() {
-		QDate end = MainWindow.instance.asOfDate;
-		QDate start = end.addDays(-3650);
+		QDate start = MainWindow.instance.getIntervalStart();
+		QDate end = MainWindow.instance.getIntervalEnd();
 
 		update(start, end);
-	}
-
-	private void display() {
-		new SwingWrapper<CategoryChart>(this.chart).displayChart();
 	}
 
 	public void create(QDate start, QDate end) {

@@ -15,7 +15,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
 import org.knowm.xchart.XChartPanel;
-import org.knowm.xchart.XYChart;
 import org.knowm.xchart.internal.chartpart.Chart;
 
 import qif.data.GenericTxn;
@@ -54,11 +53,69 @@ public class MainWindow extends JPanel {
 	// AsOfDatePanel
 	public TimeSliderPanel asOfDatePanel;
 
+	public enum IntervalLength {
+		All, TenYear, FiveYear, OneYear, Quarter, Month, Week, Day
+	}
+
+	public enum IntervalUnit {
+		Year, Quarter, Month, Week, Day;
+
+		public QDate nextDate(QDate d) {
+			int year = d.getYear();
+			int month = d.getMonth();
+			int day = d.getDay();
+
+			switch (this) {
+			case Year:
+				++year;
+				break;
+			case Quarter:
+				month += 3;
+				break;
+			case Month:
+				++month;
+				break;
+			case Week:
+				day += 7;
+				break;
+			case Day:
+				++day;
+				break;
+			}
+
+			if (month > 12) {
+				++year;
+				month -= 12;
+			}
+
+			QDate dd = new QDate(year, month, 1).getLastDayOfMonth();
+			if (day > dd.getDay()) {
+				if (this != Week && this != Day) {
+					day = dd.getDay();
+				} else {
+					++month;
+					day -= dd.getDay();
+
+					if (month > 12) {
+						++year;
+						month -= 12;
+					}
+				}
+			}
+
+			return new QDate(year, month, day);
+		}
+	}
+
 	public QDate asOfDate = QDate.today();
+	public IntervalLength reportPeriod = IntervalLength.All;
+	public IntervalUnit reportUnit = IntervalUnit.Year;
 
 	public Dashboard dashboardPanel;
 	public JPanel chartPanel;
-	public BalanceChart balChart;
+	private BalanceChart balChart;
+	private NetWorthChart nwChart;
+	private ISIOptionsChart optChart;
 	private JSplitPane accountViewSplit;
 
 	public MainWindow() {
@@ -74,6 +131,80 @@ public class MainWindow extends JPanel {
 		add(contentPanel, BorderLayout.CENTER);
 		add(this.asOfDatePanel, BorderLayout.SOUTH);
 		// add(new JButton("Status Bar Goes Here"), BorderLayout.SOUTH);
+	}
+
+	public QDate getIntervalStart() {
+		QDate first = this.asOfDate;
+
+		switch (this.reportPeriod) {
+		case Day:
+			first = first.addDays(-1);
+			break;
+		case Week:
+			first = first.addDays(-7);
+			break;
+		case Month:
+			first = first.addMonths(-1);
+			break;
+		case Quarter:
+			first = first.addMonths(-3);
+			break;
+		case OneYear:
+			first = first.addMonths(-12);
+			break;
+		case FiveYear:
+			first = first.addMonths(-60);
+			break;
+		case TenYear:
+			first = first.addMonths(-120);
+			break;
+
+		case All:
+			return GenericTxn.getFirstTransactionDate();
+		}
+
+		if (first.compareTo(GenericTxn.getFirstTransactionDate()) < 0) {
+			first = GenericTxn.getFirstTransactionDate();
+		}
+
+		return first;
+	}
+
+	public QDate getIntervalEnd() {
+		QDate last = getIntervalStart();
+
+		switch (this.reportPeriod) {
+		case Day:
+			last = last.addDays(1);
+			break;
+		case Week:
+			last = last.addDays(7);
+			break;
+		case Month:
+			last = last.addMonths(1);
+			break;
+		case Quarter:
+			last = last.addMonths(3);
+			break;
+		case OneYear:
+			last = last.addMonths(12);
+			break;
+		case FiveYear:
+			last = last.addMonths(60);
+			break;
+		case TenYear:
+			last = last.addMonths(120);
+			break;
+
+		case All:
+			return GenericTxn.getLastTransactionDate();
+		}
+
+		if (last.compareTo(GenericTxn.getLastTransactionDate()) > 0) {
+			last = GenericTxn.getLastTransactionDate();
+		}
+
+		return last;
 	}
 
 	public void loadProperties() {
@@ -168,14 +299,16 @@ public class MainWindow extends JPanel {
 		this.chartPanel = new JPanel(new BorderLayout());
 		JTabbedPane chartTabs = new JTabbedPane();
 
-		XYChart nwChart = NetWorthChart.createNetWorthChart();
+		this.nwChart = new NetWorthChart();
+		this.nwChart.create();
 		this.balChart = new BalanceChart();
 		this.balChart.create();
-		XYChart optChart = NetWorthChart.createISIOptionsChart();
+		this.optChart = new ISIOptionsChart();
+		this.optChart.create();
 
-		XChartPanel<Chart> nwChartPanel = new XChartPanel<Chart>(nwChart);
+		XChartPanel<Chart> nwChartPanel = new XChartPanel<Chart>(nwChart.chart);
 		XChartPanel<Chart> balChartPanel = new XChartPanel<Chart>(balChart.chart);
-		XChartPanel<Chart> optChartPanel = new XChartPanel<Chart>(optChart);
+		XChartPanel<Chart> optChartPanel = new XChartPanel<Chart>(optChart.chart);
 		// this.chartView.validate();
 
 		chartTabs.addTab("Balances", balChartPanel);
@@ -184,9 +317,12 @@ public class MainWindow extends JPanel {
 
 		this.chartPanel.add(chartTabs, BorderLayout.CENTER);
 	}
-	
-	private void updateChartPanel() {
+
+	public void updateChartPanel() {
 		this.balChart.update();
+		this.nwChart.update();
+		this.optChart.update();
+
 		this.chartPanel.repaint();
 	}
 

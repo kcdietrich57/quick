@@ -50,11 +50,13 @@ public class NetWorthReporter {
 		return retdate;
 	}
 
-	public static List<StatusForDateModel> getMonthlyNetWorth() {
-		return getMonthlyNetWorth(null, MainWindow.instance.asOfDate);
+	public static List<StatusForDateModel> getNetWorthData() {
+		return getNetWorthData(null, MainWindow.instance.asOfDate, //
+				MainWindow.instance.reportUnit);
 	}
 
-	public static List<StatusForDateModel> getMonthlyNetWorth(QDate start, QDate end) {
+	public static List<StatusForDateModel> getNetWorthData( //
+			QDate start, QDate end, MainWindow.IntervalUnit unit) {
 		List<StatusForDateModel> balances = new ArrayList<StatusForDateModel>();
 
 		QDate d = (start != null) ? start : getFirstTransactionDate();
@@ -62,19 +64,14 @@ public class NetWorthReporter {
 
 		int year = d.getYear();
 		int month = d.getMonth();
+			d = QDate.getDateForEndOfMonth(year, month);
 
 		do {
-			d = QDate.getDateForEndOfMonth(year, month);
 			StatusForDateModel b = new StatusForDateModel(d);
 
 			balances.add(b);
 
-			if (month == 12) {
-				++year;
-				month = 1;
-			} else {
-				++month;
-			}
+			d = unit.nextDate(d);
 		} while (d.compareTo(lastTxDate) <= 0);
 
 		return balances;

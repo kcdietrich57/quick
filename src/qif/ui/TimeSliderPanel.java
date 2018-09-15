@@ -5,11 +5,14 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Hashtable;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoundedRangeModel;
 import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -62,18 +65,64 @@ public class TimeSliderPanel extends JPanel {
 		this.asOfDateSlider.setPaintLabels(true);
 
 		this.asOfDateSliderLabel = new JLabel("FOO");
-		this.asOfDateSliderLabel.setFont(new Font("Helvetica", Font.BOLD, 24));
+		this.asOfDateSliderLabel.setFont(new Font("Helvetica", Font.BOLD, 12));
 		this.asOfDateSliderLabel.setForeground(Color.BLUE);
 		this.asOfDateSliderLabel.setPreferredSize(new Dimension(100, 20));
 
 		this.asOfDateLabel = new JLabel("BAR");
-		this.asOfDateLabel.setFont(new Font("Helvetica", Font.BOLD, 18));
+		this.asOfDateLabel.setFont(new Font("Helvetica", Font.BOLD, 12));
 		this.asOfDateLabel.setForeground(Color.GRAY);
 
-		JPanel datePanel = new JPanel(new GridLayout(2, 1));
+		JPanel datePanel = new JPanel(new GridLayout(1, 3));
 		datePanel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
-		datePanel.add(this.asOfDateSliderLabel);
+
+		MainWindow.IntervalLength[] periods = new MainWindow.IntervalLength[] { //
+				MainWindow.IntervalLength.Day, //
+				MainWindow.IntervalLength.Week, //
+				MainWindow.IntervalLength.Month, //
+				MainWindow.IntervalLength.Quarter, //
+				MainWindow.IntervalLength.OneYear, //
+				MainWindow.IntervalLength.FiveYear, //
+				MainWindow.IntervalLength.TenYear, //
+				MainWindow.IntervalLength.All //
+		};
+
+		JComboBox<MainWindow.IntervalLength> periodCombo = new JComboBox<MainWindow.IntervalLength>(periods);
+		periodCombo.setSelectedItem(MainWindow.IntervalLength.All);
+
+		periodCombo.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Object o = periodCombo.getSelectedItem();
+				MainWindow.instance.reportPeriod = (MainWindow.IntervalLength) o;
+				MainWindow.instance.updateChartPanel();
+			}
+		});
+
+		datePanel.add(periodCombo);
+
+		MainWindow.IntervalUnit[] units = new MainWindow.IntervalUnit[] { //
+				MainWindow.IntervalUnit.Day, //
+				MainWindow.IntervalUnit.Week, //
+				MainWindow.IntervalUnit.Month, //
+				MainWindow.IntervalUnit.Quarter, //
+				MainWindow.IntervalUnit.Year //
+		};
+
+		JComboBox<MainWindow.IntervalUnit> unitsCombo = new JComboBox<MainWindow.IntervalUnit>(units);
+		unitsCombo.setSelectedItem(MainWindow.IntervalUnit.Year);
+
+		unitsCombo.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Object o = unitsCombo.getSelectedItem();
+				MainWindow.instance.reportUnit = (MainWindow.IntervalUnit) o;
+				MainWindow.instance.updateChartPanel();
+			}
+		});
+
+		datePanel.add(unitsCombo);
+
 		datePanel.add(this.asOfDateLabel);
+		datePanel.add(this.asOfDateSliderLabel);
 
 		add(datePanel, BorderLayout.WEST);
 		add(this.asOfDateSlider, BorderLayout.CENTER);
