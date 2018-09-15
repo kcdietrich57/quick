@@ -93,8 +93,7 @@ public abstract class GenericTxn //
 
 	public static int getLastTransactionIndexOnOrBeforeDate( //
 			List<? extends GenericTxn> txns, QDate d) {
-		SEARCH.date = d;
-		int idx = getTransactionIndexByDate(txns, SEARCH, TxIndexType.LAST);
+		int idx = getTransactionInsertIndexByDate(txns, d);
 
 		int n = (idx < 0) ? -idx - 1 : idx;
 		if (n >= txns.size()) {
@@ -102,12 +101,13 @@ public abstract class GenericTxn //
 		}
 
 		GenericTxn tx = txns.get(n);
+		int diff = tx.getDate().compareTo(d);
 
-		if (tx.getDate().equals(d)) {
+		if (diff <= 0) {
 			return n;
 		}
 
-		return (n != 0) ? n : -1;
+		return (n > 0) ? n - 1 : -1;
 	}
 
 	/**
@@ -122,47 +122,7 @@ public abstract class GenericTxn //
 	}
 
 	/**
-	 * Return the first transaction on a transaction's date.
-	 * 
-	 * @return -1 if no such transaction exists
-	 */
-	private static int getTransactionIndexByDate(GenericTxn txn) {
-		return getTransactionIndexByDate(allTransactionsByDate, txn, TxIndexType.FIRST);
-	}
-
-	/**
-	 * Return the first transaction on a date in a sorted list.
-	 * 
-	 * @return -1 if no such transaction exists
-	 */
-	private static int getTransactionIndexByDate(List<? extends GenericTxn> txns, //
-			QDate date, TxIndexType which) {
-		SEARCH.setDate(date);
-
-		return getTransactionIndexByDate(txns, SEARCH, which);
-	}
-
-	/**
-	 * Return the index for inserting a transaction by date
-	 * 
-	 * @param txn
-	 * @param before If true, the insertion point before the first txn on the date
-	 *               otherwise, the point after all txns on the date.
-	 * @return Index for insert
-	 */
-	private static int getTransactionInsertIndexByDate(QDate date) {
-		SEARCH.setDate(date);
-
-		return getTransactionIndexByDate(allTransactionsByDate, SEARCH, TxIndexType.INSERT);
-	}
-
-	/**
-	 * Return the index for inserting a transaction by a transaction's date
-	 * 
-	 * @param txn
-	 * @param before If true, the insertion point before the first txn on the date
-	 *               otherwise, the point after all txns on the date.
-	 * @return Index for insert
+	 * Return the index for inserting a transaction into a list sorted by date
 	 */
 	private static int getTransactionInsertIndexByDate(GenericTxn txn) {
 		return getTransactionIndexByDate(allTransactionsByDate, txn, TxIndexType.INSERT);

@@ -10,6 +10,7 @@ import qif.data.QDate;
 import qif.report.StatusForDateModel.AccountSummary;
 import qif.report.StatusForDateModel.Section;
 import qif.report.StatusForDateModel.SecuritySummary;
+import qif.ui.MainWindow;
 
 public class NetWorthReporter {
 
@@ -50,10 +51,14 @@ public class NetWorthReporter {
 	}
 
 	public static List<StatusForDateModel> getMonthlyNetWorth() {
+		return getMonthlyNetWorth(null, MainWindow.instance.asOfDate);
+	}
+
+	public static List<StatusForDateModel> getMonthlyNetWorth(QDate start, QDate end) {
 		List<StatusForDateModel> balances = new ArrayList<StatusForDateModel>();
 
-		QDate d = getFirstTransactionDate();
-		QDate lastTxDate = QDate.today(); // getLastTransactionDate();
+		QDate d = (start != null) ? start : getFirstTransactionDate();
+		QDate lastTxDate = (end != null) ? end : QDate.today(); // getLastTransactionDate();
 
 		int year = d.getYear();
 		int month = d.getMonth();

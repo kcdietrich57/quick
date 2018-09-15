@@ -59,7 +59,7 @@ public class MainWindow extends JPanel {
 
 	public Dashboard dashboardPanel;
 	public JPanel chartPanel;
-
+	public CategoryChart balChart;
 	private JSplitPane accountViewSplit;
 
 	public MainWindow() {
@@ -135,6 +135,8 @@ public class MainWindow extends JPanel {
 			this.dashboardPanel.changeDate();
 			this.accountNavigationPanel.refreshAccountList();
 			this.summaryPanel.updateValues();
+
+			updateChartPanel();
 		}
 	}
 
@@ -164,11 +166,11 @@ public class MainWindow extends JPanel {
 
 	@SuppressWarnings("rawtypes")
 	private void createChartsPanel() {
-		chartPanel = new JPanel(new BorderLayout());
+		this.chartPanel = new JPanel(new BorderLayout());
 		JTabbedPane chartTabs = new JTabbedPane();
 
 		XYChart nwChart = NetWorthChart.createNetWorthChart();
-		CategoryChart balChart = NetWorthChart.createBalancesChart();
+		this.balChart = NetWorthChart.createBalancesChart();
 		XYChart optChart = NetWorthChart.createISIOptionsChart();
 
 		XChartPanel<Chart> nwChartPanel = new XChartPanel<Chart>(nwChart);
@@ -181,6 +183,11 @@ public class MainWindow extends JPanel {
 		chartTabs.addTab("ISI Options", optChartPanel);
 
 		this.chartPanel.add(chartTabs, BorderLayout.CENTER);
+	}
+	
+	private void updateChartPanel() {
+		NetWorthChart.updateBalancesChart(this.balChart);
+		this.chartPanel.repaint();
 	}
 
 	public void addAccountSelectionListener(AccountSelectionListener listener) {

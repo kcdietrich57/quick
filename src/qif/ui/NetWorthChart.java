@@ -112,13 +112,68 @@ public class NetWorthChart {
 		return chart;
 	}
 
+	// Series
+	static final String[] categories = new String[] { //
+			"Loan", "Credit Card", "Asset", "Retirement", "Investment", "Bank" //
+	};
+
+	static final SectionInfo[] sinfo = SectionInfo.sectionInfo;
+
+	static double[] xData;
+	static double[][] yData;
+
+	public static void updateBalancesChart(CategoryChart chart) {
+		QDate end = MainWindow.instance.asOfDate;
+		QDate start = end.addDays(-3650);
+
+		createBalancesChartData(start, end);
+
+		for (int sectionNum = 0; sectionNum < sinfo.length; ++sectionNum) {
+			for (int catNum = 0; catNum < sinfo.length; ++catNum) {
+				if (sinfo[catNum].label.equals(categories[sectionNum])) {
+					//chart.addSeries(sinfo[catNum].label, xData, yData[catNum]);
+					chart.updateCategorySeries(sinfo[catNum].label, xData, yData[catNum], null);
+				}
+			}
+		}
+	}
+
 	public static CategoryChart createBalancesChart() {
-		List<StatusForDateModel> balances = NetWorthReporter.getMonthlyNetWorth();
+		QDate end = MainWindow.instance.asOfDate;
+		QDate start = end.addDays(-3650);
 
-		SectionInfo[] sinfo = SectionInfo.sectionInfo;
+		return createBalancesChart(null, end);
+	}
 
-		double[] xData = new double[balances.size()];
-		double[][] yData = new double[sinfo.length][balances.size()];
+	public static CategoryChart createBalancesChart(QDate start, QDate end) {
+		createBalancesChartData(start, end);
+
+		CategoryChart chart = new CategoryChartBuilder().width(800).height(600) //
+				.title("Net Worth Chart") //
+				.xAxisTitle("Month").yAxisTitle("K$").build();
+
+		// Customize Chart
+		CategoryStyler styler = chart.getStyler();
+		styler.setLegendPosition(LegendPosition.InsideNW);
+		styler.setAxisTitlesVisible(false);
+		styler.setStacked(true);
+
+		for (int sectionNum = 0; sectionNum < sinfo.length; ++sectionNum) {
+			for (int catNum = 0; catNum < sinfo.length; ++catNum) {
+				if (sinfo[catNum].label.equals(categories[sectionNum])) {
+					chart.addSeries(sinfo[catNum].label, xData, yData[catNum]);
+				}
+			}
+		}
+
+		return chart;
+	}
+
+	public static void createBalancesChartData(QDate start, QDate end) {
+		List<StatusForDateModel> balances = NetWorthReporter.getMonthlyNetWorth(start, end);
+
+		xData = new double[balances.size()];
+		yData = new double[sinfo.length][balances.size()];
 
 		for (int dateIndex = 0; dateIndex < balances.size(); ++dateIndex) {
 			Section[] sections = balances.get(dateIndex).sections;
@@ -132,35 +187,13 @@ public class NetWorthChart {
 			// yData[sections.length][dateIndex] = //
 			// Math.floor(balances.get(dateIndex).netWorth.floatValue() / 1000);
 		}
-
-		CategoryChart chart = new CategoryChartBuilder().width(800).height(600) //
-				.title("Net Worth Chart") //
-				.xAxisTitle("Month").yAxisTitle("K$").build();
-
-		// Customize Chart
-		CategoryStyler styler = chart.getStyler();
-		styler.setLegendPosition(LegendPosition.InsideNW);
-		styler.setAxisTitlesVisible(false);
-		styler.setStacked(true);
-
-		// Series
-		String[] categories = new String[] { //
-				"Loan", "Credit Card", "Asset", "Retirement", "Investment", "Bank" //
-		};
-
-		for (int sectionNum = 0; sectionNum < sinfo.length; ++sectionNum) {
-			for (int catNum = 0; catNum < sinfo.length; ++catNum) {
-				if (sinfo[catNum].label.equals(categories[sectionNum])) {
-					chart.addSeries(sinfo[catNum].label, xData, yData[catNum]);
-				}
-			}
-		}
-
-		return chart;
 	}
 
 	public static XYChart createNetWorthChart() {
-		List<StatusForDateModel> balances = NetWorthReporter.getMonthlyNetWorth();
+		QDate endDate = MainWindow.instance.asOfDate;
+		QDate startDate = endDate.addDays(-365);
+
+		List<StatusForDateModel> balances = NetWorthReporter.getMonthlyNetWorth(startDate, endDate);
 
 		double[] xData = new double[balances.size()];
 		double[] yData = new double[balances.size()];
