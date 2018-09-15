@@ -14,7 +14,6 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
-import org.knowm.xchart.CategoryChart;
 import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.internal.chartpart.Chart;
@@ -59,7 +58,7 @@ public class MainWindow extends JPanel {
 
 	public Dashboard dashboardPanel;
 	public JPanel chartPanel;
-	public CategoryChart balChart;
+	public BalanceChart balChart;
 	private JSplitPane accountViewSplit;
 
 	public MainWindow() {
@@ -170,11 +169,12 @@ public class MainWindow extends JPanel {
 		JTabbedPane chartTabs = new JTabbedPane();
 
 		XYChart nwChart = NetWorthChart.createNetWorthChart();
-		this.balChart = NetWorthChart.createBalancesChart();
+		this.balChart = new BalanceChart();
+		this.balChart.create();
 		XYChart optChart = NetWorthChart.createISIOptionsChart();
 
 		XChartPanel<Chart> nwChartPanel = new XChartPanel<Chart>(nwChart);
-		XChartPanel<Chart> balChartPanel = new XChartPanel<Chart>(balChart);
+		XChartPanel<Chart> balChartPanel = new XChartPanel<Chart>(balChart.chart);
 		XChartPanel<Chart> optChartPanel = new XChartPanel<Chart>(optChart);
 		// this.chartView.validate();
 
@@ -186,7 +186,7 @@ public class MainWindow extends JPanel {
 	}
 	
 	private void updateChartPanel() {
-		NetWorthChart.updateBalancesChart(this.balChart);
+		this.balChart.update();
 		this.chartPanel.repaint();
 	}
 

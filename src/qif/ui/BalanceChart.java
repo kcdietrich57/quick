@@ -16,7 +16,7 @@ import qif.report.StatusForDateModel.SectionInfo;
 
 public class BalanceChart {
 
-	private class BalanceChartData {
+	private static class BalanceChartData {
 		final SectionInfo[] sectionInfo = SectionInfo.sectionInfo;
 
 		final String[] category = new String[] { //
@@ -55,7 +55,21 @@ public class BalanceChart {
 	private BalanceChartData balanceData = null;
 	public CategoryChart chart = null;
 
-	public void display() {
+	public void create() {
+		QDate end = MainWindow.instance.asOfDate;
+		QDate start = end.addDays(-3650);
+
+		create(start, end);
+	}
+
+	public void update() {
+		QDate end = MainWindow.instance.asOfDate;
+		QDate start = end.addDays(-3650);
+
+		update(start, end);
+	}
+
+	private void display() {
 		new SwingWrapper<CategoryChart>(this.chart).displayChart();
 	}
 
