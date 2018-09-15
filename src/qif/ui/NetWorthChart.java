@@ -5,13 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.knowm.xchart.CategoryChart;
-import org.knowm.xchart.CategoryChartBuilder;
 import org.knowm.xchart.QuickChart;
 import org.knowm.xchart.SwingWrapper;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.XYSeries.XYSeriesRenderStyle;
-import org.knowm.xchart.style.CategoryStyler;
 import org.knowm.xchart.style.XYStyler;
 import org.knowm.xchart.style.Styler.LegendPosition;
 
@@ -21,21 +19,27 @@ import qif.data.StockOption;
 import qif.report.NetWorthReporter;
 import qif.report.StatusForDateModel;
 import qif.report.NetWorthReporter.Balances;
-import qif.report.StatusForDateModel.Section;
-import qif.report.StatusForDateModel.SectionInfo;
 
 public class NetWorthChart {
+
+	static final BalanceChart balanceChart = new BalanceChart();
+
+	public static void showBalances() {
+		createBalancesChart();
+		balanceChart.display();
+	}
+
+	public static void updateBalancesChart(CategoryChart chart) {
+		QDate end = MainWindow.instance.asOfDate;
+		QDate start = end.addDays(-3650);
+
+		balanceChart.update(start, end);
+	}
 
 	public static void showISIOptions() {
 		XYChart chart = createISIOptionsChart();
 
 		new SwingWrapper<XYChart>(chart).displayChart();
-	}
-
-	public static void showBalances() {
-		CategoryChart chart = createBalancesChart();
-
-		new SwingWrapper<CategoryChart>(chart).displayChart();
 	}
 
 	public static void showNetWorth() {
@@ -112,81 +116,13 @@ public class NetWorthChart {
 		return chart;
 	}
 
-	// Series
-	static final String[] categories = new String[] { //
-			"Loan", "Credit Card", "Asset", "Retirement", "Investment", "Bank" //
-	};
-
-	static final SectionInfo[] sinfo = SectionInfo.sectionInfo;
-
-	static double[] xData;
-	static double[][] yData;
-
-	public static void updateBalancesChart(CategoryChart chart) {
-		QDate end = MainWindow.instance.asOfDate;
-		QDate start = end.addDays(-3650);
-
-		createBalancesChartData(start, end);
-
-		for (int sectionNum = 0; sectionNum < sinfo.length; ++sectionNum) {
-			for (int catNum = 0; catNum < sinfo.length; ++catNum) {
-				if (sinfo[catNum].label.equals(categories[sectionNum])) {
-					//chart.addSeries(sinfo[catNum].label, xData, yData[catNum]);
-					chart.updateCategorySeries(sinfo[catNum].label, xData, yData[catNum], null);
-				}
-			}
-		}
-	}
-
 	public static CategoryChart createBalancesChart() {
 		QDate end = MainWindow.instance.asOfDate;
 		QDate start = end.addDays(-3650);
 
-		return createBalancesChart(null, end);
-	}
+		balanceChart.create(start, end);
 
-	public static CategoryChart createBalancesChart(QDate start, QDate end) {
-		createBalancesChartData(start, end);
-
-		CategoryChart chart = new CategoryChartBuilder().width(800).height(600) //
-				.title("Net Worth Chart") //
-				.xAxisTitle("Month").yAxisTitle("K$").build();
-
-		// Customize Chart
-		CategoryStyler styler = chart.getStyler();
-		styler.setLegendPosition(LegendPosition.InsideNW);
-		styler.setAxisTitlesVisible(false);
-		styler.setStacked(true);
-
-		for (int sectionNum = 0; sectionNum < sinfo.length; ++sectionNum) {
-			for (int catNum = 0; catNum < sinfo.length; ++catNum) {
-				if (sinfo[catNum].label.equals(categories[sectionNum])) {
-					chart.addSeries(sinfo[catNum].label, xData, yData[catNum]);
-				}
-			}
-		}
-
-		return chart;
-	}
-
-	public static void createBalancesChartData(QDate start, QDate end) {
-		List<StatusForDateModel> balances = NetWorthReporter.getMonthlyNetWorth(start, end);
-
-		xData = new double[balances.size()];
-		yData = new double[sinfo.length][balances.size()];
-
-		for (int dateIndex = 0; dateIndex < balances.size(); ++dateIndex) {
-			Section[] sections = balances.get(dateIndex).sections;
-
-			xData[dateIndex] = (double) dateIndex;
-
-			for (int sectionNum = 0; sectionNum < sections.length; ++sectionNum) {
-				yData[sectionNum][dateIndex] = Math.floor(sections[sectionNum].subtotal.floatValue() / 1000);
-			}
-
-			// yData[sections.length][dateIndex] = //
-			// Math.floor(balances.get(dateIndex).netWorth.floatValue() / 1000);
-		}
+		return balanceChart.chart;
 	}
 
 	public static XYChart createNetWorthChart() {
@@ -209,7 +145,7 @@ public class NetWorthChart {
 		return chart;
 	}
 
-	public static void showChart1(List<Balances> balances) {
+	private static void showChart1(List<Balances> balances) {
 
 		double[] xData = new double[balances.size()];
 		double[] y1Data = new double[balances.size()];
