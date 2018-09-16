@@ -17,7 +17,6 @@ import javax.swing.SwingUtilities;
 import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.internal.chartpart.Chart;
 
-import chart2.BalanceChart2;
 import qif.data.GenericTxn;
 import qif.data.QDate;
 import qif.data.QifDom;
@@ -117,6 +116,7 @@ public class MainWindow extends JPanel {
 	private BalanceChart balChart;
 	private NetWorthChart nwChart;
 	private ISIOptionsChart optChart;
+	private BalanceChart2 balChart2;
 	private JSplitPane accountViewSplit;
 
 	public MainWindow() {
@@ -306,8 +306,8 @@ public class MainWindow extends JPanel {
 		this.balChart.create();
 		this.optChart = new ISIOptionsChart();
 		this.optChart.create();
-		
-		BalanceChart2 jfreechart = new BalanceChart2();
+
+		this.balChart2 = new BalanceChart2();
 
 		XChartPanel<Chart> nwChartPanel = new XChartPanel<Chart>(nwChart.chart);
 		XChartPanel<Chart> balChartPanel = new XChartPanel<Chart>(balChart.chart);
@@ -315,15 +315,16 @@ public class MainWindow extends JPanel {
 		// this.chartView.validate();
 
 		chartTabs.addTab("Balances", balChartPanel);
+		chartTabs.addTab("JFREECHART", this.balChart2.createChartPanel());
 		chartTabs.addTab("Net Worth", nwChartPanel);
 		chartTabs.addTab("ISI Options", optChartPanel);
-		chartTabs.addTab("JFREECHART", jfreechart.createChartPanel());
 
 		this.chartPanel.add(chartTabs, BorderLayout.CENTER);
 	}
 
 	public void updateChartPanel() {
 		this.balChart.update();
+		this.balChart2.update();
 		this.nwChart.update();
 		this.optChart.update();
 

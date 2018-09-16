@@ -1,4 +1,4 @@
-package chart2;
+package qif.ui;
 
 import java.awt.Color;
 import java.util.List;
