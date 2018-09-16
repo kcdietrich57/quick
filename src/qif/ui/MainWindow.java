@@ -17,6 +17,7 @@ import javax.swing.SwingUtilities;
 import org.knowm.xchart.XChartPanel;
 import org.knowm.xchart.internal.chartpart.Chart;
 
+import chart2.BalanceChart2;
 import qif.data.GenericTxn;
 import qif.data.QDate;
 import qif.data.QifDom;
@@ -305,6 +306,8 @@ public class MainWindow extends JPanel {
 		this.balChart.create();
 		this.optChart = new ISIOptionsChart();
 		this.optChart.create();
+		
+		BalanceChart2 jfreechart = new BalanceChart2();
 
 		XChartPanel<Chart> nwChartPanel = new XChartPanel<Chart>(nwChart.chart);
 		XChartPanel<Chart> balChartPanel = new XChartPanel<Chart>(balChart.chart);
@@ -314,6 +317,7 @@ public class MainWindow extends JPanel {
 		chartTabs.addTab("Balances", balChartPanel);
 		chartTabs.addTab("Net Worth", nwChartPanel);
 		chartTabs.addTab("ISI Options", optChartPanel);
+		chartTabs.addTab("JFREECHART", jfreechart.createChartPanel());
 
 		this.chartPanel.add(chartTabs, BorderLayout.CENTER);
 	}

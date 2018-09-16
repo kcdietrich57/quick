@@ -87,8 +87,8 @@ public class ISIOptionsChart {
 	}
 
 	public void update() {
-		QDate end = MainWindow.instance.asOfDate;
-		QDate start = end.addDays(-3650);
+		QDate start = MainWindow.instance.getIntervalStart();
+		QDate end = MainWindow.instance.getIntervalEnd();
 
 		update(start, end);
 	}
