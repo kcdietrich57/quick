@@ -113,10 +113,10 @@ public class MainWindow extends JPanel {
 
 	public Dashboard dashboardPanel;
 	public JPanel chartPanel;
+	private BalanceChart_old balChartXCHART;
 	private BalanceChart balChart;
 	private NetWorthChart nwChart;
 	private ISIOptionsChart optChart;
-	private BalanceChart2 balChart2;
 	private JSplitPane accountViewSplit;
 
 	public MainWindow() {
@@ -302,20 +302,20 @@ public class MainWindow extends JPanel {
 
 		this.nwChart = new NetWorthChart();
 		this.nwChart.create();
-		this.balChart = new BalanceChart();
-		this.balChart.create();
+		this.balChartXCHART = new BalanceChart_old();
+		this.balChartXCHART.create();
 		this.optChart = new ISIOptionsChart();
 		this.optChart.create();
 
-		this.balChart2 = new BalanceChart2();
+		this.balChart = new BalanceChart();
 
 		XChartPanel<Chart> nwChartPanel = new XChartPanel<Chart>(nwChart.chart);
-		XChartPanel<Chart> balChartPanel = new XChartPanel<Chart>(balChart.chart);
+		XChartPanel<Chart> balChartPanel_old = new XChartPanel<Chart>(balChartXCHART.chart);
 		XChartPanel<Chart> optChartPanel = new XChartPanel<Chart>(optChart.chart);
 		// this.chartView.validate();
 
-		chartTabs.addTab("Balances", balChartPanel);
-		chartTabs.addTab("JFREECHART", this.balChart2.createChartPanel());
+		chartTabs.addTab("Balances", this.balChart.createChartPanel());
+		chartTabs.addTab("Balances(old)", balChartPanel_old);
 		chartTabs.addTab("Net Worth", nwChartPanel);
 		chartTabs.addTab("ISI Options", optChartPanel);
 
@@ -324,7 +324,7 @@ public class MainWindow extends JPanel {
 
 	public void updateChartPanel() {
 		this.balChart.update();
-		this.balChart2.update();
+		this.balChartXCHART.update();
 		this.nwChart.update();
 		this.optChart.update();
 

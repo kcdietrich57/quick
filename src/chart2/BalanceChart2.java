@@ -13,22 +13,17 @@ import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.labels.CategoryItemLabelGenerator;
-import org.jfree.chart.labels.CategoryToolTipGenerator;
 import org.jfree.chart.labels.ItemLabelAnchor;
 import org.jfree.chart.labels.ItemLabelPosition;
 import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.DatasetRenderingOrder;
 import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.chart.renderer.category.StackedBarRenderer;
-import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.title.DateTitle;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.general.DatasetUtilities;
-import org.jfree.data.xy.IntervalXYDataset;
-import org.jfree.data.xy.XYDataset;
 import org.jfree.ui.TextAnchor;
 
 import qif.data.QDate;
@@ -110,11 +105,11 @@ public class BalanceChart2 {
 			average[ii] = (data[0][ii] + data[1][ii] + data[2][ii]) / 3.0;
 		}
 	}
-	
+
 	JFreeChart chart = null;
 
 	public JPanel createChartPanel() {
-		this. chart = createChart();
+		this.chart = createChart2();
 
 		ChartPanel chPanel = new ChartPanel(this.chart);
 		chPanel.setMouseWheelEnabled(true);
@@ -127,13 +122,13 @@ public class BalanceChart2 {
 		QDate end = MainWindow.instance.getIntervalEnd();
 
 		BalanceChartData2 balanceData = new BalanceChartData2(start, end);
-		
+
 		CategoryDataset dataset = DatasetUtilities.createCategoryDataset( //
 				"Series ", "Type ", balanceData.yData);
 		this.chart.getCategoryPlot().setDataset(dataset);
 	}
 
-	public JFreeChart createChart() {
+	private JFreeChart createChart() {
 		QDate start = MainWindow.instance.getIntervalStart();
 		QDate end = MainWindow.instance.getIntervalEnd();
 
@@ -145,7 +140,7 @@ public class BalanceChart2 {
 		// Plot type: Stacked Bar Graph.
 		JFreeChart chart = ChartFactory.createStackedBarChart(//
 				"Title", "", "", dataset, PlotOrientation.VERTICAL, true, true, false);
-		
+
 		// Set current date as the title
 		DateTitle dateTitle = new DateTitle();
 		chart.addSubtitle(dateTitle);
@@ -181,7 +176,7 @@ public class BalanceChart2 {
 		return chart;
 	}
 
-	public JFreeChart createChart2() {
+	private JFreeChart createChart2() {
 		QDate start = MainWindow.instance.getIntervalStart();
 		QDate end = MainWindow.instance.getIntervalEnd();
 
@@ -190,12 +185,19 @@ public class BalanceChart2 {
 		CategoryDataset dataset = DatasetUtilities.createCategoryDataset( //
 				"Series ", "Type ", balanceData.yData);
 
-		// Plot type: Stacked Bar Graph.
-		JFreeChart chart = ChartFactory.createStackedBarChart(//
-				"Title", "", "", dataset, PlotOrientation.VERTICAL, true, true, false);
-
 		StackedBarRenderer barRenderer = new StackedBarRenderer();
 		LineAndShapeRenderer lineRenderer = new LineAndShapeRenderer();
+
+		CategoryAxis xAxis = new CategoryAxis("Type");
+		NumberAxis yAxis = new NumberAxis("Value");
+		yAxis.setAutoRangeIncludesZero(false);
+
+		CategoryPlot plot = new CategoryPlot(dataset, xAxis, yAxis, barRenderer);
+		plot.setDataset(1, dataset);
+		plot.setRenderer(1, lineRenderer);
+		plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
+
+		JFreeChart chart = new JFreeChart("Test", JFreeChart.DEFAULT_TITLE_FONT, plot, true);
 
 //		CategoryAxis xAxis = new CategoryAxis("Type");
 //		NumberAxis yAxis = new NumberAxis("Value");
@@ -214,38 +216,42 @@ public class BalanceChart2 {
 //		XYItemRenderer renderer2 = new StandardXYItemRenderer();
 //		renderer2.setToolTipGenerator(new TimeSeriesToolTipGenerator("d-MMM-yyyy", "0.00"));
 //		XYPlot subplot2 = new XYPlot(data2, null, null, renderer2);
-		
+
+		// Plot type: Stacked Bar Graph.
+//		JFreeChart chart = ChartFactory.createStackedBarChart(//
+//				"Title", "", "", dataset, PlotOrientation.VERTICAL, true, true, false);
+
 		// Set current date as the title
 		DateTitle dateTitle = new DateTitle();
 		chart.addSubtitle(dateTitle);
 
-		CategoryPlot plot = chart.getCategoryPlot();
+		// CategoryPlot plot = chart.getCategoryPlot();
 
 		// 4 series to show. (Approved, Negotiaion, Cancelled, Completed)
-		plot.getRenderer().setSeriesPaint(0, new Color(0, 255, 0));
-		plot.getRenderer().setSeriesPaint(1, new Color(0, 0, 255));
-		plot.getRenderer().setSeriesPaint(2, new Color(255, 0, 0));
-		plot.getRenderer().setSeriesPaint(3, new Color(255, 255, 0));
+		barRenderer.setSeriesPaint(0, new Color(0, 255, 0));
+		barRenderer.setSeriesPaint(1, new Color(0, 0, 255));
+		barRenderer.setSeriesPaint(2, new Color(255, 0, 0));
+		barRenderer.setSeriesPaint(3, new Color(255, 255, 0));
 
 		// X-Axis Labels will be inclined at 45degree
-		CategoryAxis xAxis = plot.getDomainAxis();
+		// CategoryAxis xAxis = plot.getDomainAxis();
 		xAxis.setLabel("Date");
 		xAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_45);
 
 		// Y-Axis range will be set automatically based on the supplied data
-		ValueAxis rangeAxis = plot.getRangeAxis();
-		rangeAxis.setLabel("$");
-		rangeAxis.setAutoRange(true);
+		// ValueAxis rangeAxis = plot.getRangeAxis();
+		yAxis.setLabel("$");
+		yAxis.setAutoRange(true);
 
 		// if there is only one bar, it does not occupy the entire width
-		BarRenderer renderer = (BarRenderer) plot.getRenderer();
-		renderer.setMaximumBarWidth(.1);
+		// BarRenderer renderer = (BarRenderer) plot.getRenderer();
+		barRenderer.setMaximumBarWidth(.1);
 
-		renderer.setBaseItemLabelGenerator(new CategoryLabelGenerator());
-		renderer.setBaseItemLabelsVisible(true);
+		barRenderer.setBaseItemLabelGenerator(new CategoryLabelGenerator());
+		barRenderer.setBaseItemLabelsVisible(true);
 
 		ItemLabelPosition p = new ItemLabelPosition(ItemLabelAnchor.CENTER, TextAnchor.BOTTOM_CENTER);
-		renderer.setPositiveItemLabelPositionFallback(p);
+		barRenderer.setPositiveItemLabelPositionFallback(p);
 
 		return chart;
 	}
