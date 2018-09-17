@@ -152,7 +152,7 @@ public class QDate implements Comparable<QDate> {
 		}
 		if (months < 0) {
 			if (month > -months) {
-				month -= months;
+				month += months;
 			} else {
 				--year;
 				month = (month + months) + 12;

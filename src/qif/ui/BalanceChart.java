@@ -169,15 +169,6 @@ public class BalanceChart {
 
 		lineRenderer.setSeriesShapesVisible(0, false);
 
-		// 4 series to show. (Approved, Negotiaion, Cancelled, Completed)
-//		areaRenderer.setSeriesPaint(0, new Color(0, 255, 0));
-//		areaRenderer.setSeriesPaint(1, new Color(40, 0, 0));
-//		areaRenderer.setSeriesPaint(2, new Color(80, 0, 0));
-//		areaRenderer.setSeriesPaint(3, new Color(120, 0, 0));
-//		areaRenderer.setSeriesPaint(4, new Color(160, 0, 0));
-//		areaRenderer.setSeriesPaint(5, new Color(200, 0, 0));
-//		areaRenderer.setSeriesPaint(6, new Color(0, 0, 255));
-
 		// X-Axis Labels will be inclined at 45degree
 		xAxis.setLabel("Date");
 		xAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_45);
@@ -186,13 +177,21 @@ public class BalanceChart {
 		yAxis.setLabel("$");
 		yAxis.setAutoRange(true);
 
-		barRenderer.setSeriesPaint(0, new Color(0, 255, 0));
-		barRenderer.setSeriesPaint(1, new Color(40, 0, 0));
-		barRenderer.setSeriesPaint(2, new Color(80, 0, 0));
-		barRenderer.setSeriesPaint(3, new Color(120, 0, 0));
-		barRenderer.setSeriesPaint(4, new Color(160, 255, 0));
-		barRenderer.setSeriesPaint(5, new Color(200, 255, 0));
-		barRenderer.setSeriesPaint(6, new Color(0, 0, 255));
+//		areaRenderer.setSeriesPaint(0, new Color(0, 255, 0));
+//		areaRenderer.setSeriesPaint(1, new Color(40, 0, 0));
+//		areaRenderer.setSeriesPaint(2, new Color(80, 0, 0));
+//		areaRenderer.setSeriesPaint(3, new Color(120, 0, 0));
+//		areaRenderer.setSeriesPaint(4, new Color(160, 0, 0));
+//		areaRenderer.setSeriesPaint(5, new Color(200, 0, 0));
+//		areaRenderer.setSeriesPaint(6, new Color(0, 0, 255));
+
+//		barRenderer.setSeriesPaint(0, new Color(0, 255, 0));
+//		barRenderer.setSeriesPaint(1, new Color(40, 0, 0));
+//		barRenderer.setSeriesPaint(2, new Color(80, 0, 0));
+//		barRenderer.setSeriesPaint(3, new Color(120, 0, 0));
+//		barRenderer.setSeriesPaint(4, new Color(160, 255, 0));
+//		barRenderer.setSeriesPaint(5, new Color(200, 255, 0));
+//		barRenderer.setSeriesPaint(6, new Color(0, 0, 255));
 
 		// if there is only one bar, it does not occupy the entire width
 		barRenderer.setMaximumBarWidth(.1);
