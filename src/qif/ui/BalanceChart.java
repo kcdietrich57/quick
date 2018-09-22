@@ -1,6 +1,7 @@
 package qif.ui;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JPanel;
@@ -11,17 +12,14 @@ import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.labels.CategoryItemLabelGenerator;
-import org.jfree.chart.labels.ItemLabelAnchor;
-import org.jfree.chart.labels.ItemLabelPosition;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.DatasetRenderingOrder;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.chart.renderer.category.StackedAreaRenderer;
-import org.jfree.chart.renderer.category.StackedBarRenderer;
 import org.jfree.chart.title.DateTitle;
 import org.jfree.data.category.CategoryDataset;
+import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DatasetUtilities;
-import org.jfree.ui.TextAnchor;
 
 import qif.data.QDate;
 import qif.report.NetWorthReporter;
@@ -50,16 +48,18 @@ class CategoryLabelGenerator implements CategoryItemLabelGenerator {
 }
 
 class BalanceChartData {
-	final SectionInfo[] sectionInfo = SectionInfo.sectionInfo;
+	public final SectionInfo[] sectionInfo = SectionInfo.sectionInfo;
 
-	final String[] category = new String[] { //
-			"Loan", "Credit Card", "Asset", "Investment", "Retirement", "Bank" //
+	private final String[] category = new String[] { //
+			"Bank", "Asset", "Investment", "Retirement", "Credit Card", "Loan" //
 	};
-	final int[] catOrder = { 4, 2, 3, 5, 0, 1 };
+	 int[] catOrder = { 3, 1, 2, 0, 5, 4 };
 
-	double[] xData;
-	double[][] yData;
-	double[][] yDataNetWorth;
+	public List<String> categoryNames;
+	public double[] xData;
+	public QDate[] xDates;
+	public double[][] yData;
+	public double[][] yDataNetWorth;
 
 	public BalanceChartData(QDate start, QDate end) {
 		List<StatusForDateModel> balances = NetWorthReporter.getNetWorthData( //
@@ -70,12 +70,21 @@ class BalanceChartData {
 
 	private void setModel(List<StatusForDateModel> balances) {
 		this.xData = new double[balances.size()];
+		this.xDates = new QDate[balances.size()];
 		this.yData = new double[this.sectionInfo.length][balances.size()];
 		this.yDataNetWorth = new double[1][balances.size()];
+
+		this.categoryNames = new ArrayList<String>(catOrder.length);
+		for (int ii = 0; ii < 6; ++ii) {
+			int idx = catOrder[ii];
+			while (this.categoryNames.size() < idx + 1) { this.categoryNames.add(""); }
+			this.categoryNames.set(ii, category[idx]);
+		}
 
 		for (int dateIndex = 0; dateIndex < balances.size(); ++dateIndex) {
 			Section[] sections = balances.get(dateIndex).sections;
 
+			this.xDates[dateIndex] = balances.get(dateIndex).date;
 			this.xData[dateIndex] = (double) dateIndex;
 			this.yDataNetWorth[0][dateIndex] = 0.0;
 
@@ -84,7 +93,7 @@ class BalanceChartData {
 
 				double val = Math.floor(sections[idx].subtotal.floatValue() / 1000);
 
-				this.yData[idx][dateIndex] = val;
+				this.yData[sectionNum][dateIndex] = val;
 				this.yDataNetWorth[0][dateIndex] += val;
 			}
 
@@ -95,20 +104,8 @@ class BalanceChartData {
 }
 
 public class BalanceChart {
-	static double[][] data = new double[][] { //
-			{ 1.0, 4.0, 3.0, 5.0, 5.0, 7.0, 7.0, 8.0 }, //
-			{ 5.0, 7.0, 6.0, 8.0, 4.0, 4.0, 2.0, 1.0 }, //
-			{ 4.0, 3.0, 2.0, 3.0, 6.0, 3.0, 4.0, 3.0 } //
-	};
-
+	static double[][] data;
 	static double[] average;
-	static {
-		average = new double[data[0].length];
-
-		for (int ii = 0; ii < average.length; ++ii) {
-			average[ii] = (data[0][ii] + data[1][ii] + data[2][ii]) / 3.0;
-		}
-	}
 
 	JFreeChart chart = null;
 
@@ -121,37 +118,26 @@ public class BalanceChart {
 		return chPanel;
 	}
 
-	public void update() {
-		QDate start = MainWindow.instance.getIntervalStart();
-		QDate end = MainWindow.instance.getIntervalEnd();
-
-		BalanceChartData balanceData = new BalanceChartData(start, end);
-
-		CategoryDataset catDataset = DatasetUtilities.createCategoryDataset( //
-				"Series ", "Type ", balanceData.yData);
-		CategoryDataset networthDataset = DatasetUtilities.createCategoryDataset( //
-				"SeriesNW ", "TypeNW ", balanceData.yDataNetWorth);
-
-		this.chart.getCategoryPlot().setDataset(0, catDataset);
-		this.chart.getCategoryPlot().setDataset(1, networthDataset);
-	}
-
 	private JFreeChart createChart() {
 		QDate start = MainWindow.instance.getIntervalStart();
 		QDate end = MainWindow.instance.getIntervalEnd();
 
 		BalanceChartData balanceData = new BalanceChartData(start, end);
 
-		CategoryDataset catDataset = DatasetUtilities.createCategoryDataset( //
-				"Series ", "Type ", balanceData.yData);
+		DefaultCategoryDataset catDataset = //
+				(DefaultCategoryDataset)DatasetUtilities.createCategoryDataset( //
+				"AccountType", "Value", balanceData.yData);
 		CategoryDataset networthDataset = DatasetUtilities.createCategoryDataset( //
-				"SeriesNW ", "TypeNW ", balanceData.yDataNetWorth);
+				"NetWorth", "Value", balanceData.yDataNetWorth);
 
+		List<String> categoryNames = balanceData.categoryNames;
+		catDataset.setRowKeys(categoryNames);
+		
 		StackedAreaRenderer areaRenderer = new StackedAreaRenderer();
-		StackedBarRenderer barRenderer = new StackedBarRenderer();
 		LineAndShapeRenderer lineRenderer = new LineAndShapeRenderer();
 
 		CategoryAxis xAxis = new CategoryAxis("Type");
+
 		NumberAxis yAxis = new NumberAxis("Value");
 		yAxis.setAutoRangeIncludesZero(false);
 
@@ -171,37 +157,112 @@ public class BalanceChart {
 
 		// X-Axis Labels will be inclined at 45degree
 		xAxis.setLabel("Date");
+		xAxis.tickLabels = balanceData.xDates;
 		xAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_45);
 
 		// Y-Axis range will be set automatically based on the supplied data
-		yAxis.setLabel("$");
+		yAxis.setLabel("$1000");
 		yAxis.setAutoRange(true);
 
-//		areaRenderer.setSeriesPaint(0, new Color(0, 255, 0));
-//		areaRenderer.setSeriesPaint(1, new Color(40, 0, 0));
-//		areaRenderer.setSeriesPaint(2, new Color(80, 0, 0));
-//		areaRenderer.setSeriesPaint(3, new Color(120, 0, 0));
-//		areaRenderer.setSeriesPaint(4, new Color(160, 0, 0));
-//		areaRenderer.setSeriesPaint(5, new Color(200, 0, 0));
-//		areaRenderer.setSeriesPaint(6, new Color(0, 0, 255));
+		lineRenderer.setSeriesPaint(0, new Color(0, 0, 0));
 
-//		barRenderer.setSeriesPaint(0, new Color(0, 255, 0));
-//		barRenderer.setSeriesPaint(1, new Color(40, 0, 0));
-//		barRenderer.setSeriesPaint(2, new Color(80, 0, 0));
-//		barRenderer.setSeriesPaint(3, new Color(120, 0, 0));
-//		barRenderer.setSeriesPaint(4, new Color(160, 255, 0));
-//		barRenderer.setSeriesPaint(5, new Color(200, 255, 0));
-//		barRenderer.setSeriesPaint(6, new Color(0, 0, 255));
-
-		// if there is only one bar, it does not occupy the entire width
-		barRenderer.setMaximumBarWidth(.1);
-
-		barRenderer.setBaseItemLabelGenerator(new CategoryLabelGenerator());
-		barRenderer.setBaseItemLabelsVisible(true);
-
-		ItemLabelPosition p = new ItemLabelPosition(ItemLabelAnchor.CENTER, TextAnchor.BOTTOM_CENTER);
-		barRenderer.setPositiveItemLabelPositionFallback(p);
+		areaRenderer.setSeriesPaint(0, new Color(0, 0, 255));
+		areaRenderer.setSeriesPaint(1, new Color(0, 255, 0));
+		areaRenderer.setSeriesPaint(2, new Color(0, 255, 255));
+		areaRenderer.setSeriesPaint(3, new Color(255, 0, 0));
+		areaRenderer.setSeriesPaint(4, new Color(255, 0, 255));
+		areaRenderer.setSeriesPaint(5, new Color(255, 255, 0));
+//		areaRenderer.setSeriesPaint(6, new Color(255, 255, 255));
 
 		return chart;
 	}
+
+	public void update() {
+		QDate start = MainWindow.instance.getIntervalStart();
+		QDate end = MainWindow.instance.getIntervalEnd();
+
+		BalanceChartData balanceData = new BalanceChartData(start, end);
+
+		DefaultCategoryDataset catDataset = //
+				(DefaultCategoryDataset)DatasetUtilities.createCategoryDataset( //
+				"AccountType", "Value", balanceData.yData);
+		CategoryDataset networthDataset = DatasetUtilities.createCategoryDataset( //
+				"NetWorth", "Value", balanceData.yDataNetWorth);
+
+		List<String> categoryNames = balanceData.categoryNames;
+		catDataset.setRowKeys(categoryNames);
+
+		this.chart.getCategoryPlot().setDataset(0, catDataset);
+		this.chart.getCategoryPlot().setDataset(1, networthDataset);
+		
+		CategoryAxis xAxis = this.chart.getCategoryPlot().getDomainAxis();
+		xAxis.tickLabels = balanceData.xDates;
+	}
+
+//	/* Day of the year values for month end days. */
+//	public static final Integer[] MONTH_LENGTHS = { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+//	public static final String[] MONTH_NAMES = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct",
+//			"Nov", "Dec" };
+//
+//	class DateAxis extends CategoryAxis {
+//		protected AxisState drawTickMarksAndLabels(Graphics2D g2, double cursor, Rectangle2D plotArea,
+//				Rectangle2D dataArea, RectangleEdge edge) {
+//			AxisState state = new AxisState(cursor);
+//
+//			g2.setFont(getTickLabelFont());
+//
+//			double ol = getTickMarkOutsideLength();
+//			double il = getTickMarkInsideLength();
+//			int y = (int) (Math.round(cursor - ol));
+//			LineMetrics lineMetrics = g2.getFont().getLineMetrics("Ápr", g2.getFontRenderContext());
+//			int h = (int) (lineMetrics.getHeight() + 6);
+//
+//			List<ValueTick> ticks = refreshTicks(g2, state, dataArea, edge);
+//			state.setTicks(ticks);
+//
+//			/* Last x point */
+//			ValueTick tick = ticks.get(ticks.size() - 1);
+//			float[] prevAnchorPoint = calculateAnchorPoint(tick, cursor, dataArea, edge);
+//			double xmax = prevAnchorPoint[0];
+//			double max_day = tick.getValue();
+//
+//			/* First x point */
+//			tick = ticks.get(0);
+//			prevAnchorPoint = calculateAnchorPoint(tick, cursor, dataArea, edge);
+//			double xmin = Math.round(prevAnchorPoint[0]);
+//			double min_day = tick.getValue();
+//			double days_visible = max_day - min_day + 1;
+//			/* 0.1 day horizontal gap. */
+//			double gap = 0.1 * (xmax - xmin) / days_visible;
+//
+//			System.out.println("min_day " + min_day + " max_day" + max_day);
+//
+//			g2.setFont(getTickLabelFont());
+//			g2.setColor(Color.BLACK);
+//			int start_day = 0;
+//
+//			for (int month = 0; month < 12; month++) {
+//				int end_day = start_day + MONTH_LENGTHS[month] - 1;
+//				System.out.println("start-end " + start_day + " " + end_day);
+//
+//				if ((start_day >= min_day) && (start_day <= max_day) && (end_day >= min_day) && (end_day <= max_day)) {
+//					double factor_x1 = (start_day - min_day) / days_visible;
+//					double x1 = xmin + (xmax - xmin) * factor_x1;
+//					double factor_x2 = (end_day - min_day) / days_visible;
+//					double x2 = xmin + (xmax - xmin) * factor_x2;
+//					System.out.println("month=" + month + ", start_day=" + start_day + " end_day=" + end_day + " x1="
+//							+ x1 + " x2=" + x2);
+//					g2.setColor(Color.LIGHT_GRAY);
+//					g2.fill3DRect((int) (x1 + gap), y, (int) (x2 - x1 - 2 * gap), h, true);
+//					g2.setColor(Color.BLACK);
+//					TextUtilities.drawAlignedString(MONTH_NAMES[month], g2, (float) ((x1 + x2) / 2), (float) (y + ol),
+//							TextAnchor.TOP_CENTER);
+//				}
+//
+//				start_day += MONTH_LENGTHS[month];
+//			}
+//
+//			return state;
+//		}
+//	}
 }
