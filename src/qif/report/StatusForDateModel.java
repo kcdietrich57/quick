@@ -16,14 +16,18 @@ import qif.data.StockOption;
 public class StatusForDateModel {
 
 	/** Defines account categories for itemized status */
-	public static class SectionInfo {
-		public static final SectionInfo[] sectionInfo = {
-				new SectionInfo("Bank", new AccountType[] { AccountType.Bank, AccountType.Cash }, true), //
-				new SectionInfo("Asset", new AccountType[] { AccountType.Asset }, true), //
-				new SectionInfo("Investment", new AccountType[] { AccountType.Invest, AccountType.InvPort }, true), //
-				new SectionInfo("Retirement", new AccountType[] { AccountType.InvMutual, AccountType.Inv401k }, true), //
-				new SectionInfo("Credit Card", new AccountType[] { AccountType.CCard }, false), //
-				new SectionInfo("Loan", new AccountType[] { AccountType.Liability }, false) //
+	public static class AccountCategoryInfo {
+		public static final String[] accountCategoryNames = new String[] { //
+				"Bank", "Asset", "Investment", "Retirement", "Credit Card", "Loan" //
+		};
+
+		public static final AccountCategoryInfo[] accountCategoryInfo = {
+				new AccountCategoryInfo("Bank", new AccountType[] { AccountType.Bank, AccountType.Cash }, true), //
+				new AccountCategoryInfo("Asset", new AccountType[] { AccountType.Asset }, true), //
+				new AccountCategoryInfo("Investment", new AccountType[] { AccountType.Invest, AccountType.InvPort }, true), //
+				new AccountCategoryInfo("Retirement", new AccountType[] { AccountType.InvMutual, AccountType.Inv401k }, true), //
+				new AccountCategoryInfo("Credit Card", new AccountType[] { AccountType.CCard }, false), //
+				new AccountCategoryInfo("Loan", new AccountType[] { AccountType.Liability }, false) //
 		};
 
 		private static AccountType[] allAcctTypes = { //
@@ -34,18 +38,18 @@ public class StatusForDateModel {
 				AccountType.CCard, //
 				AccountType.Liability };
 
-		public AccountType[] atypes;
-		public String label;
+		private AccountType[] accountTypes;
+		public final String label;
 		public boolean isAsset;
 
-		public SectionInfo(String label, AccountType[] atypes, boolean isAsset) {
+		public AccountCategoryInfo(String label, AccountType[] atypes, boolean isAsset) {
 			this.label = label;
-			this.atypes = atypes;
+			this.accountTypes = atypes;
 			this.isAsset = isAsset;
 		}
 
-		public static SectionInfo getSectionInfoForAccount(Account a) {
-			for (SectionInfo sinfo : sectionInfo) {
+		public static AccountCategoryInfo getSectionInfoForAccount(Account a) {
+			for (AccountCategoryInfo sinfo : accountCategoryInfo) {
 				if (sinfo.contains(a.type)) {
 					return sinfo;
 				}
@@ -59,7 +63,7 @@ public class StatusForDateModel {
 		}
 
 		public boolean contains(AccountType at) {
-			for (final AccountType myat : this.atypes) {
+			for (final AccountType myat : this.accountTypes) {
 				if (myat == at) {
 					return true;
 				}
@@ -97,21 +101,21 @@ public class StatusForDateModel {
 	/** Accumulates info for a section (account category) */
 	public static class Section {
 		public static Section[] getSections() {
-			Section[] sections = new StatusForDateModel.Section[SectionInfo.sectionInfo.length];
+			Section[] sections = new StatusForDateModel.Section[AccountCategoryInfo.accountCategoryInfo.length];
 
-			for (int ii = 0; ii < SectionInfo.sectionInfo.length; ++ii) {
-				sections[ii] = new Section(SectionInfo.sectionInfo[ii]);
+			for (int ii = 0; ii < AccountCategoryInfo.accountCategoryInfo.length; ++ii) {
+				sections[ii] = new Section(AccountCategoryInfo.accountCategoryInfo[ii]);
 			}
 
 			return sections;
 		}
 
-		public final SectionInfo info;
+		public final AccountCategoryInfo info;
 		public BigDecimal subtotal = BigDecimal.ZERO;
 
 		public List<StatusForDateModel.AccountSummary> accounts = new ArrayList<StatusForDateModel.AccountSummary>();
 
-		public Section(SectionInfo info) {
+		public Section(AccountCategoryInfo info) {
 			this.info = info;
 		}
 	};

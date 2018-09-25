@@ -1,163 +1,183 @@
 package qif.ui;
 
+import java.awt.Color;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.knowm.xchart.QuickChart;
-import org.knowm.xchart.XYChart;
+import javax.swing.JPanel;
+
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.axis.CategoryLabelPositions;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.DatasetRenderingOrder;
+import org.jfree.chart.renderer.category.LineAndShapeRenderer;
+import org.jfree.data.category.CategoryDataset;
+import org.jfree.data.general.DatasetUtilities;
 
 import qif.data.Account;
 import qif.data.QDate;
 import qif.data.StockOption;
+import qif.ui.MainWindow.IntervalUnit;
 
-public class ISIOptionsChart {
-	private static class ISIOptionsChartData {
-		private double[] xData;
-		private double[] yData;
+class StatusForOptionsModel {
+	public QDate date;
+	public double value;
 
-		public ISIOptionsChartData(QDate start, QDate end) {
-			Account acct = Account.findAccount("ISI Options");
+	public StatusForOptionsModel(QDate date) {
+		this.date = date;
+	}
+}
 
-			List<QDate> dates = new ArrayList<QDate>();
-			List<BigDecimal> high = new ArrayList<BigDecimal>();
-			List<BigDecimal> low = new ArrayList<BigDecimal>();
+class ISIOptionsChartData {
+	public QDate[] dates;
+	public double[][] optionsValues;
 
-			int curYear = 1991;
-			int curMonth = 1;
-			BigDecimal bdHigh = null;
-			BigDecimal bdLow = null;
+//TODO no, no, no
+	QDate start, end;
 
-			while (start.compareTo(end) <= 0) {
-				if ((start.getYear() != curYear) || (start.getMonth() != curMonth)) {
-					dates.add(new QDate(curYear, curMonth, 1));
-					high.add(bdHigh);
-					low.add(bdLow);
+	public ISIOptionsChartData(QDate start, QDate end) {
+		this(start, end, MainWindow.instance.reportUnit);
+	}
 
-					bdHigh = bdLow = null;
-					curYear = start.getYear();
-					curMonth = start.getMonth();
-				}
+	public ISIOptionsChartData(QDate start, QDate end, IntervalUnit units) {
+		this.start = start;
+		this.end = end;
+		List<StatusForOptionsModel> optionsData = getOptionsData(start, end, units);
 
-				BigDecimal bal = BigDecimal.ZERO;
+		getData(optionsData);
+	}
 
-				List<StockOption> opts = StockOption.getOpenOptions(acct, start);
-				for (StockOption opt : opts) {
-					bal = bal.add(opt.getValueForDate(start));
-				}
+	private void getData(List<StatusForOptionsModel> optionsData) {
+		Account optionsAccount = Account.findAccount("ISI Options");
 
-				if ((bdLow == null) || (bal.compareTo(bdLow) < 0)) {
-					bdLow = bal;
-				}
-				if ((bdHigh == null) || (bal.compareTo(bdHigh) > 0)) {
-					bdHigh = bal;
-				}
+		this.dates = new QDate[optionsData.size()];
+		this.optionsValues = new double[1][optionsData.size()];
 
-				start = start.addDays(1);
+		for (int ii = 0; ii < optionsData.size(); ++ii) {
+			this.dates[ii] = optionsData.get(ii).date;
+			QDate curDate = this.dates[ii];
+
+			BigDecimal bal = BigDecimal.ZERO;
+
+			List<StockOption> opts = StockOption.getOpenOptions(optionsAccount, curDate);
+			for (StockOption opt : opts) {
+				bal = bal.add(opt.getValueForDate(curDate));
 			}
 
-			this.xData = new double[dates.size()];
-			this.yData = new double[dates.size()];
-
-			for (int ii = 0; ii < dates.size(); ++ii) {
-				xData[ii] = (double) ii;
-				BigDecimal bd = high.get(ii);
-				double d = (bd != null) ? bd.doubleValue() : 0.0;
-				yData[ii] = Math.floor(d / 1000);
-			}
+			this.optionsValues[0][ii] = bal.doubleValue();
 		}
 	}
 
-	private ISIOptionsChartData netWorthData = null;
-	public XYChart chart = null;
+	/**
+	 * Construct a skeleton list of values of the necessary size to be filled in
+	 * later
+	 */
+	public static List<StatusForOptionsModel> getOptionsData() {
+		return getOptionsData(null, MainWindow.instance.asOfDate, //
+				MainWindow.instance.reportUnit);
+	}
 
-	public void create() {
+	/**
+	 * Construct a skeleton list of values of the necessary size to be filled in
+	 * later
+	 */
+	static List<StatusForOptionsModel> getOptionsData(QDate start, QDate end) {
+		return getOptionsData(start, end, MainWindow.instance.reportUnit);
+	}
+
+	/**
+	 * Construct a skeleton list of values of the necessary size to be filled in
+	 * later
+	 */
+	static List<StatusForOptionsModel> getOptionsData( //
+			QDate start, QDate end, MainWindow.IntervalUnit unit) {
+		List<StatusForOptionsModel> balances = new ArrayList<StatusForOptionsModel>();
+
+		QDate d = (start != null) ? start : QDate.today(); // getFirstTransactionDate();
+		QDate lastTxDate = (end != null) ? end : QDate.today(); // getLastTransactionDate();
+
+		int year = d.getYear();
+		int month = d.getMonth();
+		d = QDate.getDateForEndOfMonth(year, month);
+
+		do {
+			StatusForOptionsModel b = new StatusForOptionsModel(d);
+
+			balances.add(b);
+
+			d = unit.nextDate(d);
+		} while (d.compareTo(lastTxDate) <= 0);
+
+		return balances;
+	}
+}
+
+public class ISIOptionsChart {
+	JFreeChart chart = null;
+
+	public JPanel createChartPanel() {
+		this.chart = createChart();
+
+		ChartPanel chPanel = new ChartPanel(this.chart);
+		chPanel.setMouseWheelEnabled(true);
+
+		return chPanel;
+	}
+
+	private JFreeChart createChart() {
 		QDate start = MainWindow.instance.getIntervalStart();
 		QDate end = MainWindow.instance.getIntervalEnd();
 
-		create(start, end);
-	}
+		ISIOptionsChartData optionsData = new ISIOptionsChartData(start, end);
 
-	public void create(QDate start, QDate end) {
-		this.netWorthData = new ISIOptionsChartData(start, end);
+		CategoryDataset optionsDataset = DatasetUtilities.createCategoryDataset( //
+				"ISI Options", "Value", optionsData.optionsValues);
 
-		this.chart = QuickChart.getChart( //
-				"ISI Options", "Month", "$K", "Value", //
-				this.netWorthData.xData, this.netWorthData.yData);
+		LineAndShapeRenderer lineRenderer = new LineAndShapeRenderer();
+
+		CategoryAxis xAxis = new CategoryAxis("Type");
+
+		NumberAxis yAxis = new NumberAxis("Value");
+		yAxis.setAutoRangeIncludesZero(false);
+
+		CategoryPlot plot = new CategoryPlot(optionsDataset, xAxis, yAxis, lineRenderer);
+		plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
+
+		JFreeChart chart = new JFreeChart("ISI Options", JFreeChart.DEFAULT_TITLE_FONT, plot, true);
+
+		lineRenderer.setSeriesShapesVisible(0, false);
+
+		// X-Axis Labels will be inclined at 45degree
+		xAxis.setLabel("Date");
+		xAxis.tickLabels = optionsData.dates;
+		xAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_45);
+		xAxis.setVisible(optionsData.dates.length <= 100);
+
+		// Y-Axis range will be set automatically based on the supplied data
+		yAxis.setLabel("$1000");
+		yAxis.setAutoRange(true);
+
+		lineRenderer.setSeriesPaint(0, new Color(0, 0, 0));
+
+		return chart;
 	}
 
 	public void update() {
 		QDate start = MainWindow.instance.getIntervalStart();
 		QDate end = MainWindow.instance.getIntervalEnd();
 
-		update(start, end);
-	}
+		ISIOptionsChartData optionsData = new ISIOptionsChartData(start, end);
+		CategoryDataset optionsDataset = DatasetUtilities.createCategoryDataset( //
+				"ISI Options", "Value", optionsData.optionsValues);
 
-	public void update(QDate start, QDate end) {
-		this.netWorthData = new ISIOptionsChartData(start, end);
+		this.chart.getCategoryPlot().setDataset(optionsDataset);
 
-		this.chart.updateXYSeries("Value", //
-				this.netWorthData.xData, this.netWorthData.yData, null);
-	}
-
-	public static XYChart createISIOptionsChart(QDate start, QDate end) {
-		if (start == null) {
-			start = new QDate(1991, 1, 01);
-		}
-		if (end == null) {
-			end = new QDate(2003, 12, 31);
-		}
-
-		Account acct = Account.findAccount("ISI Options");
-
-		List<QDate> dates = new ArrayList<QDate>();
-		List<BigDecimal> high = new ArrayList<BigDecimal>();
-		List<BigDecimal> low = new ArrayList<BigDecimal>();
-
-		int curYear = 1991;
-		int curMonth = 1;
-		BigDecimal bdHigh = null;
-		BigDecimal bdLow = null;
-
-		while (start.compareTo(end) <= 0) {
-			if ((start.getYear() != curYear) || (start.getMonth() != curMonth)) {
-				dates.add(new QDate(curYear, curMonth, 1));
-				high.add(bdHigh);
-				low.add(bdLow);
-
-				bdHigh = bdLow = null;
-				curYear = start.getYear();
-				curMonth = start.getMonth();
-			}
-
-			BigDecimal bal = BigDecimal.ZERO;
-
-			List<StockOption> opts = StockOption.getOpenOptions(acct, start);
-			for (StockOption opt : opts) {
-				bal = bal.add(opt.getValueForDate(start));
-			}
-
-			if ((bdLow == null) || (bal.compareTo(bdLow) < 0)) {
-				bdLow = bal;
-			}
-			if ((bdHigh == null) || (bal.compareTo(bdHigh) > 0)) {
-				bdHigh = bal;
-			}
-
-			start = start.addDays(1);
-		}
-
-		double[] xData = new double[dates.size()];
-		double[] yData = new double[dates.size()];
-
-		for (int ii = 0; ii < dates.size(); ++ii) {
-			xData[ii] = (double) ii;
-			yData[ii] = Math.floor(high.get(ii).doubleValue() / 1000);
-		}
-
-		XYChart chart = QuickChart.getChart( //
-				"ISI Options", "Month", "$K", "Value", xData, yData);
-
-		return chart;
+		CategoryAxis xAxis = this.chart.getCategoryPlot().getDomainAxis();
+		xAxis.tickLabels = optionsData.dates;
+		xAxis.setVisible(optionsData.dates.length <= 100);
 	}
 }

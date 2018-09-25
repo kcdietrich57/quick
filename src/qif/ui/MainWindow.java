@@ -113,11 +113,14 @@ public class MainWindow extends JPanel {
 
 	public Dashboard dashboardPanel;
 	public JPanel chartPanel;
-	private BalanceChart_old balChartXCHART;
 	private BalanceChart balChart;
 	private NetWorthChart nwChart;
 	private ISIOptionsChart optChart;
 	private JSplitPane accountViewSplit;
+
+	private BalanceChart_old balChartXCHART;
+	private NetWorthChart_old nwChartXCHART;
+	private ISIOptionsChart_old optChartXCHART;
 
 	public MainWindow() {
 		super(new BorderLayout());
@@ -300,33 +303,41 @@ public class MainWindow extends JPanel {
 		this.chartPanel = new JPanel(new BorderLayout());
 		JTabbedPane chartTabs = new JTabbedPane();
 
-		this.nwChart = new NetWorthChart();
-		this.nwChart.create();
+		this.nwChartXCHART = new NetWorthChart_old();
+		this.nwChartXCHART.create();
 		this.balChartXCHART = new BalanceChart_old();
 		this.balChartXCHART.create();
-		this.optChart = new ISIOptionsChart();
-		this.optChart.create();
+		this.optChartXCHART = new ISIOptionsChart_old();
+		this.optChartXCHART.create();
 
 		this.balChart = new BalanceChart();
+		this.nwChart = new NetWorthChart();
+		this.optChart = new ISIOptionsChart();
 
-		XChartPanel<Chart> nwChartPanel = new XChartPanel<Chart>(nwChart.chart);
+		XChartPanel<Chart> nwChartPanel_old = new XChartPanel<Chart>(nwChartXCHART.chart);
 		XChartPanel<Chart> balChartPanel_old = new XChartPanel<Chart>(balChartXCHART.chart);
-		XChartPanel<Chart> optChartPanel = new XChartPanel<Chart>(optChart.chart);
+		XChartPanel<Chart> optChartPanel = new XChartPanel<Chart>(optChartXCHART.chart);
 		// this.chartView.validate();
 
 		chartTabs.addTab("Balances", this.balChart.createChartPanel());
-		chartTabs.addTab("Balances(old)", balChartPanel_old);
-		chartTabs.addTab("Net Worth", nwChartPanel);
-		chartTabs.addTab("ISI Options", optChartPanel);
+		chartTabs.addTab("Net Worth", this.nwChart.createChartPanel());
+		chartTabs.addTab("ISI Options", this.optChart.createChartPanel());
+
+//		chartTabs.addTab("Balances(old)", balChartPanel_old);
+//		chartTabs.addTab("Net Worth(old)", nwChartPanel_old);
+//		chartTabs.addTab("ISI Options(old)", optChartPanel);
 
 		this.chartPanel.add(chartTabs, BorderLayout.CENTER);
 	}
 
 	public void updateChartPanel() {
 		this.balChart.update();
-		this.balChartXCHART.update();
 		this.nwChart.update();
 		this.optChart.update();
+
+		this.balChartXCHART.update();
+		this.nwChartXCHART.update();
+		this.optChartXCHART.update();
 
 		this.chartPanel.repaint();
 	}

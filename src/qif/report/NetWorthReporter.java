@@ -1,8 +1,6 @@
 package qif.report;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 import qif.data.Account;
 import qif.data.Common;
@@ -10,7 +8,6 @@ import qif.data.QDate;
 import qif.report.StatusForDateModel.AccountSummary;
 import qif.report.StatusForDateModel.Section;
 import qif.report.StatusForDateModel.SecuritySummary;
-import qif.ui.MainWindow;
 
 public class NetWorthReporter {
 
@@ -34,47 +31,6 @@ public class NetWorthReporter {
 		String s = generateReportStatusForDate(model);
 
 		System.out.println(s);
-	}
-
-	private static QDate getFirstTransactionDate() {
-		QDate retdate = null;
-
-		for (final Account a : Account.getAccounts()) {
-			final QDate d = a.getFirstTransactionDate();
-
-			if ((d != null) && ((retdate == null) || d.compareTo(retdate) < 0)) {
-				retdate = d;
-			}
-		}
-
-		return retdate;
-	}
-
-	public static List<StatusForDateModel> getNetWorthData() {
-		return getNetWorthData(null, MainWindow.instance.asOfDate, //
-				MainWindow.instance.reportUnit);
-	}
-
-	public static List<StatusForDateModel> getNetWorthData( //
-			QDate start, QDate end, MainWindow.IntervalUnit unit) {
-		List<StatusForDateModel> balances = new ArrayList<StatusForDateModel>();
-
-		QDate d = (start != null) ? start : getFirstTransactionDate();
-		QDate lastTxDate = (end != null) ? end : QDate.today(); // getLastTransactionDate();
-
-		int year = d.getYear();
-		int month = d.getMonth();
-			d = QDate.getDateForEndOfMonth(year, month);
-
-		do {
-			StatusForDateModel b = new StatusForDateModel(d);
-
-			balances.add(b);
-
-			d = unit.nextDate(d);
-		} while (d.compareTo(lastTxDate) <= 0);
-
-		return balances;
 	}
 
 	// ===============================================================
