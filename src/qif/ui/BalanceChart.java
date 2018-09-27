@@ -69,7 +69,7 @@ public class BalanceChart {
 		xAxis.setLabel("Date");
 		xAxis.tickLabels = balanceData.dates;
 		xAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_45);
-		xAxis.setVisible(balanceData.dates.length <= 100);
+		//xAxis.setVisible(balanceData.dates.length <= 100);
 
 		NumberAxis yAxis = new NumberAxis("Value");
 		yAxis.setAutoRangeIncludesZero(false);
@@ -106,6 +106,6 @@ public class BalanceChart {
 
 		CategoryAxis xAxis = this.chart.getCategoryPlot().getDomainAxis();
 		xAxis.tickLabels = balanceData.dates;
-		xAxis.setVisible(balanceData.dates.length <= 100);
+		//xAxis.setVisible(true); //balanceData.dates.length <= 100);
 	}
 }

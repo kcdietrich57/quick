@@ -67,17 +67,43 @@ public class MainWindow extends JPanel {
 
 			switch (this) {
 			case Year:
-				++year;
+				if (month < 12 || day < 31) {
+					month = 12;
+					day = 31;
+				} else {
+					++year;
+				}
 				break;
+
 			case Quarter:
-				month += 3;
+				if ((month % 3) != 0) {
+					month = month + 3 - month % 3;
+				} else if (day == QDate.getDateForEndOfMonth(year, month).getDay()) {
+					month += 3;
+					if (month > 12) {
+						++year;
+						month -= 12;
+					}
+				}
+
+				day = QDate.getDateForEndOfMonth(year, month).getDay();
 				break;
+
 			case Month:
-				++month;
+				int eomday = QDate.getDateForEndOfMonth(year, month).getDay();
+
+				if (day < eomday) {
+					day = eomday;
+				} else {
+					++month;
+					day = QDate.getDateForEndOfMonth(year, month).getDay();
+				}
 				break;
+
 			case Week:
 				day += 7;
 				break;
+
 			case Day:
 				++day;
 				break;
@@ -88,7 +114,7 @@ public class MainWindow extends JPanel {
 				month -= 12;
 			}
 
-			QDate dd = new QDate(year, month, 1).getLastDayOfMonth();
+			QDate dd = QDate.getDateForEndOfMonth(year, month);
 			if (day > dd.getDay()) {
 				if (this != Week && this != Day) {
 					day = dd.getDay();

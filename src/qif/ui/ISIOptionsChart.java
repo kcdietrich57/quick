@@ -155,7 +155,7 @@ public class ISIOptionsChart {
 		xAxis.setLabel("Date");
 		xAxis.tickLabels = optionsData.dates;
 		xAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_45);
-		xAxis.setVisible(optionsData.dates.length <= 100);
+		//xAxis.setVisible(optionsData.dates.length <= 100);
 
 		// Y-Axis range will be set automatically based on the supplied data
 		yAxis.setLabel("$1000");
@@ -178,6 +178,6 @@ public class ISIOptionsChart {
 
 		CategoryAxis xAxis = this.chart.getCategoryPlot().getDomainAxis();
 		xAxis.tickLabels = optionsData.dates;
-		xAxis.setVisible(optionsData.dates.length <= 100);
+		//xAxis.setVisible(optionsData.dates.length <= 100);
 	}
 }
