@@ -88,7 +88,7 @@ public class TimeSliderPanel extends JPanel {
 		};
 
 		JComboBox<MainWindow.IntervalLength> periodCombo = new JComboBox<MainWindow.IntervalLength>(periods);
-		periodCombo.setSelectedItem(MainWindow.IntervalLength.All);
+		periodCombo.setSelectedItem(MainWindow.instance.reportPeriod);
 
 		periodCombo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -109,7 +109,7 @@ public class TimeSliderPanel extends JPanel {
 		};
 
 		JComboBox<MainWindow.IntervalUnit> unitsCombo = new JComboBox<MainWindow.IntervalUnit>(units);
-		unitsCombo.setSelectedItem(MainWindow.IntervalUnit.Year);
+		unitsCombo.setSelectedItem(MainWindow.instance.reportUnit);
 
 		unitsCombo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {

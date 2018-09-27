@@ -109,7 +109,7 @@ public class MainWindow extends JPanel {
 
 	public QDate asOfDate = QDate.today();
 	public IntervalLength reportPeriod = IntervalLength.All;
-	public IntervalUnit reportUnit = IntervalUnit.Year;
+	public IntervalUnit reportUnit = IntervalUnit.Month;
 
 	public Dashboard dashboardPanel;
 	public JPanel chartPanel;
