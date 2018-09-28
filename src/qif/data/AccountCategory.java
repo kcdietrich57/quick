@@ -10,20 +10,23 @@ public class AccountCategory {
 	public static final int CREDIT = 4;
 	public static final int LOAN = 5;
 
+	public static final int NUM_ACCT_CATEGORIES = 6;
+
 	public static final String[] accountCategoryNames = new String[] { //
-			"Bank", "Asset", "Investment", "Retirement", "Credit Card", "Loan" //
+			"Retirement", "Asset", "Investment", "Bank", "Credit Card", "Loan" //
 	};
 
 	public static final AccountCategory[] accountCategoryInfo = {
-			new AccountCategory("Bank", new AccountType[] { AccountType.Bank, AccountType.Cash }, true), //
-			new AccountCategory("Asset", new AccountType[] { AccountType.Asset }, true), //
-			new AccountCategory("Investment", new AccountType[] { AccountType.Invest, AccountType.InvPort }, true), //
 			new AccountCategory("Retirement", new AccountType[] { AccountType.InvMutual, AccountType.Inv401k },
 					true), //
+			new AccountCategory("Asset", new AccountType[] { AccountType.Asset }, true), //
+			new AccountCategory("Investment", new AccountType[] { AccountType.Invest, AccountType.InvPort }, true), //
+			new AccountCategory("Bank", new AccountType[] { AccountType.Bank, AccountType.Cash }, true), //
 			new AccountCategory("Credit Card", new AccountType[] { AccountType.CCard }, false), //
 			new AccountCategory("Loan", new AccountType[] { AccountType.Liability }, false) //
 	};
 
+	// TODO AccountType should specify its category rather than mapping it here
 	private static AccountType[] allAcctTypes = { //
 			AccountType.Bank, AccountType.Cash, //
 			AccountType.Asset, //

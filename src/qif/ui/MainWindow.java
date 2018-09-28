@@ -14,9 +14,6 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
-import org.knowm.xchart.XChartPanel;
-import org.knowm.xchart.internal.chartpart.Chart;
-
 import qif.data.GenericTxn;
 import qif.data.QDate;
 import qif.data.QifDom;
@@ -324,7 +321,6 @@ public class MainWindow extends JPanel {
 		this.accountNavigationPanel.addAccountSelectionListener(this.accountPanel);
 	}
 
-	@SuppressWarnings("rawtypes")
 	private void createChartsPanel() {
 		this.chartPanel = new JPanel(new BorderLayout());
 		JTabbedPane chartTabs = new JTabbedPane();
@@ -340,9 +336,9 @@ public class MainWindow extends JPanel {
 		this.nwChart = new NetWorthChart();
 		this.optChart = new ISIOptionsChart();
 
-		XChartPanel<Chart> nwChartPanel_old = new XChartPanel<Chart>(nwChartXCHART.chart);
-		XChartPanel<Chart> balChartPanel_old = new XChartPanel<Chart>(balChartXCHART.chart);
-		XChartPanel<Chart> optChartPanel = new XChartPanel<Chart>(optChartXCHART.chart);
+		//XChartPanel<Chart> nwChartPanel_old = new XChartPanel<Chart>(nwChartXCHART.chart);
+		//XChartPanel<Chart> balChartPanel_old = new XChartPanel<Chart>(balChartXCHART.chart);
+		//XChartPanel<Chart> optChartPanel = new XChartPanel<Chart>(optChartXCHART.chart);
 		// this.chartView.validate();
 
 		chartTabs.addTab("Balances", this.balChart.createChartPanel());
