@@ -192,24 +192,51 @@ class AccountTableCellRenderer extends DefaultTableCellRenderer {
 
 		boolean statementDue = acct.isStatementDue();
 
+		Color  co = normalColor;
+		switch (acct.type) {
+		case Asset:
+			co = Color.GREEN;
+			break;
+		case Bank:
+		case Cash:
+			co = Color.RED;
+			break;
+		case CCard:
+			co = Color.ORANGE;
+			break;
+		case Invest:
+		case InvMutual:
+		case InvPort:
+			co = Color.BLUE;
+			break;
+		case Inv401k:
+			co = Color.DARK_GRAY;
+			break;
+		case Liability:
+			co = Color.MAGENTA;
+			break;
+		}
+
+		c.setForeground(co);
+
 		if (!acct.isOpenOn(QDate.today())) {
 			c.setFont(closedFont);
-			c.setForeground(closedColor);
+			//c.setForeground(closedColor);
 		} else if (statementDue) {
 			Statement stat = acct.getFirstUnbalancedStatement();
 
 			c.setFont(dueFont);
 
 			if ((stat != null) && (stat.cashBalance.signum() != 0)) {
-				c.setForeground(dueColor);
+				//c.setForeground(dueColor);
 				c.setBackground(dueBackground);
 			} else {
-				c.setForeground(normalColor);
+				//c.setForeground(normalColor);
 				c.setBackground(normalBackground);
 			}
 		} else {
 			c.setFont(normalFont);
-			c.setForeground(normalColor);
+			//c.setForeground(normalColor);
 			c.setBackground(normalBackground);
 		}
 
@@ -222,6 +249,7 @@ class AccountTableCellRenderer extends DefaultTableCellRenderer {
 		} else {
 			setBackground(Color.WHITE);
 		}
+
 		return c;
 	}
 }

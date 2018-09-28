@@ -18,16 +18,10 @@ import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DatasetUtilities;
 
+import qif.data.AccountCategory;
 import qif.data.QDate;
 
 public class BalanceChart {
-	private static final int RETIRE = 0;
-	private static final int ASSET = 1;
-	private static final int INVEST = 2;
-	private static final int BANK = 3;
-	private static final int CREDIT = 4;
-	private static final int LOAN = 5;
-
 	JFreeChart chart = null;
 
 	public JPanel createChartPanel() {
@@ -54,12 +48,12 @@ public class BalanceChart {
 		catDataset.setRowKeys(Arrays.asList(balanceData.accountCategoryNames));
 
 		StackedAreaRenderer areaRenderer = new StackedAreaRenderer();
-		areaRenderer.setSeriesPaint(CREDIT, Color.YELLOW);
-		areaRenderer.setSeriesPaint(LOAN, Color.MAGENTA);
-		areaRenderer.setSeriesPaint(ASSET, Color.GREEN);
-		areaRenderer.setSeriesPaint(RETIRE, Color.DARK_GRAY);
-		areaRenderer.setSeriesPaint(BANK, Color.RED);
-		areaRenderer.setSeriesPaint(INVEST, Color.BLUE);
+		areaRenderer.setSeriesPaint(AccountCategory.CREDIT, Color.YELLOW);
+		areaRenderer.setSeriesPaint(AccountCategory.LOAN, Color.MAGENTA);
+		areaRenderer.setSeriesPaint(AccountCategory.ASSET, Color.GREEN);
+		areaRenderer.setSeriesPaint(AccountCategory.RETIRE, Color.DARK_GRAY);
+		areaRenderer.setSeriesPaint(AccountCategory.BANK, Color.RED);
+		areaRenderer.setSeriesPaint(AccountCategory.INVEST, Color.BLUE);
 
 		LineAndShapeRenderer lineRenderer = new LineAndShapeRenderer();
 		lineRenderer.setSeriesShapesVisible(0, false);

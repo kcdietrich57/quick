@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import qif.data.Account;
+import qif.data.AccountCategory;
 import qif.data.QDate;
 import qif.report.StatusForDateModel;
-import qif.report.StatusForDateModel.AccountCategoryInfo;
 import qif.report.StatusForDateModel.Section;
 import qif.ui.MainWindow.IntervalUnit;
 
@@ -34,13 +34,13 @@ public class BalanceChartData {
 
 	private void getData(List<StatusForDateModel> balances) {
 		this.dates = new QDate[balances.size()];
-		this.accountCategoryValues = new double[AccountCategoryInfo.accountCategoryInfo.length][balances.size()];
+		this.accountCategoryValues = new double[AccountCategory.accountCategoryInfo.length][balances.size()];
 		this.netWorthValues = new double[1][balances.size()];
 
 		this.accountCategoryNames = new String[catOrder.length];
 
 		for (int ii = 0; ii < catOrder.length; ++ii) {
-			this.accountCategoryNames[ii] = AccountCategoryInfo.accountCategoryNames[catOrder[ii]];
+			this.accountCategoryNames[ii] = AccountCategory.accountCategoryNames[catOrder[ii]];
 		}
 
 		for (int dateIndex = 0; dateIndex < balances.size(); ++dateIndex) {
