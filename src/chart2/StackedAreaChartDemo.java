@@ -17,6 +17,7 @@ import org.jfree.ui.RefineryUtilities;
 /**
  * A stacked area chart using data from a {@link CategoryDataset}.
  */
+@SuppressWarnings("serial")
 public class StackedAreaChartDemo extends ApplicationFrame {
 	static final double[][] data = new double[][] { //
 			{ 1.0, 4.0, 3.0, 5.0, 5.0, 7.0, 7.0, 8.0 }, //

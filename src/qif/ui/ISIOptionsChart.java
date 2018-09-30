@@ -36,16 +36,11 @@ class ISIOptionsChartData {
 	public QDate[] dates;
 	public double[][] optionsValues;
 
-//TODO no, no, no
-	QDate start, end;
-
 	public ISIOptionsChartData(QDate start, QDate end) {
 		this(start, end, MainWindow.instance.reportUnit);
 	}
 
 	public ISIOptionsChartData(QDate start, QDate end, IntervalUnit units) {
-		this.start = start;
-		this.end = end;
 		List<StatusForOptionsModel> optionsData = getOptionsData(start, end, units);
 
 		getData(optionsData);

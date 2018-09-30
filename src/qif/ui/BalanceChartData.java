@@ -32,7 +32,7 @@ public class BalanceChartData {
 	private void getData(List<StatusForDateModel> balances) {
 		this.dates = new QDate[balances.size()];
 		this.accountCategoryNames = AccountCategory.accountCategoryNames;
-		this.accountCategoryValues = new double[AccountCategory.NUM_ACCT_CATEGORIES][balances.size()];
+		this.accountCategoryValues = new double[AccountCategory.numCategories()][balances.size()];
 		this.netWorthValues = new double[1][balances.size()];
 
 		for (int dateIndex = 0; dateIndex < balances.size(); ++dateIndex) {

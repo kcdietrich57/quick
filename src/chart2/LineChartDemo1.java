@@ -19,6 +19,7 @@ import org.jfree.ui.RefineryUtilities;
 /**
  * A line chart using data from a {@link CategoryDataset}.
  */
+@SuppressWarnings("serial")
 public class LineChartDemo1 extends ApplicationFrame {
 
 	public LineChartDemo1(String title) {

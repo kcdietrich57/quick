@@ -1,10 +1,22 @@
 package qif.ui;
 
+import java.awt.Color;
+import java.util.HashMap;
+import java.util.Map;
+
+import qif.data.AccountCategory;
+
 public class UIConstants {
-//	areaRenderer.setSeriesPaint(CREDIT, Color.YELLOW);
-//	areaRenderer.setSeriesPaint(LOAN, Color.MAGENTA);
-//	areaRenderer.setSeriesPaint(ASSET, Color.GREEN);
-//	areaRenderer.setSeriesPaint(RETIRE, Color.DARK_GRAY);
-//	areaRenderer.setSeriesPaint(BANK, Color.RED);
-//	areaRenderer.setSeriesPaint(INVEST, Color.BLUE);
+	public static Map<AccountCategory, Color> acctCategoryColor = //
+			new HashMap<AccountCategory, Color>();
+
+	static {
+		acctCategoryColor.put(AccountCategory.CREDIT, Color.YELLOW);
+		acctCategoryColor.put(AccountCategory.LOAN, Color.MAGENTA);
+		acctCategoryColor.put(AccountCategory.ASSET, Color.GREEN);
+		acctCategoryColor.put(AccountCategory.RETIRE, Color.DARK_GRAY);
+		acctCategoryColor.put(AccountCategory.BANK, Color.RED);
+		acctCategoryColor.put(AccountCategory.INVEST, Color.BLUE);
+	}
+
 }

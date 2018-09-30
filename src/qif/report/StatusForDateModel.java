@@ -42,10 +42,12 @@ public class StatusForDateModel {
 	/** Accumulates info for a section (account category) */
 	public static class Section {
 		public static Section[] getSections() {
-			Section[] sections = new StatusForDateModel.Section[AccountCategory.accountCategoryInfo.length];
+			int numcat = AccountCategory.numCategories();
+			Section[] sections = new StatusForDateModel.Section[numcat];
 
-			for (int ii = 0; ii < AccountCategory.accountCategoryInfo.length; ++ii) {
-				sections[ii] = new Section(AccountCategory.accountCategoryInfo[ii]);
+			for (int ii = 0; ii < numcat; ++ii) {
+				sections[ii] = new Section( //
+						AccountCategory.accountCategoryInfo[ii]);
 			}
 
 			return sections;

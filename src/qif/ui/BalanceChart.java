@@ -48,12 +48,7 @@ public class BalanceChart {
 		catDataset.setRowKeys(Arrays.asList(balanceData.accountCategoryNames));
 
 		StackedAreaRenderer areaRenderer = new StackedAreaRenderer();
-		areaRenderer.setSeriesPaint(AccountCategory.CREDIT, Color.YELLOW);
-		areaRenderer.setSeriesPaint(AccountCategory.LOAN, Color.MAGENTA);
-		areaRenderer.setSeriesPaint(AccountCategory.ASSET, Color.GREEN);
-		areaRenderer.setSeriesPaint(AccountCategory.RETIRE, Color.DARK_GRAY);
-		areaRenderer.setSeriesPaint(AccountCategory.BANK, Color.RED);
-		areaRenderer.setSeriesPaint(AccountCategory.INVEST, Color.BLUE);
+		setSeriesColor(areaRenderer);
 
 		LineAndShapeRenderer lineRenderer = new LineAndShapeRenderer();
 		lineRenderer.setSeriesShapesVisible(0, false);
@@ -63,7 +58,7 @@ public class BalanceChart {
 		xAxis.setLabel("Date");
 		xAxis.tickLabels = balanceData.dates;
 		xAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_45);
-		//xAxis.setVisible(balanceData.dates.length <= 100);
+		// xAxis.setVisible(balanceData.dates.length <= 100);
 
 		NumberAxis yAxis = new NumberAxis("Value");
 		yAxis.setAutoRangeIncludesZero(false);
@@ -78,6 +73,15 @@ public class BalanceChart {
 		JFreeChart chart = new JFreeChart("Balances", JFreeChart.DEFAULT_TITLE_FONT, plot, true);
 
 		return chart;
+	}
+
+	private void setSeriesColor(StackedAreaRenderer r) {
+		for (int idx = 0; idx < AccountCategory.numCategories(); ++idx) {
+			AccountCategory acat = AccountCategory.values()[idx];
+			Color c = UIConstants.acctCategoryColor.get(acat);
+
+			r.setSeriesPaint(idx, c);
+		}
 	}
 
 	public void update() {
@@ -100,6 +104,6 @@ public class BalanceChart {
 
 		CategoryAxis xAxis = this.chart.getCategoryPlot().getDomainAxis();
 		xAxis.tickLabels = balanceData.dates;
-		//xAxis.setVisible(true); //balanceData.dates.length <= 100);
+		// xAxis.setVisible(true); //balanceData.dates.length <= 100);
 	}
 }

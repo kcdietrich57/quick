@@ -1,71 +1,101 @@
 package qif.data;
 
-// TODO this should be an enum
 /** Defines account categories for itemized status */
-public class AccountCategory {
-	public static final int RETIRE = 0;
-	public static final int ASSET = 1;
-	public static final int INVEST = 2;
-	public static final int BANK = 3;
-	public static final int CREDIT = 4;
-	public static final int LOAN = 5;
+public enum AccountCategory {
 
-	public static final int NUM_ACCT_CATEGORIES = 6;
+	RETIRE(0, true, "Retirement", //
+			new AccountType[] { AccountType.InvMutual, AccountType.Inv401k }), //
+	ASSET(1, true, "Asset", //
+			new AccountType[] { AccountType.Asset }), //
+	INVEST(2, true, "Investment", //
+			new AccountType[] { AccountType.Invest, AccountType.InvPort }), //
+	BANK(3, true, "Bank", //
+			new AccountType[] { AccountType.Bank, AccountType.Cash }), //
+	CREDIT(4, false, "Credit Card", //
+			new AccountType[] { AccountType.CCard }), //
+	LOAN(5, false, "Loan", //
+			new AccountType[] { AccountType.Liability });
+
+	public static final int RETIRE_IDX = 0;
+	public static final int ASSET_IDX = 1;
+	public static final int INVEST_IDX = 2;
+	public static final int BANK_IDX = 3;
+	public static final int CREDIT_IDX = 4;
+	public static final int LOAN_IDX = 5;
+
+	public static final AccountCategory[] accountCategoryInfo = { //
+			RETIRE, ASSET, INVEST, BANK, CREDIT, LOAN };
+
+	public static int numCategories() {
+		return accountCategoryInfo.length;
+	}
 
 	public static final String[] accountCategoryNames = new String[] { //
 			"Retirement", "Asset", "Investment", "Bank", "Credit Card", "Loan" //
 	};
 
-	public static final AccountCategory[] accountCategoryInfo = {
-			new AccountCategory("Retirement", new AccountType[] { AccountType.InvMutual, AccountType.Inv401k },
-					true), //
-			new AccountCategory("Asset", new AccountType[] { AccountType.Asset }, true), //
-			new AccountCategory("Investment", new AccountType[] { AccountType.Invest, AccountType.InvPort }, true), //
-			new AccountCategory("Bank", new AccountType[] { AccountType.Bank, AccountType.Cash }, true), //
-			new AccountCategory("Credit Card", new AccountType[] { AccountType.CCard }, false), //
-			new AccountCategory("Loan", new AccountType[] { AccountType.Liability }, false) //
-	};
+	public static AccountCategory forAccountType(AccountType type) {
+		switch (type) {
+		case Asset:
+			return ASSET;
 
-	// TODO AccountType should specify its category rather than mapping it here
-	private static AccountType[] allAcctTypes = { //
-			AccountType.Bank, AccountType.Cash, //
-			AccountType.Asset, //
-			AccountType.Invest, AccountType.InvPort, //
-			AccountType.InvMutual, AccountType.Inv401k, //
-			AccountType.CCard, //
-			AccountType.Liability };
+		case Bank:
+		case Cash:
+			return BANK;
 
-	private AccountType[] accountTypes;
-	public final String label;
-	public boolean isAsset;
+		case CCard:
+			return CREDIT;
 
-	public AccountCategory(String label, AccountType[] atypes, boolean isAsset) {
-		this.label = label;
-		this.accountTypes = atypes;
-		this.isAsset = isAsset;
-	}
+		case Inv401k:
+		case InvMutual:
+			return RETIRE;
 
-	public static AccountCategory getSectionInfoForAccount(Account a) {
-		for (AccountCategory sinfo : accountCategoryInfo) {
-			if (sinfo.contains(a.type)) {
-				return sinfo;
-			}
+		case Invest:
+		case InvPort:
+			return INVEST;
+
+		case Liability:
+			return LOAN;
 		}
 
 		return null;
 	}
 
-	public static AccountType[] getAccountTypes() {
-		return allAcctTypes;
+	public final int index;
+	public final boolean isAsset;
+	public final String label;
+
+	private AccountCategory(int val, boolean isAsset, String label, //
+			AccountType[] atypes) {
+		this.index = val;
+		this.isAsset = isAsset;
+		this.label = label;
+	}
+
+	public int index() {
+		return this.index;
+	}
+
+	public String toString() {
+		switch (this) {
+		case ASSET:
+			return "Asset";
+		case BANK:
+			return "Bank";
+		case CREDIT:
+			return "Credit";
+		case INVEST:
+			return "Investment";
+		case LOAN:
+			return "Loan";
+		case RETIRE:
+			return "Retirement";
+		}
+
+		return "UNKNOWN";
 	}
 
 	public boolean contains(AccountType at) {
-		for (final AccountType myat : this.accountTypes) {
-			if (myat == at) {
-				return true;
-			}
-		}
-
-		return false;
+		return this == forAccountType(at);
 	}
 }

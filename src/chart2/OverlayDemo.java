@@ -19,6 +19,7 @@ import org.jfree.data.statistics.DefaultBoxAndWhiskerCategoryDataset;
 
 public class OverlayDemo {
 
+	@SuppressWarnings("serial")
 	private void display() {
 		JFrame f = new JFrame("Test");
 		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
