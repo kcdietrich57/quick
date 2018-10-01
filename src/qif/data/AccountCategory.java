@@ -1,12 +1,15 @@
 package qif.data;
 
+import java.util.Arrays;
+import java.util.List;
+
 /** Defines account categories for itemized status */
 public enum AccountCategory {
 
-	RETIRE(0, true, "Retirement", //
-			new AccountType[] { AccountType.InvMutual, AccountType.Inv401k }), //
-	ASSET(1, true, "Asset", //
+	ASSET(0, true, "Asset", //
 			new AccountType[] { AccountType.Asset }), //
+	RETIRE(1, true, "Retirement", //
+			new AccountType[] { AccountType.InvMutual, AccountType.Inv401k }), //
 	INVEST(2, true, "Investment", //
 			new AccountType[] { AccountType.Invest, AccountType.InvPort }), //
 	BANK(3, true, "Bank", //
@@ -16,15 +19,18 @@ public enum AccountCategory {
 	LOAN(5, false, "Loan", //
 			new AccountType[] { AccountType.Liability });
 
-	public static final int RETIRE_IDX = 0;
-	public static final int ASSET_IDX = 1;
-	public static final int INVEST_IDX = 2;
-	public static final int BANK_IDX = 3;
-	public static final int CREDIT_IDX = 4;
-	public static final int LOAN_IDX = 5;
-
 	public static final AccountCategory[] accountCategoryInfo = { //
-			RETIRE, ASSET, INVEST, BANK, CREDIT, LOAN };
+			ASSET, RETIRE, INVEST, BANK, CREDIT, LOAN //
+	};
+
+	private static List<AccountCategory> listOrder = //
+			Arrays.asList(new AccountCategory[] { //
+					BANK, CREDIT, INVEST, RETIRE, ASSET, LOAN //
+			});
+
+	public int getAccountListOrder() {
+		return listOrder.indexOf(this);
+	}
 
 	public static int numCategories() {
 		return accountCategoryInfo.length;

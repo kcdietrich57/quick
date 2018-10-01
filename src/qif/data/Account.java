@@ -67,6 +67,14 @@ public class Account {
 		Collections.sort(accts, new Comparator<Account>() {
 			public int compare(Account a1, Account a2) {
 				if (a1.type != a2.type) {
+					AccountCategory cat1 = AccountCategory.forAccountType(a1.type);
+					AccountCategory cat2 = AccountCategory.forAccountType(a2.type);
+
+					int diff = cat1.getAccountListOrder() - cat2.getAccountListOrder();
+					if (diff != 0) {
+						return diff;
+					}
+
 					return a1.type.compareTo(a2.type);
 				}
 

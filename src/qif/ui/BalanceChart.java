@@ -52,7 +52,7 @@ public class BalanceChart {
 
 		LineAndShapeRenderer lineRenderer = new LineAndShapeRenderer();
 		lineRenderer.setSeriesShapesVisible(0, false);
-		lineRenderer.setSeriesPaint(0, Color.BLACK);
+		lineRenderer.setSeriesPaint(0, Color.WHITE);
 
 		CategoryAxis xAxis = new CategoryAxis("Type");
 		xAxis.setLabel("Date");
@@ -69,6 +69,7 @@ public class BalanceChart {
 		plot.setDataset(1, networthDataset);
 		plot.setRenderer(1, lineRenderer);
 		plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
+		plot.setBackgroundPaint(new Color(220, 220, 220));
 
 		JFreeChart chart = new JFreeChart("Balances", JFreeChart.DEFAULT_TITLE_FONT, plot, true);
 
