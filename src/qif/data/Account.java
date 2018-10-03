@@ -66,11 +66,13 @@ public class Account {
 
 		Collections.sort(accts, new Comparator<Account>() {
 			public int compare(Account a1, Account a2) {
+				int diff;
+
 				if (a1.type != a2.type) {
 					AccountCategory cat1 = AccountCategory.forAccountType(a1.type);
 					AccountCategory cat2 = AccountCategory.forAccountType(a2.type);
 
-					int diff = cat1.getAccountListOrder() - cat2.getAccountListOrder();
+					diff = cat1.getAccountListOrder() - cat2.getAccountListOrder();
 					if (diff != 0) {
 						return diff;
 					}
@@ -78,7 +80,12 @@ public class Account {
 					return a1.type.compareTo(a2.type);
 				}
 
-				return a1.getName().compareTo(a2.getName());
+				BigDecimal cv1 = a1.getValueForDate(MainWindow.instance.asOfDate).abs();
+				BigDecimal cv2 = a2.getValueForDate(MainWindow.instance.asOfDate).abs();
+				diff = cv2.subtract(cv1).signum();
+				return (diff != 0) //
+						? diff //
+						: a1.getName().compareTo(a2.getName());
 			}
 		});
 

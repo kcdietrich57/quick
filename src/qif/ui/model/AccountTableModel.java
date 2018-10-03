@@ -27,7 +27,8 @@ public class AccountTableModel extends AbstractTableModel {
 	public void reload() {
 		this.accounts.clear();
 
-		for (Account acct : Account.getSortedAccounts()) {
+		List<Account> accts = Account.getSortedAccounts();
+		for (Account acct : accts) {
 			if ((this.showOpenAccounts //
 					&& acct.isOpenOn(MainWindow.instance.asOfDate)) //
 					|| (!this.showOpenAccounts //
