@@ -130,9 +130,10 @@ public class MainWindow extends JPanel {
 		}
 	}
 
-	public QDate asOfDate = QDate.today();
-	public IntervalLength reportPeriod = IntervalLength.All;
-	public IntervalUnit reportUnit = IntervalUnit.Month;
+	public QDate startAsOfDate;
+	public QDate asOfDate;
+	public IntervalLength reportPeriod;
+	public IntervalUnit reportUnit;
 
 	public Dashboard dashboardPanel;
 	public JPanel chartPanel;
@@ -149,6 +150,11 @@ public class MainWindow extends JPanel {
 		super(new BorderLayout());
 
 		instance = this;
+
+		updateAsOfDate(QDate.today());
+
+		this.reportPeriod = IntervalLength.All;
+		this.reportUnit = IntervalUnit.Month;
 
 		loadProperties();
 
@@ -277,16 +283,29 @@ public class MainWindow extends JPanel {
 		this.asOfDatePanel.setSliderPosition(date);
 	}
 
+	private void updateAsOfDate(QDate date) {
+		this.asOfDate = date;
+
+		int year = this.asOfDate.getYear();
+		int lastMonth = this.asOfDate.getMonth() - 1;
+		if (lastMonth < 1) {
+			lastMonth += 12;
+			--year;
+		}
+
+		this.startAsOfDate = new QDate(year, lastMonth, 1).getLastDayOfMonth();
+	}
+
 	public void setAsOfDate(QDate date) {
 		if (date.compareTo(GenericTxn.getFirstTransactionDate()) < 0) {
 			date = GenericTxn.getFirstTransactionDate();
 		}
-		if (date.compareTo(QDate.today()) > 0) {
-			date = QDate.today();
+		if (date.compareTo(GenericTxn.getLastTransactionDate()) > 0) {
+			date = GenericTxn.getLastTransactionDate();
 		}
 
 		if (!date.equals(asOfDate)) {
-			this.asOfDate = date;
+			updateAsOfDate(date);
 
 			// TODO use AsOfDateListeners to update UI
 			this.dashboardPanel.changeDate();
@@ -336,9 +355,12 @@ public class MainWindow extends JPanel {
 		this.nwChart = new NetWorthChart();
 		this.optChart = new ISIOptionsChart();
 
-		//XChartPanel<Chart> nwChartPanel_old = new XChartPanel<Chart>(nwChartXCHART.chart);
-		//XChartPanel<Chart> balChartPanel_old = new XChartPanel<Chart>(balChartXCHART.chart);
-		//XChartPanel<Chart> optChartPanel = new XChartPanel<Chart>(optChartXCHART.chart);
+		// XChartPanel<Chart> nwChartPanel_old = new
+		// XChartPanel<Chart>(nwChartXCHART.chart);
+		// XChartPanel<Chart> balChartPanel_old = new
+		// XChartPanel<Chart>(balChartXCHART.chart);
+		// XChartPanel<Chart> optChartPanel = new
+		// XChartPanel<Chart>(optChartXCHART.chart);
 		// this.chartView.validate();
 
 		chartTabs.addTab("Balances", this.balChart.createChartPanel());

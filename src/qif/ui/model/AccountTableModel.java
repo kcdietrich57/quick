@@ -7,6 +7,7 @@ import javax.swing.table.AbstractTableModel;
 
 import qif.data.Account;
 import qif.data.Common;
+import qif.data.QDate;
 import qif.ui.MainWindow;
 
 @SuppressWarnings("serial")
@@ -24,16 +25,20 @@ public class AccountTableModel extends AbstractTableModel {
 		reload();
 	}
 
+	private boolean accountIsOpenInPeriod(Account acct) {
+		QDate start = MainWindow.instance.startAsOfDate;
+		QDate end = MainWindow.instance.asOfDate;
+
+		return (acct.getOpenDate().compareTo(end) <= 0) //
+				&& ((acct.closeDate == null) || (acct.closeDate.compareTo(start) >= 0));
+	}
+
 	public void reload() {
 		this.accounts.clear();
 
 		List<Account> accts = Account.getSortedAccounts();
 		for (Account acct : accts) {
-			if ((this.showOpenAccounts //
-					&& acct.isOpenOn(MainWindow.instance.asOfDate)) //
-					|| (!this.showOpenAccounts //
-							&& !acct.isOpenOn(MainWindow.instance.asOfDate) //
-							&& (acct.getOpenDate().compareTo(MainWindow.instance.asOfDate) <= 0))) {
+			if (this.showOpenAccounts == accountIsOpenInPeriod(acct)) {
 				this.accounts.add(acct);
 			}
 		}
