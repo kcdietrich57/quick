@@ -178,12 +178,15 @@ public class CSVImport {
 
 		Account xferAcct = null;
 		Category c = null;
+		int catid;
 
 		if (cat.startsWith("Transfer:[")) {
 			cat = cat.substring(10, cat.length() - 1);
 			xferAcct = Account.findAccount(cat);
+			catid = (xferAcct != null) ? -xferAcct.acctid : 0;
 		} else {
 			c = (!cat.isEmpty()) ? Category.findCategory(cat) : null;
+			catid = (c != null) ? c.catid : 0;
 		}
 
 		SimpleTxn txn = null;
@@ -212,11 +215,9 @@ public class CSVImport {
 
 		txn.setDate(txdate);
 		txn.setAmount(amount);
-		txn.memo = memo;
-		txn.xacctid = 0;
-		txn.xtxn = null;
-		txn.catid = (c != null) ? c.catid : 0;
-		txn.xacctid = (xferAcct != null) ? xferAcct.acctid : 0;
+		txn.setMemo(memo);
+		txn.setXtxn(null);
+		txn.setCatid(catid);
 
 		if (txn instanceof GenericTxn) {
 			GenericTxn gtxn = (GenericTxn) txn;
@@ -233,7 +234,7 @@ public class CSVImport {
 			InvestmentTxn itxn = (InvestmentTxn) txn;
 			itxn.accountForTransfer = null;
 			itxn.amountTransferred = BigDecimal.ZERO;
-			itxn.catid = 0;
+			itxn.setCatid(0);
 			itxn.commission = BigDecimal.ZERO;
 			itxn.dstLots = null;
 			itxn.price = BigDecimal.ZERO;

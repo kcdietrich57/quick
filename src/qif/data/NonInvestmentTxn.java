@@ -93,14 +93,8 @@ public class NonInvestmentTxn extends GenericTxn {
 		s += " num=" + this.chkNumber;
 		s += " payee=" + getPayee();
 		s += " amt=" + getAmount();
-		s += " memo=" + this.memo;
-
-		if (this.catid < (short) 0) {
-			s += " xacct=[" + Account.getAccountByID(-this.catid).getName() + "]";
-		} else if (this.catid > (short) 0) {
-			s += " cat=" + Category.getCategory(this.catid).name;
-		}
-
+		s += " memo=" + getMemo();
+		s += " xfer/cat=" + getCategory();
 		s += " bal=" + this.runningTotal;
 
 		if ((this.address != null) && !this.address.isEmpty()) {
@@ -114,17 +108,9 @@ public class NonInvestmentTxn extends GenericTxn {
 			s += "\n  splits \n";
 
 			for (final SimpleTxn txn : this.split) {
-				if (txn.catid < (short) 0) {
-					s += " [" + Account.getAccountByID(-txn.catid).getName() + "]";
-				} else if (txn.catid > (short) 0) {
-					s += " " + Category.getCategory(txn.catid).name;
-				}
-
+				s += "  " + getCategory();
 				s += " " + txn.getAmount();
-
-				if (txn.memo != null) {
-					s += " " + txn.memo;
-				}
+				s += " " + txn.getMemo();
 
 				s += "\n";
 			}

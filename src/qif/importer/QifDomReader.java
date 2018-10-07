@@ -1167,7 +1167,7 @@ class Cleaner {
 
 		for (int ii = 0; ii < nitxn.split.size(); ++ii) {
 			final SimpleTxn stxn = nitxn.split.get(ii);
-			if (stxn.catid >= 0) {
+			if (stxn.getCatid() >= 0) {
 				continue;
 			}
 
@@ -1176,13 +1176,13 @@ class Cleaner {
 			for (int jj = ii + 1; jj < nitxn.split.size(); ++jj) {
 				final SimpleTxn stxn2 = nitxn.split.get(jj);
 
-				if (stxn.catid == stxn2.catid) {
+				if (stxn.getCatid() == stxn2.getCatid()) {
 					if (mtxn == null) {
 						mtxn = new MultiSplitTxn(txn.acctid);
 						nitxn.split.set(ii, mtxn);
 
 						mtxn.setAmount(stxn.getAmount());
-						mtxn.catid = stxn.catid;
+						mtxn.setCatid(stxn.getCatid());
 						mtxn.subsplits.add(stxn);
 					}
 
@@ -1228,20 +1228,20 @@ class Cleaner {
 			for (final SimpleTxn stxn : ((NonInvestmentTxn) txn).split) {
 				connectTransfers(stxn, txn.getDate());
 			}
-		} else if ((txn.catid < 0) && //
+		} else if ((txn.getCatid() < 0) && //
 		// opening balance shows up as xfer to same acct
-				(-txn.catid != txn.acctid)) {
+				(-txn.getCatid() != txn.acctid)) {
 			connectTransfers(txn, txn.getDate());
 		}
 	}
 
 	private void connectTransfers(SimpleTxn txn, QDate date) {
 		// Opening balance appears as a transfer to the same acct
-		if ((txn.catid >= 0) || (txn.catid == -txn.getXferAcctid())) {
+		if ((txn.getCatid() >= 0) || (txn.getCatid() == -txn.getXferAcctid())) {
 			return;
 		}
 
-		final Account a = Account.getAccountByID(-txn.catid);
+		final Account a = Account.getAccountByID(-txn.getCatid());
 
 		findMatchesForTransfer(a, txn, date, true);
 
@@ -1268,8 +1268,8 @@ class Cleaner {
 			xtxn = matchingTxns.get(0);
 		}
 
-		txn.xtxn = xtxn;
-		xtxn.xtxn = txn;
+		txn.setXtxn(xtxn);
+		xtxn.setXtxn(txn);
 	}
 
 	private void findMatchesForTransfer(Account acct, SimpleTxn txn, QDate date, boolean strict) {
@@ -1308,7 +1308,7 @@ class Cleaner {
 	}
 
 	private SimpleTxn checkMatchForTransfer(SimpleTxn txn, GenericTxn gtxn, boolean strict) {
-		assert -txn.catid == gtxn.acctid;
+		assert -txn.getCatid() == gtxn.acctid;
 
 		if (!gtxn.hasSplits()) {
 			if ((gtxn.getXferAcctid() == txn.acctid) //
@@ -1956,7 +1956,7 @@ class TransactionProcessor {
 				break;
 			}
 
-			if ("[[ignore]]".equals(txn.memo)) {
+			if ("[[ignore]]".equals(txn.getMemo())) {
 				continue;
 			}
 
@@ -2007,7 +2007,7 @@ class TransactionProcessor {
 				txn.setDate(Common.parseQDate(qline.value));
 				break;
 			case InvMemo:
-				txn.memo = qline.value;
+				txn.setMemo(qline.value);
 				break;
 			case InvPrice:
 				txn.price = Common.getDecimal(qline.value);
@@ -2031,7 +2031,7 @@ class TransactionProcessor {
 				break;
 			case InvXferAcct:
 				txn.accountForTransfer = qline.value;
-				txn.xacctid = findCategoryID(qline.value);
+				txn.setCatid(findCategoryID(qline.value));
 				break;
 
 			default:
@@ -2052,7 +2052,7 @@ class TransactionProcessor {
 				break;
 			}
 
-			if ("[[ignore]]".equals(txn.memo)) {
+			if ("[[ignore]]".equals(txn.getMemo())) {
 				continue;
 			}
 
@@ -2075,13 +2075,17 @@ class TransactionProcessor {
 			case EndOfSection:
 				return txn;
 
-			case TxnCategory:
-				txn.catid = findCategoryID(qline.value);
+			case TxnCategory: {
+				int catid = findCategoryID(qline.value);
 
-				if (txn.catid == 0) {
+				if (catid == 0) {
 					Common.reportError("Can't find xtxn: " + qline.value);
 				}
+
+				txn.setCatid(catid);
+			}
 				break;
+
 			case TxnAmount: {
 				final BigDecimal amt = Common.getDecimal(qline.value);
 
@@ -2096,7 +2100,7 @@ class TransactionProcessor {
 				break;
 			}
 			case TxnMemo:
-				txn.memo = qline.value;
+				txn.setMemo(qline.value);
 				break;
 
 			case TxnDate:
@@ -2116,7 +2120,7 @@ class TransactionProcessor {
 				break;
 
 			case TxnSplitCategory:
-				if (cursplit == null || cursplit.catid != 0) {
+				if (cursplit == null || cursplit.getCatid() != 0) {
 					cursplit = new SimpleTxn(txn.acctid);
 					txn.split.add(cursplit);
 				}
@@ -2124,9 +2128,9 @@ class TransactionProcessor {
 				if (qline.value == null || qline.value.trim().isEmpty()) {
 					qline.value = "Fix Me";
 				}
-				cursplit.catid = findCategoryID(qline.value);
+				cursplit.setCatid(findCategoryID(qline.value));
 
-				if (cursplit.catid == 0) {
+				if (cursplit.getCatid() == 0) {
 					Common.reportError("Can't find xtxn: " + qline.value);
 				}
 				break;
@@ -2140,7 +2144,7 @@ class TransactionProcessor {
 				break;
 			case TxnSplitMemo:
 				if (cursplit != null) {
-					cursplit.memo = qline.value;
+					cursplit.setMemo(qline.value);
 				}
 				break;
 

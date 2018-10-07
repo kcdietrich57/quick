@@ -261,7 +261,7 @@ public class MainWindow extends JPanel {
 			QifDom.qifProperties = new Properties();
 		}
 
-		// TODO give statment transactions table its own model
+		// TODO give statement transactions table its own model
 		// this.statementTransactionPanel.updateQifProperties();
 		this.reconcileTransactionsPanel.updateQifProperties();
 		this.registerTransactionPanel.updateQifProperties();

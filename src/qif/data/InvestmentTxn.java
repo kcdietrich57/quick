@@ -306,10 +306,6 @@ public class InvestmentTxn extends GenericTxn {
 		}
 	}
 
-	public short getXferAcctid() {
-		return (short) -this.xacctid;
-	}
-
 	public String formatForSave() {
 		String secString = ";";
 		if (this.security != null) {
@@ -364,7 +360,7 @@ public class InvestmentTxn extends GenericTxn {
 		s += " amt=" + getAmount();
 		s += " clr=" + this.clearedStatus;
 		s += " txt=" + this.textFirstLine;
-		s += " memo=" + this.memo;
+		s += " memo=" + getMemo();
 		s += " comm=" + this.commission;
 		s += " xact=" + this.accountForTransfer;
 		s += " xamt=" + this.amountTransferred;

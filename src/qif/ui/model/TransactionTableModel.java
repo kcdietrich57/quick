@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import qif.data.Account;
-import qif.data.Category;
 import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
@@ -134,28 +133,11 @@ public class TransactionTableModel //
 		case 3:
 			return Common.stringValue(tx.getAmount());
 
-		case 4: {
-			if (tx.catid > 0) {
-				return Category.getCategory(tx.catid).name;
-			}
-
-			int acctid = 0;
-
-			if (tx.catid < 0) {
-				acctid = -tx.catid;
-			} else if (tx instanceof InvestmentTxn) {
-				acctid = ((InvestmentTxn) tx).getXferAcctid();
-			}
-
-			if (acctid > 0) {
-				return "[" + Account.getAccountByID(acctid).getName() + "]";
-			}
-
-			return "";
-		}
+		case 4: 
+			return tx.getCategory();
 
 		case 5:
-			return Common.stringValue(tx.memo);
+			return tx.getMemo();
 
 		case 6:
 			if (tx instanceof InvestmentTxn) {

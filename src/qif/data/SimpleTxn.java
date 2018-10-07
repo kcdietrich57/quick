@@ -16,11 +16,10 @@ public class SimpleTxn {
 	public final int txid;
 
 	private BigDecimal amount;
-	public String memo;
+	private String memo;
 
-	public int xacctid;
-	public int catid; // >0: CategoryID; <0 AccountID
-	public SimpleTxn xtxn;
+	private int catid; // >0: CategoryID; <0 AccountID
+	private SimpleTxn xtxn;
 
 	public SimpleTxn(int acctid) {
 		this.txid = nextid++;
@@ -30,7 +29,6 @@ public class SimpleTxn {
 		this.memo = null;
 
 		this.catid = 0;
-		this.xacctid = 0;
 		this.xtxn = null;
 	}
 
@@ -42,7 +40,6 @@ public class SimpleTxn {
 		this.memo = other.memo;
 		this.catid = other.catid;
 
-		this.xacctid = 0;
 		this.xtxn = null;
 	}
 
@@ -102,8 +99,40 @@ public class SimpleTxn {
 		return NOSPLITS;
 	}
 
-	public short getXferAcctid() {
-		return (short) ((this.catid < 0) ? -this.catid : 0);
+	public int getXferAcctid() {
+		return (this.catid < 0) ? -this.catid : 0;
+	}
+
+	public SimpleTxn getXtxn() {
+		return this.xtxn;
+	}
+
+	public void setXtxn(SimpleTxn txn) {
+		this.xtxn = txn;
+	}
+
+	public String getCategory() {
+		if (hasSplits()) {
+			return "[Split]";
+		}
+
+		if (this.catid > 0) {
+			return Category.getCategory(this.catid).name;
+		}
+
+		int acctid = -this.catid;
+
+		return (acctid > 0) //
+				? "[" + Account.getAccountByID(acctid).getName() + "]" //
+				: "N/A";
+	}
+
+	public int getCatid() {
+		return this.catid;
+	}
+
+	public void setCatid(int catid) {
+		this.catid = catid;
 	}
 
 	public void setAmount(BigDecimal amount) {
@@ -123,6 +152,14 @@ public class SimpleTxn {
 		return this.amount;
 	}
 
+	public String getMemo() {
+		return (this.memo != null) ? this.memo : "";
+	}
+
+	public void setMemo(String memo) {
+		this.memo = memo;
+	}
+
 	public String toString() {
 		return toStringLong();
 	}
@@ -139,12 +176,10 @@ public class SimpleTxn {
 		String s = "Tx" + this.txid + ":";
 		s += Account.getAccountByID(this.acctid).getName();
 		s += " amt=" + this.amount;
-		s += " memo=" + this.memo;
+		s += " memo=" + getMemo();
 
-		if (this.xacctid < (short) 0) {
-			s += " xacct=" + Account.getAccountByID(-this.xacctid).getName();
-		} else if (this.catid < (short) 0) {
-			s += " xcat=" + Account.getAccountByID(-this.catid).getName();
+		if (this.catid < (short) 0) {
+			s += " xacct=" + Account.getAccountByID(-this.catid).getName();
 		} else if (this.catid > (short) 0) {
 			s += " cat=" + Category.getCategory(this.catid).name;
 		}
