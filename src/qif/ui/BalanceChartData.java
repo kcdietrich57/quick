@@ -1,5 +1,6 @@
 package qif.ui;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,8 +42,33 @@ public class BalanceChartData {
 			this.dates[dateIndex] = balances.get(dateIndex).date;
 			this.netWorthValues[0][dateIndex] = 0.0;
 
+			double[] massagedValues = new double[sections.length];
+			for (int ii = 0; ii < massagedValues.length; ++ii) {
+				massagedValues[ii] = Math.floor(sections[ii].subtotal.floatValue() / 1000);
+			}
+
+			int aidx = AccountCategory.ASSET.index;
+			int lidx = AccountCategory.LOAN.index;
+			
+			double assets = massagedValues[aidx];
+			double loans = massagedValues[lidx];
+
+			boolean separateAssetsAndLoans = true;
+
+			if (!separateAssetsAndLoans) {
+				if (assets > Math.abs(loans)) {
+					massagedValues[aidx] = assets + loans;
+					massagedValues[lidx] = 0.0;
+				} else {
+					massagedValues[lidx] = loans + assets;
+					massagedValues[aidx] = 0.0;
+				}
+			}
+
 			for (int sectionNum = 0; sectionNum < sections.length; ++sectionNum) {
-				double val = Math.floor(sections[sectionNum].subtotal.floatValue() / 1000);
+				double val = (separateAssetsAndLoans) //
+						? Math.floor(sections[sectionNum].subtotal.floatValue() / 1000) //
+						: massagedValues[sectionNum];
 
 				this.accountCategoryValues[sectionNum][dateIndex] = val;
 				this.netWorthValues[0][dateIndex] += val;

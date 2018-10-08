@@ -27,9 +27,13 @@ import qif.data.Account;
 import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
+import qif.data.Lot;
 import qif.data.NonInvestmentTxn;
+import qif.data.QDate;
+import qif.data.Security;
 import qif.data.SimpleTxn;
 import qif.data.Statement;
+import qif.data.TxAction;
 import qif.ui.model.TransactionTableModel;
 
 /** This panel displays transactions in an account or statement */
@@ -110,55 +114,60 @@ public class TransactionPanel //
 	private void clickTransactionHandler(int row) {
 		GenericTxn txn = this.transactionTableModel.getTransactionAt(row);
 
-		Object o;
-
 		SimpleTxn stx = txn;
-		stx.getAmount();
-		stx.getCashAmount();
-		stx.getCategory();
-		stx.getMemo();
-		stx.getSplits(); // NOSPLITS
-		stx.getXferAcctid();
-		stx.getXferAmount();
-		o = stx.getXtxn();
-		
-		txn.getDate();
-		txn.getPayee();
-		txn.isCleared();
-		o = txn.stmtdate;
-		
+		TxAction action = stx.getAction();
+		BigDecimal amt = stx.getAmount();
+		BigDecimal cashamt = stx.getCashAmount();
+		String cat = stx.getCategory();
+		String memo = stx.getMemo();
+		List<SimpleTxn> splits = stx.getSplits(); // NOSPLITS
+		// int xacctid = stx.getXferAcctid();
+		BigDecimal xamt = stx.getXferAmount();
+		// SimpleTxn xtxn = stx.getXtxn();
+
+		QDate date = txn.getDate();
+		String payee = txn.getPayee();
+		boolean clr = txn.isCleared();
+		// QDate stmtdate = txn.stmtdate;
+
 		if (txn instanceof NonInvestmentTxn) {
 			NonInvestmentTxn nit = (NonInvestmentTxn) txn;
 
-			o = nit.chkNumber; // String
-			nit.getCheckNumber(); // int
-			o = nit.address;
-			
+			String cknumStr = nit.chkNumber;
+			// int cknum = nit.getCheckNumber();
+			// List<String> addr = nit.address;
+
 			try {
 				System.out.println();
 				// System.out.println("Non-Investment Transaction:");
-				System.out.println(String.format("%-10s %-6s %-30s %12s", //
-						nit.getDate().longString, //
-						((nit.chkNumber != null) //
-								? nit.chkNumber //
-								: nit.getAction().toString()), //
-						nit.getPayee(), Common.formatAmount(nit.getAmount())));
+				if (!amt.equals(cashamt)) {
+					System.out.println("Warning: amt/cash not equal");
+				}
 
-				System.out.println(String.format("  %-20s  : %s", //
-						nit.getMemo(), //
-						nit.getCategory()));
+				System.out.println(String.format("%-10s |%c| %-6s | %-30s | %12s", //
+						date.longString, //
+						((clr) ? 'C' : ' '), //
+						((cknumStr != null) //
+								? cknumStr //
+								: action.toString()), //
+						payee, //
+						Common.formatAmount(amt)));
+
+				System.out.println(String.format("  %-20s | %s", //
+						cat, //
+						memo));
 
 				if (nit.hasSplits()) {
 					int ii = 1;
-					for (SimpleTxn split : nit.getSplits()) {
-						BigDecimal amt = split.getAmount();
-						if (Common.isEffectivelyZero(amt)) {
+					for (SimpleTxn split : splits) {
+						BigDecimal samt = split.getAmount();
+						if (Common.isEffectivelyZero(samt)) {
 							continue;
 						}
 
 						System.out.println(String.format("    %2d: %15s  %20s  %20s", //
 								ii++, //
-								Common.formatAmount(split.getAmount()), //
+								Common.formatAmount(samt), //
 								split.getCategory(), //
 								split.getMemo()));
 					}
@@ -166,45 +175,77 @@ public class TransactionPanel //
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		}
-
-		if (txn instanceof InvestmentTxn) {
+		} else if (txn instanceof InvestmentTxn) {
 			InvestmentTxn it = (InvestmentTxn) txn;
 
 			try {
-				o = it.accountForTransfer;
-				o = it.amountTransferred;
-				o = it.xferTxns;
-				o = it.commission;
-				o = it.srcLots;
-				o = it.dstLots;
-				o = it.price;
-				o = it.security;
-				it.getShares();
-				
-				System.out.println();
-				// System.out.println("Non-Investment Transaction:");
-				System.out.println(String.format("%-10s %-30s %12s", //
-						it.getDate().longString, //
-						it.getPayee(), Common.formatAmount(it.getAmount())));
+				String xacctName = it.accountForTransfer;
+				BigDecimal xferAmt = it.amountTransferred;
+				List<InvestmentTxn> xtxns = it.xferTxns;
+				BigDecimal commission = it.commission;
+				List<Lot> srclots = it.srcLots;
+				List<Lot> dstlots = it.dstLots;
+				Security sec = it.security;
+				BigDecimal price = it.price;
+				BigDecimal shares = it.getShares();
 
-				System.out.println(String.format("  %-20s  : %s", //
-						it.getMemo(), //
-						it.getCategory()));
+				System.out.println();
+				System.out.println("-----------------------");
+				System.out.println(String.format("%-10s |%c| %-6s | %-30s | %12s", //
+						date.longString, //
+						((clr) ? 'C' : ' '), //
+						action.toString(), //
+						payee, //
+						Common.formatAmount(amt)));
+
+				System.out.println(String.format("  %-20s | %s", //
+						cat, //
+						memo));
 
 				if (it.hasSplits()) {
 					int ii = 1;
 					for (SimpleTxn split : it.getSplits()) {
-						BigDecimal amt = split.getAmount();
-						if (Common.isEffectivelyZero(amt)) {
+						BigDecimal samt = split.getAmount();
+						if (Common.isEffectivelyZero(samt)) {
 							continue;
 						}
 
 						System.out.println(String.format("    %2d: %15s  %20s  %20s", //
 								ii++, //
-								Common.formatAmount(split.getAmount()), //
+								Common.formatAmount(samt), //
 								split.getCategory(), //
 								split.getMemo()));
+					}
+				}
+
+				System.out.println();
+				System.out.println("  Sec/shr/price: " + sec.getName() //
+						+ " | " + Common.formatAmount3(shares) //
+						+ " | " + Common.formatAmount3(price));
+				System.out.println("  Commission: " + commission //
+						+ "  Xamt: " + Common.formatAmount(xferAmt) //
+						+ "  Xacct: " + xacctName);
+				if (!xtxns.isEmpty()) {
+					System.out.println("  Xtxns: ");
+
+					for (InvestmentTxn xtxn : xtxns) {
+						System.out.println("    " + xtxn);
+					}
+				}
+
+				if ((srclots != null) && !srclots.isEmpty()) {
+					System.out.println("  Src lots: ");
+
+					for (Lot lot : srclots) {
+						System.out.println("    " + lot);
+					}
+				}
+
+				if ((dstlots != null) && !dstlots.isEmpty()) {
+					System.out.println("  Dst lots: ");
+
+					for (Lot lot : dstlots) {
+						System.out.println("    " + lot);
 					}
 				}
 			} catch (Exception e) {
