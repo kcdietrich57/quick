@@ -49,7 +49,7 @@ public class BalanceChartData {
 
 			int aidx = AccountCategory.ASSET.index;
 			int lidx = AccountCategory.LOAN.index;
-			
+
 			double assets = massagedValues[aidx];
 			double loans = massagedValues[lidx];
 

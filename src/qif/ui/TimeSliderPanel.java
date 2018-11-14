@@ -93,8 +93,10 @@ public class TimeSliderPanel extends JPanel {
 		periodCombo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				Object o = periodCombo.getSelectedItem();
-				MainWindow.instance.reportPeriod = (MainWindow.IntervalLength) o;
-				MainWindow.instance.updateChartPanel();
+				if (MainWindow.instance.reportPeriod != (MainWindow.IntervalLength) o) {
+					MainWindow.instance.reportPeriod = (MainWindow.IntervalLength) o;
+					MainWindow.instance.updateChartPanel(true);
+				}
 			}
 		});
 
@@ -114,8 +116,10 @@ public class TimeSliderPanel extends JPanel {
 		unitsCombo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				Object o = unitsCombo.getSelectedItem();
-				MainWindow.instance.reportUnit = (MainWindow.IntervalUnit) o;
-				MainWindow.instance.updateChartPanel();
+				if (MainWindow.instance.reportUnit != (MainWindow.IntervalUnit) o) {
+					MainWindow.instance.reportUnit = (MainWindow.IntervalUnit) o;
+					MainWindow.instance.updateChartPanel(true);
+				}
 			}
 		});
 
@@ -134,9 +138,12 @@ public class TimeSliderPanel extends JPanel {
 		int smonths = this.asOfDateSlider.getValue();
 
 		this.sliderDate = convertMonthsToDate(smonths);
-		MainWindow.instance.setAsOfDate(this.sliderDate);
 
-		updateValues();
+		if (!MainWindow.instance.asOfDate.equals(this.sliderDate)) {
+			MainWindow.instance.setAsOfDate(this.sliderDate);
+
+			updateValues();
+		}
 	}
 
 	public void updateValues() {

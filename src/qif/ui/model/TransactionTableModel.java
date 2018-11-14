@@ -133,7 +133,7 @@ public class TransactionTableModel //
 		case 3:
 			return Common.stringValue(tx.getAmount());
 
-		case 4: 
+		case 4:
 			return tx.getCategory();
 
 		case 5:

@@ -2,6 +2,9 @@ package qif.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -312,7 +315,9 @@ public class MainWindow extends JPanel {
 			this.accountNavigationPanel.refreshAccountList();
 			this.summaryPanel.updateValues();
 
-			updateChartPanel();
+			if (this.reportPeriod != IntervalLength.All) {
+				updateChartPanel(true);
+			}
 		}
 	}
 
@@ -363,25 +368,82 @@ public class MainWindow extends JPanel {
 		// XChartPanel<Chart>(optChartXCHART.chart);
 		// this.chartView.validate();
 
-		chartTabs.addTab("Balances", this.balChart.createChartPanel());
-		chartTabs.addTab("Net Worth", this.nwChart.createChartPanel());
-		chartTabs.addTab("ISI Options", this.optChart.createChartPanel());
+		JPanel balPanel = this.balChart.createChartPanel();
+		JPanel nwPanel = this.nwChart.createChartPanel();
+		JPanel optPanel = this.optChart.createChartPanel();
+
+		chartTabs.addTab("Balances", balPanel);
+		chartTabs.addTab("Net Worth", nwPanel);
+		chartTabs.addTab("ISI Options", optPanel);
 
 //		chartTabs.addTab("Balances(old)", balChartPanel_old);
 //		chartTabs.addTab("Net Worth(old)", nwChartPanel_old);
 //		chartTabs.addTab("ISI Options(old)", optChartPanel);
 
 		this.chartPanel.add(chartTabs, BorderLayout.CENTER);
+
+		ComponentListener chartListener = new ComponentAdapter() {
+			public void componentShown(ComponentEvent e) {
+				if (e.getComponent() == chartPanel) {
+					chartsVisible = true;
+				} else if (e.getComponent() == balPanel) {
+					balVisible = true;
+				} else if (e.getComponent() == nwPanel) {
+					nwVisible = true;
+				} else if (e.getComponent() == optPanel) {
+					optVisible = true;
+				}
+
+				chartNeedsRefresh = true;
+				updateChartPanel(false);
+			}
+
+			public void componentHidden(ComponentEvent e) {
+				if (e.getComponent() == chartPanel) {
+					chartsVisible = false;
+				} else if (e.getComponent() == balPanel) {
+					balVisible = false;
+				} else if (e.getComponent() == nwPanel) {
+					nwVisible = false;
+				} else if (e.getComponent() == optPanel) {
+					optVisible = false;
+				}
+			}
+		};
+
+		chartPanel.addComponentListener(chartListener);
+
+		balPanel.addComponentListener(chartListener);
+		nwPanel.addComponentListener(chartListener);
+		optPanel.addComponentListener(chartListener);
 	}
 
-	public void updateChartPanel() {
-		this.balChart.update();
-		this.nwChart.update();
-		this.optChart.update();
+	private boolean chartNeedsRefresh = true;
+	private boolean chartsVisible = false;
+	private boolean nwVisible = false;
+	private boolean balVisible = false;
+	private boolean optVisible = false;
 
-		this.balChartXCHART.update();
-		this.nwChartXCHART.update();
-		this.optChartXCHART.update();
+	public void updateChartPanel(boolean refresh) {
+		if (!this.chartsVisible) {
+			this.chartNeedsRefresh = true;
+			return;
+		} else if (!refresh && !this.chartNeedsRefresh) {
+			return;
+		}
+
+		this.chartNeedsRefresh = false;
+
+		if (this.balVisible) {
+			this.balChart.update();
+			this.balChartXCHART.update();
+		} else if (this.nwVisible) {
+			this.nwChart.update();
+			this.nwChartXCHART.update();
+		} else if (optVisible) {
+			this.optChart.update();
+			this.optChartXCHART.update();
+		}
 
 		this.chartPanel.repaint();
 	}
