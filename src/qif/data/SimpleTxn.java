@@ -4,6 +4,12 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Minimal transaction info (acct, amt, category, memo). This can be<br>
+ * specialized for various transaction types, or<br>
+ * used to specify part of a split transaction that inherit other info like date
+ * from the containing transaction.
+ */
 public class SimpleTxn {
 	private static final List<SimpleTxn> NOSPLITS = new ArrayList<SimpleTxn>();
 

@@ -8,6 +8,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
 import qif.data.Account;
+import qif.data.GenericTxn;
 
 /**
  * This panel contains views/operations based on selected account (register,
@@ -52,6 +53,11 @@ public class AccountPanel //
 		add(acctInfoPanel, BorderLayout.NORTH);
 		add(acctTabbedPane, BorderLayout.CENTER);
 
+		this.registerTransactionPanel.addTransactionSelectionListener(new TransactionSelectionListener() {
+			public void transactionSelected(GenericTxn transaction) {
+				System.out.println("Selected transaction: " + transaction.toString());
+			}
+		});
 		this.statementPanel.addStatementSelectionListener(this.statementDetailsPanel);
 	}
 

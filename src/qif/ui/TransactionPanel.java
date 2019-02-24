@@ -114,21 +114,24 @@ public class TransactionPanel //
 	private void clickTransactionHandler(int row) {
 		GenericTxn txn = this.transactionTableModel.getTransactionAt(row);
 
+		QDate date = txn.getDate();
+		String payee = txn.getPayee();
+		boolean clr = txn.isCleared();
+		QDate stmtdate = txn.stmtdate;
+
 		SimpleTxn stx = txn;
+
 		TxAction action = stx.getAction();
 		BigDecimal amt = stx.getAmount();
 		BigDecimal cashamt = stx.getCashAmount();
 		String cat = stx.getCategory();
 		String memo = stx.getMemo();
-		List<SimpleTxn> splits = stx.getSplits(); // NOSPLITS
-		// int xacctid = stx.getXferAcctid();
-		BigDecimal xamt = stx.getXferAmount();
-		// SimpleTxn xtxn = stx.getXtxn();
 
-		QDate date = txn.getDate();
-		String payee = txn.getPayee();
-		boolean clr = txn.isCleared();
-		// QDate stmtdate = txn.stmtdate;
+		int xacctid = stx.getXferAcctid();
+		BigDecimal xamt = stx.getXferAmount();
+		SimpleTxn xtxn = stx.getXtxn();
+
+		List<SimpleTxn> splits = stx.getSplits(); // NOSPLITS
 
 		if (txn instanceof NonInvestmentTxn) {
 			NonInvestmentTxn nit = (NonInvestmentTxn) txn;
@@ -219,17 +222,19 @@ public class TransactionPanel //
 				}
 
 				System.out.println();
-				System.out.println("  Sec/shr/price: " + sec.getName() //
-						+ " | " + Common.formatAmount3(shares) //
-						+ " | " + Common.formatAmount3(price));
+				if (sec != null) {
+					System.out.println("  Sec/shr/price: " + sec.getName() //
+							+ " | " + Common.formatAmount3(shares) //
+							+ " | " + Common.formatAmount3(price));
+				}
 				System.out.println("  Commission: " + commission //
 						+ "  Xamt: " + Common.formatAmount(xferAmt) //
 						+ "  Xacct: " + xacctName);
 				if (!xtxns.isEmpty()) {
 					System.out.println("  Xtxns: ");
 
-					for (InvestmentTxn xtxn : xtxns) {
-						System.out.println("    " + xtxn);
+					for (InvestmentTxn ixtxn : xtxns) {
+						System.out.println("    " + ixtxn);
 					}
 				}
 

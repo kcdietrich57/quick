@@ -2115,9 +2115,9 @@ class TransactionProcessor {
 			case TxnPayee:
 				txn.setPayee(qline.value);
 				break;
-			case TxnAddress:
-				txn.address.add(qline.value);
-				break;
+//			case TxnAddress:
+//				txn.address.add(qline.value);
+//				break;
 
 			case TxnSplitCategory:
 				if (cursplit == null || cursplit.getCatid() != 0) {

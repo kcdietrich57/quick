@@ -7,7 +7,7 @@ import java.util.List;
 public class NonInvestmentTxn extends GenericTxn {
 	public String chkNumber;
 
-	public List<String> address;
+//	public List<String> address;
 	public List<SimpleTxn> split;
 
 	public NonInvestmentTxn(int acctid) {
@@ -15,7 +15,7 @@ public class NonInvestmentTxn extends GenericTxn {
 
 		this.chkNumber = "";
 
-		this.address = new ArrayList<String>();
+//		this.address = new ArrayList<String>();
 		this.split = new ArrayList<SimpleTxn>();
 	}
 
@@ -24,12 +24,13 @@ public class NonInvestmentTxn extends GenericTxn {
 
 		this.chkNumber = other.chkNumber;
 
-		this.address = new ArrayList<String>();
+//		this.address = new ArrayList<String>();
+//		for (final String a : other.address) {
+//			this.address.add(new String(a));
+//		}
+
 		this.split = new ArrayList<SimpleTxn>();
 
-		for (final String a : other.address) {
-			this.address.add(new String(a));
-		}
 		for (final SimpleTxn st : other.split) {
 			this.split.add(st);
 		}
@@ -97,12 +98,12 @@ public class NonInvestmentTxn extends GenericTxn {
 		s += " xfer/cat=" + getCategory();
 		s += " bal=" + this.runningTotal;
 
-		if ((this.address != null) && !this.address.isEmpty()) {
-			s += "\n  addr= ";
-			for (final String addr : this.address) {
-				s += "\n  " + addr;
-			}
-		}
+//		if ((this.address != null) && !this.address.isEmpty()) {
+//			s += "\n  addr= ";
+//			for (final String addr : this.address) {
+//				s += "\n  " + addr;
+//			}
+//		}
 
 		if ((this.split != null) && !this.split.isEmpty()) {
 			s += "\n  splits \n";
