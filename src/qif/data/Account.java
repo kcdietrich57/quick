@@ -227,9 +227,15 @@ public class Account {
 	}
 
 	public QDate getLastStatementDate() {
-		return (this.statements.isEmpty()) //
-				? null //
-				: this.statements.get(this.statements.size() - 1).date;
+		for (int idx = this.statements.size() - 1; idx >= 0; --idx) {
+			Statement stat = this.statements.get(idx);
+			
+			if (stat.isBalanced) {
+				return stat.date;
+			}
+		}
+		
+		return null;
 	}
 
 	public Statement getFirstUnbalancedStatement() {
