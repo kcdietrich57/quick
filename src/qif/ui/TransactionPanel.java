@@ -10,32 +10,22 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import qif.data.Account;
-import qif.data.Common;
 import qif.data.GenericTxn;
-import qif.data.InvestmentTxn;
-import qif.data.Lot;
-import qif.data.NonInvestmentTxn;
-import qif.data.QDate;
-import qif.data.Security;
-import qif.data.SimpleTxn;
 import qif.data.Statement;
-import qif.data.TxAction;
 import qif.ui.model.TransactionTableModel;
 
 /** This panel displays transactions in an account or statement */
@@ -89,9 +79,10 @@ public class TransactionPanel //
 		transactionTableModel.setColumnWidths(this.transactionTable.getColumnModel());
 		transactionTableModel.addColumnWidthListeners(this.transactionTable);
 
-		this.transactionTable.addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent evt) {
-				int row = transactionTable.rowAtPoint(evt.getPoint());
+		this.transactionTable.setRowSelectionAllowed(true);
+		this.transactionTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent e) {
+				int row = transactionTable.getSelectedRow();
 
 				if (row >= 0) {
 					clickTransactionHandler(row);
@@ -121,152 +112,7 @@ public class TransactionPanel //
 	private void clickTransactionHandler(int row) {
 		GenericTxn txn = this.transactionTableModel.getTransactionAt(row);
 
-		QDate date = txn.getDate();
-		String payee = txn.getPayee();
-		boolean clr = txn.isCleared();
-		QDate stmtdate = txn.stmtdate;
-
-		TxAction action = txn.getAction();
-		BigDecimal amt = txn.getAmount();
-		BigDecimal cashamt = txn.getCashAmount();
-		String cat = txn.getCategory();
-		String memo = txn.getMemo();
-
-		int xacctid = txn.getXferAcctid();
-		BigDecimal xamt = txn.getXferAmount();
-		SimpleTxn xtxn = txn.getXtxn();
-
-		List<SimpleTxn> splits = txn.getSplits(); // NOSPLITS
-
 		this.textArea.setText(txn.formatValue());
-
-		if (true) {
-			return;
-		}
-		
-		if (txn instanceof NonInvestmentTxn) {
-			NonInvestmentTxn nit = (NonInvestmentTxn) txn;
-
-			String cknumStr = nit.chkNumber;
-			// int cknum = nit.getCheckNumber();
-			// List<String> addr = nit.address;
-
-			try {
-				// System.out.println("Non-Investment Transaction:");
-				if (!amt.equals(cashamt)) {
-					System.out.println("Warning: amt/cash not equal");
-				}
-
-				System.out.println(String.format("%-10s |%c| %-6s | %-30s | %12s", //
-						date.longString, //
-						((clr) ? 'C' : ' '), //
-						((cknumStr != null) //
-								? cknumStr //
-								: action.toString()), //
-						payee, //
-						Common.formatAmount(amt)));
-
-				System.out.println(String.format("  %-20s | %s", //
-						cat, //
-						memo));
-
-				if (nit.hasSplits()) {
-					int ii = 1;
-					for (SimpleTxn split : splits) {
-						BigDecimal samt = split.getAmount();
-						if (Common.isEffectivelyZero(samt)) {
-							continue;
-						}
-
-						System.out.println(String.format("    %2d: %15s  %20s  %20s", //
-								ii++, //
-								Common.formatAmount(samt), //
-								split.getCategory(), //
-								split.getMemo()));
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		} else if (txn instanceof InvestmentTxn) {
-			InvestmentTxn it = (InvestmentTxn) txn;
-
-			try {
-				String xacctName = it.accountForTransfer;
-				BigDecimal xferAmt = it.amountTransferred;
-				List<InvestmentTxn> xtxns = it.xferTxns;
-				BigDecimal commission = it.commission;
-				List<Lot> srclots = it.srcLots;
-				List<Lot> dstlots = it.dstLots;
-				Security sec = it.security;
-				BigDecimal price = it.price;
-				BigDecimal shares = it.getShares();
-
-				System.out.println();
-				System.out.println("-----------------------");
-				System.out.println(String.format("%-10s |%c| %-6s | %-30s | %12s", //
-						date.longString, //
-						((clr) ? 'C' : ' '), //
-						action.toString(), //
-						payee, //
-						Common.formatAmount(amt)));
-
-				System.out.println(String.format("  %-20s | %s", //
-						cat, //
-						memo));
-
-				if (it.hasSplits()) {
-					int ii = 1;
-					for (SimpleTxn split : it.getSplits()) {
-						BigDecimal samt = split.getAmount();
-						if (Common.isEffectivelyZero(samt)) {
-							continue;
-						}
-
-						System.out.println(String.format("    %2d: %15s  %20s  %20s", //
-								ii++, //
-								Common.formatAmount(samt), //
-								split.getCategory(), //
-								split.getMemo()));
-					}
-				}
-
-				System.out.println();
-				if (sec != null) {
-					System.out.println("  Sec/shr/price: " + sec.getName() //
-							+ " | " + Common.formatAmount3(shares) //
-							+ " | " + Common.formatAmount3(price));
-				}
-				System.out.println("  Commission: " + commission //
-						+ "  Xamt: " + Common.formatAmount(xferAmt) //
-						+ "  Xacct: " + xacctName);
-				if (!xtxns.isEmpty()) {
-					System.out.println("  Xtxns: ");
-
-					for (InvestmentTxn ixtxn : xtxns) {
-						System.out.println("    " + ixtxn);
-					}
-				}
-
-				if ((srclots != null) && !srclots.isEmpty()) {
-					System.out.println("  Src lots: ");
-
-					for (Lot lot : srclots) {
-						System.out.println("    " + lot);
-					}
-				}
-
-				if ((dstlots != null) && !dstlots.isEmpty()) {
-					System.out.println("  Dst lots: ");
-
-					for (Lot lot : dstlots) {
-						System.out.println("    " + lot);
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
 
 		for (TransactionSelectionListener l : this.txnSelListeners) {
 			l.transactionSelected(txn);
