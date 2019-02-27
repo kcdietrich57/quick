@@ -32,4 +32,8 @@ public class MultiSplitTxn extends SimpleTxn {
 
 		return total;
 	}
+
+	public String formatValue() {
+		return super.formatValue();
+	}
 }

@@ -17,10 +17,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import qif.data.Account;
@@ -42,6 +44,7 @@ public class TransactionPanel //
 		extends JPanel //
 		implements AccountSelectionListener, StatementSelectionListener {
 
+	public JTextArea textArea;
 	private TransactionTableModel transactionTableModel;
 	private JTable transactionTable;
 	private List<TransactionSelectionListener> txnSelListeners;
@@ -67,19 +70,23 @@ public class TransactionPanel //
 
 		add(titlePanel, BorderLayout.NORTH);
 
+		this.textArea = new JTextArea(10, 90);
+		this.textArea.setText("Transaction info goes here");
+		add(this.textArea, BorderLayout.SOUTH);
+
 		this.transactionTableModel = new TransactionTableModel();
 		this.transactionTable = new JTable(transactionTableModel);
 		JScrollPane scrollPane = new JScrollPane(this.transactionTable);
 
 		add(scrollPane, BorderLayout.CENTER);
 
-		transactionTable.setFillsViewportHeight(true);
+		this.transactionTable.setFillsViewportHeight(true);
 
-		transactionTable.setDefaultRenderer(Object.class, //
+		this.transactionTable.setDefaultRenderer(Object.class, //
 				new TransactionTableCellRenderer(highlighting));
 
 		this.transactionTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		transactionTableModel.setColumnWidths(transactionTable.getColumnModel());
+		transactionTableModel.setColumnWidths(this.transactionTable.getColumnModel());
 		transactionTableModel.addColumnWidthListeners(this.transactionTable);
 
 		this.transactionTable.addMouseListener(new MouseAdapter() {
@@ -119,20 +126,24 @@ public class TransactionPanel //
 		boolean clr = txn.isCleared();
 		QDate stmtdate = txn.stmtdate;
 
-		SimpleTxn stx = txn;
+		TxAction action = txn.getAction();
+		BigDecimal amt = txn.getAmount();
+		BigDecimal cashamt = txn.getCashAmount();
+		String cat = txn.getCategory();
+		String memo = txn.getMemo();
 
-		TxAction action = stx.getAction();
-		BigDecimal amt = stx.getAmount();
-		BigDecimal cashamt = stx.getCashAmount();
-		String cat = stx.getCategory();
-		String memo = stx.getMemo();
+		int xacctid = txn.getXferAcctid();
+		BigDecimal xamt = txn.getXferAmount();
+		SimpleTxn xtxn = txn.getXtxn();
 
-		int xacctid = stx.getXferAcctid();
-		BigDecimal xamt = stx.getXferAmount();
-		SimpleTxn xtxn = stx.getXtxn();
+		List<SimpleTxn> splits = txn.getSplits(); // NOSPLITS
 
-		List<SimpleTxn> splits = stx.getSplits(); // NOSPLITS
+		this.textArea.setText(txn.formatValue());
 
+		if (true) {
+			return;
+		}
+		
 		if (txn instanceof NonInvestmentTxn) {
 			NonInvestmentTxn nit = (NonInvestmentTxn) txn;
 
@@ -141,7 +152,6 @@ public class TransactionPanel //
 			// List<String> addr = nit.address;
 
 			try {
-				System.out.println();
 				// System.out.println("Non-Investment Transaction:");
 				if (!amt.equals(cashamt)) {
 					System.out.println("Warning: amt/cash not equal");

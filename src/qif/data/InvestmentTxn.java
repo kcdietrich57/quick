@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 public class InvestmentTxn extends GenericTxn {
@@ -321,6 +322,70 @@ public class InvestmentTxn extends GenericTxn {
 				secString, //
 				getCashAmount());
 		return s;
+	}
+
+	public String getSecurityName() {
+		if (this.security != null) {
+			return this.security.getName();
+		}
+
+		return "N/A";
+	}
+
+	public String formatValue() {
+		String ret = String.format("%10s %-30s %s  %13s  %-15s  %-10s", //
+				Common.formatDate(getDate().toDate()), //
+				this.getPayee(), //
+				((isCleared()) ? "C" : " "), //
+				Common.formatAmount(getAmount()), //
+				getCategory(), //
+				getMemo());
+
+		ret += "\n    ";
+		ret += getAction().name();
+		ret += "  ";
+
+		if (this.amountTransferred != null) {
+			ret += String.format(" %s %s", //
+					this.accountForTransfer, //
+					Common.formatAmount(this.amountTransferred));
+		}
+
+		if (this.security != null) {
+			ret += String.format(" %s %s %s", //
+					getSecurityName(), //
+					Common.formatAmount(this.price), //
+					Common.formatAmount3(quantity));
+		}
+
+		ret += "\n";
+		// public String textFirstLine;
+		// public BigDecimal commission;
+
+		if (hasSplits()) {
+			for (Iterator<SimpleTxn> iter = getSplits().iterator(); iter.hasNext();) {
+				SimpleTxn split = iter.next();
+				ret += "\n";
+				ret += split.formatValue();
+			}
+		}
+
+//		public List<InvestmentTxn> xferTxns;
+		
+		if (this.srcLots != null && !this.srcLots.isEmpty()) {
+			for (Lot lot : this.srcLots) {
+				ret += "   src " + lot.toString();
+			}
+		}
+		if (this.dstLots != null && !this.dstLots.isEmpty()) {
+			for (Lot lot : this.dstLots) {
+				ret += "   dst " + lot.toString();
+			}
+		}
+//		public List<Lot> srcLots = null;
+//		public List<Lot> dstLots = null;
+
+		return ret;
 	}
 
 	public String toStringShort(boolean veryshort) {

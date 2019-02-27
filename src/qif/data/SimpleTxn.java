@@ -193,6 +193,13 @@ public class SimpleTxn {
 		return s;
 	}
 
+	public String formatValue() {
+		return String.format("  %10s  %-25s  %-30s", //
+				Common.formatAmount(this.amount), //
+				getCategory(), //
+				getMemo());
+	}
+
 	public boolean amountIsEqual(SimpleTxn other, boolean strict) {
 		final BigDecimal amt1 = getXferAmount();
 		final BigDecimal amt2 = other.getXferAmount();

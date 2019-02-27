@@ -304,4 +304,8 @@ public abstract class GenericTxn //
 
 		return 0;
 	}
+
+	public String formatValue() {
+		return super.formatValue();
+	}
 }

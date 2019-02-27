@@ -2,6 +2,7 @@ package qif.data;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class NonInvestmentTxn extends GenericTxn {
@@ -69,8 +70,27 @@ public class NonInvestmentTxn extends GenericTxn {
 		}
 	}
 
-	public String toStringShort(boolean veryshort) {
+	public String formatValue() {
+		String ret = String.format("%10s %-30s %s  %13s  %-15s  %-10s", //
+				Common.formatDate(getDate().toDate()), //
+				this.getPayee(), //
+				((isCleared()) ? "C" : " "), //
+				Common.formatAmount(getAmount()), //
+				getCategory(), //
+				getMemo());
 
+		if (hasSplits()) {
+			for (Iterator<SimpleTxn> iter = getSplits().iterator(); iter.hasNext();) {
+				SimpleTxn split = iter.next();
+				ret += "\n";
+				ret += split.formatValue();
+			}
+		}
+
+		return ret;
+	}
+
+	public String toStringShort(boolean veryshort) {
 		return (veryshort) //
 				? String.format("%s %s  %s", //
 						getDate().shortString, //

@@ -231,6 +231,16 @@ public class SecurityPortfolio {
 		return s;
 	}
 
+	public boolean isEmpty() {
+		for (final SecurityPosition p : this.positions) {
+			if (!p.transactions.isEmpty()) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	public boolean isEmptyForDate(QDate d) {
 		for (final SecurityPosition p : this.positions) {
 			int ii = GenericTxn.getLastTransactionIndexOnOrBeforeDate(p.transactions, d);
