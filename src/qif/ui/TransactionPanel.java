@@ -25,6 +25,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 
 import qif.data.Account;
 import qif.data.GenericTxn;
+import qif.data.InvestmentTxn;
+import qif.data.Security;
 import qif.data.Statement;
 import qif.ui.model.TransactionTableModel;
 

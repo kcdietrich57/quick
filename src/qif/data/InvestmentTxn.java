@@ -356,6 +356,24 @@ public class InvestmentTxn extends GenericTxn {
 					getSecurityName(), //
 					Common.formatAmount(this.price), //
 					Common.formatAmount3(quantity));
+
+			List<Lot> lots = this.security.getLotsForTransaction(this);
+
+			switch (this.action) {
+			case BUY:
+			case BUYX:
+			case EXERCISE:
+			case EXERCISEX:
+			case SHRS_IN:
+				this.dstLots = lots;
+				break;
+
+			case EXPIRE:
+			case SELL:
+			case SELLX:
+				this.srcLots = lots;
+				break;
+			}
 		}
 
 		ret += "\n";
@@ -371,14 +389,16 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 //		public List<InvestmentTxn> xferTxns;
-		
+
 		if (this.srcLots != null && !this.srcLots.isEmpty()) {
 			for (Lot lot : this.srcLots) {
+				ret += "\n";
 				ret += "   src " + lot.toString();
 			}
 		}
 		if (this.dstLots != null && !this.dstLots.isEmpty()) {
 			for (Lot lot : this.dstLots) {
+				ret += "\n";
 				ret += "   dst " + lot.toString();
 			}
 		}

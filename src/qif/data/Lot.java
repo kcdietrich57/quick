@@ -24,7 +24,10 @@ public class Lot {
 	/** The transaction that invalidated this lot */
 	public InvestmentTxn expireTransaction;
 
-	/** True if this represents adding shares to the associated account */
+	/**
+	 * TODO unused<br>
+	 * True if this represents adding shares to the associated account
+	 */
 	public boolean addshares = true;
 
 	public Lot(int acctid, QDate date, int secid, BigDecimal shares, BigDecimal cost, InvestmentTxn txn) {
