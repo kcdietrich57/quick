@@ -15,6 +15,7 @@ import qif.data.Category;
 import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
+import qif.data.Lot;
 import qif.data.NonInvestmentTxn;
 import qif.data.QDate;
 import qif.data.QifDom;
@@ -236,11 +237,11 @@ public class CSVImport {
 			itxn.amountTransferred = BigDecimal.ZERO;
 			itxn.setCatid(0);
 			itxn.commission = BigDecimal.ZERO;
-			itxn.dstLots = null;
+			itxn.lotsDisposed = new ArrayList<Lot>();
 			itxn.price = BigDecimal.ZERO;
 			itxn.security = null;
-			itxn.srcLots = null;
-			itxn.textFirstLine = null;
+			itxn.lotsCreated = new ArrayList<Lot>();
+			//itxn.textFirstLine = null;
 			itxn.xferTxns = null;
 		}
 

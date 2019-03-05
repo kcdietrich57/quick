@@ -4,8 +4,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class InvestmentTxn extends GenericTxn {
 	private static final List<InvestmentTxn> NO_XFER_TXNS = //
@@ -15,14 +18,16 @@ public class InvestmentTxn extends GenericTxn {
 	public Security security;
 	public BigDecimal price;
 	private BigDecimal quantity;
-	public String textFirstLine;
+	// public String textFirstLine;
 	public BigDecimal commission;
 	public String accountForTransfer;
+
 	public BigDecimal amountTransferred;
 	public List<InvestmentTxn> xferTxns;
+	public Lot srcLot;
 
-	public List<Lot> srcLots = null;
-	public List<Lot> dstLots = null;
+	public List<Lot> lotsCreated;
+	public List<Lot> lotsDisposed;
 
 	public InvestmentTxn(int acctid) {
 		super(acctid);
@@ -31,11 +36,40 @@ public class InvestmentTxn extends GenericTxn {
 		this.security = null;
 		this.price = BigDecimal.ZERO;
 		this.quantity = BigDecimal.ZERO;
-		this.textFirstLine = "";
+		// this.textFirstLine = "";
 		this.commission = null;
 		this.accountForTransfer = "";
 		this.amountTransferred = null;
 		this.xferTxns = NO_XFER_TXNS;
+
+		this.srcLot = null;
+		this.lotsCreated = new ArrayList<Lot>();
+		this.lotsDisposed = new ArrayList<Lot>();
+	}
+
+	public InvestmentTxn(int acctid, InvestmentTxn txn) {
+		super(acctid);
+
+		setDate(txn.getDate());
+		setAmount(txn.getAmount());
+
+		this.clearedStatus = txn.clearedStatus;
+		this.runningTotal = BigDecimal.ZERO;
+		this.stmtdate = null;
+
+		this.action = txn.action;
+		this.security = txn.security;
+		this.price = txn.price;
+		this.quantity = txn.quantity;
+		// this.textFirstLine = "";
+		this.commission = txn.commission;
+		this.accountForTransfer = txn.accountForTransfer;
+		this.amountTransferred = txn.amountTransferred;
+		this.xferTxns = NO_XFER_TXNS;
+
+		this.srcLot = null;
+		this.lotsCreated = new ArrayList<Lot>();
+		this.lotsDisposed = new ArrayList<Lot>();
 	}
 
 	public void setAction(TxAction action) {
@@ -72,6 +106,77 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 		return this.quantity;
+	}
+
+	public static enum ShareAction {
+		NO_ACTION, NEW_SHARES, DISPOSE_SHARES, TRANSFER_OUT, TRANSFER_IN, SPLIT
+	};
+
+	public ShareAction getShareAction() {
+		switch (getAction()) {
+		case BUY:
+		case BUYX:
+		case REINV_INT:
+		case REINV_DIV:
+		case REINV_SH:
+		case REINV_LG:
+			return ShareAction.NEW_SHARES;
+
+		case SHRS_IN:
+			return (this.xferTxns.isEmpty()) //
+					? ShareAction.NEW_SHARES //
+					: ShareAction.TRANSFER_IN;
+
+		case SHRS_OUT:
+			return (this.xferTxns.isEmpty()) //
+					? ShareAction.DISPOSE_SHARES //
+					: ShareAction.TRANSFER_OUT;
+
+		case SELL:
+		case SELLX:
+			return ShareAction.DISPOSE_SHARES;
+
+		case STOCKSPLIT:
+			return ShareAction.SPLIT;
+
+		case EXERCISE:
+		case EXERCISEX:
+			return ShareAction.NO_ACTION;
+
+		case CASH:
+		case GRANT:
+		case VEST:
+		case EXPIRE:
+		case CONTRIBX:
+		case DIV:
+		case INT_INC:
+		case MISC_INCX:
+		case OTHER:
+		case REMINDER:
+		case WITHDRAWX:
+		case XIN:
+		case XOUT:
+			break;
+		}
+
+		return ShareAction.NO_ACTION;
+	}
+
+	public boolean removesShares() {
+		switch (getAction()) {
+		case EXERCISE:
+		case EXERCISEX:
+		case EXPIRE:
+		case SELL:
+		case SELLX:
+		case SHRS_OUT:
+		case WITHDRAWX:
+		case XOUT:
+			return true;
+
+		default:
+			return false;
+		}
 	}
 
 	public BigDecimal getShareCost() {
@@ -181,7 +286,7 @@ public class InvestmentTxn extends GenericTxn {
 	}
 
 	public List<Lot> getLots() {
-		return this.dstLots;
+		return this.lotsDisposed;
 	}
 
 	private void repairBuySell() {
@@ -332,7 +437,113 @@ public class InvestmentTxn extends GenericTxn {
 		return "N/A";
 	}
 
+	class AccountLotsInfo {
+		Account acct;
+		List<Lot> lots;
+		BigDecimal bal;
+
+		public AccountLotsInfo(Account acct) {
+			this.acct = acct;
+			this.lots = new ArrayList<Lot>();
+			this.bal = BigDecimal.ZERO;
+		}
+
+		public boolean processLotForTransaction(InvestmentTxn tx, Lot lot) {
+			if (lot.createTransaction == tx) {
+				tx.lotsCreated.add(lot);
+
+				this.lots.add(lot);
+				this.bal = this.bal.add(lot.shares);
+
+				return true;
+			}
+
+			if (lot.expireTransaction == tx) {
+				tx.lotsDisposed.add(lot);
+
+				this.lots.add(lot);
+				this.bal = this.bal.subtract(lot.shares);
+
+				return true;
+			}
+
+			if (tx.action == TxAction.SHRS_IN) {
+				System.out.println("INSHRS=" + Common.formatAmount3(tx.quantity) //
+						+ " LOTSHRS=" + Common.formatAmount3(lot.shares));
+
+				if (tx.quantity.equals(lot.shares)) {
+					System.out.println("match");
+				}
+			}
+
+			return false;
+		}
+
+		public String toString() {
+			return "acct=" + acct.getName() + " " + //
+					Common.formatAmount3(this.bal) + " shares in " + //
+					this.lots.size() + " lots";
+		}
+	}
+
+	public void organizeLots() {
+		Security sec = this.security;
+		if (sec == null) {
+			return;
+		}
+
+		List<InvestmentTxn> txns = new ArrayList<InvestmentTxn>(sec.transactions);
+		Collections.sort(txns, new Comparator<InvestmentTxn>() {
+			public int compare(InvestmentTxn t1, InvestmentTxn t2) {
+				return t1.getDate().compareTo(t2.getDate());
+			}
+		});
+
+		List<Lot> lots = new ArrayList<Lot>(sec.getLots());
+		Collections.sort(lots, new Comparator<Lot>() {
+			public int compare(Lot l1, Lot l2) {
+				return l1.createDate.compareTo(l2.createDate);
+			}
+		});
+
+		for (Lot lot : lots) {
+			System.out.println(lot.toString());
+		}
+
+		Map<Account, AccountLotsInfo> lotinfo = new HashMap<Account, AccountLotsInfo>();
+
+		for (InvestmentTxn tx : txns) {
+			Account acct = tx.getAccount();
+
+			AccountLotsInfo ali = lotinfo.get(acct);
+			if (ali == null) {
+				ali = new AccountLotsInfo(acct);
+				lotinfo.put(acct, ali);
+			}
+
+			tx.lotsCreated.clear();
+			tx.lotsDisposed.clear();
+
+			for (Iterator<Lot> iter = lots.iterator(); iter.hasNext();) {
+				Lot lot = iter.next();
+				if (lot.acctid == acct.acctid) {
+					if (ali.processLotForTransaction(tx, lot)) {
+						iter.remove();
+					}
+				}
+			}
+
+			if (tx.lotsCreated.isEmpty() && tx.lotsDisposed.isEmpty()) {
+				System.out.println("No lots for tx?");
+			}
+		}
+
+		return;
+	}
+
 	public String formatValue() {
+		organizeLots();
+
 		String ret = String.format("%10s %-30s %s  %13s  %-15s  %-10s", //
 				Common.formatDate(getDate().toDate()), //
 				this.getPayee(), //
@@ -351,30 +562,30 @@ public class InvestmentTxn extends GenericTxn {
 					Common.formatAmount(this.amountTransferred));
 		}
 
-		if (this.security != null) {
-			ret += String.format(" %s %s %s", //
-					getSecurityName(), //
-					Common.formatAmount(this.price), //
-					Common.formatAmount3(quantity));
-
-			List<Lot> lots = this.security.getLotsForTransaction(this);
-
-			switch (this.action) {
-			case BUY:
-			case BUYX:
-			case EXERCISE:
-			case EXERCISEX:
-			case SHRS_IN:
-				this.dstLots = lots;
-				break;
-
-			case EXPIRE:
-			case SELL:
-			case SELLX:
-				this.srcLots = lots;
-				break;
-			}
-		}
+//		if (this.security != null) {
+//			ret += String.format(" %s %s %s", //
+//					getSecurityName(), //
+//					Common.formatAmount(this.price), //
+//					Common.formatAmount3(quantity));
+//
+//			List<Lot> lots = this.security.getLotsForTransaction(this);
+//
+//			switch (this.action) {
+//			case BUY:
+//			case BUYX:
+//			case EXERCISE:
+//			case EXERCISEX:
+//			case SHRS_IN:
+//				this.dstLots = lots;
+//				break;
+//
+//			case EXPIRE:
+//			case SELL:
+//			case SELLX:
+//				this.srcLots = lots;
+//				break;
+//			}
+//		}
 
 		ret += "\n";
 		// public String textFirstLine;
@@ -390,14 +601,14 @@ public class InvestmentTxn extends GenericTxn {
 
 //		public List<InvestmentTxn> xferTxns;
 
-		if (this.srcLots != null && !this.srcLots.isEmpty()) {
-			for (Lot lot : this.srcLots) {
+		if (this.lotsCreated != null && !this.lotsCreated.isEmpty()) {
+			for (Lot lot : this.lotsCreated) {
 				ret += "\n";
 				ret += "   src " + lot.toString();
 			}
 		}
-		if (this.dstLots != null && !this.dstLots.isEmpty()) {
-			for (Lot lot : this.dstLots) {
+		if (this.lotsDisposed != null && !this.lotsDisposed.isEmpty()) {
+			for (Lot lot : this.lotsDisposed) {
 				ret += "\n";
 				ret += "   dst " + lot.toString();
 			}
@@ -444,7 +655,7 @@ public class InvestmentTxn extends GenericTxn {
 		s += " qty=" + this.quantity;
 		s += " amt=" + getAmount();
 		s += " clr=" + this.clearedStatus;
-		s += " txt=" + this.textFirstLine;
+		// s += " txt=" + this.textFirstLine;
 		s += " memo=" + getMemo();
 		s += " comm=" + this.commission;
 		s += " xact=" + this.accountForTransfer;

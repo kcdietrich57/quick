@@ -64,7 +64,9 @@ public class TransactionPanel //
 
 		this.textArea = new JTextArea(10, 90);
 		this.textArea.setText("Transaction info goes here");
-		add(this.textArea, BorderLayout.SOUTH);
+		
+		JScrollPane sp = new JScrollPane(this.textArea);
+		add(sp, BorderLayout.SOUTH);
 
 		this.transactionTableModel = new TransactionTableModel();
 		this.transactionTable = new JTable(transactionTableModel);

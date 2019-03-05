@@ -58,38 +58,6 @@ public class SimpleTxn {
 	}
 
 	public boolean removesShares() {
-		switch (getAction()) {
-		case BUY:
-		case BUYX:
-		case CASH:
-		case CONTRIBX:
-		case DIV:
-		case GRANT:
-		case INT_INC:
-		case MISC_INCX:
-		case OTHER:
-		case REINV_DIV:
-		case REINV_INT:
-		case REINV_LG:
-		case REINV_SH:
-		case REMINDER:
-		case SHRS_IN:
-		case STOCKSPLIT:
-		case VEST:
-		case XIN:
-			return false;
-
-		case EXERCISE:
-		case EXERCISEX:
-		case EXPIRE:
-		case SELL:
-		case SELLX:
-		case SHRS_OUT:
-		case WITHDRAWX:
-		case XOUT:
-			return true;
-		}
-
 		return false;
 	}
 
