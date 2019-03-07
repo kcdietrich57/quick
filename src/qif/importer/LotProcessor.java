@@ -76,7 +76,16 @@ class LotProcessor {
 		for (int txIdx = 0; txIdx < txns.size();) {
 //			String txstr = txns.get(txIdx).toString();
 
-			txIdx = createLotsForTransaction(txns, txIdx);
+			int newTxIdx = createLotsForTransaction(txns, txIdx);
+
+			System.out.println("=============================");
+			for (int ii = txIdx; ii < newTxIdx; ++ii) {
+				InvestmentTxn tx = txns.get(ii);
+				System.out.println();
+				System.out.println(tx.formatValue());
+			}
+
+			txIdx = newTxIdx;
 
 //			for (Lot lot : this.lots) {
 //				if (lot.expireTransaction == null) {
@@ -109,16 +118,27 @@ class LotProcessor {
 			++txIdx;
 		}
 
+		if (!srcTxns.isEmpty()) {
+			int acctid = srcTxns.get(0).acctid;
+			System.out.println("====== Open lots for " + acctid);
+			System.out.println(printOpenLots(acctid));
+		}
+
+		List<Lot> srcLots = null;
+		if (!srcTxns.isEmpty()) {
+			srcLots = getSrcLots(srcTxns);
+		}
+
 		switch (txn.getShareAction()) {
 		case NEW_SHARES:
 			addShares(txn);
 			break;
 		case DISPOSE_SHARES:
-			removeShares(txn);
+			removeShares(txn, srcLots);
 			break;
 		case TRANSFER_IN:
 		case TRANSFER_OUT:
-			transferShares(txn, srcTxns, dstTxns);
+			transferShares(srcTxns, dstTxns, srcLots);
 			break;
 		case SPLIT:
 			processSplit(txn);
@@ -155,21 +175,70 @@ class LotProcessor {
 		addLot(lot);
 	}
 
+	/** Get open lots for account */
+	private List<Lot> getOpenLots(int acctid) {
+		List<Lot> ret = new ArrayList<Lot>();
+
+		for (Lot lot : this.lots) {
+			if (lot.isOpen() && (lot.acctid == acctid)) {
+				ret.add(lot);
+			}
+		}
+
+		return ret;
+	}
+
+	/** Get open lots to satisfy txns that consume lots (sell/xfer out/split) */
+	private List<Lot> getSrcLots(List<InvestmentTxn> txns) {
+		List<Lot> lots = getOpenLots(txns.get(0).acctid);
+		List<Lot> ret = new ArrayList<Lot>();
+		BigDecimal sharesRequired = BigDecimal.ZERO;
+
+		for (InvestmentTxn txn : txns) {
+			sharesRequired = sharesRequired.add(txn.getShares().abs());
+		}
+
+		BigDecimal sharesRemaining = sharesRequired;
+
+		while ((sharesRemaining.signum() > 0) && !lots.isEmpty()) {
+			Lot lot = lots.remove(0);
+			ret.add(lot);
+
+			if (lot.shares.compareTo(sharesRemaining) >= 0) {
+				return ret;
+			}
+
+			sharesRemaining = sharesRemaining.subtract(lot.shares);
+		}
+
+		Common.reportError(String.format("Insufficient open lots: required %s, shortfall %s", //
+				Common.formatAmount3(sharesRequired).trim(), //
+				Common.formatAmount3(sharesRemaining).trim()));
+		printOpenLots(txns.get(0).acctid);
+
+		return null;
+	}
+	
+	private Lot getBestLot(BigDecimal shares, List<Lot> lots) {
+		for (Lot lot : lots) {
+			if (lot.shares.equals(shares)) {
+				lots.remove(lot);
+				return lot;
+			}
+		}
+		
+		return lots.remove(0);
+	}
+
 	/**
 	 * Dispose lot(s) removed by a transaction.<br>
 	 * Split the last lot if partially removed.
 	 */
-	private void removeShares(InvestmentTxn txn) {
+	private void removeShares(InvestmentTxn txn, List<Lot> srcLots) {
 		BigDecimal sharesRemaining = txn.getShares().abs();
-		BigDecimal sharesAvailable = getAvailableShares();
-
-		if (sharesAvailable.compareTo(sharesRemaining) < 0) {
-			printOpenLots();
-			Common.reportError("Insufficient shares for sale/transfer");
-		}
-
+		
 		while (!Common.isEffectivelyZero(sharesRemaining)) {
-			Lot srcLot = getFirstOpenLot(txn.acctid);
+			Lot srcLot = getBestLot(sharesRemaining, srcLots);
 
 			if (srcLot.shares.compareTo(sharesRemaining) > 0) {
 				// Split source lot
@@ -187,30 +256,14 @@ class LotProcessor {
 		}
 	}
 
-	private BigDecimal getAvailableShares() {
-		BigDecimal bal = BigDecimal.ZERO;
-
-		for (Lot lot : this.lots) {
-			if (lot.expireTransaction == null) {
-				bal = bal.add(lot.shares);
-			}
-		}
-
-		return bal;
-	}
-
-	private String printOpenLots() {
+	private String printOpenLots(int acctid) {
 		String s = "";
 		BigDecimal bal = BigDecimal.ZERO;
 		boolean addshares = false;
 		QDate curdate = null;
 		TxAction curaction = null;
 
-		for (Lot lot : this.lots) {
-			if (lot.expireTransaction != null) {
-				continue;
-			}
-
+		for (Lot lot : getOpenLots(acctid)) {
 			bal = bal.add(lot.shares);
 
 			if (curdate == null || //
@@ -242,9 +295,10 @@ class LotProcessor {
 	 * Transfer lot(s) between accounts for a transaction.<br>
 	 * Split the last lot if partially transferred.
 	 */
-	private void transferShares(InvestmentTxn txn, //
+	private void transferShares( //
 			List<InvestmentTxn> srcTxns, //
-			List<InvestmentTxn> dstTxns) {
+			List<InvestmentTxn> dstTxns, //
+			List<Lot> srcLots) {
 		InvestmentTxn dstTxn = null;
 		// Note this will be >= 0 (credit shares)
 		BigDecimal sharesLeftInDstTxn = BigDecimal.ZERO;
@@ -270,7 +324,7 @@ class LotProcessor {
 				}
 
 				// Consume the next available shares in the source account
-				Lot srcLot = getFirstOpenLot(srcTxn.acctid);
+				Lot srcLot = getBestLot(sharesLeftInDstTxn, srcLots);
 				if (srcLot == null) {
 					Common.reportError("Transfer ran out of src lots:" //
 							+ " shares still required: " + Common.formatAmount3(sharesLeftInSrcTxn));
@@ -306,15 +360,38 @@ class LotProcessor {
 		}
 	}
 
-	private Lot getFirstOpenLot(int acctid) {
+	private Lot getFirstOpenLot(int acctid, BigDecimal sharesToMatch) {
+		int idx = 0;
 		for (Lot lot : this.lots) {
-			if ((lot.expireTransaction == null) && //
-					((acctid == 0) || (lot.acctid == acctid))) {
-				return lot;
+			if (lot.isOpen() //
+					&& ((acctid == 0) || (lot.acctid == acctid))) {
+				break;
+			}
+
+			++idx;
+		}
+
+		if (idx >= this.lots.size()) {
+			return null;
+		}
+
+		Lot lot = this.lots.get(idx);
+
+		if (sharesToMatch != null) {
+			for (int idx2 = idx; idx2 < this.lots.size(); ++idx2) {
+				Lot lot2 = this.lots.get(idx2);
+
+				if (lot2.getAcquisitionDate().compareTo(lot.getAcquisitionDate()) > 0) {
+					break;
+				}
+
+				if (lot2.shares.equals(sharesToMatch)) {
+					return lot2;
+				}
 			}
 		}
 
-		return null;
+		return this.lots.get(idx);
 	}
 
 	/** Apply a split to all open shares in all accounts */
@@ -322,7 +399,7 @@ class LotProcessor {
 		List<Lot> newLots = new ArrayList<Lot>();
 
 		for (;;) {
-			Lot oldlot = getFirstOpenLot(0);
+			Lot oldlot = getFirstOpenLot(0, null);
 			if (oldlot == null) {
 				break;
 			}
@@ -468,7 +545,7 @@ class LotProcessor {
 		int lotcount = 0;
 
 		for (Lot lot : origlots) {
-			if (lot.expireTransaction == null) {
+			if (lot.isOpen()) {
 				balance = balance.add(lot.shares);
 				++lotcount;
 

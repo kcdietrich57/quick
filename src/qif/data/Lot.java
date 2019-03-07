@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Lot {
+	private static int nextlotid = 1;
+
+	public final int lotid;
 	public final int acctid;
 	public final int secid;
 	public final BigDecimal shares;
@@ -16,7 +19,7 @@ public class Lot {
 
 	/** Lot this is derived from if not original purchase/grant */
 	public final Lot sourceLot;
-	public final List<Lot> childLots = new ArrayList<Lot>();
+	public final List<Lot> childLots;
 
 	/** The transaction that created this lot */
 	public final InvestmentTxn createTransaction;
@@ -30,60 +33,62 @@ public class Lot {
 	 */
 	public boolean addshares = true;
 
-	/** Constructor for new shares added via BUY, etc */
-	public Lot(int acctid, QDate date, int secid, BigDecimal shares, BigDecimal cost, InvestmentTxn txn) {
-		this.createDate = date;
-		this.sourceLot = null;
-		this.acctid = acctid;
-		this.secid = secid;
-		this.shares = shares;
-		this.costBasis = cost;
+	private Lot(int acctid, QDate date, int secid, //
+			BigDecimal shares, BigDecimal cost, //
+			InvestmentTxn createTxn, //InvestmentTxn expireTxn, //
+			Lot srcLot) {
+		this.lotid = nextlotid++;
 
-		this.createTransaction = txn;
+		this.acctid = acctid;
+		this.createDate = date;
+		this.secid = secid;
+		this.shares = shares.abs();
+		this.costBasis = cost;
+		this.createTransaction = createTxn;
 		this.expireTransaction = null;
+		this.sourceLot = srcLot;
+		this.childLots = new ArrayList<Lot>();
+	}
+
+	/** Constructor for new shares added via BUY, etc */
+	public Lot(int acctid, QDate date, int secid, //
+			BigDecimal shares, BigDecimal cost, //
+			InvestmentTxn txn) {
+		this(acctid, date, secid, shares, cost, txn, null);
 
 		txn.lotsCreated.add(this);
 	}
 
 	/** Constructor for the remainder from the disposal of part of a lot */
 	public Lot(Lot srcLot, int acctid, BigDecimal shares, InvestmentTxn txn) {
+		this(acctid, srcLot.createDate, srcLot.secid, shares, //
+				shares.multiply(srcLot.getPrice()), txn, srcLot);
+
 		checkChildLots(srcLot, shares);
 
-		this.createDate = srcLot.createDate;
-		this.sourceLot = srcLot;
 		this.sourceLot.childLots.add(this);
-		this.acctid = acctid;
-		this.secid = srcLot.secid;
-		this.shares = shares.abs();
-		this.costBasis = shares.multiply(srcLot.getPrice());
-
-		this.createTransaction = txn;
-		this.expireTransaction = null;
-
 		txn.lotsCreated.add(this);
 		txn.lotsDisposed.add(srcLot);
 	}
 
 	/** Constructor for the destination lot for a transfer/split transaction */
 	public Lot(Lot srcLot, int acctid, InvestmentTxn srcTxn, InvestmentTxn dstTxn) {
-		this.createDate = srcLot.createDate;
-		this.sourceLot = srcLot;
+		this(dstTxn.acctid, srcLot.createDate, srcLot.secid, //
+				srcLot.shares.multiply(dstTxn.getSplitRatio()), //
+				srcLot.costBasis, srcTxn, srcLot);
+
 		this.sourceLot.childLots.add(this);
-		this.acctid = acctid;
-		this.secid = srcLot.secid;
-		this.shares = srcLot.shares.multiply(dstTxn.getSplitRatio());
-		this.costBasis = srcLot.costBasis;
+		dstTxn.lotsCreated.add(this);
+		srcTxn.lotsDisposed.add(srcLot);
 
 		// Dispose of the original lot if not already done
-		if ((srcTxn != null) && (srcLot.expireTransaction == null)) {
+		if (srcLot.expireTransaction == null) {
 			srcLot.expireTransaction = srcTxn;
 		}
+	}
 
-		this.createTransaction = dstTxn;
-		this.expireTransaction = null;
-
-		dstTxn.lotsCreated.add(this);
-		dstTxn.lotsDisposed.add(srcLot);
+	public boolean isOpen() {
+		return this.expireTransaction == null;
 	}
 
 	public QDate getAcquisitionDate() {
@@ -131,12 +136,13 @@ public class Lot {
 	}
 
 	public String toString() {
-		String ret = "*** " + this.acctid + " " + //
+		String ret = "[" + this.lotid + "] " + this.acctid + " " + //
 		// Common.formatDate(this.createDate.toDate()) + expireDate + " " + //
 		// Security.getSecurity(this.secid).getSymbol() + " " + //
 				Common.formatAmount3(this.shares) + " " //
+				// TODO will this ever be null?
 				+ ((this.createTransaction != null) ? "C" : "-") //
-				+ ((this.expireTransaction != null) ? "X" : "-");
+				+ ((!isOpen()) ? "X" : "-");
 		if (!this.childLots.isEmpty()) {
 			ret += "\n  -> " + this.childLots.toString();
 		}

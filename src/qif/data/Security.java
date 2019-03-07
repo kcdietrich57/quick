@@ -104,20 +104,6 @@ public class Security {
 		this.lots.addAll(lots);
 	}
 
-	public List<Lot> getLotsForTransaction(InvestmentTxn txn) {
-		List<Lot> ret = new ArrayList<Lot>();
-
-		for (Lot lot : this.lots) {
-			if ((lot.createTransaction.txid == txn.txid) //
-					|| (lot.expireTransaction != null //
-							&& lot.expireTransaction.txid == txn.txid)) {
-				ret.add(lot);
-			}
-		}
-
-		return ret;
-	}
-
 	public String getSymbol() {
 		return (this.symbol != null) ? this.symbol : getName();
 	}
