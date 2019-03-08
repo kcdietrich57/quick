@@ -25,8 +25,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 
 import qif.data.Account;
 import qif.data.GenericTxn;
-import qif.data.InvestmentTxn;
-import qif.data.Security;
 import qif.data.Statement;
 import qif.ui.model.TransactionTableModel;
 
@@ -89,7 +87,7 @@ public class TransactionPanel //
 				int row = transactionTable.getSelectedRow();
 
 				if (row >= 0) {
-					clickTransactionHandler(row);
+					transactionSelected(row);
 				}
 			}
 		});
@@ -113,7 +111,7 @@ public class TransactionPanel //
 		});
 	}
 
-	private void clickTransactionHandler(int row) {
+	private void transactionSelected(int row) {
 		GenericTxn txn = this.transactionTableModel.getTransactionAt(row);
 
 		this.textArea.setText(txn.formatValue());
