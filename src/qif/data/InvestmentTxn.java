@@ -4,11 +4,10 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class InvestmentTxn extends GenericTxn {
 	private static final List<InvestmentTxn> NO_XFER_TXNS = //
@@ -25,6 +24,7 @@ public class InvestmentTxn extends GenericTxn {
 	public BigDecimal amountTransferred;
 	public List<InvestmentTxn> xferTxns;
 
+	public List<Lot> lots;
 	public List<Lot> lotsCreated;
 	public List<Lot> lotsDisposed;
 
@@ -41,6 +41,7 @@ public class InvestmentTxn extends GenericTxn {
 		this.amountTransferred = null;
 		this.xferTxns = NO_XFER_TXNS;
 
+		this.lots = new ArrayList<Lot>();
 		this.lotsCreated = new ArrayList<Lot>();
 		this.lotsDisposed = new ArrayList<Lot>();
 	}
@@ -65,6 +66,7 @@ public class InvestmentTxn extends GenericTxn {
 		this.amountTransferred = txn.amountTransferred;
 		this.xferTxns = NO_XFER_TXNS;
 
+		this.lots = new ArrayList<Lot>();
 		this.lotsCreated = new ArrayList<Lot>();
 		this.lotsDisposed = new ArrayList<Lot>();
 	}
@@ -161,9 +163,9 @@ public class InvestmentTxn extends GenericTxn {
 
 	public boolean removesShares() {
 		switch (getAction()) {
-		//case EXERCISE:
-		//case EXERCISEX:
-		//case EXPIRE:
+		// case EXERCISE:
+		// case EXERCISEX:
+		// case EXPIRE:
 		case SELL:
 		case SELLX:
 		case SHRS_OUT:
@@ -436,11 +438,12 @@ public class InvestmentTxn extends GenericTxn {
 
 	public String formatValue() {
 		// organizeLots();
+		String datestr = Common.formatDate(getDate());
 
 		String ret = String.format("[%d]%10s %d %5s",
 				// "%10s %-30s %s %13s %-15s %-10s", //
 				this.txid, //
-				Common.formatDate(getDate().toDate()), //
+				datestr, //
 				// this.getPayee(), //
 				// ((isCleared()) ? "C" : " "), //
 				// Common.formatAmount(getAmount()), //
@@ -497,8 +500,6 @@ public class InvestmentTxn extends GenericTxn {
 			}
 		}
 
-//		public List<InvestmentTxn> xferTxns;
-
 		if (this.lotsCreated != null && !this.lotsCreated.isEmpty()) {
 			for (Lot lot : this.lotsCreated) {
 				ret += "\n";
@@ -511,6 +512,90 @@ public class InvestmentTxn extends GenericTxn {
 				ret += "  dispose " + lot.toString();
 			}
 		}
+
+		if (this.security != null) {
+			ret += "\n\n";
+
+			// All security positions for date
+			Map<Security, BigDecimal[]> x = SecurityPortfolio.portfolio.getOpenPositionsForDate(getDate());
+
+			ret += "\nAll security positions on " + datestr;
+			for (Entry<Security, BigDecimal[]> entry : x.entrySet()) {
+				ret += "\n";
+				ret += String.format("%8s: %12s %8s %12s", //
+						entry.getKey().getSymbol(), //
+						Common.formatAmount3(entry.getValue()[0]), //
+						Common.formatAmount3(entry.getValue()[1]), //
+						Common.formatAmount(entry.getValue()[2]));
+			}
+
+			BigDecimal[] overallValue = x.get(this.security);
+
+			ret += "\n\nTotal holdings for " + getSecurityName() + " on " + datestr;
+			if (overallValue != null) {
+				ret += "\n";
+				ret += String.format("%12s %8s %12s", //
+						Common.formatAmount3(overallValue[0]), //
+						Common.formatAmount3(overallValue[1]), //
+						Common.formatAmount(overallValue[2]));
+				ret += "  :  ";
+			}
+
+			// Current account position for date
+			Map<Security, BigDecimal[]> y = getAccount().getOpenPositionsForDate(getDate());
+
+			ret += "\n\nAll positions for " + getAccount().getName() + " on " + datestr;
+			for (Entry<Security, BigDecimal[]> entry : y.entrySet()) {
+				ret += "\n";
+				ret += String.format("%8s: %12s %8s %12s", //
+						entry.getKey().getSymbol(), //
+						Common.formatAmount3(entry.getValue()[0]), //
+						Common.formatAmount3(entry.getValue()[1]), //
+						Common.formatAmount(entry.getValue()[2]));
+			}
+
+			// Position for the current account
+			BigDecimal[] acctValue = y.get(this.security);
+
+			ret += "\n\nPosition for " + getSecurityName() //
+					+ " for " + getAccount().getName() + " on " + datestr;
+			if (acctValue != null) {
+				ret += "\n";
+				ret += String.format("%12s %8s %12s", //
+						Common.formatAmount3(acctValue[0]), //
+						Common.formatAmount3(acctValue[1]), //
+						Common.formatAmount(acctValue[2]));
+			}
+
+			// Positions in security for each account for date
+			Map<Account, BigDecimal[]> z = //
+					SecurityPortfolio.portfolio.getOpenPositionsForDateByAccount( //
+							this.security, getDate());
+
+			ret += "\n\nPosition for all accounts for " + getSecurityName() //
+					+ " on " + datestr;
+			for (Entry<Account, BigDecimal[]> entry : z.entrySet()) {
+				ret += "\n";
+				ret += String.format("%8s: %12s %8s %12s", //
+						Common.formatString(entry.getKey().getName(), 20), //
+						Common.formatAmount3(entry.getValue()[0]), //
+						Common.formatAmount3(entry.getValue()[1]), //
+						Common.formatAmount(entry.getValue()[2]));
+			}
+		}
+
+		if (getAction() == TxAction.SELL || getAction() == TxAction.SELLX) {
+			ret += "\n\n";
+			ret += toString();
+			ret += "\nLots sold:\n---------------\n";
+
+			for (Lot lot : this.lots) {
+				ret += "\n - " + lot.toString();
+			}
+
+		}
+
+		System.out.println("\n=============================\n" + ret + "\n");
 
 		return ret;
 	}

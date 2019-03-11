@@ -2,8 +2,10 @@ package qif.data;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 // This can be global information, or for a single account or statement
 public class SecurityPortfolio {
@@ -122,10 +124,32 @@ public class SecurityPortfolio {
 		}
 	}
 
-	public void getPositionsForDate(QDate d) {
+	public Map<Security, BigDecimal[]> getOpenPositionsForDate(QDate d) {
+		Map<Security, BigDecimal[]> ret = new HashMap<Security, BigDecimal[]>();
+
 		for (SecurityPosition pos : this.positions) {
-			pos.getPositionForDate(d);
+			BigDecimal[] values = pos.getPositionForDate(d);
+
+			if ((values != null) && (values[0].signum() != 0)) {
+				ret.put(pos.security, values);
+			}
 		}
+
+		return ret;
+	}
+
+	public Map<Account, BigDecimal[]> getOpenPositionsForDateByAccount(Security sec, QDate d) {
+		Map<Account, BigDecimal[]> ret = new HashMap<Account, BigDecimal[]>();
+
+		for (Account acct : Account.accounts) {
+			BigDecimal[] values = acct.getSecurityValueForDate(sec, d);
+
+			if ((values != null) && (values[0].signum() != 0)) {
+				ret.put(acct, values);
+			}
+		}
+
+		return ret;
 	}
 
 	public BigDecimal getPortfolioValueForDate(QDate d) {
@@ -225,7 +249,9 @@ public class SecurityPortfolio {
 
 		int nn = 0;
 		for (final SecurityPosition p : this.positions) {
-			s += "  " + ++nn + ": " + p.toString() + "\n";
+			if (!p.transactions.isEmpty()) {
+				s += "  " + ++nn + ": " + p.toString() + "\n";
+			}
 		}
 
 		return s;

@@ -143,6 +143,16 @@ public class Common {
 		return parseDate(datestr);
 	}
 
+	public static String formatString(String s, int maxlen) {
+		if (s == null) {
+			s = "N/A";
+		}
+
+		return (s.length() > maxlen) //
+				? s.substring(0, maxlen) //
+				: String.format("%" + maxlen + "s", s);
+	}
+
 	public static String stringValue(Object o) {
 		if (o == null) {
 			return "";
@@ -179,31 +189,32 @@ public class Common {
 		return String.format("%10.3f", amt);
 	}
 
-	public static String formatDate(Date date) {
+	public static String formatDate(QDate date) {
+		return formatDate(date, "MM/dd/yy");
+	}
+
+	public static String formatDateLong(QDate date) {
+		return formatDate(date, "MM/dd/yyyy");
+	}
+
+	public static String formatDateShort(QDate date) {
+		return formatDate(date, "MM/dd");
+	}
+
+	public static String formatDateMonthYear(QDate date) {
+		return formatDate(date, "MM/yyyy");
+	}
+
+	private static String formatDate(QDate date, String format) {
 		if (date == null) {
 			return "null";
 		}
 
-		final DateFormat dfmt = new SimpleDateFormat("MM/dd/yy");
-		return dfmt.format(date);
+		return formatDate(date.toDate(), format);
 	}
 
-	public static String formatDateLong(Date date) {
-		if (date == null) {
-			return "null";
-		}
-
-		final DateFormat dfmt = new SimpleDateFormat("MM/dd/yyyy");
-		return dfmt.format(date);
-	}
-
-	public static String formatDateShort(Date date) {
-		final DateFormat dfmt = new SimpleDateFormat("MM/dd");
-		return dfmt.format(date);
-	}
-
-	public static String formatDateMonthYear(Date date) {
-		final DateFormat dfmt = new SimpleDateFormat("MM/yyyy");
+	private static String formatDate(Date date, String format) {
+		DateFormat dfmt = new SimpleDateFormat(format);
 		return dfmt.format(date);
 	}
 

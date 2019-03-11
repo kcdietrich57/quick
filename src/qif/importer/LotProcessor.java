@@ -173,6 +173,8 @@ class LotProcessor {
 		Lot lot = new Lot(txn.acctid, txn.getDate(), txn.security.secid, //
 				txn.getShares(), txn.getShareCost(), txn);
 		addLot(lot);
+
+		txn.lots.add(lot);
 	}
 
 	/** Get open lots for account */
@@ -218,7 +220,7 @@ class LotProcessor {
 
 		return null;
 	}
-	
+
 	private Lot getBestLot(BigDecimal shares, List<Lot> lots) {
 		for (Lot lot : lots) {
 			if (lot.shares.equals(shares)) {
@@ -226,7 +228,7 @@ class LotProcessor {
 				return lot;
 			}
 		}
-		
+
 		return lots.remove(0);
 	}
 
@@ -236,23 +238,27 @@ class LotProcessor {
 	 */
 	private void removeShares(InvestmentTxn txn, List<Lot> srcLots) {
 		BigDecimal sharesRemaining = txn.getShares().abs();
-		
+
 		while (!Common.isEffectivelyZero(sharesRemaining)) {
 			Lot srcLot = getBestLot(sharesRemaining, srcLots);
 
+			// Split the src lot if it has shares in excess of what is
+			// required for the current dst transaction
 			if (srcLot.shares.compareTo(sharesRemaining) > 0) {
-				// Split source lot
-				Lot remainderLot = new Lot(srcLot, srcLot.acctid, //
-						srcLot.shares.subtract(sharesRemaining), txn);
-				addLot(remainderLot);
+				Lot[] splitLot = srcLot.split(txn, sharesRemaining);
 
-				sharesRemaining = BigDecimal.ZERO;
-			} else {
-				// Consume entire source lot
-				sharesRemaining = sharesRemaining.subtract(srcLot.shares);
+				addLot(splitLot[0]);
+				addLot(splitLot[1]);
+
+				srcLot = splitLot[0];
 			}
 
+			// Consume source lot
 			srcLot.expireTransaction = txn;
+			txn.lotsDisposed.add(srcLot);
+			txn.lots.add(srcLot);
+
+			sharesRemaining = sharesRemaining.subtract(srcLot.shares);
 		}
 	}
 
@@ -349,6 +355,7 @@ class LotProcessor {
 				sharesLeftInSrcTxn = sharesLeftInSrcTxn.subtract(newDstLot.shares);
 
 				srcLot.expireTransaction = srcTxn;
+				srcTxn.lots.add(srcLot);
 
 				if (sharesLeftInDstTxn.compareTo(newDstLot.shares) > 0) {
 					sharesLeftInDstTxn = sharesLeftInDstTxn.subtract(newDstLot.shares);

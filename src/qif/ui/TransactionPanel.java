@@ -114,6 +114,7 @@ public class TransactionPanel //
 	private void transactionSelected(int row) {
 		GenericTxn txn = this.transactionTableModel.getTransactionAt(row);
 
+		// TODO implement transactions property pane
 		this.textArea.setText(txn.formatValue());
 
 		for (TransactionSelectionListener l : this.txnSelListeners) {

@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import qif.ui.MainWindow;
 
@@ -229,12 +230,12 @@ public class Account {
 	public QDate getLastStatementDate() {
 		for (int idx = this.statements.size() - 1; idx >= 0; --idx) {
 			Statement stat = this.statements.get(idx);
-			
+
 			if (stat.isBalanced) {
 				return stat.date;
 			}
 		}
-		
+
 		return null;
 	}
 
@@ -698,6 +699,19 @@ public class Account {
 		return portValue;
 	}
 
+	public BigDecimal[] getSecurityValueForDate(Security sec, QDate d) {
+		SecurityPosition pos = this.securities.getPosition(sec.secid);
+
+		if (pos == null) {
+			return new BigDecimal[] { BigDecimal.ZERO };
+		}
+
+		return new BigDecimal[] { //
+				pos.getSharesForDate(d), //
+				sec.getPriceForDate(d).getPrice(), //
+				pos.getValueForDate(d) };
+	}
+
 	public String toString() {
 		String s = "Account" + this.acctid + ": " + this.name //
 				+ " type=" + this.type //
@@ -816,7 +830,7 @@ public class Account {
 	}
 
 	// FIXME account status for period unused, unfinished
-	public void getPositionsForDate(QDate d) {
-		this.securities.getPositionsForDate(d);
+	public Map<Security, BigDecimal[]> getOpenPositionsForDate(QDate d) {
+		return this.securities.getOpenPositionsForDate(d);
 	}
 }

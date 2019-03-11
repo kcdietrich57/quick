@@ -192,9 +192,11 @@ public class SecurityPosition {
 		return (idx >= 0) ? shrBalance.get(idx) : BigDecimal.ZERO;
 	}
 
-	public void getPositionForDate(QDate d) {
-		// FIXME implement getPositionForDate
-		// throw new Exception("not implemented");
+	public BigDecimal[] getPositionForDate(QDate d) {
+		return new BigDecimal[] { //
+				getSharesForDate(d), //
+				this.security.getPriceForDate(d).getPrice(), //
+				getValueForDate(d) };
 	}
 
 	// name;numtx[;txid;shrbal]

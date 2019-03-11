@@ -72,7 +72,7 @@ public class NonInvestmentTxn extends GenericTxn {
 
 	public String formatValue() {
 		String ret = String.format("%10s %-30s %s  %13s  %-15s  %-10s", //
-				Common.formatDate(getDate().toDate()), //
+				Common.formatDate(getDate()), //
 				this.getPayee(), //
 				((isCleared()) ? "C" : " "), //
 				Common.formatAmount(getAmount()), //

@@ -93,6 +93,10 @@ public abstract class GenericTxn //
 
 	public static int getLastTransactionIndexOnOrBeforeDate( //
 			List<? extends GenericTxn> txns, QDate d) {
+		if (txns.isEmpty()) {
+			return -1;
+		}
+
 		int idx = getTransactionInsertIndexByDate(txns, d);
 
 		int n = (idx < 0) ? -idx - 1 : idx;

@@ -35,7 +35,7 @@ public class Lot {
 
 	private Lot(int acctid, QDate date, int secid, //
 			BigDecimal shares, BigDecimal cost, //
-			InvestmentTxn createTxn, //InvestmentTxn expireTxn, //
+			InvestmentTxn createTxn, // InvestmentTxn expireTxn, //
 			Lot srcLot) {
 		this.lotid = nextlotid++;
 
@@ -59,7 +59,7 @@ public class Lot {
 		txn.lotsCreated.add(this);
 	}
 
-	/** Constructor for the remainder from the disposal of part of a lot */
+	/** Constructor for the dividing a lot for partial sale */
 	public Lot(Lot srcLot, int acctid, BigDecimal shares, InvestmentTxn txn) {
 		this(acctid, srcLot.createDate, srcLot.secid, shares, //
 				shares.multiply(srcLot.getPrice()), txn, srcLot);
@@ -68,14 +68,17 @@ public class Lot {
 
 		this.sourceLot.childLots.add(this);
 		txn.lotsCreated.add(this);
-		txn.lotsDisposed.add(srcLot);
+
+		if (!txn.lotsDisposed.contains(srcLot)) {
+			txn.lotsDisposed.add(srcLot);
+		}
 	}
 
 	/** Constructor for the destination lot for a transfer/split transaction */
 	public Lot(Lot srcLot, int acctid, InvestmentTxn srcTxn, InvestmentTxn dstTxn) {
 		this(dstTxn.acctid, srcLot.createDate, srcLot.secid, //
 				srcLot.shares.multiply(dstTxn.getSplitRatio()), //
-				srcLot.costBasis, srcTxn, srcLot);
+				srcLot.costBasis, dstTxn, srcLot);
 
 		this.sourceLot.childLots.add(this);
 		dstTxn.lotsCreated.add(this);
@@ -114,7 +117,6 @@ public class Lot {
 		Lot returnLot = new Lot(this, this.acctid, shares, txn);
 
 		this.expireTransaction = txn;
-		txn.lotsDisposed.add(this);
 
 		return new Lot[] { returnLot, remainderLot };
 	}
@@ -137,14 +139,25 @@ public class Lot {
 
 	public String toString() {
 		String ret = "[" + this.lotid + "] " + this.acctid + " " + //
-		// Common.formatDate(this.createDate.toDate()) + expireDate + " " + //
-		// Security.getSecurity(this.secid).getSymbol() + " " + //
+				Common.formatDate(getAcquisitionDate()) + " " + //
+				// Common.formatDate(this.createDate.toDate()) + expireDate + " " + //
+				// Security.getSecurity(this.secid).getSymbol() + " " + //
 				Common.formatAmount3(this.shares) + " " //
 				// TODO will this ever be null?
-				+ ((this.createTransaction != null) ? "C" : "-") //
-				+ ((!isOpen()) ? "X" : "-");
+				+ ((this.createTransaction != null) //
+						? this.createTransaction.getAction().toString() //
+						: "") //
+				+ "-" //
+				+ ((this.expireTransaction != null) //
+						? this.expireTransaction.getAction().toString() //
+						: "");
 		if (!this.childLots.isEmpty()) {
-			ret += "\n  -> " + this.childLots.toString();
+//			ret += "\n  -> " + this.childLots.toString();
+			ret += " (" + this.childLots.size() + " children)";
+		}
+
+		if (this.sourceLot != null) {
+			ret += "\n  <- " + this.sourceLot.toString();
 		}
 
 		return ret;
