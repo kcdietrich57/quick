@@ -436,6 +436,52 @@ public class InvestmentTxn extends GenericTxn {
 		return "N/A";
 	}
 
+	public String toStringShort(boolean veryshort) {
+		String s = String.format("%s %s %s:%s", //
+				((this.stmtdate != null) ? "*" : " "), //
+				getDate().toString(), //
+				getAccount().getName(), //
+				this.action.toString());
+
+		if (this.action == TxAction.STOCKSPLIT) {
+			s += String.format(" %5.2f", //
+					getSplitRatio());
+		} else {
+			s += String.format(" %8.2f %8.2f %8.2f", //
+					getShares(), //
+					getAmount(), //
+					getCashAmount());
+		}
+
+		s += " " + ((this.security != null) ? this.security.getSymbol() : getPayee());
+
+		return s;
+	}
+
+	public String toStringLong() {
+		String s = ((this.stmtdate != null) ? "*" : " ") + "InvTx" + this.txid + ":";
+		s += " dt=" + getDate().toString();
+		s += " acct=" + Account.getAccountByID(this.acctid).getName();
+		s += " act=" + this.action;
+		if (this.security != null) {
+			s += " sec=" + this.security.getName();
+		} else {
+			s += " payee=" + getPayee();
+		}
+		s += " price=" + this.price;
+		s += " qty=" + this.quantity;
+		s += " amt=" + getAmount();
+		s += " clr=" + this.clearedStatus;
+		// s += " txt=" + this.textFirstLine;
+		s += " memo=" + getMemo();
+		s += " comm=" + this.commission;
+		s += " xact=" + this.accountForTransfer;
+		s += " xamt=" + this.amountTransferred;
+		s += "\n";
+
+		return s;
+	}
+
 	public String formatValue() {
 		// organizeLots();
 		String datestr = Common.formatDate(getDate());
@@ -593,56 +639,18 @@ public class InvestmentTxn extends GenericTxn {
 				ret += "\n - " + lot.toString();
 			}
 
+			ret += "\n\n";
+			ret += "Basis Info";
+			BasisInfo info = Lot.getBasisInfo(this.lots);
+
+			ret += info.toString();
+			ret += String.format("Proceeds: %s\nGain/loss: %s\n", //
+					Common.formatAmount(getAmount()), //
+					Common.formatAmount(getAmount().subtract(info.totalCost)));
 		}
 
 		System.out.println("\n=============================\n" + ret + "\n");
 
 		return ret;
-	}
-
-	public String toStringShort(boolean veryshort) {
-		String s = String.format("%s %s %s:%s", //
-				((this.stmtdate != null) ? "*" : " "), //
-				getDate().toString(), //
-				getAccount().getName(), //
-				this.action.toString());
-
-		if (this.action == TxAction.STOCKSPLIT) {
-			s += String.format(" %5.2f", //
-					getSplitRatio());
-		} else {
-			s += String.format(" %8.2f %8.2f %8.2f", //
-					getShares(), //
-					getAmount(), //
-					getCashAmount());
-		}
-
-		s += " " + ((this.security != null) ? this.security.getSymbol() : getPayee());
-
-		return s;
-	}
-
-	public String toStringLong() {
-		String s = ((this.stmtdate != null) ? "*" : " ") + "InvTx" + this.txid + ":";
-		s += " dt=" + getDate().toString();
-		s += " acct=" + Account.getAccountByID(this.acctid).getName();
-		s += " act=" + this.action;
-		if (this.security != null) {
-			s += " sec=" + this.security.getName();
-		} else {
-			s += " payee=" + getPayee();
-		}
-		s += " price=" + this.price;
-		s += " qty=" + this.quantity;
-		s += " amt=" + getAmount();
-		s += " clr=" + this.clearedStatus;
-		// s += " txt=" + this.textFirstLine;
-		s += " memo=" + getMemo();
-		s += " comm=" + this.commission;
-		s += " xact=" + this.accountForTransfer;
-		s += " xamt=" + this.amountTransferred;
-		s += "\n";
-
-		return s;
 	}
 }
