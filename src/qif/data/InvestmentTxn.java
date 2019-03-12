@@ -7,7 +7,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+
+import qif.data.SecurityPosition.PositionInfo;
 
 public class InvestmentTxn extends GenericTxn {
 	private static final List<InvestmentTxn> NO_XFER_TXNS = //
@@ -563,70 +564,52 @@ public class InvestmentTxn extends GenericTxn {
 			ret += "\n\n";
 
 			// All security positions for date
-			Map<Security, BigDecimal[]> x = SecurityPortfolio.portfolio.getOpenPositionsForDate(getDate());
+			Map<Security, PositionInfo> x = SecurityPortfolio.portfolio.getOpenPositionsForDate(getDate());
 
 			ret += "\nAll security positions on " + datestr;
-			for (Entry<Security, BigDecimal[]> entry : x.entrySet()) {
+			for (PositionInfo pinfo : x.values()) {
 				ret += "\n";
-				ret += String.format("%8s: %12s %8s %12s", //
-						entry.getKey().getSymbol(), //
-						Common.formatAmount3(entry.getValue()[0]), //
-						Common.formatAmount3(entry.getValue()[1]), //
-						Common.formatAmount(entry.getValue()[2]));
+				ret += pinfo.toString();
 			}
 
-			BigDecimal[] overallValue = x.get(this.security);
+			PositionInfo overallValue = x.get(this.security);
 
 			ret += "\n\nTotal holdings for " + getSecurityName() + " on " + datestr;
 			if (overallValue != null) {
 				ret += "\n";
-				ret += String.format("%12s %8s %12s", //
-						Common.formatAmount3(overallValue[0]), //
-						Common.formatAmount3(overallValue[1]), //
-						Common.formatAmount(overallValue[2]));
+				ret += overallValue.toString();
 				ret += "  :  ";
 			}
 
 			// Current account position for date
-			Map<Security, BigDecimal[]> y = getAccount().getOpenPositionsForDate(getDate());
+			Map<Security, PositionInfo> y = getAccount().getOpenPositionsForDate(getDate());
 
 			ret += "\n\nAll positions for " + getAccount().getName() + " on " + datestr;
-			for (Entry<Security, BigDecimal[]> entry : y.entrySet()) {
+			for (PositionInfo pinfo : y.values()) {
 				ret += "\n";
-				ret += String.format("%8s: %12s %8s %12s", //
-						entry.getKey().getSymbol(), //
-						Common.formatAmount3(entry.getValue()[0]), //
-						Common.formatAmount3(entry.getValue()[1]), //
-						Common.formatAmount(entry.getValue()[2]));
+				ret += pinfo.toString();
 			}
 
 			// Position for the current account
-			BigDecimal[] acctValue = y.get(this.security);
+			PositionInfo acctValue = y.get(this.security);
 
 			ret += "\n\nPosition for " + getSecurityName() //
 					+ " for " + getAccount().getName() + " on " + datestr;
 			if (acctValue != null) {
 				ret += "\n";
-				ret += String.format("%12s %8s %12s", //
-						Common.formatAmount3(acctValue[0]), //
-						Common.formatAmount3(acctValue[1]), //
-						Common.formatAmount(acctValue[2]));
+				ret += acctValue.toString();
 			}
 
 			// Positions in security for each account for date
-			Map<Account, BigDecimal[]> z = //
+			Map<Account, PositionInfo> z = //
 					SecurityPortfolio.portfolio.getOpenPositionsForDateByAccount( //
 							this.security, getDate());
 
 			ret += "\n\nPosition for all accounts for " + getSecurityName() //
 					+ " on " + datestr;
-			for (Entry<Account, BigDecimal[]> entry : z.entrySet()) {
+			for (PositionInfo pinfo : z.values()) {
 				ret += "\n";
-				ret += String.format("%8s: %12s %8s %12s", //
-						Common.formatString(entry.getKey().getName(), 20), //
-						Common.formatAmount3(entry.getValue()[0]), //
-						Common.formatAmount3(entry.getValue()[1]), //
-						Common.formatAmount(entry.getValue()[2]));
+				ret += pinfo.toString();
 			}
 		}
 

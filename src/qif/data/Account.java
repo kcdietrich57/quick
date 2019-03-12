@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import qif.data.SecurityPosition.PositionInfo;
 import qif.ui.MainWindow;
 
 class Foo {
@@ -699,17 +700,19 @@ public class Account {
 		return portValue;
 	}
 
-	public BigDecimal[] getSecurityValueForDate(Security sec, QDate d) {
+	public PositionInfo getSecurityValueForDate(Security sec, QDate d) {
 		SecurityPosition pos = this.securities.getPosition(sec.secid);
 
 		if (pos == null) {
-			return new BigDecimal[] { BigDecimal.ZERO };
+			return new PositionInfo(sec, d);
 		}
 
-		return new BigDecimal[] { //
+		return new PositionInfo( //
+				sec, //
+				d, //
 				pos.getSharesForDate(d), //
 				sec.getPriceForDate(d).getPrice(), //
-				pos.getValueForDate(d) };
+				pos.getValueForDate(d));
 	}
 
 	public String toString() {
@@ -829,8 +832,7 @@ public class Account {
 		return apos;
 	}
 
-	// FIXME account status for period unused, unfinished
-	public Map<Security, BigDecimal[]> getOpenPositionsForDate(QDate d) {
+	public Map<Security, PositionInfo> getOpenPositionsForDate(QDate d) {
 		return this.securities.getOpenPositionsForDate(d);
 	}
 }

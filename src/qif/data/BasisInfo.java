@@ -2,13 +2,24 @@ package qif.data;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * This class represents tax basis info for a lot or lots.
+ */
 public class BasisInfo {
+	public List<Lot> lots = new ArrayList<Lot>();
 	public BigDecimal totalShares = BigDecimal.ZERO;
 	public BigDecimal totalCost = BigDecimal.ZERO;
 	public BigDecimal averagePrice = BigDecimal.ZERO;
 
 	public void addLot(Lot lot) {
+		if (this.lots.contains(lot)) {
+			return;
+		}
+
+		this.lots.add(lot);
 		this.totalShares = this.totalShares.add(lot.shares);
 		this.totalCost = this.totalCost.add(lot.getCostBasis());
 

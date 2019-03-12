@@ -6,6 +6,41 @@ import java.util.Collections;
 import java.util.List;
 
 public class SecurityPosition {
+	public static class PositionInfo {
+		public final QDate date;
+		public final Security security;
+		public final BigDecimal shares;
+		public final BigDecimal price;
+		public final BigDecimal value;
+
+		public PositionInfo(Security security, QDate date) {
+			this.security = security;
+			this.date = date;
+
+			this.shares = BigDecimal.ZERO;
+			this.price = security.getPriceForDate(date).getPrice();
+			this.value = BigDecimal.ZERO;
+		}
+
+		public PositionInfo( //
+				Security security, QDate date, //
+				BigDecimal shares, BigDecimal price, BigDecimal value) {
+			this.security = security;
+			this.date = date;
+			this.shares = shares;
+			this.price = price;
+			this.value = value;
+		}
+
+		public String toString() {
+			return String.format("%8s: %12s %8s %12s", //
+					this.security.getSymbol(), //
+					Common.formatAmount3(this.shares), //
+					Common.formatAmount3(this.price), //
+					Common.formatAmount(this.value));
+		}
+	}
+
 	public static class SecurityPerformance {
 		private final SecurityPosition pos;
 
@@ -192,11 +227,18 @@ public class SecurityPosition {
 		return (idx >= 0) ? shrBalance.get(idx) : BigDecimal.ZERO;
 	}
 
-	public BigDecimal[] getPositionForDate(QDate d) {
-		return new BigDecimal[] { //
-				getSharesForDate(d), //
-				this.security.getPriceForDate(d).getPrice(), //
-				getValueForDate(d) };
+	public PositionInfo getPositionForDate(QDate date) {
+		BigDecimal shares = getSharesForDate(date);
+		if (shares == null) {
+			return null;
+		}
+
+		return new PositionInfo( //
+				this.security, //
+				date, //
+				shares, //
+				this.security.getPriceForDate(date).getPrice(), //
+				getValueForDate(date));
 	}
 
 	// name;numtx[;txid;shrbal]

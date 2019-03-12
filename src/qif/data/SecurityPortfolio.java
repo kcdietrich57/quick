@@ -7,6 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import qif.data.SecurityPosition.PositionInfo;
+
 // This can be global information, or for a single account or statement
 public class SecurityPortfolio {
 
@@ -124,13 +126,13 @@ public class SecurityPortfolio {
 		}
 	}
 
-	public Map<Security, BigDecimal[]> getOpenPositionsForDate(QDate d) {
-		Map<Security, BigDecimal[]> ret = new HashMap<Security, BigDecimal[]>();
+	public Map<Security, PositionInfo> getOpenPositionsForDate(QDate d) {
+		Map<Security, PositionInfo> ret = new HashMap<Security, PositionInfo>();
 
 		for (SecurityPosition pos : this.positions) {
-			BigDecimal[] values = pos.getPositionForDate(d);
+			PositionInfo values = pos.getPositionForDate(d);
 
-			if ((values != null) && (values[0].signum() != 0)) {
+			if (values != null) {
 				ret.put(pos.security, values);
 			}
 		}
@@ -138,13 +140,13 @@ public class SecurityPortfolio {
 		return ret;
 	}
 
-	public Map<Account, BigDecimal[]> getOpenPositionsForDateByAccount(Security sec, QDate d) {
-		Map<Account, BigDecimal[]> ret = new HashMap<Account, BigDecimal[]>();
+	public Map<Account, PositionInfo> getOpenPositionsForDateByAccount(Security sec, QDate d) {
+		Map<Account, PositionInfo> ret = new HashMap<Account, PositionInfo>();
 
 		for (Account acct : Account.accounts) {
-			BigDecimal[] values = acct.getSecurityValueForDate(sec, d);
+			PositionInfo values = acct.getSecurityValueForDate(sec, d);
 
-			if ((values != null) && (values[0].signum() != 0)) {
+			if (values != null) {
 				ret.put(acct, values);
 			}
 		}
