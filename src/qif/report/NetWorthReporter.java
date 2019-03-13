@@ -41,6 +41,12 @@ public class NetWorthReporter {
 		sb.append("\n");
 		sb.append(String.format("Global status for date: %s\n", model.date.toString()));
 		sb.append("--------------------------------------------------------\n");
+		sb.append(String.format("Assets:      %15.2f\n", model.assets));
+		sb.append(String.format("Liabilities: %15.2f\n", model.liabilities));
+		sb.append(String.format("Balance:     %15.2f\n", model.netWorth));
+		sb.append("--------------------------------------------------------\n");
+		sb.append("\n");
+
 		sb.append(String.format("  %-36s : %10s\n", "Account", "Balance\n"));
 
 		for (Section sect : model.sections) {
@@ -80,11 +86,6 @@ public class NetWorthReporter {
 
 			sb.append("\n");
 		}
-
-		sb.append(String.format("Assets:      %15.2f\n", model.assets));
-		sb.append(String.format("Liabilities: %15.2f\n", model.liabilities));
-		sb.append(String.format("Balance:     %15.2f\n", model.netWorth));
-		sb.append("\n");
 
 		return sb.toString();
 	}

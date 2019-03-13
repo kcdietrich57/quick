@@ -52,5 +52,6 @@ public class Dashboard extends JPanel {
 	public void changeDate() {
 		StatusForDateModel balancesModel = new StatusForDateModel(MainWindow.instance.asOfDate);
 		this.balancesText.setText(NetWorthReporter.generateReportStatusForDate(balancesModel));
+		this.balancesText.setCaretPosition(0);
 	}
 }
