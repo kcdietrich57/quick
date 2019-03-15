@@ -216,7 +216,7 @@ class SecurityProcessor {
 				break;
 			}
 
-			Security sec = Security.findSecurityBySymbol(price.symbol);
+			Security sec = Security.getSecurity(price.secid);
 			if (sec != null) {
 				sec.addPrice(price, true);
 			}

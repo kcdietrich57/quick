@@ -19,6 +19,7 @@ import org.json.JSONObject;
 import qif.data.Common;
 import qif.data.QPrice;
 import qif.data.QifDom;
+import qif.data.Security;
 
 public class QuoteDownloader {
 	private static final String queryPattern = "%s/query?function=%s&symbol=%s%s&apikey=%s";
@@ -82,7 +83,9 @@ public class QuoteDownloader {
 			BigDecimal closingPrice = quote.getBigDecimal(closePriceKey);
 			BigDecimal splitPrice = quote.getBigDecimal(splitPriceKey);
 
-			prices.add(new QPrice(Common.parseQDate(date), symbol, closingPrice, splitPrice));
+			prices.add(new QPrice(Common.parseQDate(date), //
+					Security.findSecurity(symbol).secid, //
+					closingPrice, splitPrice));
 		}
 
 		return prices;

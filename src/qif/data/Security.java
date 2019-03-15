@@ -168,7 +168,7 @@ public class Security {
 		final int idx = getPriceIndexForDate(d);
 
 		if (idx < 0) {
-			return QPrice.ZERO;
+			return new QPrice(d, this.secid, BigDecimal.ZERO, null);
 		}
 
 		final QPrice p = this.prices.get(idx);

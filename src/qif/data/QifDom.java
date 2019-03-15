@@ -3,6 +3,7 @@ package qif.data;
 import java.io.File;
 import java.util.Properties;
 
+/** Global information and functions */
 public class QifDom {
 	public static File qifDir = null;
 

@@ -5,47 +5,25 @@ import java.math.BigDecimal;
 import qif.importer.QFileReader;
 
 public class QPrice implements Comparable<QPrice> {
-	public static final QPrice ZERO = new QPrice(new BigDecimal(0));
+	public final QDate date;
+	public final int secid;
 
-	public QDate date;
-	public String symbol;
-	private BigDecimal price;
-	private BigDecimal splitAdjustedPrice;
+	private final BigDecimal price;
+	private final BigDecimal splitAdjustedPrice;
 
-	public QPrice() {
-		this.price = null;
-		this.splitAdjustedPrice = null;
-		this.date = null;
-	}
-
-	public QPrice(QDate date, String symbol, BigDecimal price, BigDecimal splitAdjPrice) {
+	public QPrice(QDate date, int secid, BigDecimal price, BigDecimal splitAdjPrice) {
 		this.date = date;
-		this.symbol = symbol;
+		this.secid = secid;
 		this.price = price;
 		this.splitAdjustedPrice = splitAdjPrice;
-	}
-
-	private QPrice(BigDecimal val) {
-		this();
-
-		this.price = val;
 	}
 
 	public BigDecimal getPrice() {
 		return this.price;
 	}
 
-	public void setPrice(BigDecimal price) {
-		this.price = price;
-	}
-
 	public BigDecimal getSplitAdjustedPrice() {
 		return (this.splitAdjustedPrice != null) ? this.splitAdjustedPrice : this.price;
-	}
-
-	public void setSplitAdjustedPrice(BigDecimal saPrice, BigDecimal price) {
-		this.price = price;
-		this.splitAdjustedPrice = saPrice;
 	}
 
 	/**
@@ -84,6 +62,7 @@ public class QPrice implements Comparable<QPrice> {
 			Common.reportError("syntax error for price");
 		}
 
+		Security sec = Security.findSecurity(sym);
 		final String pricestr = s.substring(1, idx);
 		final BigDecimal price = Common.parsePrice(pricestr);
 
@@ -101,13 +80,8 @@ public class QPrice implements Comparable<QPrice> {
 		final String datestr = s.substring(1, idx);
 		final QDate date = Common.parseQDate(datestr);
 
-		final QPrice p = new QPrice();
-
-		p.symbol = sym;
-		p.price = price;
 		// figure out splitAdjustedPrice (or ignore quicken price history?)
-		p.splitAdjustedPrice = null;
-		p.date = date;
+		QPrice p = new QPrice(date, sec.secid, price, null);
 
 		// Ex: "FEQIX",48 3/4," 2/16' 0"
 		qfr.nextPriceLine(qline);

@@ -19,6 +19,7 @@ class Foo {
 	}
 }
 
+/** Represents an account */
 public class Account {
 	/**
 	 * This list of accounts may not contain nulls, size == numAccounts, index is

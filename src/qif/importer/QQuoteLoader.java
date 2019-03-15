@@ -135,24 +135,25 @@ class QQuoteLoader {
 					Common.reportError("Invalid price in quote file");
 				}
 
-				final QPrice p = new QPrice();
-
 				if (isWeekly) {
 					// I am suspicious of this - go to middle of the week?
 					date = date.addDays(4);
 				}
 
-				p.date = date;
-
 				final BigDecimal splitRatio = sec.getSplitRatioForDate(date);
 
+				BigDecimal saprice;
+
 				if (isSplitAdjusted) {
-					p.setSplitAdjustedPrice(price, price.multiply(splitRatio));
+					saprice = price;
+					price = price.multiply(splitRatio);
 				} else {
-					p.setSplitAdjustedPrice(price.divide(splitRatio), price);
+					saprice = price.divide(splitRatio);
 				}
 
-				prices.add(p);
+				QPrice qprice = new QPrice(date, sec.secid, price, saprice);
+
+				prices.add(qprice);
 
 				line = rdr.readLine();
 			}
