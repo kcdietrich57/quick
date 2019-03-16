@@ -78,14 +78,12 @@ class LotProcessor {
 
 			int newTxIdx = createLotsForTransaction(txns, txIdx);
 
-			System.out.println("=============================");
-			for (int ii = txIdx; ii < newTxIdx; ++ii) {
-				InvestmentTxn tx = txns.get(ii);
-				System.out.println();
-				System.out.println(tx.formatValue());
-			}
-
-			txIdx = newTxIdx;
+//			System.out.println("=============================");
+//			for (int ii = txIdx; ii < newTxIdx; ++ii) {
+//				InvestmentTxn tx = txns.get(ii);
+//				System.out.println();
+//				System.out.println(tx.formatValue());
+//			}
 
 //			for (Lot lot : this.lots) {
 //				if (lot.expireTransaction == null) {
@@ -95,6 +93,8 @@ class LotProcessor {
 //
 //			System.out.print(txstr);
 //			System.out.println("========= ");
+
+			txIdx = newTxIdx;
 		}
 	}
 
@@ -118,11 +118,11 @@ class LotProcessor {
 			++txIdx;
 		}
 
-		if (!srcTxns.isEmpty()) {
-			int acctid = srcTxns.get(0).acctid;
-			System.out.println("====== Open lots for " + acctid);
-			System.out.println(printOpenLots(acctid));
-		}
+//		if (!srcTxns.isEmpty()) {
+//			int acctid = srcTxns.get(0).acctid;
+//			System.out.println("====== Open lots for " + acctid);
+//			System.out.println(printOpenLots(acctid));
+//		}
 
 		List<Lot> srcLots = null;
 		if (!srcTxns.isEmpty()) {

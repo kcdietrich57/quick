@@ -83,7 +83,7 @@ public class AccountTableModel extends AbstractTableModel {
 
 		switch (col) {
 		case 0:
-			return a.getName();
+			return a.name;
 		case 1:
 			return a.type.toString();
 		case 2:

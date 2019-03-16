@@ -34,7 +34,7 @@ public class QifReporter {
 
 	public static void generateMonthlyStatements(Account a) {
 		System.out.println("\n!Account");
-		System.out.println("N" + a.getName());
+		System.out.println("N" + a.name);
 		System.out.println("^");
 		System.out.println("!Statements");
 

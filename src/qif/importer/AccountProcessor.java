@@ -3,6 +3,7 @@ package qif.importer;
 import qif.data.Account;
 import qif.data.AccountType;
 import qif.data.Common;
+import qif.data.QDate;
 
 class AccountProcessor {
 	private int nextAccountID = Account.getNextAccountID();
@@ -24,7 +25,7 @@ class AccountProcessor {
 				break;
 			}
 
-			Account existing = Account.findAccount(acct.getName());
+			Account existing = Account.findAccount(acct.name);
 
 			if (existing != null) {
 				updateAccount(existing, acct);
@@ -39,45 +40,50 @@ class AccountProcessor {
 	private Account loadAccount() {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
-		Account acct = new Account();
+		AccountType type = null;
+		String name = null;
+		String desc = null;
+		QDate closedate = null;
+		int statfreq = -1;
+		int statdom = -1;
 
 		for (;;) {
 			this.qrdr.getFileReader().nextAccountLine(qline);
 
 			switch (qline.type) {
 			case EndOfSection:
-				QKludge.fixAccount(acct);
+				Account acct = QKludge.fixAccount(name, type, desc, closedate, statfreq, statdom);
 
 				return acct;
 
 			case AcctType:
-				if (acct.type == null) {
-					acct.type = AccountType.parseAccountType(qline.value);
+				if (type == null) {
+					type = AccountType.parseAccountType(qline.value);
 				}
 				break;
 			case AcctCreditLimit:
-				// acct.creditLimit = Common.getDecimal(qline.value);
+				// creditLimit = Common.getDecimal(qline.value);
 				break;
 			case AcctDescription:
-				acct.description = qline.value;
+				desc = qline.value;
 				break;
 			case AcctName:
-				acct.setName(qline.value);
+				name = qline.value;
 				break;
 			case AcctStmtDate:
-				// acct.stmtDate = Common.GetDate(qline.value);
+				// stmtDate = Common.GetDate(qline.value);
 				break;
 			case AcctStmtBal:
-				// acct.stmtBalance = Common.getDecimal(qline.value);
+				// stmtBalance = Common.getDecimal(qline.value);
 				break;
 			case AcctCloseDate:
-				acct.closeDate = Common.parseQDate(qline.value);
+				closedate = Common.parseQDate(qline.value);
 				break;
 			case AcctStmtFrequency:
-				acct.statementFrequency = Integer.parseInt(qline.value);
+				statfreq = Integer.parseInt(qline.value);
 				break;
 			case AcctStmtDay:
-				acct.statementDayOfMonth = Integer.parseInt(qline.value);
+				statdom = Integer.parseInt(qline.value);
 				break;
 
 			default:
@@ -86,6 +92,10 @@ class AccountProcessor {
 		}
 	}
 
+	/**
+	 * When encountering an account again during data load, compare the two and
+	 * report issues as necessary, or update account properties where appropriate.
+	 */
 	private void updateAccount(Account oldacct, Account newacct) {
 		if ((oldacct.type != null) && (newacct.type != null) //
 				&& (oldacct.type != newacct.type)) {
@@ -106,7 +116,8 @@ class AccountProcessor {
 		}
 
 		if (oldacct.type == null) {
-			oldacct.type = newacct.type;
+			Common.reportError("Account type is null: " //
+					+ "acct name '"+ oldacct.name + "'");
 		}
 
 		oldacct.statementFrequency = newacct.statementFrequency;

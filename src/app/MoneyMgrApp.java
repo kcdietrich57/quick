@@ -8,6 +8,7 @@ import qif.importer.QifDomReader;
 import qif.report.InvestmentPerformanceModel;
 import qif.ui.MainFrame;
 
+/** Test program for importing output from Quicken on Mac */
 public class MoneyMgrApp {
 	public static Scanner scn;
 

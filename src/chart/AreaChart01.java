@@ -7,6 +7,7 @@ import org.knowm.xchart.XYSeries.XYSeriesRenderStyle;
 import org.knowm.xchart.demo.charts.ExampleChart;
 import org.knowm.xchart.style.Styler.LegendPosition;
 
+/** Example stacked AreaChart xchart application */
 public class AreaChart01 implements ExampleChart<XYChart> {
 
 	public static void main(String[] args) {

@@ -143,7 +143,7 @@ public class SecurityPortfolio {
 	public Map<Account, PositionInfo> getOpenPositionsForDateByAccount(Security sec, QDate d) {
 		Map<Account, PositionInfo> ret = new HashMap<Account, PositionInfo>();
 
-		for (Account acct : Account.accounts) {
+		for (Account acct : Account.getAccounts()) {
 			PositionInfo values = acct.getSecurityValueForDate(sec, d);
 
 			if (values != null) {

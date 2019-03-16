@@ -58,14 +58,14 @@ class TransactionProcessor {
 				txn.security.addTransaction(txn);
 			}
 
-			Account.currAccount.addTransaction(txn);
+			Account.currAccountBeingLoaded.addTransaction(txn);
 		}
 	}
 
 	private InvestmentTxn loadInvestmentTransaction() {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
-		InvestmentTxn txn = new InvestmentTxn(Account.currAccount.acctid);
+		InvestmentTxn txn = new InvestmentTxn(Account.currAccountBeingLoaded.acctid);
 
 		for (;;) {
 			this.qrdr.getFileReader().nextInvLine(qline);
@@ -152,14 +152,14 @@ class TransactionProcessor {
 
 			txn.verifySplit();
 
-			Account.currAccount.addTransaction(txn);
+			Account.currAccountBeingLoaded.addTransaction(txn);
 		}
 	}
 
 	private NonInvestmentTxn loadNonInvestmentTransaction() {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
-		NonInvestmentTxn txn = new NonInvestmentTxn(Account.currAccount.acctid);
+		NonInvestmentTxn txn = new NonInvestmentTxn(Account.currAccountBeingLoaded.acctid);
 		SimpleTxn cursplit = null;
 
 		for (;;) {

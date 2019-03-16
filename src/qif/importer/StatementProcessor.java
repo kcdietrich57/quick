@@ -30,8 +30,8 @@ class StatementProcessor {
 
 			List<Statement> stmts = loadStatementsSection(this.qrdr.getFileReader());
 			for (Statement stmt : stmts) {
-				Account.currAccount.statements.add(stmt);
-				Account.currAccount.statementFile = file;
+				Account.currAccountBeingLoaded.statements.add(stmt);
+				Account.currAccountBeingLoaded.statementFile = file;
 			}
 		}
 	}
@@ -56,7 +56,7 @@ class StatementProcessor {
 					Common.reportError("Can't find account: " + aname);
 				}
 
-				Account.currAccount = a;
+				Account.currAccountBeingLoaded = a;
 				currstmt = null;
 				break;
 			}
@@ -101,7 +101,7 @@ class StatementProcessor {
 
 					final Statement prevstmt = (stmts.isEmpty() ? null : stmts.get(stmts.size() - 1));
 
-					currstmt = new Statement(Account.currAccount.acctid);
+					currstmt = new Statement(Account.currAccountBeingLoaded.acctid);
 					currstmt.date = d;
 					currstmt.closingBalance = currstmt.cashBalance = bal;
 					if ((prevstmt != null) && (prevstmt.acctid == currstmt.acctid)) {

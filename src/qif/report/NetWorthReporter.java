@@ -99,7 +99,7 @@ public class NetWorthReporter {
 
 		b.date = d;
 
-		for (Account a : Account.accounts) {
+		for (Account a : Account.getAccounts()) {
 			final BigDecimal amt = a.getValueForDate(d);
 
 			b.netWorth = b.netWorth.add(amt);

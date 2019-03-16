@@ -63,14 +63,6 @@ public class QifDomReader {
 		new OptionsProcessor().processOptions();
 		new PortfolioProcessor(this).fixPortfolios();
 
-		// TODO need to match up lots with transactions
-		for (Account acct : Account.accounts) {
-			if (!acct.isInvestmentAccount() || acct.securities.isEmpty()) {
-				continue;
-			}
-
-		}
-
 		final File dd = new File(this.qifDir, "statements");
 		new StatementProcessor(this).processStatementFiles(dd);
 

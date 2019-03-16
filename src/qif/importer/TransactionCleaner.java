@@ -308,7 +308,7 @@ class TransactionCleaner {
 			if (QifDom.verbose && !outs.isEmpty()) {
 				String s = String.format(//
 						"%-20s : %10s %8s %8s INSH=%10s (%3d txns) OUTSH=%10s (%d txns)", //
-						t.getAccount().getName(), //
+						t.getAccount().name, //
 						t.getAction().toString(), //
 						t.security.symbol, //
 						t.getDate().toString(), //
@@ -325,7 +325,7 @@ class TransactionCleaner {
 						: "           ";
 
 				String s = String.format("%-20s : %10s %8s %8s SHR=%s%10s", //
-						t.getAccount().getName(), //
+						t.getAccount().name, //
 						t.getAction().toString(), //
 						t.security.symbol, //
 						t.getDate().toString(), //

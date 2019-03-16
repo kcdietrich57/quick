@@ -204,7 +204,7 @@ public class InvestmentTxn extends GenericTxn {
 
 		if (action == TxAction.OTHER) {
 			Common.reportError("Transaction has unknown type: " + //
-					Account.getAccountByID(this.acctid).getName());
+					Account.getAccountByID(this.acctid).name);
 			return;
 		}
 
@@ -315,7 +315,7 @@ public class InvestmentTxn extends GenericTxn {
 			final BigDecimal newprice = tot.divide(this.quantity).abs();
 
 			String s = "Inconsistent " + this.action + " transaction:" + //
-					" acct=" + Account.getAccountByID(this.acctid).getName() + //
+					" acct=" + Account.getAccountByID(this.acctid).name + //
 					" " + getDate().toString() + "\n" + //
 					"  sec=" + this.security.getName() + //
 					" qty=" + this.quantity + //
@@ -441,7 +441,7 @@ public class InvestmentTxn extends GenericTxn {
 		String s = String.format("%s %s %s:%s", //
 				((this.stmtdate != null) ? "*" : " "), //
 				getDate().toString(), //
-				getAccount().getName(), //
+				getAccount().name, //
 				this.action.toString());
 
 		if (this.action == TxAction.STOCKSPLIT) {
@@ -462,7 +462,7 @@ public class InvestmentTxn extends GenericTxn {
 	public String toStringLong() {
 		String s = ((this.stmtdate != null) ? "*" : " ") + "InvTx" + this.txid + ":";
 		s += " dt=" + getDate().toString();
-		s += " acct=" + Account.getAccountByID(this.acctid).getName();
+		s += " acct=" + Account.getAccountByID(this.acctid).name;
 		s += " act=" + this.action;
 		if (this.security != null) {
 			s += " sec=" + this.security.getName();
@@ -584,7 +584,7 @@ public class InvestmentTxn extends GenericTxn {
 			// Current account position for date
 			Map<Security, PositionInfo> y = getAccount().getOpenPositionsForDate(getDate());
 
-			ret += "\n\nAll positions for " + getAccount().getName() + " on " + datestr;
+			ret += "\n\nAll positions for " + getAccount().name + " on " + datestr;
 			for (PositionInfo pinfo : y.values()) {
 				ret += "\n";
 				ret += pinfo.toString();
@@ -594,7 +594,7 @@ public class InvestmentTxn extends GenericTxn {
 			PositionInfo acctValue = y.get(this.security);
 
 			ret += "\n\nPosition for " + getSecurityName() //
-					+ " for " + getAccount().getName() + " on " + datestr;
+					+ " for " + getAccount().name + " on " + datestr;
 			if (acctValue != null) {
 				ret += "\n";
 				ret += acctValue.toString();

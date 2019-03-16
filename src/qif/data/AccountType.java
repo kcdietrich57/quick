@@ -52,6 +52,29 @@ public enum AccountType { //
 		return AccountType.Bank;
 	}
 
+	public boolean isLiability() {
+		return !isAsset();
+	}
+
+	public boolean isAsset() {
+		switch (this) {
+		case Bank:
+		case Cash:
+		case Asset:
+		case InvMutual:
+		case InvPort:
+		case Invest:
+		case Inv401k:
+			return true;
+
+		case CCard:
+		case Liability:
+			return false;
+		}
+
+		return false;
+	}
+
 	public String toString() {
 		switch (this) {
 		case Cash:

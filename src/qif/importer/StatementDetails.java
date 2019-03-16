@@ -38,7 +38,7 @@ public class StatementDetails {
 		Account a = Account.getAccountByID(stmt.acctid);
 
 		String s = String.format("%s;%s;%5.2f;%5.2f;%d;%d", //
-				a.getName(), //
+				a.name, //
 				stmt.date.toString(), //
 				stmt.closingBalance, //
 				stmt.cashBalance, //

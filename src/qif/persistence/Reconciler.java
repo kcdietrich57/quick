@@ -130,7 +130,7 @@ public class Reconciler {
 			Statement s = a.getStatement(d.date, d.closingBalance);
 			if (s == null) {
 				Common.reportError("Can't find statement for details: " //
-						+ a.getName() //
+						+ a.name //
 						+ "  " + d.date.toString() //
 						+ "  " + d.closingBalance);
 			}
@@ -140,7 +140,7 @@ public class Reconciler {
 			if (!s.isBalanced) {
 				getTransactionsFromDetails(a, s, d);
 				Common.reportError("Can't reconcile statement from log.\n" //
-						+ " a=" + a.getName() //
+						+ " a=" + a.name //
 						+ " s=" + s.toString());
 			}
 		}
@@ -192,7 +192,7 @@ public class Reconciler {
 			// d.transactions.removeAll(badinfo);
 			Common.reportWarning( //
 					"Can't find " + badinfo.size() + " reconciled transactions" //
-							+ " for acct " + a.getName() + ":\n" //
+							+ " for acct " + a.name + ":\n" //
 							+ badinfo.toString() + "\n"); // + toString());
 			return;
 		}

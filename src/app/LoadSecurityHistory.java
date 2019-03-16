@@ -9,6 +9,7 @@ import qif.data.QDate;
 import qif.data.QPrice;
 import qif.data.Security;
 
+/** Test application for loading quote history from files */
 public class LoadSecurityHistory {
 
 	public static void main(String[] args) {

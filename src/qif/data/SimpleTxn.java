@@ -97,7 +97,7 @@ public class SimpleTxn {
 		int acctid = -this.catid;
 
 		return (acctid > 0) //
-				? "[" + Account.getAccountByID(acctid).getName() + "]" //
+				? "[" + Account.getAccountByID(acctid).name + "]" //
 				: "N/A";
 	}
 
@@ -148,12 +148,12 @@ public class SimpleTxn {
 	// multiple lines.
 	public String toStringLong() {
 		String s = "Tx" + this.txid + ":";
-		s += Account.getAccountByID(this.acctid).getName();
+		s += Account.getAccountByID(this.acctid).name;
 		s += " amt=" + this.amount;
 		s += " memo=" + getMemo();
 
 		if (this.catid < (short) 0) {
-			s += " xacct=" + Account.getAccountByID(-this.catid).getName();
+			s += " xacct=" + Account.getAccountByID(-this.catid).name;
 		} else if (this.catid > (short) 0) {
 			s += " cat=" + Category.getCategory(this.catid).name;
 		}

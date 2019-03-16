@@ -35,7 +35,7 @@ public class ReconcileStatusReporter {
 
 			public AccountInfo(Account a) {
 				isClosed = !a.isOpenOn(null);
-				lastStatementDate = a.getLastStatementDate();
+				lastStatementDate = a.getLastBalancedStatementDate();
 
 				ucount = a.getUnclearedTransactionCount();
 				tcount = a.transactions.size();
@@ -119,7 +119,7 @@ public class ReconcileStatusReporter {
 
 			return (o2.statements.isEmpty()) //
 					? 1 //
-					: o1.getLastStatementDate().compareTo(o2.getLastStatementDate());
+					: o1.getLastBalancedStatementDate().compareTo(o2.getLastBalancedStatementDate());
 		};
 
 		Collections.sort(ranking, cmp);

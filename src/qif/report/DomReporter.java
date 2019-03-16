@@ -38,7 +38,7 @@ public class DomReporter {
 			}
 
 			if (compact) {
-				System.out.println(a.getName() + " " + a.type + " " + a.balance);
+				System.out.println(a.name + " " + a.type + " " + a.balance);
 				continue;
 			}
 
@@ -180,7 +180,7 @@ public class DomReporter {
 					System.out.println(String.format( //
 							"  %-12s  %-20s  %-10s  %s  %s", //
 							t.getDate().toString(), //
-							Account.getAccountByID(t.acctid).getName(), //
+							Account.getAccountByID(t.acctid).name, //
 							t.getAction().toString(), //
 							Common.formatAmount3(t.getShares()), //
 							Common.formatAmount3(shrbal)));

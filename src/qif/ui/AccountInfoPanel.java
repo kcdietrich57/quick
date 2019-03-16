@@ -45,7 +45,7 @@ public class AccountInfoPanel //
 		if (update || (acct != this.account)) {
 			this.account = acct;
 
-			this.accountName.setText((acct != null) ? acct.getName() : "---");
+			this.accountName.setText((acct != null) ? acct.name : "---");
 			this.accountDescription.setText((acct != null) ? acct.description : "");
 		}
 	}

@@ -159,9 +159,8 @@ public class CSVImport {
 
 		Account acct = Account.findAccount(acctname);
 		if (acct == null) {
-			acct = new Account();
-			acct.setName(acctname);
-			acct.type = AccountType.Bank;
+			acct = new Account(acctname, AccountType.Bank);
+
 			Account.addAccount(acct);
 		}
 

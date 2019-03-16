@@ -133,7 +133,7 @@ public class AccountListPanel extends JScrollPane {
 
 				ChooseAccountDialog dialog = new ChooseAccountDialog(new JFrame(), //
 						"Account Information", //
-						"This is about account " + a.getName());
+						"This is about account " + a.name);
 
 				dialog.setSize(300, 150);
 				dialog.setVisible(true);
