@@ -45,16 +45,16 @@ public class Account {
 		return accountsByID.get(acctid);
 	}
 
-	private static int compareAccounts(Account a1, Account a2) {
+	/** Compare two accounts by date of first and last transaction, then name */
+	private static int compareAccountsByTxnDateAndName(Account a1, Account a2) {
 		if (a1 == null) {
 			return (a2 == null) ? 0 : 1;
 		} else if (a2 == null) {
 			return -1;
 		}
 
-		// Order by firsttran, lasttran
-		final int ct1 = a1.transactions.size();
-		final int ct2 = a2.transactions.size();
+		int ct1 = a1.transactions.size();
+		int ct2 = a2.transactions.size();
 
 		if (ct1 == 0) {
 			return (ct2 == 0) ? 0 : -1;
@@ -80,51 +80,48 @@ public class Account {
 		return (a1.name.compareTo(a2.name));
 	}
 
-	// Sort on isOpen|type|name
+	/** Compare two accounts by date of first and last transaction, then name */
+	private static int compareAccountsByTypeAndName(Account a1, Account a2) {
+		int diff;
+
+		if (a1.type != a2.type) {
+			AccountCategory cat1 = AccountCategory.forAccountType(a1.type);
+			AccountCategory cat2 = AccountCategory.forAccountType(a2.type);
+
+			diff = cat1.getAccountListOrder() - cat2.getAccountListOrder();
+			if (diff != 0) {
+				return diff;
+			}
+
+			return a1.type.compareTo(a2.type);
+		}
+
+		BigDecimal cv1 = a1.getValueForDate(MainWindow.instance.asOfDate).abs();
+		BigDecimal cv2 = a2.getValueForDate(MainWindow.instance.asOfDate).abs();
+
+		diff = cv2.subtract(cv1).signum();
+		return (diff != 0) //
+				? diff //
+				: a1.name.compareTo(a2.name);
+	}
+
+	/** Get Account list sorted on isOpen|type|name */
 	public static List<Account> getSortedAccounts() {
 		List<Account> accts = new ArrayList<Account>();
 
 		for (Account acct : accounts) {
-			if (acct == null) {
-				continue;
-			}
-
-			if (acct.isOpenOn(MainWindow.instance.asOfDate) //
-					|| (acct.getOpenDate().compareTo(MainWindow.instance.asOfDate) <= 0)) {
+			if (acct.isOpenAsOf(MainWindow.instance.asOfDate)) {
 				accts.add(acct);
 			}
 		}
 
 		Collections.sort(accts, new Comparator<Account>() {
 			public int compare(Account a1, Account a2) {
-				int diff;
-
-				if (a1.type != a2.type) {
-					AccountCategory cat1 = AccountCategory.forAccountType(a1.type);
-					AccountCategory cat2 = AccountCategory.forAccountType(a2.type);
-
-					diff = cat1.getAccountListOrder() - cat2.getAccountListOrder();
-					if (diff != 0) {
-						return diff;
-					}
-
-					return a1.type.compareTo(a2.type);
-				}
-
-				BigDecimal cv1 = a1.getValueForDate(MainWindow.instance.asOfDate).abs();
-				BigDecimal cv2 = a2.getValueForDate(MainWindow.instance.asOfDate).abs();
-				diff = cv2.subtract(cv1).signum();
-				return (diff != 0) //
-						? diff //
-						: a1.name.compareTo(a2.name);
+				return compareAccountsByTypeAndName(a1, a2);
 			}
 		});
 
 		return accts;
-	}
-
-	public static void setCurrAccount(Account a) {
-		currAccountBeingLoaded = a;
 	}
 
 	public static void addAccount(Account acct) {
@@ -139,10 +136,10 @@ public class Account {
 		accountsByID.set(acct.acctid, acct);
 		accounts.add(acct);
 
-		setCurrAccount(acct);
+		Account.currAccountBeingLoaded = acct;
 
 		Collections.sort(accounts, (a1, a2) -> {
-			return compareAccounts(a1, a2);
+			return compareAccountsByTxnDateAndName(a1, a2);
 		});
 	}
 
@@ -168,12 +165,13 @@ public class Account {
 
 	public final String name;
 	public final AccountType type;
-	public String description;
+	public final String description;
 	public QDate closeDate;
+	public int statementFrequency;
+	public int statementDayOfMonth;
+
 	public BigDecimal balance;
 	public BigDecimal clearedBalance;
-	public int statementFrequency = 30;
-	public int statementDayOfMonth = 30;
 
 	public List<GenericTxn> transactions;
 	public List<Statement> statements;
@@ -201,6 +199,15 @@ public class Account {
 		this.statementFile = null;
 	}
 
+	public String getDisplayName(int length) {
+		String nn = this.name;
+		if (nn.length() > 36) {
+			nn = nn.substring(0, 33) + "...";
+		}
+
+		return nn;
+	}
+
 	public Account(String name, AccountType type) {
 		this(name, type, "", null, -1, -1);
 	}
@@ -211,6 +218,18 @@ public class Account {
 
 	public boolean isAsset() {
 		return this.type.isAsset();
+	}
+
+	public boolean isInvestmentAccount() {
+		return this.type.isInvestment();
+	}
+
+	public boolean isCashAccount() {
+		return this.type.isCash();
+	}
+
+	public boolean isNonInvestmentAccount() {
+		return this.type.isNonInvestment();
 	}
 
 	/** Return the date this account opened (i.e. the first transaction date) */
@@ -239,6 +258,37 @@ public class Account {
 		}
 
 		return isOpenAsOf(d) && !isClosedAsOf(d);
+	}
+
+	public void addTransaction(GenericTxn txn) {
+		int idx = getTransactionIndexForDate(txn);
+
+		this.transactions.add(idx, txn);
+	}
+
+	/** Find the index to insert a new transaction in a list sorted by date */
+	private int getTransactionIndexForDate(QDate date) {
+		GenericTxn t = new NonInvestmentTxn(1);
+		t.setDate(date);
+
+		return getTransactionIndexForDate(t);
+	}
+
+	/** Find the index to insert a new transaction in a list sorted by date */
+	private int getTransactionIndexForDate(GenericTxn tx) {
+		Comparator<GenericTxn> c = new Comparator<GenericTxn>() {
+			public int compare(GenericTxn o1, GenericTxn o2) {
+				return o1.getDate().subtract(o2.getDate());
+			}
+		};
+
+		int idx = Collections.binarySearch(this.transactions, tx, c);
+
+		if (idx < 0) {
+			idx = -idx - 1;
+		}
+
+		return idx;
 	}
 
 	/** Get the last statement for the account (closed or not) */
@@ -409,15 +459,21 @@ public class Account {
 		return stat;
 	}
 
-	public Statement getUnclearedStatement(Statement laststmt) {
+	/**
+	 * Construct a statement for any uncleared transactions not already in a
+	 * statement, up to the current date.
+	 */
+	public Statement createUnclearedStatement(Statement laststmt) {
 		List<GenericTxn> txns = new ArrayList<GenericTxn>();
 
 		if (laststmt != null) {
 			int laststmtidx = this.statements.indexOf(laststmt);
 
 			addTransactionsToAsOfDate(txns, laststmt.unclearedTransactions);
+
 			if (laststmtidx < this.statements.size() - 1) {
 				Statement nextstmt = this.statements.get(laststmtidx + 1);
+
 				addTransactionsToAsOfDate(txns, nextstmt.transactions);
 				addTransactionsToAsOfDate(txns, nextstmt.unclearedTransactions);
 			}
@@ -433,6 +489,7 @@ public class Account {
 		return stmt;
 	}
 
+	/** Add txns from one list to another if date <= current date */
 	private void addTransactionsToAsOfDate(List<GenericTxn> txns, List<GenericTxn> srctxns) {
 		for (GenericTxn txn : srctxns) {
 			if ((txn.getDate().compareTo(MainWindow.instance.asOfDate) <= 0) //
@@ -442,21 +499,24 @@ public class Account {
 		}
 	}
 
+	/** Get the date of the first transaction */
 	public QDate getFirstTransactionDate() {
 		return (this.transactions.isEmpty()) ? null : this.transactions.get(0).getDate();
 	}
 
-	public QDate getLastTransactionDate() {
-		return (this.transactions.isEmpty()) ? null : this.transactions.get(this.transactions.size() - 1).getDate();
-	}
-
+	/** Get the date of the last non-cleared transaction */
 	public QDate getFirstUnclearedTransactionDate() {
-		GenericTxn t = getFirstUnclearedTransaction();
-
-		return (t == null) ? null : t.getDate();
+		int txidx = getFirstUnclearedTransactionIndex();
+		return (txidx < 0) ? null : this.transactions.get(txidx).getDate();
 	}
 
-	public int getFirstUnclearedTransactionIndex() {
+	public GenericTxn getFirstUnclearedTransaction() {
+		int txidx = getFirstUnclearedTransactionIndex();
+		return (txidx < 0) ? null : this.transactions.get(txidx);
+	}
+
+	/** Get the index of the first uncleared transaction */
+	private int getFirstUnclearedTransactionIndex() {
 		for (int ii = 0; ii < this.transactions.size(); ++ii) {
 			GenericTxn t = this.transactions.get(ii);
 
@@ -472,7 +532,7 @@ public class Account {
 	public int getUnclearedTransactionCount() {
 		int count = 0;
 
-		for (final GenericTxn t : this.transactions) {
+		for (GenericTxn t : this.transactions) {
 			if ((t != null) && (t.stmtdate == null)) {
 				++count;
 			}
@@ -481,13 +541,11 @@ public class Account {
 		return count;
 	}
 
-	/**
-	 * Return a new collection of uncleared transactions that don't belong to any
-	 * statement
-	 */
+	/** Return a new list of uncleared txns that don't belong to any statement */
 	private List<GenericTxn> getUnclearedTransactions() {
 		List<GenericTxn> txns = new ArrayList<GenericTxn>();
 
+		// Gather transactions not belonging to a statement
 		for (int txidx = getFirstUnclearedTransactionIndex(); //
 				(txidx >= 0) && (txidx < this.transactions.size()); //
 				++txidx) {
@@ -498,6 +556,7 @@ public class Account {
 			}
 		}
 
+		// Add transactions that belong to non-balanced statements
 		for (int statidx = this.statements.size() - 1; statidx >= 0; --statidx) {
 			Statement stmt = this.statements.get(statidx);
 
@@ -511,140 +570,24 @@ public class Account {
 		return txns;
 	}
 
-	public GenericTxn getFirstUnclearedTransaction() {
-		for (GenericTxn t : this.transactions) {
-			if ((t != null) && (t.stmtdate == null)) {
-				return t;
-			}
-		}
-
-		return null;
-	}
-
-	public boolean isInvestmentAccount() {
-		switch (this.type) {
-		case Bank:
-		case Cash:
-		case CCard:
-		case Asset:
-		case Liability:
-			return false;
-
-		case Inv401k:
-		case InvMutual:
-		case InvPort:
-		case Invest:
-			return true;
-
-		default:
-			Common.reportError("unknown acct type: " + this.type);
-			return false;
-		}
-	}
-
-	public boolean isCashAccount() {
-		switch (this.type) {
-		case Bank:
-		case Cash:
-			return true;
-
-		case CCard:
-		case Asset:
-		case Liability:
-		case Inv401k:
-		case InvMutual:
-		case InvPort:
-		case Invest:
-			return false;
-
-		default:
-			Common.reportError("unknown acct type: " + this.type);
-			return false;
-		}
-	}
-
-	public boolean isNonInvestmentAccount() {
-		switch (this.type) {
-		case Bank:
-		case CCard:
-		case Cash:
-		case Asset:
-		case Liability:
-			return true;
-
-		case Inv401k:
-		case InvMutual:
-		case InvPort:
-		case Invest:
-			return false;
-
-		default:
-			Common.reportError("unknown acct type: " + this.type);
-			return false;
-		}
-	}
-
-	int getTransactionIndexForDate(QDate date) {
-		GenericTxn t = new NonInvestmentTxn(1);
-		t.setDate(date);
-
-		return getTransactionIndexForDate(t);
-	}
-
-	int getTransactionIndexForDate(GenericTxn tx) {
-		Comparator<GenericTxn> c = new Comparator<GenericTxn>() {
-			public int compare(GenericTxn o1, GenericTxn o2) {
-				return o1.getDate().subtract(o2.getDate());
-			}
-		};
-
-		int idx = Collections.binarySearch(this.transactions, tx, c);
-
-		if (idx < 0) {
-			idx = -idx - 1;
-		}
-
-		return idx;
-	}
-
-	public void addTransaction(GenericTxn txn) {
-		int idx = getTransactionIndexForDate(txn);
-
-		this.transactions.add(idx, txn);
-	}
-
-	private int findFirstNonClearedTransaction() {
-		for (int ii = 0; ii < this.transactions.size(); ++ii) {
-			final GenericTxn t = this.transactions.get(ii);
-
-			if (!t.isCleared()) {
-				return ii;
-			}
-		}
-
-		return -1;
-	}
-
-	public String getDisplayName(int length) {
-		String nn = this.name;
-		if (nn.length() > 36) {
-			nn = nn.substring(0, 33) + "...";
-		}
-
-		return nn;
-	}
-
+	/** Return the account value as of today */
 	public BigDecimal getCurrentValue() {
 		return getValueForDate(QDate.today());
 	}
 
-	public BigDecimal getFinalValue() {
-		QDate d = (this.transactions.isEmpty()) //
-				? QDate.today() //
-				: this.transactions.get(this.transactions.size() - 1).getDate();
-		return getValueForDate(d);
+	/** Return the account value as of a specified date */
+	public BigDecimal getValueForDate(QDate d) {
+		BigDecimal cashBal = getCashValueForDate(d);
+		BigDecimal secBal = this.securities.getPortfolioValueForDate(d);
+
+		BigDecimal acctValue = cashBal.add(secBal);
+
+		acctValue = acctValue.setScale(2, RoundingMode.HALF_UP);
+
+		return acctValue;
 	}
 
+	/** Get account cash value for a specified date */
 	private BigDecimal getCashValueForDate(QDate d) {
 		BigDecimal cashBal = null;
 
@@ -659,17 +602,7 @@ public class Account {
 		return (cashBal != null) ? cashBal : BigDecimal.ZERO;
 	}
 
-	public BigDecimal getValueForDate(QDate d) {
-		final BigDecimal cashBal = getCashValueForDate(d);
-		final BigDecimal secBal = this.securities.getPortfolioValueForDate(d);
-
-		BigDecimal acctValue = cashBal.add(secBal);
-
-		acctValue = acctValue.setScale(2, RoundingMode.HALF_UP);
-
-		return acctValue;
-	}
-
+	/** Get the value of securities for this account on a given date */
 	public BigDecimal getSecuritiesValueForDate(QDate d) {
 		BigDecimal portValue = BigDecimal.ZERO;
 
@@ -682,35 +615,22 @@ public class Account {
 		return portValue;
 	}
 
+	/** Get the value of a single security for this account on a specified date */
 	public PositionInfo getSecurityValueForDate(Security sec, QDate d) {
 		SecurityPosition pos = this.securities.getPosition(sec.secid);
 
-		if (pos == null) {
-			return new PositionInfo(sec, d);
-		}
-
-		return new PositionInfo( //
-				sec, //
-				d, //
-				pos.getSharesForDate(d), //
-				sec.getPriceForDate(d).getPrice(), //
-				pos.getValueForDate(d));
+		return (pos == null) //
+				? new PositionInfo(sec, d) //
+				: new PositionInfo(sec, d, //
+						pos.getSharesForDate(d), //
+						sec.getPriceForDate(d).getPrice(), //
+						pos.getValueForDate(d));
 	}
 
-	public String toString() {
-		String s = "Account" + this.acctid + ": " + this.name //
-				+ " type=" + this.type //
-				+ " clbal=" + this.clearedBalance //
-				+ " bal=" + this.balance //
-				+ " desc=" + this.description //
-				+ " #tx= " + this.transactions.size() //
-				+ "\n";
-
-		s += this.securities.toString();
-
-		return s;
-	}
-
+	/**
+	 * Find existing transaction(s) that match a transaction being loaded.<br>
+	 * Date is close, amount matches (or the amount of a split).
+	 */
 	public List<GenericTxn> findMatchingTransactions(SimpleTxn tx, QDate date) {
 		List<GenericTxn> txns = new ArrayList<GenericTxn>();
 
@@ -768,16 +688,21 @@ public class Account {
 		return txns;
 	}
 
+	/**
+	 * Gather transactions that might belong to a statement.<br>
+	 * i.e., They do not yet belong to a statement and their date is on or before
+	 * the statement closing date.
+	 */
 	public List<GenericTxn> gatherTransactionsForStatement(Statement s) {
-		final List<GenericTxn> txns = new ArrayList<GenericTxn>();
+		List<GenericTxn> txns = new ArrayList<GenericTxn>();
 
-		final int idx1 = findFirstNonClearedTransaction();
+		int idx1 = getFirstUnclearedTransactionIndex();
 		if (idx1 < 0) {
 			return txns;
 		}
 
 		for (int ii = idx1; ii < this.transactions.size(); ++ii) {
-			final GenericTxn t = this.transactions.get(ii);
+			GenericTxn t = this.transactions.get(ii);
 
 			if (t.getDate().compareTo(s.date) > 0) {
 				break;
@@ -793,7 +718,24 @@ public class Account {
 		return txns;
 	}
 
+	/**
+	 * Return security positions in this account that are open on a specified date.
+	 */
 	public Map<Security, PositionInfo> getOpenPositionsForDate(QDate d) {
 		return this.securities.getOpenPositionsForDate(d);
+	}
+
+	public String toString() {
+		String s = "Account" + this.acctid + ": " + this.name //
+				+ " type=" + this.type //
+				+ " clbal=" + this.clearedBalance //
+				+ " bal=" + this.balance //
+				+ " desc=" + this.description //
+				+ " #tx= " + this.transactions.size() //
+				+ "\n";
+
+		s += this.securities.toString();
+
+		return s;
 	}
 }

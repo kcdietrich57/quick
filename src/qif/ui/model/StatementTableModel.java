@@ -51,7 +51,8 @@ public class StatementTableModel //
 						}
 					}
 
-					unclearedStmt = acct.getUnclearedStatement(laststmt);
+					// TODO do we keep creating statements each time the acct is selected?
+					unclearedStmt = acct.createUnclearedStatement(laststmt);
 				} else {
 					this.statements.addAll(acct.statements);
 

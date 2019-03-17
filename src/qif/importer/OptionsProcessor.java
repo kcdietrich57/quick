@@ -116,14 +116,12 @@ class OptionsProcessor {
 
 		for (Account a : Account.getAccounts()) {
 			if (a.isInvestmentAccount()) {
-				processOptions(// a.securities,
-						a.transactions);
+				processOptions(a.transactions);
 			}
 		}
 	}
 
-	private void processOptions(// SecurityPortfolio port,
-			List<GenericTxn> txns) {
+	private void processOptions(List<GenericTxn> txns) {
 		for (final GenericTxn gtxn : txns) {
 			if (!(gtxn instanceof InvestmentTxn) //
 					|| (((InvestmentTxn) gtxn).security == null)) {

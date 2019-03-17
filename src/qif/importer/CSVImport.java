@@ -25,16 +25,16 @@ public class CSVImport {
 	private static int SPLIT_IDX = -1;
 	private static int ACCOUNT_IDX = -1;
 	private static int DATE_IDX = -1;
-	private static int TYPE_IDX = -1;
+	// private static int TYPE_IDX = -1;
 	private static int CHECKNUM_IDX = -1;
-	private static int SECURITY_IDX = -1;
+	// private static int SECURITY_IDX = -1;
 	private static int PAYEE_IDX = -1;
 	private static int CATEGORY_IDX; // >0: CategoryID; <0 AccountID
-	private static int FEES_IDX = -1;
-	private static int SHARES_IDX = -1;
+	// private static int FEES_IDX = -1;
+	// private static int SHARES_IDX = -1;
 	private static int AMOUNT_IDX;
 	private static int MEMO_IDX;
-	private static int XACCOUNT_IDX;
+	// private static int XACCOUNT_IDX;
 
 	// private static int xtxn;
 
@@ -168,13 +168,13 @@ public class CSVImport {
 		BigDecimal amount = Common.getDecimal(tuple[AMOUNT_IDX]);
 
 		String split = tuple[SPLIT_IDX];
-		String type = tuple[TYPE_IDX];
+		// String type = tuple[TYPE_IDX];
 		String memo = tuple[MEMO_IDX];
 		String cknum = tuple[CHECKNUM_IDX];
-		String sec = tuple[SECURITY_IDX];
+		// String sec = tuple[SECURITY_IDX];
 		String cat = tuple[CATEGORY_IDX];
-		String fees = tuple[FEES_IDX];
-		String shares = tuple[SHARES_IDX];
+		// String fees = tuple[FEES_IDX];
+		// String shares = tuple[SHARES_IDX];
 
 		Account xferAcct = null;
 		Category c = null;
@@ -194,23 +194,10 @@ public class CSVImport {
 		if (split.equals("S")) {
 			// TODO assemble splits into transaction
 			txn = new SimpleTxn(acct.acctid);
-		} else {
-			switch (acct.type) {
-			case Bank:
-			case Asset:
-			case Cash:
-			case CCard:
-			case Liability:
-				txn = new NonInvestmentTxn(acct.acctid);
-				break;
-
-			case Inv401k:
-			case Invest:
-			case InvMutual:
-			case InvPort:
-				txn = new InvestmentTxn(acct.acctid);
-				break;
-			}
+		} else if (acct.isNonInvestmentAccount()) {
+			txn = new NonInvestmentTxn(acct.acctid);
+		} else if (acct.isInvestmentAccount()) {
+			txn = new InvestmentTxn(acct.acctid);
 		}
 
 		txn.setDate(txdate);
@@ -240,7 +227,7 @@ public class CSVImport {
 			itxn.price = BigDecimal.ZERO;
 			itxn.security = null;
 			itxn.lotsCreated = new ArrayList<Lot>();
-			//itxn.textFirstLine = null;
+			// itxn.textFirstLine = null;
 			itxn.xferTxns = null;
 		}
 
@@ -374,14 +361,14 @@ public class CSVImport {
 		ACCOUNT_IDX = getFieldIndex("Account", fieldnames);
 		DATE_IDX = getFieldIndex("Date", fieldnames);
 		AMOUNT_IDX = getFieldIndex("Amount", fieldnames);
-		TYPE_IDX = getFieldIndex("Type", fieldnames);
+		// TYPE_IDX = getFieldIndex("Type", fieldnames);
 		CHECKNUM_IDX = getFieldIndex("Check #", fieldnames);
-		SECURITY_IDX = getFieldIndex("Security", fieldnames);
+		// SECURITY_IDX = getFieldIndex("Security", fieldnames);
 		PAYEE_IDX = getFieldIndex("Payee", fieldnames);
 		CATEGORY_IDX = getFieldIndex("Category", fieldnames);
-		FEES_IDX = getFieldIndex("Comm/Fee", fieldnames);
+		// FEES_IDX = getFieldIndex("Comm/Fee", fieldnames);
 		DATE_IDX = getFieldIndex("Date", fieldnames);
-		SHARES_IDX = getFieldIndex("Shares", fieldnames);
+		// SHARES_IDX = getFieldIndex("Shares", fieldnames);
 		MEMO_IDX = getFieldIndex("Memo/Notes", fieldnames);
 	}
 

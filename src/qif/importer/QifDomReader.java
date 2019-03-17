@@ -2,7 +2,6 @@ package qif.importer;
 
 import java.io.File;
 
-import qif.data.Account;
 import qif.data.Common;
 import qif.data.QifDom;
 import qif.importer.QFileReader.SectionType;

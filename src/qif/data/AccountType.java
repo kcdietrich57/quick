@@ -75,6 +75,69 @@ public enum AccountType { //
 		return false;
 	}
 
+	public boolean isInvestment() {
+		switch (this) {
+		case Bank:
+		case Cash:
+		case CCard:
+		case Asset:
+		case Liability:
+			return false;
+
+		case Inv401k:
+		case InvMutual:
+		case InvPort:
+		case Invest:
+			return true;
+
+		default:
+			Common.reportError("unknown acct type: " + this);
+			return false;
+		}
+	}
+
+	public boolean isCash() {
+		switch (this) {
+		case Bank:
+		case Cash:
+			return true;
+
+		case CCard:
+		case Asset:
+		case Liability:
+		case Inv401k:
+		case InvMutual:
+		case InvPort:
+		case Invest:
+			return false;
+
+		default:
+			Common.reportError("unknown acct type: " + this);
+			return false;
+		}
+	}
+
+	public boolean isNonInvestment() {
+		switch (this) {
+		case Bank:
+		case CCard:
+		case Cash:
+		case Asset:
+		case Liability:
+			return true;
+
+		case Inv401k:
+		case InvMutual:
+		case InvPort:
+		case Invest:
+			return false;
+
+		default:
+			Common.reportError("unknown acct type: " + this);
+			return false;
+		}
+	}
+
 	public String toString() {
 		switch (this) {
 		case Cash:

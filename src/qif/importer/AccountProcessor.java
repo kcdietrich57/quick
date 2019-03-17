@@ -29,7 +29,7 @@ class AccountProcessor {
 
 			if (existing != null) {
 				updateAccount(existing, acct);
-				Account.setCurrAccount(existing);
+				Account.currAccountBeingLoaded = existing;
 			} else {
 				acct.acctid = this.nextAccountID++;
 				Account.addAccount(acct);
