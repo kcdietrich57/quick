@@ -53,13 +53,13 @@ public class StatusForDateModel {
 			return sections;
 		}
 
-		public final AccountCategory info;
+		public final AccountCategory acctCategory;
 		public BigDecimal subtotal = BigDecimal.ZERO;
 
 		public List<StatusForDateModel.AccountSummary> accounts = new ArrayList<StatusForDateModel.AccountSummary>();
 
-		public Section(AccountCategory info) {
-			this.info = info;
+		public Section(AccountCategory category) {
+			this.acctCategory = category;
 		}
 	};
 
@@ -78,7 +78,8 @@ public class StatusForDateModel {
 
 	public StatusForDateModel.Section getSectionForAccount(Account acct) {
 		for (StatusForDateModel.Section s : this.sections) {
-			if (s.info.contains(acct.type)) {
+			if (acct.acctCategory == s.acctCategory) {
+			//if (s.acctCategory.contains(acct.type)) {
 				return s;
 			}
 		}
@@ -154,7 +155,7 @@ public class StatusForDateModel {
 
 			modelsect.subtotal.add(amt);
 
-			if (modelsect.info.isAsset) {
+			if (modelsect.acctCategory.isAsset) {
 				this.assets = this.assets.add(amt);
 			} else {
 				this.liabilities = this.liabilities.add(amt);

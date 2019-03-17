@@ -3,7 +3,7 @@ package qif.data;
 import java.util.Arrays;
 import java.util.List;
 
-/** Defines account categories for itemized status */
+/** Defines account type categories for itemized status */
 public enum AccountCategory {
 
 	ASSET(0, true, "Asset", //
@@ -18,6 +18,10 @@ public enum AccountCategory {
 			new AccountType[] { AccountType.CCard }), //
 	LOAN(5, false, "Loan", //
 			new AccountType[] { AccountType.Liability });
+
+	public static final String[] accountCategoryNames = new String[] { //
+			"Retirement", "Asset", "Investment", "Bank", "Credit Card", "Loan" //
+	};
 
 	public static final AccountCategory[] accountCategoryInfo = { //
 			ASSET, RETIRE, INVEST, BANK, CREDIT, LOAN //
@@ -36,11 +40,11 @@ public enum AccountCategory {
 		return accountCategoryInfo.length;
 	}
 
-	public static final String[] accountCategoryNames = new String[] { //
-			"Retirement", "Asset", "Investment", "Bank", "Credit Card", "Loan" //
-	};
-
 	public static AccountCategory forAccountType(AccountType type) {
+		if (type == null) {
+			return null;
+		}
+
 		switch (type) {
 		case Asset:
 			return ASSET;
@@ -99,9 +103,5 @@ public enum AccountCategory {
 		}
 
 		return "UNKNOWN";
-	}
-
-	public boolean contains(AccountType at) {
-		return this == forAccountType(at);
 	}
 }

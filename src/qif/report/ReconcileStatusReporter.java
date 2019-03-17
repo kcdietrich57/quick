@@ -117,9 +117,14 @@ public class ReconcileStatusReporter {
 				return (o2.statements.isEmpty()) ? 0 : -1;
 			}
 
-			return (o2.statements.isEmpty()) //
-					? 1 //
-					: o1.getLastBalancedStatementDate().compareTo(o2.getLastBalancedStatementDate());
+			if (o1 == null || o2 == null) {
+				return (o1 == null) ? ((o2 == null) ? 0 : 1) : -1;
+			}
+
+			QDate d1 = o1.getLastBalancedStatementDate();
+			QDate d2 = o2.getLastBalancedStatementDate();
+
+			return (o2.statements.isEmpty()) ? 1 : d1.compareTo(d2);
 		};
 
 		Collections.sort(ranking, cmp);

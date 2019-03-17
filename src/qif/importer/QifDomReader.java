@@ -137,4 +137,8 @@ public class QifDomReader {
 			}
 		}
 	}
+	
+	public String toString() {
+		return "DomReader[" + this.curFile.getPath() + "]";
+	}
 }

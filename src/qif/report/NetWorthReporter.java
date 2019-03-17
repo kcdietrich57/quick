@@ -50,7 +50,7 @@ public class NetWorthReporter {
 		sb.append(String.format("  %-36s : %10s\n", "Account", "Balance\n"));
 
 		for (Section sect : model.sections) {
-			String label = sect.info.label + " Accounts ";
+			String label = sect.acctCategory.label + " Accounts ";
 			while (label.length() < 30) {
 				label += "=";
 			}

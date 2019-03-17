@@ -2,13 +2,12 @@ package qif.importer;
 
 import qif.data.Account;
 import qif.data.AccountType;
+import qif.data.Common;
 import qif.data.QDate;
 
-class QKludge {
-	// Repair Quicken's confusion about these accounts
-	public static Account fixAccount(String name, AccountType type, String desc, //
-			QDate closedate, int statfreq, int statdom) {
-		// Fixups based on account name
+public class AccountDetailsFixer {
+	/** Repair Quicken's confusion about specific account types */
+	public static AccountType fixType(String name, AccountType type) {
 		if (name.endsWith("Checking")) {
 			type = AccountType.Bank;
 		} else if (name.equals("UnionNationalCD") //
@@ -35,6 +34,30 @@ class QKludge {
 			type = AccountType.Bank;
 		}
 
-		return new Account(name, type, desc, closedate, statfreq, statdom);
+		if (type == null) {
+			Account existing = Account.findAccount(name);
+			type = (existing == null) ? AccountType.Bank : existing.type;
+		}
+
+		return type;
+	}
+
+	/**
+	 * When encountering an account again during data load, compare the two and
+	 * report issues as necessary, or update account properties where appropriate.
+	 */
+	public static void updateAccount( //
+			Account acct, QDate closeDate, int freq, int dom) {
+		if (acct.type == null) {
+			Common.reportError("Account type is null: " //
+					+ "acct name '" + acct.name + "'");
+		}
+		System.out.println(acct.name + " " + acct.statementFrequency + " " + acct.statementDayOfMonth);
+		if (acct.closeDate == null) {
+			acct.closeDate = closeDate;
+		}
+
+		acct.statementFrequency = freq;
+		acct.statementDayOfMonth = dom;
 	}
 }

@@ -1,8 +1,10 @@
 package qif.data;
 
+/** Account type (e.g. banking vs hard asset vs investment) */
 public enum AccountType { //
 	Bank, CCard, Cash, Asset, Liability, Invest, InvPort, Inv401k, InvMutual;
 
+	/** Parse type name from input file */
 	public static AccountType parseAccountType(String s) {
 		switch (s.charAt(0)) {
 		case 'B':
@@ -70,9 +72,11 @@ public enum AccountType { //
 		case CCard:
 		case Liability:
 			return false;
-		}
 
-		return false;
+		default:
+			Common.reportError("unknown acct type: " + this);
+			return false;
+		}
 	}
 
 	public boolean isInvestment() {
@@ -156,7 +160,9 @@ public enum AccountType { //
 			return "CCD";
 		case Liability:
 			return "LIA";
+
 		default:
+			Common.reportError("unknown acct type: " + this);
 			return "---";
 		}
 	}

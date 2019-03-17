@@ -6,7 +6,6 @@ import qif.data.Common;
 import qif.data.QDate;
 
 class AccountProcessor {
-	private int nextAccountID = Account.getNextAccountID();
 	private QifDomReader qrdr;
 
 	public AccountProcessor(QifDomReader qrdr) {
@@ -25,15 +24,7 @@ class AccountProcessor {
 				break;
 			}
 
-			Account existing = Account.findAccount(acct.name);
-
-			if (existing != null) {
-				updateAccount(existing, acct);
-				Account.currAccountBeingLoaded = existing;
-			} else {
-				acct.acctid = this.nextAccountID++;
-				Account.addAccount(acct);
-			}
+			Account.currAccountBeingLoaded = acct;
 		}
 	}
 
@@ -52,9 +43,7 @@ class AccountProcessor {
 
 			switch (qline.type) {
 			case EndOfSection:
-				Account acct = QKludge.fixAccount(name, type, desc, closedate, statfreq, statdom);
-
-				return acct;
+				return Account.makeAccount(name, type, desc, closedate, statfreq, statdom);
 
 			case AcctType:
 				if (type == null) {
@@ -90,37 +79,5 @@ class AccountProcessor {
 				Common.reportError("syntax error");
 			}
 		}
-	}
-
-	/**
-	 * When encountering an account again during data load, compare the two and
-	 * report issues as necessary, or update account properties where appropriate.
-	 */
-	private void updateAccount(Account oldacct, Account newacct) {
-		if ((oldacct.type != null) && (newacct.type != null) //
-				&& (oldacct.type != newacct.type)) {
-			String msg = "Account type mismatch: " //
-					+ oldacct.type + " vs " + newacct.type;
-
-			if (oldacct.isInvestmentAccount() != newacct.isInvestmentAccount()) {
-				// Common.reportError(msg);
-			}
-
-			if (newacct.type != AccountType.Invest) {
-				Common.reportWarning(msg);
-			}
-		}
-
-		if (oldacct.closeDate == null) {
-			oldacct.closeDate = newacct.closeDate;
-		}
-
-		if (oldacct.type == null) {
-			Common.reportError("Account type is null: " //
-					+ "acct name '"+ oldacct.name + "'");
-		}
-
-		oldacct.statementFrequency = newacct.statementFrequency;
-		oldacct.statementDayOfMonth = newacct.statementDayOfMonth;
 	}
 }

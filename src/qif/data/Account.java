@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import qif.data.SecurityPosition.PositionInfo;
+import qif.importer.AccountDetailsFixer;
 import qif.ui.MainWindow;
 
 class Foo {
@@ -28,6 +29,23 @@ public class Account {
 
 	/** Tracks current context as we are loading */
 	public static Account currAccountBeingLoaded = null;
+
+	public static Account makeAccount( //
+			String name, AccountType type, String desc, QDate closeDate, //
+			int statFreq, int statDayOfMonth) {
+		Account acct = Account.findAccount(name);
+
+		if (acct == null) {
+			type = AccountDetailsFixer.fixType(name, type);
+			acct = new Account(name, type, desc, closeDate, statFreq, statDayOfMonth);
+			Account.addAccount(acct);
+		} else {
+			AccountDetailsFixer.updateAccount(acct, //
+					closeDate, statFreq, statDayOfMonth);
+		}
+
+		return acct;
+	}
 
 	public static int getNextAccountID() {
 		return (accountsByID.isEmpty()) ? 1 : accountsByID.size();
@@ -126,7 +144,8 @@ public class Account {
 
 	public static void addAccount(Account acct) {
 		if (acct.acctid == 0) {
-			acct.acctid = getNextAccountID();
+			// acct.acctid = getNextAccountID();
+			Common.reportError("Account '" + acct.name + "' has zero acctid");
 		}
 
 		while (accountsByID.size() <= acct.acctid) {
@@ -161,10 +180,11 @@ public class Account {
 		return null;
 	}
 
-	public int acctid;
+	public final int acctid;
 
 	public final String name;
 	public final AccountType type;
+	public final AccountCategory acctCategory;
 	public final String description;
 	public QDate closeDate;
 	public int statementFrequency;
@@ -181,10 +201,11 @@ public class Account {
 
 	public Account(String name, AccountType type, String desc, QDate closeDate, //
 			int statFreq, int statDayOfMonth) {
-		this.acctid = 0;
+		this.acctid = getNextAccountID();
 
 		this.name = name;
 		this.type = type;
+		this.acctCategory = AccountCategory.forAccountType(type);
 		this.description = (desc != null) ? desc : "";
 		this.closeDate = closeDate;
 		this.statementFrequency = (statFreq > 0) ? statFreq : 30;
@@ -199,6 +220,10 @@ public class Account {
 		this.statementFile = null;
 	}
 
+	public Account(String name, AccountType type) {
+		this(name, type, "", null, -1, -1);
+	}
+
 	public String getDisplayName(int length) {
 		String nn = this.name;
 		if (nn.length() > 36) {
@@ -206,10 +231,6 @@ public class Account {
 		}
 
 		return nn;
-	}
-
-	public Account(String name, AccountType type) {
-		this(name, type, "", null, -1, -1);
 	}
 
 	public boolean isLiability() {
