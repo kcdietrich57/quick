@@ -11,12 +11,12 @@ public class UIConstants {
 			new HashMap<AccountCategory, Color>();
 
 	static {
-		acctCategoryColor.put(AccountCategory.CREDIT, Color.YELLOW);
+		acctCategoryColor.put(AccountCategory.CREDITCARD, Color.YELLOW);
 		acctCategoryColor.put(AccountCategory.LOAN, Color.MAGENTA);
 		acctCategoryColor.put(AccountCategory.ASSET, new Color(127, 127, 127));
-		acctCategoryColor.put(AccountCategory.RETIRE, Color.GREEN);
+		acctCategoryColor.put(AccountCategory.RETIREMENT, Color.GREEN);
 		acctCategoryColor.put(AccountCategory.BANK, Color.RED);
-		acctCategoryColor.put(AccountCategory.INVEST, Color.BLUE);
+		acctCategoryColor.put(AccountCategory.INVESTMENT, Color.BLUE);
 	}
 
 }

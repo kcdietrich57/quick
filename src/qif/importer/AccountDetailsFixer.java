@@ -52,7 +52,7 @@ public class AccountDetailsFixer {
 			Common.reportError("Account type is null: " //
 					+ "acct name '" + acct.name + "'");
 		}
-		System.out.println(acct.name + " " + acct.statementFrequency + " " + acct.statementDayOfMonth);
+
 		if (acct.closeDate == null) {
 			acct.closeDate = closeDate;
 		}

@@ -1,36 +1,46 @@
 package qif.data;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/** Defines account type categories for itemized status */
+/** Defines account type categories for itemizing status output */
 public enum AccountCategory {
 
-	ASSET(0, true, "Asset", //
+	ASSET(true, "Asset", //
 			new AccountType[] { AccountType.Asset }), //
-	RETIRE(1, true, "Retirement", //
+	RETIREMENT(true, "Retirement", //
 			new AccountType[] { AccountType.InvMutual, AccountType.Inv401k }), //
-	INVEST(2, true, "Investment", //
+	INVESTMENT(true, "Investment", //
 			new AccountType[] { AccountType.Invest, AccountType.InvPort }), //
-	BANK(3, true, "Bank", //
+	BANK(true, "Bank/Cash", //
 			new AccountType[] { AccountType.Bank, AccountType.Cash }), //
-	CREDIT(4, false, "Credit Card", //
+	CREDITCARD(false, "Credit Card", //
 			new AccountType[] { AccountType.CCard }), //
-	LOAN(5, false, "Loan", //
+	LOAN(false, "Loan", //
 			new AccountType[] { AccountType.Liability });
 
-	public static final String[] accountCategoryNames = new String[] { //
-			"Retirement", "Asset", "Investment", "Bank", "Credit Card", "Loan" //
-	};
+	/** Ordering (bottom to top) of categories in the itemized/stacked charts */
+	public static final AccountCategory[] accountCategoryInfo;
+	public static final List<String> accountCategoryLabels;
 
-	public static final AccountCategory[] accountCategoryInfo = { //
-			ASSET, RETIRE, INVEST, BANK, CREDIT, LOAN //
-	};
+	/** Ordering (top to bottom) of account categories in the Accounts list */
+	private static final List<AccountCategory> listOrder;
 
-	private static List<AccountCategory> listOrder = //
-			Arrays.asList(new AccountCategory[] { //
-					BANK, CREDIT, INVEST, RETIRE, ASSET, LOAN //
-			});
+	static {
+		accountCategoryInfo = new AccountCategory[] { //
+				ASSET, RETIREMENT, INVESTMENT, BANK, CREDITCARD, LOAN //
+		};
+
+		accountCategoryLabels = new ArrayList<String>(accountCategoryInfo.length);
+		for (int idx = 0; idx < accountCategoryInfo.length; ++idx) {
+			accountCategoryLabels.add(idx, accountCategoryInfo[idx].label);
+		}
+
+		listOrder = Arrays.asList(new AccountCategory[] { //
+				BANK, CREDITCARD, INVESTMENT, RETIREMENT, ASSET, LOAN //
+		});
+	}
 
 	public int getAccountListOrder() {
 		return listOrder.indexOf(this);
@@ -41,10 +51,6 @@ public enum AccountCategory {
 	}
 
 	public static AccountCategory forAccountType(AccountType type) {
-		if (type == null) {
-			return null;
-		}
-
 		switch (type) {
 		case Asset:
 			return ASSET;
@@ -54,15 +60,15 @@ public enum AccountCategory {
 			return BANK;
 
 		case CCard:
-			return CREDIT;
+			return CREDITCARD;
 
 		case Inv401k:
 		case InvMutual:
-			return RETIRE;
+			return RETIREMENT;
 
 		case Invest:
 		case InvPort:
-			return INVEST;
+			return INVESTMENT;
 
 		case Liability:
 			return LOAN;
@@ -71,19 +77,12 @@ public enum AccountCategory {
 		return null;
 	}
 
-	public final int index;
 	public final boolean isAsset;
 	public final String label;
 
-	private AccountCategory(int val, boolean isAsset, String label, //
-			AccountType[] atypes) {
-		this.index = val;
+	private AccountCategory(boolean isAsset, String label, AccountType[] atypes) {
 		this.isAsset = isAsset;
 		this.label = label;
-	}
-
-	public int index() {
-		return this.index;
 	}
 
 	public String toString() {
@@ -92,13 +91,13 @@ public enum AccountCategory {
 			return "Asset";
 		case BANK:
 			return "Bank";
-		case CREDIT:
+		case CREDITCARD:
 			return "Credit";
-		case INVEST:
+		case INVESTMENT:
 			return "Investment";
 		case LOAN:
 			return "Loan";
-		case RETIRE:
+		case RETIREMENT:
 			return "Retirement";
 		}
 

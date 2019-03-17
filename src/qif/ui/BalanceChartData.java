@@ -13,7 +13,7 @@ import qif.ui.MainWindow.IntervalUnit;
 /** This data class is used by various charts */
 public class BalanceChartData {
 	public QDate[] dates;
-	public String[] accountCategoryNames;
+	public List<String> accountCategoryLabels;
 	public double[][] accountCategoryValues;
 	public double[][] netWorthValues;
 	// TODO per-account values
@@ -31,7 +31,7 @@ public class BalanceChartData {
 
 	private void getData(List<StatusForDateModel> balances) {
 		this.dates = new QDate[balances.size()];
-		this.accountCategoryNames = AccountCategory.accountCategoryNames;
+		this.accountCategoryLabels = AccountCategory.accountCategoryLabels;
 		this.accountCategoryValues = new double[AccountCategory.numCategories()][balances.size()];
 		this.netWorthValues = new double[1][balances.size()];
 
@@ -46,28 +46,8 @@ public class BalanceChartData {
 				massagedValues[ii] = Math.floor(sections[ii].subtotal.floatValue() / 1000);
 			}
 
-			int aidx = AccountCategory.ASSET.index;
-			int lidx = AccountCategory.LOAN.index;
-
-			double assets = massagedValues[aidx];
-			double loans = massagedValues[lidx];
-
-			boolean separateAssetsAndLoans = true;
-
-			if (!separateAssetsAndLoans) {
-				if (assets > Math.abs(loans)) {
-					massagedValues[aidx] = assets + loans;
-					massagedValues[lidx] = 0.0;
-				} else {
-					massagedValues[lidx] = loans + assets;
-					massagedValues[aidx] = 0.0;
-				}
-			}
-
 			for (int sectionNum = 0; sectionNum < sections.length; ++sectionNum) {
-				double val = (separateAssetsAndLoans) //
-						? Math.floor(sections[sectionNum].subtotal.floatValue() / 1000) //
-						: massagedValues[sectionNum];
+				double val = Math.floor(sections[sectionNum].subtotal.floatValue() / 1000);
 
 				this.accountCategoryValues[sectionNum][dateIndex] = val;
 				this.netWorthValues[0][dateIndex] += val;

@@ -1,7 +1,6 @@
 package qif.ui;
 
 import java.awt.Color;
-import java.util.Arrays;
 
 import javax.swing.JPanel;
 
@@ -45,7 +44,7 @@ public class BalanceChart {
 
 		CategoryDataset networthDataset = DatasetUtilities.createCategoryDataset( //
 				"NetWorth", "Value", balanceData.netWorthValues);
-		catDataset.setRowKeys(Arrays.asList(balanceData.accountCategoryNames));
+		catDataset.setRowKeys(balanceData.accountCategoryLabels);
 
 		StackedAreaRenderer areaRenderer = new StackedAreaRenderer();
 		setSeriesColor(areaRenderer);
@@ -97,7 +96,7 @@ public class BalanceChart {
 
 		CategoryDataset networthDataset = DatasetUtilities.createCategoryDataset( //
 				"NetWorth", "Value", balanceData.netWorthValues);
-		catDataset.setRowKeys(Arrays.asList(balanceData.accountCategoryNames));
+		catDataset.setRowKeys(balanceData.accountCategoryLabels);
 
 		CategoryPlot plot = this.chart.getCategoryPlot();
 		plot.setDataset(0, catDataset);
