@@ -3,6 +3,7 @@ package qif.importer;
 import qif.data.Category;
 import qif.data.Common;
 
+/** Process input file details for a category */
 class CategoryProcessor {
 	QifDomReader qrdr;
 
@@ -10,6 +11,7 @@ class CategoryProcessor {
 		this.qrdr = qrdr;
 	}
 
+	/** Load a section containing categories, creating category objects */
 	public void loadCategories() {
 		for (;;) {
 			String s = this.qrdr.getFileReader().peekLine();
@@ -17,46 +19,52 @@ class CategoryProcessor {
 				break;
 			}
 
-			Category cat = loadCategory();
-			if (cat == null) {
+			if (!loadCategory()) {
 				break;
-			}
-
-			Category existing = Category.findCategory(cat.name);
-
-			if (existing == null) {
-				Category.addCategory(cat);
 			}
 		}
 	}
 
-	private Category loadCategory() {
-		final QFileReader.QLine qline = new QFileReader.QLine();
+	private boolean loadCategory() {
+		QFileReader.QLine qline = new QFileReader.QLine();
 
-		final Category cat = new Category();
+		String name = null;
+		String desc = null;
+		boolean isExpense = true;
 
 		for (;;) {
 			this.qrdr.getFileReader().nextCategoryLine(qline);
 
 			switch (qline.type) {
 			case EndOfSection:
-				return cat;
+				if (name == null) {
+					return false;
+				}
+
+				Category cat = Category.findCategory(name);
+				// TODO To be anal, we could check if cat.xxx matches input
+
+				if (cat == null) {
+					cat = new Category(name, desc, isExpense);
+					Category.addCategory(cat);
+				}
+
+				return true;
 
 			case CatName:
-				cat.name = qline.value;
+				name = qline.value;
 				break;
 			case CatDescription:
-				cat.description = qline.value;
+				desc = qline.value;
 				break;
 			case CatTaxRelated:
 				// cat.taxRelated = Common.parseBoolean(qline.value);
 				break;
 			case CatIncomeCategory:
-				cat.expenseCategory = !Common.parseBoolean(qline.value);
-				// cat.incomeCategory = Common.parseBoolean(qline.value);
+				isExpense = !Common.parseBoolean(qline.value);
 				break;
 			case CatExpenseCategory:
-				cat.expenseCategory = Common.parseBoolean(qline.value);
+				isExpense = Common.parseBoolean(qline.value);
 				break;
 			case CatBudgetAmount:
 				// cat.budgetAmount = Common.getDecimal(qline.value);

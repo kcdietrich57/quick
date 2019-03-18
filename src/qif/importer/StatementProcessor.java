@@ -101,8 +101,7 @@ class StatementProcessor {
 
 					final Statement prevstmt = (stmts.isEmpty() ? null : stmts.get(stmts.size() - 1));
 
-					currstmt = new Statement(Account.currAccountBeingLoaded.acctid);
-					currstmt.date = d;
+					currstmt = new Statement(Account.currAccountBeingLoaded.acctid, d);
 					currstmt.closingBalance = currstmt.cashBalance = bal;
 					if ((prevstmt != null) && (prevstmt.acctid == currstmt.acctid)) {
 						currstmt.prevStatement = prevstmt;

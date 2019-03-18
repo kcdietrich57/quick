@@ -3,6 +3,7 @@ package qif.data;
 import java.util.Calendar;
 import java.util.Date;
 
+/** Efficient date wrapper supporting quick comparison and display */
 public class QDate implements Comparable<QDate> {
 	public static QDate today() {
 		return new QDate(new Date());
@@ -18,47 +19,27 @@ public class QDate implements Comparable<QDate> {
 		this(new Date(time));
 	}
 
+	/** Days in months (with February complication of course) */
 	private static final int MONTH_DAYS[] = { //
 			31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 //
 	};
 
+	/** Return the correct date for the last day in a given year/month */
 	public static QDate getDateForEndOfMonth(int year, int month) {
+		// TODO can I just do Year/Month+1/1 minus one day?
 		return (month == 2) //
 				? new QDate(year, 3, 1).addDays(-1) //
 				: new QDate(year, month, MONTH_DAYS[(month + 11) % 12]);
 	}
 
-	public QDate getLastDayOfMonth() {
-		return (getMonth() != 2) //
-				? new QDate(getYear(), getMonth(), MONTH_DAYS[getMonth() - 1])
-				: new QDate(getYear(), 3, 1).addDays(-1);
-	}
-
-	public QDate getDateNearestTo(int day) {
-		if (day == getDay()) {
-			return this;
-		}
-
-		if (day - getDay() > 15) {
-			QDate lastMonth = new QDate(getYear(), getMonth(), 1).addDays(-1);
-
-			return lastMonth.getDateNearestTo(day);
-		}
-
-		if (getDay() - day > 15) {
-			QDate nextMonth = getLastDayOfMonth().addDays(1);
-
-			return nextMonth.getDateNearestTo(day);
-		}
-
-		if (day < MONTH_DAYS[getMonth() - 1]) {
-			return new QDate(getYear(), getMonth(), day);
-		}
-
-		return getLastDayOfMonth();
-	}
-
+	/** Construct a date y/m/d */
 	public QDate(int y, int m, int d) {
+		while (m > 12) {
+			m -= 12;
+			++y;
+		}
+		// TODO we could have trouble with (y,2,29), but should be avoiding that
+
 		y = adjustYear(y);
 
 		if (m == 2 && d > 28) {
@@ -77,6 +58,7 @@ public class QDate implements Comparable<QDate> {
 		this.monthYearString = String.format("%02d/%04d", m, y);
 	}
 
+	/** Construct from a Date object */
 	public QDate(Date dt) {
 		Calendar cal = Calendar.getInstance();
 		cal.setTime((dt != null) ? dt : new Date());
@@ -93,18 +75,6 @@ public class QDate implements Comparable<QDate> {
 		this.monthYearString = String.format("%02d/%04d", m, y);
 	}
 
-	public int adjustYear(int y) {
-		if (y < 30) {
-			return 2000 + y;
-		}
-
-		if (y < 100) {
-			return 1900 + y;
-		}
-
-		return y;
-	}
-
 	public int getYear() {
 		return this.datevalue / 10000;
 	}
@@ -117,6 +87,54 @@ public class QDate implements Comparable<QDate> {
 		return this.datevalue % 100;
 	}
 
+	/** Return the last day of the month for this date */
+	public QDate getLastDayOfMonth() {
+		return new QDate(getYear(), getMonth() + 1, 1).addDays(-1);
+	}
+
+	/** Calculate the date (given day of month) nearest to the current date */
+	public QDate getDateNearestTo(int day) {
+		if (day == getDay()) {
+			return this;
+		}
+
+		// e.g. For 2/5 and 24 (24-5 > 15) 2/24 is nearer to 3/5 than 3/24
+		if (day - getDay() > 15) {
+			QDate lastMonth = new QDate(getYear(), getMonth(), 1).addDays(-1);
+
+			return lastMonth.getDateNearestTo(day);
+		}
+
+		// e.g. For 2/24 and 5 (24-5 > 15) 3/5 is nearer to 2/24 than 2/5
+		if (getDay() - day > 15) {
+			QDate nextMonth = getLastDayOfMonth().addDays(1);
+
+			return nextMonth.getDateNearestTo(day);
+		}
+
+		// current/desired day are near to each other - usually the same month
+		// Check for day near end of month
+		if (day < MONTH_DAYS[getMonth() - 1]) {
+			return new QDate(getYear(), getMonth(), day);
+		}
+
+		return getLastDayOfMonth();
+	}
+
+	/** Convert two-digit year to four digit year */
+	public int adjustYear(int y) {
+		if (y < 30) {
+			return 2000 + y;
+		}
+
+		if (y < 100) {
+			return 1900 + y;
+		}
+
+		return y;
+	}
+
+	/** Get a date a given number of days away from this date */
 	public QDate addDays(int days) {
 		Calendar cal = Calendar.getInstance();
 		Date d = toDate();
@@ -127,6 +145,7 @@ public class QDate implements Comparable<QDate> {
 		return new QDate(d);
 	}
 
+	/** Get a date a given number of months away from this date */
 	public QDate addMonths(int months) {
 		int year = getYear();
 		int month = getMonth();
@@ -165,13 +184,15 @@ public class QDate implements Comparable<QDate> {
 	}
 
 	public boolean equals(Object obj) {
-		return (obj instanceof QDate) ? this.datevalue == ((QDate) obj).datevalue : false;
+		return (obj instanceof QDate) //
+				&& this.datevalue == ((QDate) obj).datevalue;
 	}
 
 	public int compareTo(QDate o) {
 		return this.datevalue - o.datevalue;
 	}
 
+	/** Return the number of days separating this date from another */
 	public int subtract(QDate o) {
 		int diff = this.datevalue - o.datevalue;
 		if (Math.abs(diff) <= 31) {
@@ -188,6 +209,7 @@ public class QDate implements Comparable<QDate> {
 		return Common.msToDays(msdiff);
 	}
 
+	/** Convert this date to a Java date object */
 	public Date toDate() {
 		Calendar cal = Calendar.getInstance();
 		cal.set(getYear(), getMonth() - 1, getDay(), 0, 0, 1);
@@ -199,6 +221,7 @@ public class QDate implements Comparable<QDate> {
 		return this.datestring;
 	}
 
+	/** Unit test */
 	public static void main(String[] args) {
 		for (int month = 1; month <= 12; ++month) {
 			QDate estimate;

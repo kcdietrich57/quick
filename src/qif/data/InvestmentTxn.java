@@ -483,19 +483,83 @@ public class InvestmentTxn extends GenericTxn {
 		return s;
 	}
 
+	// TODO put this information into the UI appropriately
 	public String formatValue() {
+		String ret = "";
+
 		// organizeLots();
 		String datestr = Common.formatDate(getDate());
 
-		String ret = String.format("[%d]%10s %d %5s",
-				// "%10s %-30s %s %13s %-15s %-10s", //
-				this.txid, //
+		if (this.security != null) {
+			// All security positions for date
+			Map<Security, PositionInfo> allPositionsForDate = //
+					SecurityPortfolio.portfolio.getOpenPositionsForDate(getDate());
+
+			ret += "\nAll security positions on " + datestr;
+			ret += "\n--------------------------------------";
+			for (PositionInfo pinfo : allPositionsForDate.values()) {
+				if (!Common.isEffectivelyZero(pinfo.shares)) {
+					ret += "\n";
+					ret += pinfo.toString();
+				}
+			}
+
+			PositionInfo overallValue = allPositionsForDate.get(this.security);
+
+			ret += "\n\nTotal holdings for security '" + this.security.symbol + "' on " + datestr;
+			ret += "\n--------------------------------------";
+			if (overallValue != null) {
+				ret += "\n";
+				ret += overallValue.toString();
+				ret += "  :  ";
+			}
+
+			// Current account position for date
+			Map<Security, PositionInfo> accountPositionsForDate = //
+					getAccount().getOpenPositionsForDate(getDate());
+
+			ret += "\n\nAll positions for account '" + getAccount().name + "' on " + datestr;
+			ret += "\n--------------------------------------";
+			for (PositionInfo pinfo : accountPositionsForDate.values()) {
+				if (!Common.isEffectivelyZero(pinfo.shares)) {
+					ret += "\n";
+					ret += pinfo.toString();
+				}
+			}
+
+			// Position for the current account
+			PositionInfo acctValue = accountPositionsForDate.get(this.security);
+
+			ret += "\n\nPosition for security '" + this.security.symbol + "'" //
+					+ " for account '" + getAccount().name + "' on " + datestr;
+			ret += "\n--------------------------------------";
+			if (acctValue != null) {
+				ret += "\n";
+				ret += acctValue.toString();
+			}
+
+			// Positions in security for each account for date
+			Map<Account, PositionInfo> allAccountPositionsByDate = //
+					SecurityPortfolio.portfolio.getOpenPositionsForDateByAccount( //
+							this.security, getDate());
+
+			ret += "\n\nPosition for all accounts" //
+					+ " for security '" + this.security.symbol + ";" //
+					+ " on " + datestr;
+			ret += "\n--------------------------------------";
+			for (PositionInfo pinfo : allAccountPositionsByDate.values()) {
+				if (!Common.isEffectivelyZero(pinfo.shares)) {
+					ret += "\n";
+					ret += pinfo.toString();
+				}
+			}
+		}
+
+		ret += "\n\n===================================";
+
+		ret += "\n";
+		ret += String.format("Transaction[%d] %10s %d %5s", this.txid, //
 				datestr, //
-				// this.getPayee(), //
-				// ((isCleared()) ? "C" : " "), //
-				// Common.formatAmount(getAmount()), //
-				// getCategory(), //
-				// getMemo(),
 				this.acctid, //
 				getAction().name());
 
@@ -509,35 +573,15 @@ public class InvestmentTxn extends GenericTxn {
 		if (this.security != null) {
 			List<Lot> lots = new ArrayList<Lot>(this.lotsCreated);
 			lots.addAll(this.lotsDisposed);
-			// List<Lot> lots = this.security.getLotsForTransaction(this);
 
-			ret += String.format(" SEC(%s %s, %d lots)", //
+			ret += String.format(" SEC(%s %s %s, %d lots)", //
 					this.security.getSymbol(), //
-//					Common.formatAmount(this.price), //
 					Common.formatAmount3(quantity).trim(), //
+					Common.formatAmount(this.price).trim(), //
 					lots.size());
-
-//			switch (this.action) {
-//			case BUY:
-//			case BUYX:
-//			case EXERCISE:
-//			case EXERCISEX:
-//			case SHRS_IN:
-//				this.dstLots = lots;
-//				break;
-//
-//			case EXPIRE:
-//			case SELL:
-//			case SELLX:
-//				this.srcLots = lots;
-//				break;
-//			}
 		}
 
 		ret += "\n";
-
-		// public String textFirstLine;
-		// public BigDecimal commission;
 
 		if (hasSplits()) {
 			for (Iterator<SimpleTxn> iter = getSplits().iterator(); iter.hasNext();) {
@@ -560,58 +604,10 @@ public class InvestmentTxn extends GenericTxn {
 			}
 		}
 
-		if (this.security != null) {
-			ret += "\n\n";
+		ret += "\n=========================================";
 
-			// All security positions for date
-			Map<Security, PositionInfo> x = SecurityPortfolio.portfolio.getOpenPositionsForDate(getDate());
-
-			ret += "\nAll security positions on " + datestr;
-			for (PositionInfo pinfo : x.values()) {
-				ret += "\n";
-				ret += pinfo.toString();
-			}
-
-			PositionInfo overallValue = x.get(this.security);
-
-			ret += "\n\nTotal holdings for " + getSecurityName() + " on " + datestr;
-			if (overallValue != null) {
-				ret += "\n";
-				ret += overallValue.toString();
-				ret += "  :  ";
-			}
-
-			// Current account position for date
-			Map<Security, PositionInfo> y = getAccount().getOpenPositionsForDate(getDate());
-
-			ret += "\n\nAll positions for " + getAccount().name + " on " + datestr;
-			for (PositionInfo pinfo : y.values()) {
-				ret += "\n";
-				ret += pinfo.toString();
-			}
-
-			// Position for the current account
-			PositionInfo acctValue = y.get(this.security);
-
-			ret += "\n\nPosition for " + getSecurityName() //
-					+ " for " + getAccount().name + " on " + datestr;
-			if (acctValue != null) {
-				ret += "\n";
-				ret += acctValue.toString();
-			}
-
-			// Positions in security for each account for date
-			Map<Account, PositionInfo> z = //
-					SecurityPortfolio.portfolio.getOpenPositionsForDateByAccount( //
-							this.security, getDate());
-
-			ret += "\n\nPosition for all accounts for " + getSecurityName() //
-					+ " on " + datestr;
-			for (PositionInfo pinfo : z.values()) {
-				ret += "\n";
-				ret += pinfo.toString();
-			}
-		}
+		ret += "\n\nTransaction info";
+		ret += "\n===================================";
 
 		if (getAction() == TxAction.SELL || getAction() == TxAction.SELLX) {
 			ret += "\n\n";
@@ -631,6 +627,8 @@ public class InvestmentTxn extends GenericTxn {
 					Common.formatAmount(getAmount()), //
 					Common.formatAmount(getAmount().subtract(info.totalCost)));
 		}
+
+		ret += "\n===================================";
 
 		System.out.println("\n=============================\n" + ret + "\n");
 

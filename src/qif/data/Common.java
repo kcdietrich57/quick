@@ -10,98 +10,101 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+/** Useful utility functions */
 public class Common {
-	public static final BigDecimal CLOSE_ENOUGH_TO_ZERO = new BigDecimal(0.005);
+	/** Threshold for deeming BigDecimal values to be effectively equal */
+	private static final BigDecimal CLOSE_ENOUGH_TO_ZERO = new BigDecimal(0.005);
 
+	/** Log info message */
 	public static void reportInfo(String s) {
 		if (QifDom.verbose) {
 			System.out.println("**** Info: " + s);
 		}
 	}
 
+	/** Log warning message */
 	public static void reportWarning(String s) {
 		System.out.println("**** Warning! " + s);
 	}
 
+	/** Log error message */
 	public static void reportError(String s) {
 		System.out.println("**** ERROR! " + s);
 		throw new RuntimeException(s);
 	}
 
+	/** One day, in milliseconds */
 	private static final long MS_PER_DAY = (long) (24 * 60 * 60 * 1000);
 
+	/** Convert ms to whole days */
 	public static int msToDays(long ms) {
 		return (int) (ms / MS_PER_DAY);
 	}
 
-	/**
-	 * Values sometimes use thousands separators ",". Delete them.
-	 * 
-	 * @param value
-	 * @return Massaged value
-	 */
-	public static BigDecimal getDecimal(String value) {
-		final StringBuilder sb = new StringBuilder(value);
-		for (;;) {
-			final int comma = sb.indexOf(",");
-			if (comma < 0) {
-				break;
+	/** Sort transactions list by date and id */
+	public static void sortTransactionsByDate(List<GenericTxn> txns) {
+		final Comparator<GenericTxn> cmptor = (t1, t2) -> {
+			final int diff = t1.getDate().compareTo(t2.getDate());
+
+			if (diff != 0) {
+				return diff;
 			}
 
-			sb.deleteCharAt(comma);
-		}
+			return t1.txid - t2.txid;
+		};
 
-		return new BigDecimal(sb.toString().trim());
+		Collections.sort(txns, cmptor);
 	}
 
+	/** Parse a decimal value string (possibly with separators) */
+	public static BigDecimal getDecimal(String value) {
+		return parseDecimal(value.trim().replace(",", ""));
+	}
+
+	/** Parse a decimal value string */
 	public static BigDecimal parseDecimal(String s) {
 		try {
 			return new BigDecimal(s);
 		} catch (final Exception e) {
-			e.printStackTrace();
-			reportError("Bad decimal string: " + s);
+			reportError("Bad decimal string: '" + s + "'");
 		}
 
 		return null;
 	}
 
+	/** Is a value zero (or very close) */
 	public static boolean isEffectivelyZero(BigDecimal n) {
 		return (CLOSE_ENOUGH_TO_ZERO.compareTo(n.abs()) > 0);
 	}
 
+	/** Are two values equal (or very close) */
 	public static boolean isEffectivelyEqual(BigDecimal d1, BigDecimal d2) {
 		final BigDecimal diff = d1.subtract(d2).abs();
 		return (CLOSE_ENOUGH_TO_ZERO.compareTo(diff) > 0);
 	}
 
+	/** Parse an input boolean string (using Java rules) */
 	public static boolean parseBoolean(String value) {
 		return (value.length() > 0) && Boolean.parseBoolean(value);
 	}
 
 	/**
-	 * QIF dates sometimes use "'" for separator. Change to "/".
-	 * 
-	 * @param qifDateString
-	 * @return Massaged date string
+	 * Convert a QIF date string to standard format.<br>
+	 * Sometimes use "'" for separator. Change to "/".<br>
+	 * Sometimes have spaces with single-digit day/month numbers.
 	 */
 	public static String convertQIFDateString(String qifDateString) {
-		final int i = qifDateString.indexOf("'");
-		if (i != -1) {
-			qifDateString = qifDateString.substring(0, i) + "/" + qifDateString.substring(i + 1);
-		}
+		qifDateString = qifDateString.replaceFirst("'", "/");
 
 		return qifDateString.replace(" ", "0");
 	}
 
+	/** Parse a date in various formats. Return QDate object */
 	public static QDate parseQDate(String value) {
-		Date d = parseDate(value);
-
-		return new QDate(d);
+		return new QDate(parseDate(value));
 	}
 
-	/**
-	 * Parse a date in various formats
-	 */
+	/** Parse a date in various formats. Return Java Date object */
 	public static Date parseDate(String value) {
 		try {
 			// Format found in QIF transactions
@@ -137,12 +140,14 @@ public class Common {
 		return null;
 	}
 
+	/** Construct a Java Date from y/m/d values */
 	public static Date getDate(int year, int month, int day) {
 		final String datestr = "" + month + "/" + day + "/" + year;
 
 		return parseDate(datestr);
 	}
 
+	/** Format a string, possibly null, to maximum length */
 	public static String formatString(String s, int maxlen) {
 		if (s == null) {
 			s = "N/A";
@@ -153,6 +158,7 @@ public class Common {
 				: String.format("%" + maxlen + "s", s);
 	}
 
+	/** Safely get the string representation of an object, possibly null */
 	public static String stringValue(Object o) {
 		if (o == null) {
 			return "";
@@ -165,6 +171,7 @@ public class Common {
 		return (String) o;
 	}
 
+	/** Format a decimal value to two places */
 	public static String formatAmount(BigDecimal amt) {
 		if (amt == null) {
 			return "null";
@@ -173,6 +180,7 @@ public class Common {
 		return String.format("%10.2f", amt);
 	}
 
+	/** Format a decimal value as integer */
 	public static String formatAmount0(BigDecimal amt) {
 		if (amt == null) {
 			return "null";
@@ -181,6 +189,7 @@ public class Common {
 		return String.format("%,10.0f", amt);
 	}
 
+	/** Format a decimal value to three places */
 	public static String formatAmount3(BigDecimal amt) {
 		if (amt == null) {
 			return "null";
@@ -189,42 +198,44 @@ public class Common {
 		return String.format("%10.3f", amt);
 	}
 
+	/** Format a date mm/dd/yy */
 	public static String formatDate(QDate date) {
 		return formatDate(date, "MM/dd/yy");
 	}
 
+	/** Format a date mm/dd/yyyy */
 	public static String formatDateLong(QDate date) {
 		return formatDate(date, "MM/dd/yyyy");
 	}
 
+	/** Format a date mm/dd */
 	public static String formatDateShort(QDate date) {
 		return formatDate(date, "MM/dd");
 	}
 
+	/** Format a date mm/yyyy */
 	public static String formatDateMonthYear(QDate date) {
 		return formatDate(date, "MM/yyyy");
 	}
 
+	/** Format a date (possibly null) with a given SimpleDateFormat format */
 	private static String formatDate(QDate date, String format) {
 		if (date == null) {
 			return "null";
 		}
 
-		return formatDate(date.toDate(), format);
+		return new SimpleDateFormat(format).format(date.toDate());
 	}
 
-	private static String formatDate(Date date, String format) {
-		DateFormat dfmt = new SimpleDateFormat(format);
-		return dfmt.format(date);
-	}
-
+	/** Parse a security price (decimal or fraction) */
 	public static BigDecimal parsePrice(String pricestr) {
 		if (pricestr.length() == 0) {
 			return BigDecimal.ZERO;
 		}
 
+		// Separate decimal and fraction part
 		String fracstr = null;
-		final int slash = pricestr.indexOf('/');
+		int slash = pricestr.indexOf('/');
 		if (slash > 0) {
 			final int space = pricestr.indexOf(' ');
 
@@ -232,7 +243,10 @@ public class Common {
 			pricestr = (space > 0) ? pricestr.substring(0, space) : "0";
 		}
 
+		// Parse decimal part
 		BigDecimal price = new BigDecimal(pricestr);
+
+		// Add fraction
 		if (fracstr != null) {
 			final BigDecimal frac = parseFraction(fracstr);
 			price = frac.add(price);
@@ -241,6 +255,7 @@ public class Common {
 		return price;
 	}
 
+	/** Parse fractional part of price */
 	public static BigDecimal parseFraction(String fracstr) {
 		if ((fracstr.length() != 4) || //
 				(fracstr.charAt(0) != ' ') || //
@@ -262,33 +277,33 @@ public class Common {
 		return new BigDecimal(numerator).divide(new BigDecimal(denominator));
 	}
 
-	public static void writeIfSet(PrintWriter pw, String tag, String value) {
+	private static void writeIfSet(PrintWriter pw, String tag, String value) {
 		pw.println("" + tag + value);
 	}
 
-	public static void writeln(PrintWriter pw, String tag) {
+	private static void writeln(PrintWriter pw, String tag) {
 		pw.println(tag);
 	}
 
-	public static void write(PrintWriter pw, char key) {
+	private static void write(PrintWriter pw, char key) {
 		pw.println("" + key);
 	}
 
-	public static void write(PrintWriter pw, String s) {
+	private static void write(PrintWriter pw, String s) {
 		pw.println(s);
 	}
 
-	public static void writeIfSet(PrintWriter pw, char key, String value) {
+	private static void writeIfSet(PrintWriter pw, char key, String value) {
 		if (value != null && value.length() > 0) {
 			write(pw, key, value);
 		}
 	}
 
-	public static void write(PrintWriter pw, char key, String value) {
+	private static void write(PrintWriter pw, char key, String value) {
 		pw.println("" + key + value);
 	}
 
-	public static BigDecimal sumAmounts(List<GenericTxn> txns) {
+	private static BigDecimal sumAmounts(List<GenericTxn> txns) {
 		BigDecimal totaltx = BigDecimal.ZERO;
 		for (final GenericTxn t : txns) {
 			totaltx = totaltx.add(t.getAmount());
@@ -299,30 +314,16 @@ public class Common {
 
 	public static BigDecimal sumCashAmounts(List<GenericTxn> txns) {
 		BigDecimal totaltx = BigDecimal.ZERO;
-		for (final GenericTxn t : txns) {
+		for (GenericTxn t : txns) {
 			totaltx = totaltx.add(t.getCashAmount());
 		}
 
 		return totaltx;
 	}
 
-	public static String getCheckNumString(GenericTxn t) {
+	private static String getCheckNumString(GenericTxn t) {
 		return (t instanceof NonInvestmentTxn) //
 				? ((NonInvestmentTxn) t).chkNumber //
 				: "";
-	}
-
-	public static void sortTransactionsByDate(List<GenericTxn> txns) {
-		final Comparator<GenericTxn> cmptor = (t1, t2) -> {
-			final int diff = t1.getDate().compareTo(t2.getDate());
-
-			if (diff != 0) {
-				return diff;
-			}
-
-			return t1.txid - t2.txid;
-		};
-
-		Collections.sort(txns, cmptor);
 	}
 }

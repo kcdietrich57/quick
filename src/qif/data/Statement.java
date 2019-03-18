@@ -6,60 +6,87 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/** Information about statements */
 public class Statement {
-	// Info about reconciled statements goes in this file
+	/** Info about reconciled statements goes into this file. */
 	public static File stmtLogFile = new File(QifDom.qifDir, "statementLog.dat");
 
-	public int acctid;
-	public QDate date;
+	public final int acctid;
+	public final QDate date;
 
 	public Statement prevStatement;
 
 	public boolean isBalanced;
 
-	// open/close balance are total balance, including cash and securities
+	/** Total closing balance, including cash and securities */
 	public BigDecimal closingBalance;
 
-	// Separate closing balance for cash and securities
+	/** Cash closing balance */
 	public BigDecimal cashBalance;
-	public SecurityPortfolio holdings;
 
-	// Transactions included in this statement
+	/** Information about security activity in the statement period */
+	public final SecurityPortfolio holdings;
+
+	/** Transactions included in this statement */
 	public final List<GenericTxn> transactions;
 
-	// Transactions that as of the closing date are not cleared
+	/** Transactions during the statement period that are not cleared afterwards */
 	public final List<GenericTxn> unclearedTransactions;
 
-	/** Whether this statement has been saved to the reconcile log file */
+	/** Whether this statement has been saved to the statement file */
 	public boolean dirty = false;
 
-	public Statement(int acctid) {
+	public Statement(int acctid, QDate date) {
 		this.isBalanced = false;
 		this.acctid = acctid;
-		this.date = null;
-		this.prevStatement = null;
-		this.closingBalance = null;
-		this.cashBalance = null;
-		this.holdings = new SecurityPortfolio();
+		this.date = date;
 
 		this.transactions = new ArrayList<GenericTxn>();
 		this.unclearedTransactions = new ArrayList<GenericTxn>();
+		this.holdings = new SecurityPortfolio();
+
+		this.prevStatement = null;
+		this.closingBalance = null;
+		this.cashBalance = null;
+	}
+
+	/** Add transactions to this statement's cleared list */
+	public void addTransactions(Collection<GenericTxn> txns) {
+		addTransactions(txns, false);
+	}
+
+	/** Add transactions to the cleared list, optionally checking their date */
+	public void addTransactions(Collection<GenericTxn> txns, boolean checkDate) {
+		// TODO should some/all txns go into unclearedTransactions?
+		if (!checkDate) {
+			this.transactions.addAll(txns);
+		} else {
+			for (GenericTxn t : txns) {
+				if (t.getDate().compareTo(this.date) <= 0) {
+					this.transactions.add(t);
+				}
+			}
+		}
+	}
+
+	/** Add a transaction to the cleared transaction list */
+	public void addTransaction(GenericTxn txn) {
+		this.transactions.add(txn);
 	}
 
 	public BigDecimal getOpeningBalance() {
-		final BigDecimal openingBalance = (this.prevStatement != null) //
+		return (this.prevStatement != null) //
 				? this.prevStatement.closingBalance //
 				: BigDecimal.ZERO;
-		return openingBalance;
 	}
 
 	public BigDecimal getOpeningCashBalance() {
-		final BigDecimal openingBalance = (this.prevStatement != null) //
+		return (this.prevStatement != null) //
 				? this.prevStatement.cashBalance //
 				: BigDecimal.ZERO;
-		return openingBalance;
 	}
 
+	/** Calculate closing cash balance from opening balance and cleared txns */
 	public BigDecimal getClearedCashBalance() {
 		BigDecimal bal = getOpeningCashBalance();
 
@@ -70,6 +97,7 @@ public class Statement {
 		return bal;
 	}
 
+	/** Calculate sum of cleared credit transactions */
 	public BigDecimal getCredits() {
 		BigDecimal cr = new BigDecimal(0);
 
@@ -84,6 +112,7 @@ public class Statement {
 		return cr;
 	}
 
+	/** Calculate sum of cleared debit transactions */
 	public BigDecimal getDebits() {
 		BigDecimal db = new BigDecimal(0);
 
@@ -98,33 +127,14 @@ public class Statement {
 		return db;
 	}
 
-	public void addTransactions(Collection<GenericTxn> txns) {
-		addTransactions(txns, false);
-	}
-
-	public void addTransactions(Collection<GenericTxn> txns, boolean checkDate) {
-		// TODO should some/all txns go into unclearedTransactions?
-		if (!checkDate) {
-			this.transactions.addAll(txns);
-		} else {
-			for (GenericTxn t : txns) {
-				if (t.getDate().compareTo(this.date) <= 0) {
-					this.transactions.add(t);
-				}
-			}
-		}
-	}
-
-	public void addTransaction(GenericTxn txn) {
-		this.transactions.add(txn);
-	}
-
+	/** Get all transactions (cleared and uncleared) that could be reconciled */
 	public List<GenericTxn> getTransactionsForReconcile() {
 		List<GenericTxn> txns = new ArrayList<GenericTxn>(this.transactions);
 		txns.addAll(this.unclearedTransactions);
 		return txns;
 	}
 
+	/** Toggle the cleared state of a transaction */
 	public void toggleCleared(GenericTxn txn) {
 		if (this.unclearedTransactions.contains(txn)) {
 			clearTransaction(txn);
@@ -133,34 +143,22 @@ public class Statement {
 		}
 	}
 
+	/** Add a transaction to the cleared list */
 	public void clearTransaction(GenericTxn txn) {
-		txn.stmtdate = this.date;
+		if (this.unclearedTransactions.remove(txn)) {
+			txn.stmtdate = this.date;
 
-		this.transactions.add(txn);
-		this.unclearedTransactions.remove(txn);
+			this.transactions.add(txn);
+		}
 	}
 
+	/** Remove a transaction from the cleared list */
 	public void unclearTransaction(GenericTxn txn) {
-		txn.stmtdate = null;
+		if (this.transactions.remove(txn)) {
+			txn.stmtdate = null;
 
-		this.transactions.remove(txn);
-		this.unclearedTransactions.add(txn);
-	}
-
-	public void clearTransactions( //
-			List<GenericTxn> txns, List<GenericTxn> unclearedTxns) {
-		for (final GenericTxn t : txns) {
-			t.stmtdate = this.date;
+			this.unclearedTransactions.add(txn);
 		}
-		for (final GenericTxn t : unclearedTxns) {
-			t.stmtdate = null;
-		}
-
-		this.transactions.clear();
-		this.unclearedTransactions.clear();
-
-		this.transactions.addAll(txns);
-		this.unclearedTransactions.addAll(unclearedTxns);
 	}
 
 	public void clearAllTransactions() {
@@ -171,58 +169,36 @@ public class Statement {
 		unclearTransactions(this.transactions);
 	}
 
+	/** Clear a group of transactions */
 	public void clearTransactions(List<GenericTxn> txns) {
-		for (final GenericTxn t : txns) {
-			t.stmtdate = this.date;
+		for (GenericTxn t : txns) {
+			clearTransaction(t);
 		}
-
-		this.transactions.addAll(txns);
-		this.unclearedTransactions.removeAll(txns);
 	}
 
+	/** Unclear a group of transactions */
 	public void unclearTransactions(List<GenericTxn> txns) {
-		for (final GenericTxn t : txns) {
-			t.stmtdate = null;
+		for (GenericTxn t : txns) {
+			unclearTransaction(t);
 		}
-
-		this.unclearedTransactions.addAll(txns);
-		this.transactions.removeAll(txns);
 	}
 
-	/**
-	 * Check cleared transactions against expected cash balance
-	 *
-	 * @return True if balance matches
-	 */
+	/** Check currently cleared transactions against expected cash balance */
 	public boolean cashMatches() {
 		return cashMatches(this.transactions);
 	}
 
-	/**
-	 * Check cleared transactions against expected cash balance
-	 *
-	 * @param txns The transactions to check
-	 * @return True if balance matches
-	 */
+	/** Check a list of cleared transactions against expected cash balance */
 	public boolean cashMatches(List<GenericTxn> txns) {
 		return getCashDifference(txns).signum() == 0;
 	}
 
-	/**
-	 * Check list of transactions against expected cash balance
-	 *
-	 * @return Difference from expected value
-	 */
+	/** Compare balance for currently cleared txns against expected cash balance */
 	public BigDecimal getCashDifference() {
 		return getCashDifference(this.transactions);
 	}
 
-	/**
-	 * Check list of transactions against expected cash balance
-	 *
-	 * @param txns The transactions to check
-	 * @return Difference from expected balance
-	 */
+	/** Compare balance for list of transactions against expected cash balance */
 	private BigDecimal getCashDifference(List<GenericTxn> txns) {
 		final BigDecimal cashTotal = Common.sumCashAmounts(txns);
 		final BigDecimal cashExpected = this.cashBalance.subtract(getOpeningCashBalance());
@@ -234,48 +210,33 @@ public class Statement {
 		return cashDiff;
 	}
 
-	/**
-	 * Calculate the resulting cash position from the previous balance and a list of
-	 * transactions
-	 *
-	 * @param txns The transactions
-	 * @return The new cash balance
-	 */
+	/** Calculate the change in cash position for a list of transactions */
 	public BigDecimal getCashDelta(List<GenericTxn> txns) {
 		return getOpeningCashBalance().add(Common.sumCashAmounts(txns));
 	}
 
-	/**
-	 * Calculate the resulting cash position from the previous balance and cleared
-	 * transactions
-	 *
-	 * @return The new cash balance
-	 */
+	/** Calculate the change in cash position from the currently cleared txns */
 	public BigDecimal getCashDelta() {
 		return getCashDelta(this.transactions);
 	}
 
-	/**
-	 * Check cleared transactions against expected security holdings
-	 *
-	 * @return True if they match
-	 */
+	/** Check result of cleared transactions against expected security holdings */
 	public boolean holdingsMatch() {
 		if (this.holdings.positions.isEmpty()) {
 			return true;
 		}
 
-		final SecurityPortfolio delta = getPortfolioDelta();
+		SecurityPortfolio delta = getPortfolioDelta();
 
-		for (final SecurityPosition p : this.holdings.positions) {
-			final SecurityPosition op = delta.getPosition(p.security);
+		for (SecurityPosition p : this.holdings.positions) {
+			SecurityPosition op = delta.getPosition(p.security);
 
 			return Common.isEffectivelyEqual(p.endingShares, //
 					(op != null) ? op.endingShares : BigDecimal.ZERO);
 		}
 
 		for (final SecurityPosition p : delta.positions) {
-			final SecurityPosition op = this.holdings.getPosition(p.security);
+			SecurityPosition op = this.holdings.getPosition(p.security);
 
 			return (op != null) //
 					? Common.isEffectivelyEqual(p.endingShares, op.endingShares) //
@@ -285,13 +246,12 @@ public class Statement {
 		return true;
 	}
 
-	/**
-	 * Build a Portfolio position from the previous holdings and a list of
-	 * transactions
-	 *
-	 * @param txns The transactions
-	 * @return new portfolio holdings
-	 */
+	/** Build a Portfolio position based on the currently cleared transactions */
+	public SecurityPortfolio getPortfolioDelta() {
+		return getPortfolioDelta(this.transactions);
+	}
+
+	/** Build a Portfolio position based on a list of cleared transactions */
 	public SecurityPortfolio getPortfolioDelta(List<GenericTxn> txns) {
 		SecurityPortfolio clearedPositions = (this.prevStatement != null) //
 				? new SecurityPortfolio(this.prevStatement.holdings) //
@@ -310,16 +270,6 @@ public class Statement {
 		return clearedPositions;
 	}
 
-	/**
-	 * Build a Portfolio position from the previous holdings and the current
-	 * transactions
-	 *
-	 * @return Portfolio with holdings
-	 */
-	public SecurityPortfolio getPortfolioDelta() {
-		return getPortfolioDelta(this.transactions);
-	}
-
 	public String toString() {
 		final String s = this.date.toString() //
 				+ "  " + this.closingBalance //
@@ -327,4 +277,4 @@ public class Statement {
 
 		return s;
 	}
-};
+}

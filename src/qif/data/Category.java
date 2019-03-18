@@ -3,6 +3,7 @@ package qif.data;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Transaction category for tracking/budgeting */
 public class Category {
 	private static final List<Category> categories = new ArrayList<Category>();
 
@@ -11,11 +12,9 @@ public class Category {
 	}
 
 	public static Category getCategory(int catid) {
-		if (catid < 1 || catid >= categories.size()) {
-			return null;
-		}
-
-		return categories.get(catid);
+		return ((catid > 0) && catid < categories.size()) //
+				? categories.get(catid) //
+				: null;
 	}
 
 	public static Category findCategory(String name) {
@@ -33,8 +32,6 @@ public class Category {
 	public static void addCategory(Category cat) {
 		assert (findCategory(cat.name) == null);
 
-		cat.catid = getNextCategoryID();
-
 		while (categories.size() <= cat.catid) {
 			categories.add(null);
 		}
@@ -42,19 +39,22 @@ public class Category {
 		categories.set(cat.catid, cat);
 	}
 
-	public int catid;
-	public String name;
-	public String description;
-	public boolean expenseCategory;
+	public final int catid;
+	public final String name;
+	public final String description;
+	public final boolean isExpense;
 
-	public Category() {
-		this.catid = (short) 0;
+	public Category(String name, String desc, boolean isExpense) {
+		this.catid = getNextCategoryID();
+		this.name = name;
+		this.description = desc;
+		this.isExpense = isExpense;
 	}
 
 	public String toString() {
 		final String s = "Category" + this.catid + ": " + this.name //
 				+ " desc=" + this.description //
-				+ " expcat=" + this.expenseCategory //
+				+ " expense=" + this.isExpense //
 				+ "\n";
 
 		return s;

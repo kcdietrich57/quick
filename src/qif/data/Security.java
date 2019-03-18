@@ -4,12 +4,15 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class Security {
+	/** Map symbol to security */
 	private static final Map<String, Security> securities = new HashMap<String, Security>();
+	/** Securities indexed by ID */
 	private static final List<Security> securitiesByID = new ArrayList<Security>();
 
 	private static int nextSecurityID = 1;
@@ -19,8 +22,8 @@ public class Security {
 	}
 
 	public static void addSecurity(Security sec) {
-		Security existingName = findSecurityByName(sec.getName());
-		if (existingName != null) {
+		Security existingByName = findSecurityByName(sec.getName());
+		if (existingByName != null) {
 			Common.reportWarning("Adding duplicate security name");
 		}
 
@@ -28,8 +31,8 @@ public class Security {
 			sec.symbol = sec.getName();
 		}
 
-		Security existingSymbol = (sec.symbol != null) ? securities.get(sec.symbol) : null;
-		if (existingSymbol != null) {
+		Security existingBySymbol = (sec.symbol != null) ? securities.get(sec.symbol) : null;
+		if (existingBySymbol != null) {
 			Common.reportWarning("Adding duplicate security symbol");
 		}
 
@@ -70,20 +73,31 @@ public class Security {
 	}
 
 	public int secid;
+	/** Names the security is known by (first is default) */
 	public List<String> names;
+	/** Ticker symbol of security */
 	public String symbol;
+
 	public String type;
 	public String goal;
 
+	/** Lots for all holdings/transactions for this security */
 	private final List<Lot> lots = new ArrayList<Lot>();
+
+	/** Transactions involving this security */
 	public final List<InvestmentTxn> transactions = new ArrayList<InvestmentTxn>();
+
+	/** Price history for this security */
 	public final List<QPrice> prices = new ArrayList<QPrice>();
 
+	/** Information about a split involving this security */
 	public static class SplitInfo {
 		public QDate splitDate;
+		/** Multiplier applied to shares for the split (newsh = oldsh * ratio) */
 		public BigDecimal splitRatio;
 	}
 
+	/** Information about splits for this security */
 	public List<SplitInfo> splits = new ArrayList<SplitInfo>();
 
 	public Security(String symbol) {
@@ -109,14 +123,11 @@ public class Security {
 	}
 
 	public String getName() {
-		if (this.names.isEmpty()) {
-			return "";
-		} else {
-			return this.names.get(0);
-		}
+		return (this.names.isEmpty()) ? "" : this.names.get(0);
 	}
 
 	public void addTransaction(InvestmentTxn txn) {
+		// TODO should the list be sorted?
 		this.transactions.add(txn);
 
 		if ((txn.price != null) && //
@@ -165,25 +176,36 @@ public class Security {
 	// }
 
 	public QPrice getPriceForDate(QDate d) {
-		final int idx = getPriceIndexForDate(d);
+		int idx = getPriceIndexForDate(d);
 
 		if (idx < 0) {
 			return new QPrice(d, this.secid, BigDecimal.ZERO, null);
 		}
 
-		final QPrice p = this.prices.get(idx);
+		QPrice p = this.prices.get(idx);
 		return p;
 	}
 
 	private int getPriceIndexForDate(QDate d) {
+		// TODO use binary search
+		int idx2 = Collections.binarySearch(this.prices, //
+				new QPrice(d, 1, BigDecimal.ZERO, BigDecimal.ZERO), //
+				new Comparator<QPrice>() {
+					public int compare(QPrice p1, QPrice p2) {
+						int diff = p1.date.compareTo(p2.date);
+						return diff;
+					}
+				});
+
 		if (this.prices.isEmpty()) {
 			return -1;
 		}
 
 		int loidx = 0;
 		int hiidx = this.prices.size() - 1;
-		final QDate loval = this.prices.get(loidx).date;
-		final QDate hival = this.prices.get(hiidx).date;
+		QDate loval = this.prices.get(loidx).date;
+		QDate hival = this.prices.get(hiidx).date;
+
 		if (loval.compareTo(d) >= 0) {
 			return loidx;
 		}
@@ -193,12 +215,13 @@ public class Security {
 
 		int idx = loidx;
 		while (loidx < hiidx) {
-			final int mididx = (loidx + hiidx) / 2;
+			int mididx = (loidx + hiidx) / 2;
 			if (mididx <= loidx || mididx >= hiidx) {
 				idx = mididx;
 				break;
 			}
-			final QDate val = this.prices.get(mididx).date;
+
+			QDate val = this.prices.get(mididx).date;
 
 			if (val.compareTo(d) < 0) {
 				loidx = mididx;

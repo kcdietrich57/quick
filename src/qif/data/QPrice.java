@@ -4,10 +4,12 @@ import java.math.BigDecimal;
 
 import qif.importer.QFileReader;
 
+/** Price for a security on a given date */
 public class QPrice implements Comparable<QPrice> {
 	public final QDate date;
 	public final int secid;
 
+	// TODO meaning of price vs split-adjusted price?
 	private final BigDecimal price;
 	private final BigDecimal splitAdjustedPrice;
 
@@ -16,6 +18,10 @@ public class QPrice implements Comparable<QPrice> {
 		this.secid = secid;
 		this.price = price;
 		this.splitAdjustedPrice = splitAdjPrice;
+		
+		if (splitAdjPrice != null) {
+			//System.out.println();
+		}
 	}
 
 	public BigDecimal getPrice() {
@@ -23,15 +29,12 @@ public class QPrice implements Comparable<QPrice> {
 	}
 
 	public BigDecimal getSplitAdjustedPrice() {
-		return (this.splitAdjustedPrice != null) ? this.splitAdjustedPrice : this.price;
+		return (this.splitAdjustedPrice != null) //
+				? this.splitAdjustedPrice //
+				: this.price;
 	}
 
-	/**
-	 * Read/parse QIF security price (symbol/price/date)
-	 * 
-	 * @param qfr File reader
-	 * @return Price object
-	 */
+	/** Read/parse QIF security price (symbol/price/date) */
 	public static QPrice load(QFileReader qfr) {
 		final QFileReader.QLine qline = new QFileReader.QLine();
 
@@ -101,7 +104,8 @@ public class QPrice implements Comparable<QPrice> {
 			return false;
 		}
 
-		return Common.isEffectivelyEqual(this.splitAdjustedPrice, ((QPrice) o).splitAdjustedPrice);
+		return Common.isEffectivelyEqual( //
+				this.splitAdjustedPrice, ((QPrice) o).splitAdjustedPrice);
 	}
 
 	public int compareTo(QPrice o) {

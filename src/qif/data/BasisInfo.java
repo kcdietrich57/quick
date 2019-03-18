@@ -5,15 +5,15 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * This class represents tax basis info for a lot or lots.
- */
+// TODO Lot should have more comprehensive info (e.g. option grant basis vs time)
+/** This class represents tax basis info for a lot or lots. */
 public class BasisInfo {
 	public List<Lot> lots = new ArrayList<Lot>();
 	public BigDecimal totalShares = BigDecimal.ZERO;
 	public BigDecimal totalCost = BigDecimal.ZERO;
 	public BigDecimal averagePrice = BigDecimal.ZERO;
 
+	/** Add info for an additional lot */
 	public void addLot(Lot lot) {
 		if (this.lots.contains(lot)) {
 			return;

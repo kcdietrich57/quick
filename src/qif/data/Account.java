@@ -436,9 +436,8 @@ public class Account {
 		if (stat == null) {
 			QDate laststmtdate = getLastBalancedStatementDate();
 			Statement laststmt = getStatement(laststmtdate);
-			stat = new Statement(this.acctid);
+			stat = new Statement(this.acctid, getNextStatementDate());
 
-			stat.date = getNextStatementDate();
 			stat.prevStatement = laststmt;
 		}
 
@@ -463,7 +462,7 @@ public class Account {
 		if (MainWindow.instance.asOfDate.compareTo(QDate.today()) < 0) {
 			stat = getFirstStatementAfter(MainWindow.instance.asOfDate);
 			if (stat == null) {
-				stat = new Statement(this.acctid);
+				stat = new Statement(this.acctid, MainWindow.instance.asOfDate);
 			}
 		} else {
 			List<GenericTxn> txns = getUnclearedTransactions();
@@ -472,8 +471,7 @@ public class Account {
 				return null;
 			}
 
-			stat = new Statement(this.acctid);
-			stat.date = QDate.today();
+			stat = new Statement(this.acctid, QDate.today());
 			stat.addTransactions(txns);
 		}
 
@@ -502,10 +500,9 @@ public class Account {
 			addTransactionsToAsOfDate(txns, this.transactions);
 		}
 
-		Statement stmt = new Statement(this.acctid);
+		Statement stmt = new Statement(this.acctid, MainWindow.instance.asOfDate);
 		Common.sortTransactionsByDate(txns);
 		stmt.addTransactions(txns);
-		stmt.date = MainWindow.instance.asOfDate;
 
 		return stmt;
 	}
