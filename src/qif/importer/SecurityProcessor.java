@@ -86,12 +86,7 @@ class SecurityProcessor {
 			// "' does not specify a ticker symbol.");
 		}
 
-		final Security security = new Security(symbol);
-		security.names.add(name);
-		security.type = type;
-		security.goal = goal;
-
-		return security;
+		return new Security(symbol, name, type, goal);
 	}
 
 	public void processSecurities() {
@@ -184,19 +179,14 @@ class SecurityProcessor {
 
 				if (prices != null) {
 					for (QPrice price : prices) {
-						QPrice secprice = sec.getPriceForDate(price.date);
-
-						if (secprice == null) {
-							sec.addPrice(price, false);
-						} else if (price.compareTo(secprice) != 0) {
-							sec.addPrice(price, true);
+						if (!sec.addPrice(price)) {
 							++warningCount;
 						}
 					}
 
 					if (QifDom.verbose && (warningCount > 0)) {
 						Common.reportWarning( //
-								"Security price mismatches for " + symbol + ":" //
+								"Security prices replaced for " + symbol + ":" //
 										+ Integer.toString(warningCount));
 					}
 				}
@@ -218,7 +208,7 @@ class SecurityProcessor {
 
 			Security sec = Security.getSecurity(price.secid);
 			if (sec != null) {
-				sec.addPrice(price, true);
+				sec.addPrice(price);
 			}
 		}
 	}

@@ -15,8 +15,6 @@ public class Security {
 	/** Securities indexed by ID */
 	private static final List<Security> securitiesByID = new ArrayList<Security>();
 
-	private static int nextSecurityID = 1;
-
 	public static Collection<Security> getSecurities() {
 		return Collections.unmodifiableCollection(securities.values());
 	}
@@ -24,20 +22,17 @@ public class Security {
 	public static void addSecurity(Security sec) {
 		Security existingByName = findSecurityByName(sec.getName());
 		if (existingByName != null) {
-			Common.reportWarning("Adding duplicate security name");
-		}
-
-		if (sec.symbol == null) {
-			sec.symbol = sec.getName();
+			Common.reportError("Adding duplicate security name '" + sec.getName() + "'");
 		}
 
 		Security existingBySymbol = (sec.symbol != null) ? securities.get(sec.symbol) : null;
 		if (existingBySymbol != null) {
-			Common.reportWarning("Adding duplicate security symbol");
+			Common.reportError("Adding duplicate security symbol '" + sec.symbol + "'");
 		}
 
-		if (sec.secid == 0) {
-			sec.secid = nextSecurityID++;
+		if (sec.secid != securities.size() + 1) {
+			Common.reportError("Bad security id '" + sec.secid + "'" //
+					+ " should be " + (securities.size() + 1));
 		}
 
 		while (securitiesByID.size() <= sec.secid) {
@@ -72,14 +67,21 @@ public class Security {
 		return securities.get(sym);
 	}
 
-	public int secid;
+	/** Information about a split involving this security */
+	public static class SplitInfo {
+		public QDate splitDate;
+		/** Multiplier applied to shares for the split (newsh = oldsh * ratio) */
+		public BigDecimal splitRatio;
+	}
+
+	public final int secid;
 	/** Names the security is known by (first is default) */
 	public List<String> names;
 	/** Ticker symbol of security */
-	public String symbol;
+	public final String symbol;
 
-	public String type;
-	public String goal;
+	public final String type;
+	public final String goal;
 
 	/** Lots for all holdings/transactions for this security */
 	private final List<Lot> lots = new ArrayList<Lot>();
@@ -90,23 +92,30 @@ public class Security {
 	/** Price history for this security */
 	public final List<QPrice> prices = new ArrayList<QPrice>();
 
-	/** Information about a split involving this security */
-	public static class SplitInfo {
-		public QDate splitDate;
-		/** Multiplier applied to shares for the split (newsh = oldsh * ratio) */
-		public BigDecimal splitRatio;
-	}
-
 	/** Information about splits for this security */
 	public List<SplitInfo> splits = new ArrayList<SplitInfo>();
 
-	public Security(String symbol) {
-		this.secid = 0;
-		this.symbol = symbol;
+	public Security(String symbol, String name, String type, String goal) {
+		this.secid = securities.size() + 1;
+
+		this.symbol = (symbol != null) ? symbol : name;
 
 		this.names = new ArrayList<String>();
-		this.type = "";
-		this.goal = "";
+		this.names.add(name);
+		this.type = type;
+		this.goal = goal;
+	}
+
+	public Security(String symbol, String name) {
+		this(symbol, name, "", "");
+	}
+
+	public String getSymbol() {
+		return this.symbol;
+	}
+
+	public String getName() {
+		return (this.names.isEmpty()) ? "" : this.names.get(0);
 	}
 
 	public List<Lot> getLots() {
@@ -116,14 +125,6 @@ public class Security {
 	public void setLots(List<Lot> lots) {
 		this.lots.clear();
 		this.lots.addAll(lots);
-	}
-
-	public String getSymbol() {
-		return (this.symbol != null) ? this.symbol : getName();
-	}
-
-	public String getName() {
-		return (this.names.isEmpty()) ? "" : this.names.get(0);
 	}
 
 	public void addTransaction(InvestmentTxn txn) {
@@ -141,106 +142,106 @@ public class Security {
 		}
 	}
 
-	public void addPrice(QPrice newPrice, boolean replace) {
+	/** Add a price to the history of this security */
+	public boolean addPrice(QPrice newPrice) {
 		if (newPrice == null) {
-			return;
+			return true;
 		}
 
-		final int idx = getPriceIndexForDate(newPrice.date);
-
-		if (idx >= 0) {
-			final QPrice p = this.prices.get(idx);
-			final int diff = newPrice.date.compareTo(p.date);
-
-			if (diff == 0) {
-				if (replace) {
-					this.prices.set(idx, newPrice);
-				} else {
-					if (!p.getSplitAdjustedPrice().equals(newPrice.getSplitAdjustedPrice()) //
-							&& QifDom.verbose) {
-						Common.reportWarning("Security price mismatch");
-					}
-				}
-			} else if (diff < 0) {
-				this.prices.add(idx, newPrice);
-			} else {
-				this.prices.add(idx + 1, newPrice);
-			}
-		} else {
+		if (this.prices.isEmpty()) {
 			this.prices.add(newPrice);
+			return true;
 		}
-	}
 
-	// private void sortPrices() {
-	// Collections.sort(this.prices, (o1, o2) -> o1.date.compareTo(o2.date));
-	// }
-
-	public QPrice getPriceForDate(QDate d) {
-		int idx = getPriceIndexForDate(d);
-
-		if (idx < 0) {
-			return new QPrice(d, this.secid, BigDecimal.ZERO, null);
+		int idx = getPriceIndexForDate(newPrice.date);
+		if ((idx < 0) || (idx >= this.prices.size())) {
+			this.prices.add(newPrice);
+			return true;
 		}
 
 		QPrice p = this.prices.get(idx);
-		return p;
+		int diff = newPrice.date.compareTo(p.date);
+
+		if (diff == 0) {
+			BigDecimal oldp = p.getSplitAdjustedPrice();
+			BigDecimal newp = newPrice.getSplitAdjustedPrice();
+
+			if (!oldp.equals(newp)) {
+				if (QifDom.verbose) {
+					Common.reportWarning(String.format( //
+							"Security price (%s) was replaced (%s)", //
+							Common.formatAmount3(oldp).trim(), //
+							Common.formatAmount3(newp).trim()));
+				}
+
+				this.prices.set(idx, newPrice);
+				return false;
+			}
+		} else if (diff > 0) {
+			this.prices.add(idx + 1, newPrice);
+		} else {
+			this.prices.add(idx, newPrice);
+		}
+
+		return true;
 	}
 
-	private int getPriceIndexForDate(QDate d) {
-		// TODO use binary search
-		int idx2 = Collections.binarySearch(this.prices, //
-				new QPrice(d, 1, BigDecimal.ZERO, BigDecimal.ZERO), //
+	/** Get Security price on a given date */
+	public QPrice getPriceForDate(QDate date) {
+		int idx = getPriceIndexForDate(date);
+
+		if (idx >= 0) {
+			QPrice ret = this.prices.get(idx);
+
+			if (ret.date.compareTo(date) <= 0) {
+				return ret;
+			}
+		}
+
+		// We either have no price history, or the date is before the start
+		return new QPrice(date, this.secid, BigDecimal.ZERO, null);
+	}
+
+	/**
+	 * Find position in the price history nearest/prior to a given date.<br>
+	 * Return exact match if possible.<br>
+	 * Return closest date before if possible.<br>
+	 * Return first date if argument is before the start of the history.
+	 */
+	private int getPriceIndexForDate(QDate date) {
+		int idx = Collections.binarySearch(this.prices, //
+				new QPrice(date, 1, BigDecimal.ZERO, BigDecimal.ZERO), //
 				new Comparator<QPrice>() {
 					public int compare(QPrice p1, QPrice p2) {
-						int diff = p1.date.compareTo(p2.date);
-						return diff;
+						return p1.date.compareTo(p2.date);
 					}
 				});
 
-		if (this.prices.isEmpty()) {
-			return -1;
-		}
+		// Adjust position when we don't have an exact match
+		if (idx < 0) {
+			idx = -(idx + 1); // insertion point
 
-		int loidx = 0;
-		int hiidx = this.prices.size() - 1;
-		QDate loval = this.prices.get(loidx).date;
-		QDate hival = this.prices.get(hiidx).date;
-
-		if (loval.compareTo(d) >= 0) {
-			return loidx;
-		}
-		if (hival.compareTo(d) <= 0) {
-			return hiidx;
-		}
-
-		int idx = loidx;
-		while (loidx < hiidx) {
-			int mididx = (loidx + hiidx) / 2;
-			if (mididx <= loidx || mididx >= hiidx) {
-				idx = mididx;
-				break;
+			// Use the date prior to the insertion point, if not at beginning
+			if (idx > 0) {
+				--idx;
 			}
 
-			QDate val = this.prices.get(mididx).date;
-
-			if (val.compareTo(d) < 0) {
-				loidx = mididx;
-			} else if (val.compareTo(d) > 0) {
-				hiidx = mididx;
-			} else {
-				idx = mididx;
-				break;
+			if (idx >= this.prices.size()) {
+				idx = this.prices.size() - 1;
 			}
 		}
 
 		return idx;
 	}
 
+	/**
+	 * Return the cumulative split multiplier for this security from the start of
+	 * the history up to a specific date.
+	 */
 	public BigDecimal getSplitRatioForDate(QDate d) {
 		BigDecimal ret = BigDecimal.ONE;
 
-		for (int ii = this.splits.size() - 1; ii >= 0; --ii) {
-			final SplitInfo si = this.splits.get(ii);
+		for (SplitInfo si : this.splits) {
 			if (si.splitDate.compareTo(d) < 0) {
 				break;
 			}
@@ -272,4 +273,4 @@ public class Security {
 
 		return s;
 	}
-};
+}

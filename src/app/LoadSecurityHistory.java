@@ -32,7 +32,7 @@ public class LoadSecurityHistory {
 
 		for (final File f : files) {
 			try {
-				final Security sec = new Security(f.getName());
+				final Security sec = new Security(f.getName(), f.getName());
 				securities.add(sec);
 				// QifDomReader.loadQuoteFile(sec, f);
 			} catch (final Exception e) {
