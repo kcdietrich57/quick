@@ -246,12 +246,15 @@ public class Statement {
 		return true;
 	}
 
-	/** Build a Portfolio position based on the currently cleared transactions */
+	/** Build changes to previous Portfolio based on the cleared transactions */
 	public SecurityPortfolio getPortfolioDelta() {
 		return getPortfolioDelta(this.transactions);
 	}
 
-	/** Build a Portfolio position based on a list of cleared transactions */
+	/**
+	 * Build changes to the previous Portfolio position based on a list of cleared
+	 * transactions
+	 */
 	public SecurityPortfolio getPortfolioDelta(List<GenericTxn> txns) {
 		SecurityPortfolio clearedPositions = (this.prevStatement != null) //
 				? new SecurityPortfolio(this.prevStatement.holdings) //

@@ -9,6 +9,7 @@ import qif.report.StatusForDateModel.AccountSummary;
 import qif.report.StatusForDateModel.Section;
 import qif.report.StatusForDateModel.SecuritySummary;
 
+/** Output a text representation of investment performance */
 public class InvestmentPerformanceReporter {
 
 	public static class Balances {

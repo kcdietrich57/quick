@@ -144,6 +144,7 @@ public class StockOption {
 			}
 		}
 
+		// TODO why would we always expect to find an option?
 		if (!found && QifDom.verbose) {
 			Common.reportWarning("Can't find match for option split transaction " //
 					+ txn.toString());

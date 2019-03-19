@@ -1,6 +1,5 @@
 package qif.data;
 
-import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -277,41 +276,6 @@ public class Common {
 		return new BigDecimal(numerator).divide(new BigDecimal(denominator));
 	}
 
-	private static void writeIfSet(PrintWriter pw, String tag, String value) {
-		pw.println("" + tag + value);
-	}
-
-	private static void writeln(PrintWriter pw, String tag) {
-		pw.println(tag);
-	}
-
-	private static void write(PrintWriter pw, char key) {
-		pw.println("" + key);
-	}
-
-	private static void write(PrintWriter pw, String s) {
-		pw.println(s);
-	}
-
-	private static void writeIfSet(PrintWriter pw, char key, String value) {
-		if (value != null && value.length() > 0) {
-			write(pw, key, value);
-		}
-	}
-
-	private static void write(PrintWriter pw, char key, String value) {
-		pw.println("" + key + value);
-	}
-
-	private static BigDecimal sumAmounts(List<GenericTxn> txns) {
-		BigDecimal totaltx = BigDecimal.ZERO;
-		for (final GenericTxn t : txns) {
-			totaltx = totaltx.add(t.getAmount());
-		}
-
-		return totaltx;
-	}
-
 	public static BigDecimal sumCashAmounts(List<GenericTxn> txns) {
 		BigDecimal totaltx = BigDecimal.ZERO;
 		for (GenericTxn t : txns) {
@@ -321,9 +285,44 @@ public class Common {
 		return totaltx;
 	}
 
-	private static String getCheckNumString(GenericTxn t) {
-		return (t instanceof NonInvestmentTxn) //
-				? ((NonInvestmentTxn) t).chkNumber //
-				: "";
-	}
+//	private static void writeIfSet(PrintWriter pw, String tag, String value) {
+//		pw.println("" + tag + value);
+//	}
+//
+//	private static void writeln(PrintWriter pw, String tag) {
+//		pw.println(tag);
+//	}
+//
+//	private static void write(PrintWriter pw, char key) {
+//		pw.println("" + key);
+//	}
+//
+//	private static void write(PrintWriter pw, String s) {
+//		pw.println(s);
+//	}
+//
+//	private static void writeIfSet(PrintWriter pw, char key, String value) {
+//		if (value != null && value.length() > 0) {
+//			write(pw, key, value);
+//		}
+//	}
+//
+//	private static BigDecimal sumAmounts(List<GenericTxn> txns) {
+//		BigDecimal totaltx = BigDecimal.ZERO;
+//		for (final GenericTxn t : txns) {
+//			totaltx = totaltx.add(t.getAmount());
+//		}
+//
+//		return totaltx;
+//	}
+//
+//	private static String getCheckNumString(GenericTxn t) {
+//		return (t instanceof NonInvestmentTxn) //
+//				? ((NonInvestmentTxn) t).chkNumber //
+//				: "";
+//	}
+//
+//	private static void write(PrintWriter pw, char key, String value) {
+//		pw.println("" + key + value);
+//	}
 }

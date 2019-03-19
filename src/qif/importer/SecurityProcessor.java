@@ -15,6 +15,10 @@ import qif.data.SecurityPortfolio;
 import qif.data.SecurityPosition;
 import qif.data.StockOption;
 
+/**
+ * Helper class for loading securities and setting up security and lot details
+ * afterwards.
+ */
 class SecurityProcessor {
 	private QifDomReader qrdr;
 
@@ -22,6 +26,7 @@ class SecurityProcessor {
 		this.qrdr = qrdr;
 	}
 
+	/** Process securities section of an input file and create security objects */
 	public void loadSecurities() {
 		for (;;) {
 			String s = this.qrdr.getFileReader().peekLine();
@@ -48,6 +53,7 @@ class SecurityProcessor {
 		}
 	}
 
+	/** Load an individual security from the input file */
 	private Security loadSecurity() {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
@@ -77,21 +83,27 @@ class SecurityProcessor {
 				break;
 
 			default:
-				Common.reportError("syntax error");
+				Common.reportError("Unknown security field: " + qline.value);
 			}
 		}
 
+		if (name == null) {
+			Common.reportError("No name or symbol for security");
+		}
+
 		if (symbol == null) {
-			// Common.reportWarning("Security '" + name + //
-			// "' does not specify a ticker symbol.");
+			// Common.reportWarning("No ticker symbol for '" + name + "'");
 		}
 
 		return new Security(symbol, name, type, goal);
 	}
 
+	/** Process security transactions for all accounts after loading from QIF */
 	public void processSecurities() {
+		// Process global porfolio info
 		processSecurities2(SecurityPortfolio.portfolio, GenericTxn.getAllTransactions());
 
+		// Process holdings for each account
 		for (Account a : Account.getAccounts()) {
 			if (a.isInvestmentAccount()) {
 				processSecurities2(a.securities, a.transactions);
@@ -99,8 +111,14 @@ class SecurityProcessor {
 		}
 	}
 
+	/**
+	 * Process transactions for securities in a portfolio.<br>
+	 * Add transactions to positions appropriately.<br>
+	 * Add share balance to positions.<br>
+	 * Process splits along the way.
+	 */
 	private void processSecurities2(SecurityPortfolio port, List<GenericTxn> txns) {
-		for (final GenericTxn gtxn : txns) {
+		for (GenericTxn gtxn : txns) {
 			if (!(gtxn instanceof InvestmentTxn) //
 					|| (((InvestmentTxn) gtxn).security == null)) {
 				continue;
@@ -151,6 +169,7 @@ class SecurityProcessor {
 		}
 	}
 
+	/** Load quotes from CSV input files in a specified directory */
 	public void loadSecurityPriceHistory(File quoteDirectory) {
 		if (!quoteDirectory.isDirectory()) {
 			return;
@@ -194,6 +213,7 @@ class SecurityProcessor {
 		}
 	}
 
+	/** Load quotes from a QIF input file */
 	public void loadPrices() {
 		for (;;) {
 			String s = this.qrdr.getFileReader().peekLine();

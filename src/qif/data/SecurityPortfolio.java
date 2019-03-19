@@ -9,11 +9,16 @@ import java.util.Map;
 
 import qif.data.SecurityPosition.PositionInfo;
 
-// This can be global information, or for a single account or statement
+/**
+ * History for a group of securities, either global, or for a single account or
+ * statement
+ */
 public class SecurityPortfolio {
 
-	public static final SecurityPortfolio portfolio = new SecurityPortfolio();
+	/** The global history of all securities */
+	public static SecurityPortfolio portfolio = new SecurityPortfolio();
 
+	/** Position history for each security tracked in this portfolio */
 	public List<SecurityPosition> positions;
 
 	public SecurityPortfolio() {
@@ -46,11 +51,7 @@ public class SecurityPortfolio {
 		pos.shrBalance.add(pos.endingShares);
 	}
 
-	/**
-	 * Build state from transactions
-	 *
-	 * @param stat Statement containing my transactions
-	 */
+	/** Build state from transactions in a statement */
 	public void captureTransactions(Statement stat) {
 		SecurityPortfolio dport = stat.getPortfolioDelta();
 		SecurityPortfolio prevPort = (stat.prevStatement != null) //
@@ -65,14 +66,9 @@ public class SecurityPortfolio {
 		}
 	}
 
-	/**
-	 * Find a position for a security, if it exists
-	 *
-	 * @param sec The security
-	 * @return The position, null if nonexistent
-	 */
+	/** Find a position for a security, if it exists */
 	public SecurityPosition findPosition(Security sec) {
-		for (final SecurityPosition pos : this.positions) {
+		for (SecurityPosition pos : this.positions) {
 			if (pos.security == sec) {
 				return pos;
 			}
@@ -81,30 +77,12 @@ public class SecurityPortfolio {
 		return null;
 	}
 
-	/**
-	 * Find a position for a security. Create it if it does not exist.
-	 *
-	 * @param secid
-	 * @return The position
-	 */
+	/** Find a position for a security. Create it if it does not exist. */
 	public SecurityPosition getPosition(int secid) {
-		Security sec = Security.getSecurity(secid);
-		SecurityPosition pos = findPosition(sec);
-
-		if (pos == null) {
-			pos = new SecurityPosition(sec);
-			this.positions.add(pos);
-		}
-
-		return pos;
+		return getPosition(Security.getSecurity(secid));
 	}
 
-	/**
-	 * Find a position for a security. Create it if it does not exist.
-	 *
-	 * @param sec The security
-	 * @return The position
-	 */
+	/** Find a position for a security. Create it if it does not exist. */
 	public SecurityPosition getPosition(Security sec) {
 		SecurityPosition pos = findPosition(sec);
 
@@ -116,9 +94,12 @@ public class SecurityPortfolio {
 		return pos;
 	}
 
+	/** Remove empty positions from this portfolio */
 	public void purgeEmptyPositions() {
-		for (final Iterator<SecurityPosition> iter = this.positions.iterator(); iter.hasNext();) {
-			final SecurityPosition p = iter.next();
+		Iterator<SecurityPosition> iter = this.positions.iterator();
+
+		while (iter.hasNext()) {
+			SecurityPosition p = iter.next();
 
 			if (Common.isEffectivelyZero(p.endingShares)) {
 				iter.remove();
@@ -126,6 +107,7 @@ public class SecurityPortfolio {
 		}
 	}
 
+	/** Get all non-empty positions for a given date (map Security to position) */
 	public Map<Security, PositionInfo> getOpenPositionsForDate(QDate d) {
 		Map<Security, PositionInfo> ret = new HashMap<Security, PositionInfo>();
 
@@ -140,6 +122,7 @@ public class SecurityPortfolio {
 		return ret;
 	}
 
+	/** Get non-empty positions for a given date/security (map acct to position) */
 	public Map<Account, PositionInfo> getOpenPositionsForDateByAccount(Security sec, QDate d) {
 		Map<Account, PositionInfo> ret = new HashMap<Account, PositionInfo>();
 
@@ -154,76 +137,58 @@ public class SecurityPortfolio {
 		return ret;
 	}
 
+	/** Calculate value for a given date */
 	public BigDecimal getPortfolioValueForDate(QDate d) {
 		BigDecimal portValue = BigDecimal.ZERO;
 
-		for (final SecurityPosition pos : this.positions) {
+		for (SecurityPosition pos : this.positions) {
 			portValue = portValue.add(pos.getValueForDate(d));
 		}
 
 		return portValue;
 	}
 
+	/** Compares holdings to a target (e.g. for statement reconciliation) */
 	public static class HoldingsComparison {
 		public List<SecurityPosition> desiredPositions = new ArrayList<SecurityPosition>();
 		public List<SecurityPosition> actualPositions = new ArrayList<SecurityPosition>();
 
+		/** Set the positions to compare */
 		public void addPosition(SecurityPosition desired, SecurityPosition actual) {
 			this.desiredPositions.add(desired);
 			this.actualPositions.add(actual);
 		}
 
 		public String getSecurityName(int idx) {
-			if ((idx < 0) || (idx >= this.desiredPositions.size())) {
-				return "";
-			}
-
 			SecurityPosition pos = getPosition(idx);
-
-			return pos.security.getName();
+			return (pos != null) ? pos.security.getName() : "";
 		}
 
-		public BigDecimal getDesiredShares(int idx) {
-			if ((idx < 0) || (idx >= this.desiredPositions.size())) {
-				return BigDecimal.ZERO;
-			}
-
-			SecurityPosition pos = this.desiredPositions.get(idx);
-
-			return (pos != null) ? pos.endingShares : BigDecimal.ZERO;
-		}
-
-		public BigDecimal getActualShares(int idx) {
-			if ((idx < 0) || (idx >= this.actualPositions.size())) {
-				return BigDecimal.ZERO;
-			}
-
-			SecurityPosition pos = this.actualPositions.get(idx);
-
-			return (pos != null) ? pos.endingShares : BigDecimal.ZERO;
-		}
-
-		private SecurityPosition getPosition(int idx) {
-			assert (idx >= 0) && (idx < this.desiredPositions.size());
-
-			SecurityPosition pos = this.desiredPositions.get(idx);
-			return (pos != null) ? pos : this.actualPositions.get(idx);
-		}
-
+		/** Compare desired/actual holdings for each security position */
 		public boolean holdingsMatch() {
 			for (int ii = 0; ii < this.desiredPositions.size(); ++ii) {
-				SecurityPosition pos1 = this.desiredPositions.get(ii);
-				SecurityPosition pos2 = this.actualPositions.get(ii);
-
-				BigDecimal val1 = (pos1 != null) ? pos1.endingShares : BigDecimal.ZERO;
-				BigDecimal val2 = (pos2 != null) ? pos2.endingShares : BigDecimal.ZERO;
-
-				if (!Common.isEffectivelyEqual(val1, val2)) {
+				if (!Common.isEffectivelyEqual(getDesiredShares(ii), getActualShares(ii))) {
 					return false;
 				}
 			}
 
 			return true;
+		}
+
+		public BigDecimal getDesiredShares(int idx) {
+			SecurityPosition pos = this.desiredPositions.get(idx);
+			return (pos != null) ? pos.endingShares : BigDecimal.ZERO;
+		}
+
+		public BigDecimal getActualShares(int idx) {
+			SecurityPosition pos = this.actualPositions.get(idx);
+			return (pos != null) ? pos.endingShares : BigDecimal.ZERO;
+		}
+
+		/** Return desired or actual position by index */
+		private SecurityPosition getPosition(int idx) {
+			SecurityPosition pos = this.desiredPositions.get(idx);
+			return (pos != null) ? pos : this.actualPositions.get(idx);
 		}
 	}
 
@@ -246,6 +211,30 @@ public class SecurityPortfolio {
 		return comp;
 	}
 
+	/** Check if this portfolio has no data at all */
+	public boolean isEmpty() {
+		for (SecurityPosition p : this.positions) {
+			if (!p.transactions.isEmpty()) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/** Check whether this portfolio has any holdings on a given date */
+	public boolean isEmptyForDate(QDate d) {
+		for (SecurityPosition p : this.positions) {
+			int ii = GenericTxn.getLastTransactionIndexOnOrBeforeDate(p.transactions, d);
+
+			if ((ii >= 0) && !Common.isEffectivelyZero(p.shrBalance.get(ii))) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	public String toString() {
 		String s = "Securities Held:\n";
 
@@ -257,27 +246,5 @@ public class SecurityPortfolio {
 		}
 
 		return s;
-	}
-
-	public boolean isEmpty() {
-		for (final SecurityPosition p : this.positions) {
-			if (!p.transactions.isEmpty()) {
-				return false;
-			}
-		}
-
-		return true;
-	}
-
-	public boolean isEmptyForDate(QDate d) {
-		for (final SecurityPosition p : this.positions) {
-			int ii = GenericTxn.getLastTransactionIndexOnOrBeforeDate(p.transactions, d);
-
-			if ((ii >= 0) && !Common.isEffectivelyZero(p.shrBalance.get(ii))) {
-				return false;
-			}
-		}
-
-		return true;
 	}
 }

@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/** Holdings/price history for a single security */
 public class SecurityPosition {
+	/** Holdings/value for a security on a specified date */
 	public static class PositionInfo {
 		public final QDate date;
 		public final Security security;
@@ -41,6 +43,7 @@ public class SecurityPosition {
 		}
 	}
 
+	/** Helper to analyze performance of a security over a period of time */
 	public static class SecurityPerformance {
 		private final SecurityPosition pos;
 
@@ -62,10 +65,11 @@ public class SecurityPosition {
 			this.startShares = this.pos.getSharesForDate(this.start);
 			this.endShares = this.pos.getSharesForDate(this.end);
 
-			build();
+			analyzeTransactions();
 		}
 
-		private void build() {
+		/** TODO (incomplete) Gather performance data from security transactions */
+		private void analyzeTransactions() {
 			int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate( //
 					this.pos.transactions, start);
 			if (idx < 0) {
@@ -80,26 +84,46 @@ public class SecurityPosition {
 					this.contribution = this.contribution.add(txn.getAmount());
 					break;
 
+				case REINV_DIV:
+				case REINV_INT:
+				case REINV_LG:
+				case REINV_SH:
+
+				case DIV:
+				case INT_INC:
+				case MISC_INCX:
+					this.dividend = this.dividend.add(txn.getAmount());
+					break;
+
+				case SHRS_IN:
+				case SHRS_OUT:
+					// TODO should the performance info follow the shares?
+					break;
+
 				case BUY:
 				case SELL:
 				case GRANT:
 				case VEST:
 				case EXERCISE:
 				case STOCKSPLIT:
-				case SHRS_IN:
-				case SHRS_OUT:
 					// These don't fit into any performance category (neutral)
 					break;
 
-				case REINV_DIV:
-				case REINV_INT:
-				case REINV_LG:
-				case REINV_SH:
-					this.dividend = this.dividend.add(txn.getAmount());
+				// TODO consider these action types
+				case BUYX:
+				case SELLX:
+				case CASH:
+				case CONTRIBX:
+				case WITHDRAWX:
+				case XOUT:
+				case EXERCISEX:
+				case EXPIRE:
+				case REMINDER:
+				case OTHER:
 					break;
 
 				default:
-					System.out.println();
+					Common.reportWarning("Unknown action " + txn.getAction().toString());
 					break;
 				}
 			}
@@ -122,11 +146,12 @@ public class SecurityPosition {
 		}
 	}
 
-	public Security security;
+	public final Security security;
 	private BigDecimal startShares;
 	public BigDecimal endingShares;
 
-	public List<InvestmentTxn> transactions;
+	/** Transactions for this security */
+	public final List<InvestmentTxn> transactions;
 
 	/** Running share balance per transaction */
 	public List<BigDecimal> shrBalance;
@@ -163,6 +188,7 @@ public class SecurityPosition {
 		return this.endingShares;
 	}
 
+	/** Reset history with starting share balance and transactions */
 	public void setTransactions(List<InvestmentTxn> txns, BigDecimal startBal) {
 		Collections.sort(txns, (t1, t2) -> t1.getDate().compareTo(t2.getDate()));
 
@@ -178,6 +204,64 @@ public class SecurityPosition {
 		}
 	}
 
+	/** Get the value for the Nth transaction */
+	private BigDecimal getValueForIndex(QDate date, int idx) {
+		if (idx < 0) {
+			return BigDecimal.ZERO;
+		}
+
+		BigDecimal shares = this.shrBalance.get(idx);
+		BigDecimal price = this.security.getPriceForDate(date).getPrice();
+
+		BigDecimal value = shares.multiply(price);
+
+		return value;
+	}
+
+	/** Get value as of a given date */
+	public BigDecimal getValueForDate(QDate d) {
+		return getValueForIndex( //
+				d, //
+				GenericTxn.getLastTransactionIndexOnOrBeforeDate(this.transactions, d));
+	}
+
+	/** Get shares held on a given date */
+	public BigDecimal getSharesForDate(QDate date) {
+		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(this.transactions, date);
+		return (idx >= 0) ? shrBalance.get(idx) : BigDecimal.ZERO;
+	}
+
+	/** Create a PositionInfo summarizing the position/value on a given date */
+	public PositionInfo getPositionForDate(QDate date) {
+		BigDecimal shares = getSharesForDate(date);
+		return (shares == null) //
+				? null //
+				: new PositionInfo( //
+						this.security, //
+						date, //
+						shares, //
+						this.security.getPriceForDate(date).getPrice(), //
+						getValueForDate(date));
+	}
+
+	/** Encode position transactions for persistence: name;numtx[;txid;shrbal] */
+	public String formatForSave(Statement stat) {
+		int numtx = this.transactions.size();
+		String s = this.security.getName() + ";" + numtx;
+
+		for (int ii = 0; ii < numtx; ++ii) {
+			InvestmentTxn t = this.transactions.get(ii);
+			int txidx = stat.transactions.indexOf(t);
+			BigDecimal bal = this.shrBalance.get(ii);
+
+			assert txidx >= 0;
+
+			s += String.format(";%d;%f", txidx, bal);
+		}
+
+		return s;
+	}
+
 	public String toString() {
 		String s = String.format( //
 				"%-20s   %s shrs  %d txns", //
@@ -187,72 +271,6 @@ public class SecurityPosition {
 
 		if (this.value != null) {
 			s += "  " + Common.formatAmount3(this.value);
-		}
-
-		return s;
-	}
-
-	public BigDecimal getValueForTransaction(InvestmentTxn tx) {
-		int idx = this.transactions.indexOf(tx);
-
-		if (idx >= 0) {
-			return this.shrBalance.get(idx).multiply( //
-					this.security.getPriceForDate(tx.getDate()).getPrice());
-		}
-
-		return BigDecimal.ZERO;
-	}
-
-	public BigDecimal getValueForDate(QDate d) {
-		if (this.transactions.isEmpty()) {
-			return this.endingShares.multiply(this.security.getPriceForDate(d).getPrice());
-		}
-
-		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(this.transactions, d);
-
-		if (idx < 0) {
-			return BigDecimal.ZERO;
-		}
-
-		final InvestmentTxn txn = this.transactions.get(idx);
-		final BigDecimal tshrbal = this.shrBalance.get(idx);
-		final BigDecimal price = txn.security.getPriceForDate(d).getPrice();
-
-		return price.multiply(tshrbal);
-	}
-
-	public BigDecimal getSharesForDate(QDate date) {
-		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(this.transactions, date);
-
-		return (idx >= 0) ? shrBalance.get(idx) : BigDecimal.ZERO;
-	}
-
-	public PositionInfo getPositionForDate(QDate date) {
-		BigDecimal shares = getSharesForDate(date);
-		if (shares == null) {
-			return null;
-		}
-
-		return new PositionInfo( //
-				this.security, //
-				date, //
-				shares, //
-				this.security.getPriceForDate(date).getPrice(), //
-				getValueForDate(date));
-	}
-
-	// name;numtx[;txid;shrbal]
-	public String formatForSave(Statement stat) {
-		final int numtx = this.transactions.size();
-		String s = this.security.getName() + ";" + numtx;
-
-		for (int ii = 0; ii < numtx; ++ii) {
-			final InvestmentTxn t = this.transactions.get(ii);
-			final int txidx = stat.transactions.indexOf(t);
-			assert txidx >= 0;
-			final BigDecimal bal = this.shrBalance.get(ii);
-
-			s += String.format(";%d;%f", txidx, bal);
 		}
 
 		return s;

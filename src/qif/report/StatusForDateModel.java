@@ -17,9 +17,9 @@ public class StatusForDateModel {
 	/** Describes the holdings/value of a security at a point in time */
 	public static class SecuritySummary {
 		public String name;
-		public BigDecimal value = BigDecimal.ZERO;
 		public BigDecimal shares = BigDecimal.ZERO;
 		public BigDecimal price = BigDecimal.ZERO;
+		public BigDecimal value = BigDecimal.ZERO;
 
 		public String toString() {
 			return String.format("%s: %s@%s %s", //
@@ -76,10 +76,10 @@ public class StatusForDateModel {
 		build();
 	}
 
+	/** Determine which section an account belongs to */
 	public StatusForDateModel.Section getSectionForAccount(Account acct) {
 		for (StatusForDateModel.Section s : this.sections) {
 			if (acct.acctCategory == s.acctCategory) {
-			//if (s.acctCategory.contains(acct.type)) {
 				return s;
 			}
 		}
@@ -87,12 +87,9 @@ public class StatusForDateModel {
 		return null;
 	}
 
+	/** Construct model from account info */
 	private void build() {
 		for (Account a : Account.getAccounts()) {
-			if (!a.isOpenAsOf(this.date)) {
-				continue;
-			}
-
 			BigDecimal amt = a.getValueForDate(this.date);
 
 			if (!a.isOpenOn(this.date) //

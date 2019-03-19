@@ -12,6 +12,7 @@ import java.util.Map;
 public class Security {
 	/** Map symbol to security */
 	private static final Map<String, Security> securities = new HashMap<String, Security>();
+
 	/** Securities indexed by ID */
 	private static final List<Security> securitiesByID = new ArrayList<Security>();
 
@@ -69,18 +70,25 @@ public class Security {
 
 	/** Information about a split involving this security */
 	public static class SplitInfo {
+		/** Date of the split */
 		public QDate splitDate;
+
 		/** Multiplier applied to shares for the split (newsh = oldsh * ratio) */
 		public BigDecimal splitRatio;
 	}
 
 	public final int secid;
+
 	/** Names the security is known by (first is default) */
 	public List<String> names;
+
 	/** Ticker symbol of security */
 	public final String symbol;
 
+	/** Security type (stock, mutual fund, etc) */
 	public final String type;
+
+	/** Security goal (growth, income, etc) */
 	public final String goal;
 
 	/** Lots for all holdings/transactions for this security */
@@ -122,6 +130,7 @@ public class Security {
 		return Collections.unmodifiableList(this.lots);
 	}
 
+	/** Set/replace the set of lots for transactions on this security */
 	public void setLots(List<Lot> lots) {
 		this.lots.clear();
 		this.lots.addAll(lots);
@@ -142,7 +151,11 @@ public class Security {
 		}
 	}
 
-	/** Add a price to the history of this security */
+	/**
+	 * Add a price to the history of this security.<br>
+	 * If the quote is new or we already have a matching quote, we return true.<br>
+	 * If a different quote for that day exists, we replace it and return false.
+	 */
 	public boolean addPrice(QPrice newPrice) {
 		if (newPrice == null) {
 			return true;
