@@ -2,6 +2,7 @@ package qif.data;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -11,10 +12,12 @@ import java.util.List;
  * from the containing transaction.
  */
 public class SimpleTxn {
-	private static final List<SimpleTxn> NOSPLITS = new ArrayList<SimpleTxn>();
+	private static final List<SimpleTxn> NOSPLITS = //
+			Collections.unmodifiableList(new ArrayList<SimpleTxn>());
 
-	static int cashok = 0;
-	static int cashbad = 0;
+	/** Keep track of any cash transfers that don't match */
+	private static int cashok = 0;
+	private static int cashbad = 0;
 
 	private static int nextid = 1;
 
@@ -169,8 +172,8 @@ public class SimpleTxn {
 	}
 
 	public boolean amountIsEqual(SimpleTxn other, boolean strict) {
-		final BigDecimal amt1 = getXferAmount();
-		final BigDecimal amt2 = other.getXferAmount();
+		BigDecimal amt1 = getXferAmount();
+		BigDecimal amt2 = other.getXferAmount();
 
 		if (amt1.abs().compareTo(amt2.abs()) != 0) {
 			return false;
@@ -182,9 +185,9 @@ public class SimpleTxn {
 
 		// We know the magnitude is the same and non-zero
 		// Check whether they are equal or negative of each other
-		final boolean eq = amt1.equals(amt2);
+		boolean eq = amt1.equals(amt2);
 
-		final boolean ret = !eq || !strict;
+		boolean ret = !eq || !strict;
 
 		if ((getAction() == TxAction.CASH) //
 				|| (other.getAction() == TxAction.CASH)) {

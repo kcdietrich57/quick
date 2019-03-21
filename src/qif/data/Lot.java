@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Track a block of shares bought or sold as a unit */
 public class Lot {
 	private static int nextlotid = 1;
 

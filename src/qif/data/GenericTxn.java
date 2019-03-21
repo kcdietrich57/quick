@@ -216,9 +216,11 @@ public abstract class GenericTxn //
 	}
 
 	private QDate date;
-	public String clearedStatus;
+	//public String clearedStatus;
 	public QDate stmtdate;
 	private String payee;
+	
+	/** Keeps track of account balance - depends on order of transactions */
 	public BigDecimal runningTotal;
 
 	public GenericTxn(int acctid) {
@@ -226,7 +228,7 @@ public abstract class GenericTxn //
 
 		this.date = null;
 		this.payee = "";
-		this.clearedStatus = null;
+		//this.clearedStatus = null;
 		this.stmtdate = null;
 		this.runningTotal = null;
 
@@ -238,7 +240,7 @@ public abstract class GenericTxn //
 
 		this.date = other.date;
 		this.payee = other.payee;
-		this.clearedStatus = other.clearedStatus;
+		//this.clearedStatus = other.clearedStatus;
 		this.stmtdate = other.stmtdate;
 		this.runningTotal = null;
 

@@ -92,7 +92,7 @@ class TransactionProcessor {
 				txn.setAction(TxAction.parseAction(qline.value));
 				break;
 			case InvClearedStatus:
-				txn.clearedStatus = qline.value;
+				//txn.clearedStatus = qline.value;
 				break;
 			case InvCommission:
 				txn.commission = Common.getDecimal(qline.value);
@@ -201,7 +201,7 @@ class TransactionProcessor {
 				txn.setDate(Common.parseQDate(qline.value));
 				break;
 			case TxnClearedStatus:
-				txn.clearedStatus = qline.value;
+				//txn.clearedStatus = qline.value;
 				break;
 			case TxnNumber:
 				txn.chkNumber = qline.value;

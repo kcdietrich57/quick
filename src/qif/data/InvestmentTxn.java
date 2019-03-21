@@ -53,7 +53,7 @@ public class InvestmentTxn extends GenericTxn {
 		setDate(txn.getDate());
 		setAmount(txn.getAmount());
 
-		this.clearedStatus = txn.clearedStatus;
+		//this.clearedStatus = txn.clearedStatus;
 		this.runningTotal = BigDecimal.ZERO;
 		this.stmtdate = null;
 
@@ -472,7 +472,7 @@ public class InvestmentTxn extends GenericTxn {
 		s += " price=" + this.price;
 		s += " qty=" + this.quantity;
 		s += " amt=" + getAmount();
-		s += " clr=" + this.clearedStatus;
+		//s += " clr=" + this.clearedStatus;
 		// s += " txt=" + this.textFirstLine;
 		s += " memo=" + getMemo();
 		s += " comm=" + this.commission;

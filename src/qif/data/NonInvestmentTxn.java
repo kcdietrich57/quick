@@ -110,7 +110,7 @@ public class NonInvestmentTxn extends GenericTxn {
 		s += " date=" + ((d != null) ? getDate().toString() : "null");
 		Account a = Account.getAccountByID(this.acctid);
 		s += " acct=" + ((a != null) ? a.name : "null");
-		s += " clr:" + this.clearedStatus;
+		//s += " clr:" + this.clearedStatus;
 		s += " num=" + this.chkNumber;
 		s += " payee=" + getPayee();
 		s += " amt=" + getAmount();

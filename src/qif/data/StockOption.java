@@ -4,17 +4,41 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Class for tracking security option grants of various kinds */
 public class StockOption {
-	// GRANT Name Date Qty Price VestPeriod NumVests lifeMonths
-	// VEST Name Date VestNum
-	// SPLIT Name Date NewShr OldShr [newQty/newPrice]
-	// EXERCISE DName ate Qty Price
-	// CANCEL Name Date
-	// EXPIRE Name Date
+	// Life cycle of an option
+	// ==============================
+	// ---GRANT Name Date Qty Price VestPeriod NumVests lifeMonths
+	// This defines the parameters (size, vest method, price, lifetime)
+	// ---VEST Name Date VestNum
+	// Control of part or all of the options is given to the grantee
+	// ---SPLIT Name Date NewShr OldShr [newQty/newPrice]
+	// Splits divide or combine shares
+	// ---EXERCISE DName ate Qty Price
+	// Convert options to shares belonging to the grantee
+	// ---CANCEL Name Date
+	// The grantor withdraws the option from grant
+	// ---EXPIRE Name Date
+	// Non-exercised option automatically expires at the end of its life
+	// ==============================
 
-	public static List<StockOption> options = new ArrayList<StockOption>();
+	public static final List<StockOption> options = new ArrayList<StockOption>();
 
-	// GRANT Name Date Qty Price VestPeriod NumVests lifeMonths
+	/**
+	 * GRANT Grantor gives an option to the grantee.
+	 * 
+	 * @param name           Meaningful name given to identify the grant
+	 * @param date           Date the grant is given
+	 * @param acctid         Account tracking the grant
+	 * @param secid          Security being granted
+	 * @param shares         Number of shares granted
+	 * @param price          The share price the grantee pays on exercise
+	 * @param vestPeriod     How long until options are fully granted
+	 * @param vestCount      How many increments for vesting
+	 * @param lifetimeMonths How long from the grant date until expiration
+	 * 
+	 * @return A new option object
+	 */
 	public static StockOption grant( //
 			String name, //
 			QDate date, //
@@ -33,7 +57,15 @@ public class StockOption {
 		return opt;
 	}
 
-	// VEST Name Date VestNum
+	/**
+	 * VEST An option becomes (partially) eligible for exercise by the grantee.
+	 * 
+	 * @param name       Option name
+	 * @param date       Date of vesting
+	 * @param vestNumber Number of the vest event
+	 * 
+	 * @return A new option object for the vested option shares
+	 */
 	public static StockOption vest(String name, QDate date, int vestNumber) {
 		StockOption src = getOpenOption(name);
 		StockOption dst = new StockOption(src, date, vestNumber);
@@ -45,7 +77,16 @@ public class StockOption {
 		return dst;
 	}
 
-	// SPLIT Name Date NewShr OldShr [newQty/newPrice]
+	/**
+	 * SPLIT Shares are split or combined and the price adjusted accordingly.
+	 * 
+	 * @param name   Option name
+	 * @param date   Date of stock split
+	 * @param newshr Number of new shares for
+	 * @param oldshr This number of old shares
+	 * 
+	 * @return New option object representing the resulting option shares
+	 */
 	public static StockOption split(String name, QDate date, int newshr, int oldshr) {
 		StockOption src = getOpenOption(name);
 		StockOption dst = new StockOption(src, date, newshr, oldshr);
@@ -57,7 +98,15 @@ public class StockOption {
 		return dst;
 	}
 
-	// EXPIRE Name Date
+	/**
+	 * EXPIRE Options expire without being exercised
+	 * 
+	 * @param name Option name
+	 * @param date Date of expiration
+	 * 
+	 *             TODO why do we need an option object for non-options here?
+	 * @return New option object representing the new option state
+	 */
 	public static StockOption expire(String name, QDate date) {
 		StockOption src = getOpenOption(name);
 		StockOption dst = null;
@@ -72,13 +121,29 @@ public class StockOption {
 		return dst;
 	}
 
-	// CANCEL Name Date
+	/**
+	 * CANCEL Options withdrawn by grantee without being exercised
+	 * 
+	 * @param name Option name
+	 * @param date Date of cancellation
+	 * 
+	 *             TODO why do we need an option object for non-options here?
+	 * @return New option object representing the new option state
+	 */
 	public static StockOption cancel(String name, QDate date) {
-		// No apparent need to distinguish this from expiring
+		// TODO No apparent need to distinguish this from expiring
 		return expire(name, date);
 	}
 
-	// EXERCISE Name Date Qty Price
+	/**
+	 * EXERCISE Options converted into shares by grantee
+	 * 
+	 * @param name   Option name
+	 * @param date   Date of exercise
+	 * @param shares Number of shares exercised
+	 * 
+	 * @return New option object representing the exercised shares
+	 */
 	public static StockOption exercise(String name, QDate date, BigDecimal shares) {
 		StockOption opt = getOpenOption(name);
 		if (opt == null) {
@@ -96,13 +161,20 @@ public class StockOption {
 		return dst;
 	}
 
+	/** Match up a grant transaction with the option object */
 	public static void processGrant(InvestmentTxn txn) {
 		for (StockOption opt : options) {
 			if ((opt.srcOption == null) //
 					&& opt.date.equals(txn.getDate()) //
-					&& (opt.secid == txn.security.secid) //
-			// && opt.grantShares.equals(txn.getShares())
-			) {
+					&& (opt.secid == txn.security.secid)) {
+				if (QifDom.verbose && !opt.grantShares.equals(txn.getShares())) {
+					// TODO grant transactions in quicken have 0 shares
+					Common.reportWarning(String.format( //
+							"Option Grant shares (%s) don't match tx (%s)", //
+							Common.formatAmount3(opt.grantShares).trim(), //
+							Common.formatAmount3(txn.getShares()).trim()));
+				}
+
 				opt.transaction = txn;
 				return;
 			}
@@ -113,6 +185,7 @@ public class StockOption {
 		}
 	}
 
+	/** Match up a vest transaction with the option object */
 	public static void processVest(InvestmentTxn txn) {
 		for (StockOption opt : options) {
 			if ((opt.srcOption != null) //
@@ -130,6 +203,7 @@ public class StockOption {
 		}
 	}
 
+	/** Match up a split transaction with the option object */
 	public static void processSplit(InvestmentTxn txn) {
 		boolean found = false;
 
@@ -151,6 +225,7 @@ public class StockOption {
 		}
 	}
 
+	/** Match up an exercise transaction with the option object */
 	public static void processExercise(InvestmentTxn txn) {
 		for (StockOption opt : options) {
 			if ((opt.srcOption != null) //
@@ -170,6 +245,7 @@ public class StockOption {
 		}
 	}
 
+	/** Match up an expire transaction with the option object */
 	public static void processExpire(InvestmentTxn txn) {
 		for (StockOption opt : options) {
 			if ((opt.secid == txn.security.secid) //
@@ -189,6 +265,7 @@ public class StockOption {
 		}
 	}
 
+	/** Return an open option with a given name */
 	public static StockOption getOpenOption(String name) {
 		for (StockOption opt : StockOption.options) {
 			if ((opt.cancelDate == null) && (opt.name.equals(name))) {
@@ -199,10 +276,11 @@ public class StockOption {
 		return null;
 	}
 
+	/** Return a list of all open options */
 	public static List<StockOption> getOpenOptions() {
 		List<StockOption> openOptions = new ArrayList<StockOption>();
 
-		for (StockOption opt : StockOption.options) {
+		for (StockOption opt : options) {
 			if (opt.cancelDate == null) {
 				openOptions.add(opt);
 			}
@@ -211,6 +289,7 @@ public class StockOption {
 		return openOptions;
 	}
 
+	/** Return open options for an account on a given date */
 	public static List<StockOption> getOpenOptions(Account acct, QDate date) {
 		List<StockOption> retOptions = new ArrayList<StockOption>();
 
@@ -225,6 +304,7 @@ public class StockOption {
 		return retOptions;
 	}
 
+	/** The option this is derived from */
 	public final StockOption srcOption;
 
 	public final String name;
@@ -240,7 +320,7 @@ public class StockOption {
 	public final int vestCount;
 	public final int vestCurrent;
 
-	/** Remaining shares after partial exercise */
+	/** Remaining shares after partial exercise(s) */
 	public final BigDecimal sharesRemaining;
 
 	public InvestmentTxn transaction;
@@ -362,12 +442,14 @@ public class StockOption {
 		this.cancelDate = date;
 	}
 
+	/** Return whether this option is still in play on a given date */
 	public boolean isLiveOn(QDate date) {
 		return (this.date.compareTo(date) < 0) //
 				&& ((this.cancelDate == null) || (this.cancelDate.compareTo(date) > 0));
 
 	}
 
+	/** Return the option value on a given date (zero if underwater) */
 	public BigDecimal getValueForDate(QDate date) {
 		if (!isLiveOn(date)) {
 			return BigDecimal.ZERO;
@@ -380,10 +462,15 @@ public class StockOption {
 		return (netPrice.signum() > 0) ? shares.multiply(netPrice) : BigDecimal.ZERO;
 	}
 
+	/** Get the number of shares currently available */
 	public BigDecimal getAvailableShares() {
 		return getAvailableShares(false);
 	}
 
+	/**
+	 * Get the number of shares currently available (optionally include canceled
+	 * options)
+	 */
 	public BigDecimal getAvailableShares(boolean ignoreCancel) {
 		if (((this.cancelDate != null) && !ignoreCancel) //
 				|| (this.vestCurrent <= 0)) {

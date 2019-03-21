@@ -1,5 +1,9 @@
 package qif.data;
 
+import java.util.HashMap;
+import java.util.Map;
+
+/** A transaction's type (what it did) */
 public enum TxAction {
 	OTHER, CASH, XIN, XOUT, WITHDRAWX, //
 	CONTRIBX, INT_INC, MISC_INCX, //
@@ -10,83 +14,37 @@ public enum TxAction {
 	REINV_INT, //
 	STOCKSPLIT, REMINDER;
 
-	public static TxAction parseAction(String s) {
-		if ("StkSplit".equals(s)) {
-			return TxAction.STOCKSPLIT;
-		}
-		if ("Cash".equals(s)) {
-			return TxAction.CASH;
-		}
-		if ("XIn".equals(s)) {
-			return TxAction.XIN;
-		}
-		if ("XOut".equals(s)) {
-			return TxAction.XOUT;
-		}
-		if ("Buy".equals(s)) {
-			return TxAction.BUY;
-		}
-		if ("BuyX".equals(s)) {
-			return TxAction.BUYX;
-		}
-		if ("Sell".equals(s)) {
-			return TxAction.SELL;
-		}
-		if ("SellX".equals(s)) {
-			return TxAction.SELLX;
-		}
-		if ("ShrsIn".equals(s)) {
-			return TxAction.SHRS_IN;
-		}
-		if ("ShrsOut".equals(s)) {
-			return TxAction.SHRS_OUT;
-		}
-		if ("Grant".equals(s)) {
-			return TxAction.GRANT;
-		}
-		if ("Vest".equals(s)) {
-			return TxAction.VEST;
-		}
-		if ("Exercise".equals(s)) {
-			return TxAction.EXERCISE;
-		}
-		if ("ExercisX".equals(s)) {
-			return TxAction.EXERCISEX;
-		}
-		if ("Expire".equals(s)) {
-			return TxAction.EXPIRE;
-		}
-		if ("WithdrwX".equals(s)) {
-			return TxAction.WITHDRAWX;
-		}
-		if ("IntInc".equals(s)) {
-			return TxAction.INT_INC;
-		}
-		if ("MiscIncX".equals(s)) {
-			return TxAction.MISC_INCX;
-		}
-		if ("Div".equals(s)) {
-			return TxAction.DIV;
-		}
-		if ("ReinvDiv".equals(s)) {
-			return TxAction.REINV_DIV;
-		}
-		if ("ReinvLg".equals(s)) {
-			return TxAction.REINV_LG;
-		}
-		if ("ReinvSh".equals(s)) {
-			return TxAction.REINV_SH;
-		}
-		if ("ReinvInt".equals(s)) {
-			return TxAction.REINV_INT;
-		}
-		if ("ContribX".equals(s)) {
-			return TxAction.CONTRIBX;
-		}
-		if ("Reminder".equals(s)) {
-			return TxAction.REMINDER;
-		}
+	private static Map<String, TxAction> actionMap = new HashMap<String, TxAction>();
+	static {
+		actionMap.put("StkSplit", TxAction.STOCKSPLIT);
+		actionMap.put("Cash", TxAction.CASH);
+		actionMap.put("XIn", TxAction.XIN);
+		actionMap.put("XOut", TxAction.XOUT);
+		actionMap.put("Buy", TxAction.BUY);
+		actionMap.put("BuyX", TxAction.BUYX);
+		actionMap.put("Sell", TxAction.SELL);
+		actionMap.put("SellX", TxAction.SELLX);
+		actionMap.put("ShrsIn", TxAction.SHRS_IN);
+		actionMap.put("ShrsOut", TxAction.SHRS_OUT);
+		actionMap.put("Grant", TxAction.GRANT);
+		actionMap.put("Vest", TxAction.VEST);
+		actionMap.put("Exercise", TxAction.EXERCISE);
+		actionMap.put("ExercisX", TxAction.EXERCISEX);
+		actionMap.put("Expire", TxAction.EXPIRE);
+		actionMap.put("WithdrwX", TxAction.WITHDRAWX);
+		actionMap.put("IntInc", TxAction.INT_INC);
+		actionMap.put("MiscIncX", TxAction.MISC_INCX);
+		actionMap.put("Div", TxAction.DIV);
+		actionMap.put("ReinvDiv", TxAction.REINV_DIV);
+		actionMap.put("ReinvLg", TxAction.REINV_LG);
+		actionMap.put("ReinvSh", TxAction.REINV_SH);
+		actionMap.put("ReinvInt", TxAction.REINV_INT);
+		actionMap.put("ContribX", TxAction.CONTRIBX);
+		actionMap.put("Reminder", TxAction.REMINDER);
+	}
 
-		return TxAction.OTHER;
+	public static TxAction parseAction(String s) {
+		TxAction act = actionMap.get(s);
+		return (act != null) ? act : TxAction.OTHER;
 	}
 }
