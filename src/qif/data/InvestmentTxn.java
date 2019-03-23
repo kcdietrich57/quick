@@ -10,24 +10,32 @@ import java.util.Map;
 
 import qif.data.SecurityPosition.PositionInfo;
 
+/** Transaction for investment account (may involve security) */
 public class InvestmentTxn extends GenericTxn {
 	private static final List<InvestmentTxn> NO_XFER_TXNS = //
 			Collections.unmodifiableList(new ArrayList<InvestmentTxn>());
 
+	public static enum ShareAction {
+		NO_ACTION, NEW_SHARES, DISPOSE_SHARES, TRANSFER_OUT, TRANSFER_IN, SPLIT
+	};
+
+	/** TODO not for non-investment txns? Action taken by transaction */
 	private TxAction action;
+
 	public Security security;
 	public BigDecimal price;
 	private BigDecimal quantity;
-	// public String textFirstLine;
 	public BigDecimal commission;
-	public String accountForTransfer;
 
+	public String accountForTransfer;
 	public BigDecimal amountTransferred;
 	public List<InvestmentTxn> xferTxns;
 
-	public List<Lot> lots;
-	public List<Lot> lotsCreated;
-	public List<Lot> lotsDisposed;
+	public final List<Lot> lots;
+	public final List<Lot> lotsCreated;
+	public final List<Lot> lotsDisposed;
+
+	// public String textFirstLine;
 
 	public InvestmentTxn(int acctid) {
 		super(acctid);
@@ -47,13 +55,14 @@ public class InvestmentTxn extends GenericTxn {
 		this.lotsDisposed = new ArrayList<Lot>();
 	}
 
+	/** TODO Construct a dummy transaction for a split (see LotProcessor) */
 	public InvestmentTxn(int acctid, InvestmentTxn txn) {
 		super(acctid);
 
 		setDate(txn.getDate());
 		setAmount(txn.getAmount());
 
-		//this.clearedStatus = txn.clearedStatus;
+		// this.clearedStatus = txn.clearedStatus;
 		this.runningTotal = BigDecimal.ZERO;
 		this.stmtdate = null;
 
@@ -80,11 +89,19 @@ public class InvestmentTxn extends GenericTxn {
 		return this.action;
 	}
 
+	public String getSecurityName() {
+		if (this.security != null) {
+			return this.security.getName();
+		}
+
+		return "N/A";
+	}
+
 	public void setQuantity(BigDecimal qty) {
 		this.quantity = qty;
 	}
 
-	private boolean isStockOption() {
+	private boolean isStockOptionTransaction() {
 		switch (getAction()) {
 		case GRANT:
 		case VEST:
@@ -100,17 +117,13 @@ public class InvestmentTxn extends GenericTxn {
 
 	public BigDecimal getShares() {
 		if ((this.quantity == null) //
-				|| isStockOption() //
+				|| isStockOptionTransaction() //
 				|| (getAction() == TxAction.STOCKSPLIT)) {
 			return BigDecimal.ZERO;
 		}
 
 		return this.quantity;
 	}
-
-	public static enum ShareAction {
-		NO_ACTION, NEW_SHARES, DISPOSE_SHARES, TRANSFER_OUT, TRANSFER_IN, SPLIT
-	};
 
 	public ShareAction getShareAction() {
 		switch (getAction()) {
@@ -191,6 +204,7 @@ public class InvestmentTxn extends GenericTxn {
 		}
 	}
 
+	/** For a stock split transaction, calculate the split share multiplier */
 	public BigDecimal getSplitRatio() {
 		if ((this.quantity == null) || (getAction() != TxAction.STOCKSPLIT)) {
 			return BigDecimal.ONE;
@@ -199,148 +213,15 @@ public class InvestmentTxn extends GenericTxn {
 		return this.quantity.divide(BigDecimal.TEN);
 	}
 
-	public void repair() {
-		TxAction action = getAction();
-
-		if (action == TxAction.OTHER) {
-			Common.reportError("Transaction has unknown type: " + //
-					Account.getAccountByID(this.acctid).name);
-			return;
-		}
-
-		if ((action == TxAction.CASH) //
-				&& (getAmount() == null) && (this.amountTransferred == null)) {
-			setAmount(BigDecimal.ZERO);
-		}
-
-		if (action == TxAction.XOUT) {
-			this.amountTransferred = this.amountTransferred.negate();
-			setAmount(this.amountTransferred);
-		}
-
-		switch (action) {
-		case SHRS_OUT:
-		case SELL:
-		case SELLX:
-		case EXERCISE:
-		case EXERCISEX:
-			this.quantity = this.quantity.negate();
-			break;
-
-		case XIN: // amt/xamt
-		case INT_INC: // amt
-		case MISC_INCX: // amt
-		case CONTRIBX: // amt/xamt
-		case WITHDRAWX: // + amt/xamt
-		case DIV: // amt
-			// This, apparently, is to treat MM balances as cash
-			this.security = null;
-			break;
-
-		default:
-			break;
-		}
-
-		switch (getAction()) {
-		case BUY:
-		case BUYX:
-		case REINV_DIV:
-		case REINV_INT:
-		case REINV_LG:
-		case REINV_SH:
-		case SELL:
-		case SELLX:
-			repairBuySell();
-			break;
-
-		default:
-			break;
-		}
-
-		// We lack lots of information needed to properly track options
-		switch (getAction()) {
-		case GRANT:
-			// Strike price, open/close price, vest/expire date, qty
-			// TODO Add missing option info to memo
-			break;
-		case VEST:
-			// Connect to Grant
-			break;
-		case EXERCISE:
-		case EXERCISEX:
-			// Connect to Grant, qty/price
-			break;
-		case EXPIRE:
-			// Connect to Grant, qty
-			break;
-
-		default:
-			break;
-		}
-
-		if ((getAmount() == null) && (getXferAmount() != null)) {
-			setAmount(getXferAmount());
-		}
-
-		super.repair();
-	}
-
+	/** Get lots for shares affected by this transaction */
 	public List<Lot> getLots() {
 		return this.lotsDisposed;
 	}
 
-	private void repairBuySell() {
-		final BigDecimal amt = getBuySellAmount();
-
-		BigDecimal tot = this.quantity.multiply(this.price);
-		if (this.commission == null) {
-			this.commission = BigDecimal.ZERO;
-		}
-		tot = tot.add(this.commission);
-
-		BigDecimal diff;
-
-		switch (getAction()) {
-		case SELL:
-		case SELLX:
-			diff = tot.add(amt).abs();
-			break;
-
-		default:
-			diff = tot.subtract(amt).abs();
-			break;
-		}
-
-		if (diff.compareTo(new BigDecimal("0.005")) > 0) {
-			final BigDecimal newprice = tot.divide(this.quantity).abs();
-
-			String s = "Inconsistent " + this.action + " transaction:" + //
-					" acct=" + Account.getAccountByID(this.acctid).name + //
-					" " + getDate().toString() + "\n" + //
-					"  sec=" + this.security.getName() + //
-					" qty=" + this.quantity + //
-					" price=" + this.price;
-
-			if (this.commission != null && //
-					this.commission.compareTo(BigDecimal.ZERO) != 0) {
-				s += " comm=" + this.commission;
-			}
-
-			s += " tot=" + tot + //
-					" txamt=" + amt + //
-					" diff=" + diff + "\n";
-			s += "  Corrected price: " + newprice;
-
-			if (QifDom.verbose) {
-				Common.reportWarning(s);
-			}
-
-			this.price = newprice;
-		}
-	}
-
-	// Get the total amount of a buy/sell transaction.
-	// This returns the absolute value.
+	/**
+	 * Get the total amount of a buy/sell transaction.<br>
+	 * This returns the absolute value.
+	 */
 	public BigDecimal getBuySellAmount() {
 		BigDecimal tot = super.getCashAmount();
 
@@ -429,12 +310,142 @@ public class InvestmentTxn extends GenericTxn {
 		return s;
 	}
 
-	public String getSecurityName() {
-		if (this.security != null) {
-			return this.security.getName();
+	/** Correct issues with this loaded transaction */
+	public void repair() {
+		TxAction action = getAction();
+
+		if (action == TxAction.OTHER) {
+			Common.reportError("Transaction has unknown type: " + //
+					Account.getAccountByID(this.acctid).name);
+			return;
 		}
 
-		return "N/A";
+		if ((action == TxAction.CASH) //
+				&& (getAmount() == null) && (this.amountTransferred == null)) {
+			setAmount(BigDecimal.ZERO);
+		}
+
+		if (action == TxAction.XOUT) {
+			this.amountTransferred = this.amountTransferred.negate();
+			setAmount(this.amountTransferred);
+		}
+
+		switch (action) {
+		case SHRS_OUT:
+		case SELL:
+		case SELLX:
+		case EXERCISE:
+		case EXERCISEX:
+			this.quantity = this.quantity.negate();
+			break;
+
+		case XIN: // amt/xamt
+		case INT_INC: // amt
+		case MISC_INCX: // amt
+		case CONTRIBX: // amt/xamt
+		case WITHDRAWX: // + amt/xamt
+		case DIV: // amt
+			// This, apparently, is to treat MM balances as cash
+			this.security = null;
+			break;
+
+		default:
+			break;
+		}
+
+		switch (getAction()) {
+		case BUY:
+		case BUYX:
+		case REINV_DIV:
+		case REINV_INT:
+		case REINV_LG:
+		case REINV_SH:
+		case SELL:
+		case SELLX:
+			repairBuySell();
+			break;
+
+		default:
+			break;
+		}
+
+		// We lack lots of information needed to properly track options
+		switch (getAction()) {
+		case GRANT:
+			// Strike price, open/close price, vest/expire date, qty
+			// TODO Add missing option info to memo
+			break;
+		case VEST:
+			// Connect to Grant
+			break;
+		case EXERCISE:
+		case EXERCISEX:
+			// Connect to Grant, qty/price
+			break;
+		case EXPIRE:
+			// Connect to Grant, qty
+			break;
+
+		default:
+			break;
+		}
+
+		if ((getAmount() == null) && (getXferAmount() != null)) {
+			setAmount(getXferAmount());
+		}
+
+		super.repair();
+	}
+
+	/** Fix issues with loaded stock buy/sell transaction */
+	private void repairBuySell() {
+		final BigDecimal amt = getBuySellAmount();
+
+		BigDecimal tot = this.quantity.multiply(this.price);
+		if (this.commission == null) {
+			this.commission = BigDecimal.ZERO;
+		}
+		tot = tot.add(this.commission);
+
+		BigDecimal diff;
+
+		switch (getAction()) {
+		case SELL:
+		case SELLX:
+			diff = tot.add(amt).abs();
+			break;
+
+		default:
+			diff = tot.subtract(amt).abs();
+			break;
+		}
+
+		if (diff.compareTo(new BigDecimal("0.005")) > 0) {
+			final BigDecimal newprice = tot.divide(this.quantity).abs();
+
+			String s = "Inconsistent " + this.action + " transaction:" + //
+					" acct=" + Account.getAccountByID(this.acctid).name + //
+					" " + getDate().toString() + "\n" + //
+					"  sec=" + this.security.getName() + //
+					" qty=" + this.quantity + //
+					" price=" + this.price;
+
+			if (this.commission != null && //
+					this.commission.compareTo(BigDecimal.ZERO) != 0) {
+				s += " comm=" + this.commission;
+			}
+
+			s += " tot=" + tot + //
+					" txamt=" + amt + //
+					" diff=" + diff + "\n";
+			s += "  Corrected price: " + newprice;
+
+			if (QifDom.verbose) {
+				Common.reportWarning(s);
+			}
+
+			this.price = newprice;
+		}
 	}
 
 	public String toStringShort(boolean veryshort) {
@@ -472,7 +483,7 @@ public class InvestmentTxn extends GenericTxn {
 		s += " price=" + this.price;
 		s += " qty=" + this.quantity;
 		s += " amt=" + getAmount();
-		//s += " clr=" + this.clearedStatus;
+		// s += " clr=" + this.clearedStatus;
 		// s += " txt=" + this.textFirstLine;
 		s += " memo=" + getMemo();
 		s += " comm=" + this.commission;

@@ -122,7 +122,7 @@ class OptionsProcessor {
 	}
 
 	private void processOptions(List<GenericTxn> txns) {
-		for (final GenericTxn gtxn : txns) {
+		for (GenericTxn gtxn : txns) {
 			if (!(gtxn instanceof InvestmentTxn) //
 					|| (((InvestmentTxn) gtxn).security == null)) {
 				continue;

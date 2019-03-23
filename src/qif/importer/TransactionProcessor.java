@@ -65,6 +65,7 @@ class TransactionProcessor {
 	private InvestmentTxn loadInvestmentTransaction() {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
+		// TODO gather info and create transaction at the end
 		InvestmentTxn txn = new InvestmentTxn(Account.currAccountBeingLoaded.acctid);
 
 		for (;;) {
@@ -159,6 +160,7 @@ class TransactionProcessor {
 	private NonInvestmentTxn loadNonInvestmentTransaction() {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
+		// TODO gather info and create transaction at the end
 		NonInvestmentTxn txn = new NonInvestmentTxn(Account.currAccountBeingLoaded.acctid);
 		SimpleTxn cursplit = null;
 
@@ -216,7 +218,7 @@ class TransactionProcessor {
 			case TxnSplitCategory:
 				if (cursplit == null || cursplit.getCatid() != 0) {
 					cursplit = new SimpleTxn(txn.acctid);
-					txn.split.add(cursplit);
+					txn.splits.add(cursplit);
 				}
 
 				if (qline.value == null || qline.value.trim().isEmpty()) {
@@ -230,7 +232,7 @@ class TransactionProcessor {
 				break;
 			case TxnSplitAmount:
 				if (cursplit == null || cursplit.getAmount() != null) {
-					txn.split.add(cursplit);
+					txn.splits.add(cursplit);
 					cursplit = new SimpleTxn(txn.acctid);
 				}
 

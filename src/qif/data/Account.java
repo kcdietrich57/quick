@@ -282,7 +282,8 @@ public class Account {
 	}
 
 	public void addTransaction(GenericTxn txn) {
-		int idx = getTransactionIndexForDate(txn);
+		int idx = // getTransactionIndexForDate(txn);
+				GenericTxn.getTransactionInsertIndexByDate(this.transactions, txn);
 
 		this.transactions.add(idx, txn);
 	}
@@ -607,7 +608,7 @@ public class Account {
 
 	/** Get account cash value for a specified date */
 	private BigDecimal getCashValueForDate(QDate d) {
-		BigDecimal cashBal = null;
+		BigDecimal cashBal = null; // BigDecimal.ZERO;
 
 		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(this.transactions, d);
 
@@ -646,6 +647,7 @@ public class Account {
 	}
 
 	/**
+	 * TODO This duplicates TransactionCleaner findMatchesForTransfer()<br>
 	 * Find existing transaction(s) that match a transaction being loaded.<br>
 	 * Date is close, amount matches (or the amount of a split).
 	 */

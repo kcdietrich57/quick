@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+// TODO could be abstract with a SplitTransation subclass
 /**
  * Minimal transaction info (acct, amt, category, memo). This can be<br>
  * specialized for various transaction types, or<br>
@@ -24,10 +25,14 @@ public class SimpleTxn {
 	public final int acctid;
 	public final int txid;
 
+	/** Dollar amount of the transaction. For simple transactions, this is cash */
 	private BigDecimal amount;
 	private String memo;
 
-	private int catid; // >0: CategoryID; <0 AccountID
+	/** Category id or transfer Account id (>0: CategoryID; <0 -AccountID) */
+	private int catid;
+
+	/** In the case of a transfer, the other transaction involved */
 	private SimpleTxn xtxn;
 
 	public SimpleTxn(int acctid) {
@@ -38,17 +43,6 @@ public class SimpleTxn {
 		this.memo = null;
 
 		this.catid = 0;
-		this.xtxn = null;
-	}
-
-	public SimpleTxn(SimpleTxn other) {
-		this.txid = nextid++;
-
-		this.acctid = other.acctid;
-		this.amount = other.amount;
-		this.memo = other.memo;
-		this.catid = other.catid;
-
 		this.xtxn = null;
 	}
 
@@ -88,20 +82,23 @@ public class SimpleTxn {
 		this.xtxn = txn;
 	}
 
+	private int intSign(int i) {
+		return (i == 0) ? 0 : ((i < 0) ? -1 : 1);
+	}
+
 	public String getCategory() {
 		if (hasSplits()) {
 			return "[Split]";
 		}
 
-		if (this.catid > 0) {
+		switch (intSign(this.catid)) {
+		case 1:
 			return Category.getCategory(this.catid).name;
+		case -1:
+			return "[" + Account.getAccountByID(-this.catid).name + "]";
+		default:
+			return "N/A";
 		}
-
-		int acctid = -this.catid;
-
-		return (acctid > 0) //
-				? "[" + Account.getAccountByID(acctid).name + "]" //
-				: "N/A";
 	}
 
 	public int getCatid() {
@@ -124,7 +121,7 @@ public class SimpleTxn {
 		return this.amount;
 	}
 
-	// Return the impact of this transaction on the account cash position
+	/** Return the impact of this transaction on the account's cash position */
 	public BigDecimal getCashAmount() {
 		return this.amount;
 	}
@@ -137,18 +134,73 @@ public class SimpleTxn {
 		this.memo = memo;
 	}
 
+	/**
+	 * Compare two transactions' values. If strict is false, we compare absolute
+	 * values rather than the exact values.
+	 */
+	public boolean amountIsEqual(SimpleTxn other, boolean strict) {
+		BigDecimal amt1 = getXferAmount();
+		BigDecimal amt2 = other.getXferAmount();
+
+		if (amt1.abs().compareTo(amt2.abs()) != 0) {
+			return false;
+		}
+
+		if (BigDecimal.ZERO.compareTo(amt1) == 0) {
+			// If value is zero, there's nothing more to check
+			++cashok;
+			return true;
+		}
+
+		// We know the magnitude is the same and non-zero
+		// Check whether they are equal or negative of each other
+		boolean eq = amt1.equals(amt2);
+
+		boolean ret = !eq || !strict;
+
+		// TODO why is it 'bad' for the transactions to both be CASH?
+		if ((getAction() == TxAction.CASH) //
+				|| (other.getAction() == TxAction.CASH)) {
+			if (eq) {
+				++cashbad;
+
+				System.out.println(toString());
+				System.out.println(other.toString());
+				System.out.println("Cash ok=" + cashok + " bad=" + cashbad);
+			} else {
+				++cashok;
+			}
+
+			return ret;
+		}
+
+		return ret;
+	}
+
+	/** Return a representation of this object for display */
+	public String formatValue() {
+		return String.format("  %10s  %-25s  %-30s", //
+				Common.formatAmount(this.amount), //
+				getCategory(), //
+				getMemo());
+	}
+
 	public String toString() {
 		return toStringLong();
 	}
 
-	// This is a compact, single-line version of the transaction, such as would
-	// appear in a list for displaying and/or selecting transactions.
+	/**
+	 * Create a compact, single-line version of the transaction, such as would
+	 * appear in a list for displaying and/or selecting transactions.
+	 */
 	public String toStringShort(boolean veryshort) {
 		return "Tx" + this.txid;
 	}
 
-	// This is a more complete summary of the transaction, possibly split into
-	// multiple lines.
+	/**
+	 * Create a more complete summary of the transaction, possibly split into
+	 * multiple lines.
+	 */
 	public String toStringLong() {
 		String s = "Tx" + this.txid + ":";
 		s += Account.getAccountByID(this.acctid).name;
@@ -162,48 +214,5 @@ public class SimpleTxn {
 		}
 
 		return s;
-	}
-
-	public String formatValue() {
-		return String.format("  %10s  %-25s  %-30s", //
-				Common.formatAmount(this.amount), //
-				getCategory(), //
-				getMemo());
-	}
-
-	public boolean amountIsEqual(SimpleTxn other, boolean strict) {
-		BigDecimal amt1 = getXferAmount();
-		BigDecimal amt2 = other.getXferAmount();
-
-		if (amt1.abs().compareTo(amt2.abs()) != 0) {
-			return false;
-		}
-
-		if (BigDecimal.ZERO.compareTo(amt1) == 0) {
-			return true;
-		}
-
-		// We know the magnitude is the same and non-zero
-		// Check whether they are equal or negative of each other
-		boolean eq = amt1.equals(amt2);
-
-		boolean ret = !eq || !strict;
-
-		if ((getAction() == TxAction.CASH) //
-				|| (other.getAction() == TxAction.CASH)) {
-			if (eq) {
-				++cashbad;
-			} else {
-				++cashok;
-			}
-
-			System.out.println(toString());
-			System.out.println(other.toString());
-			System.out.println("Cash ok=" + cashok + " bad=" + cashbad);
-
-			return ret;
-		}
-
-		return ret;
 	}
 }

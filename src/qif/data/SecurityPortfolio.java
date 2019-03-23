@@ -227,7 +227,7 @@ public class SecurityPortfolio {
 		for (SecurityPosition p : this.positions) {
 			int ii = GenericTxn.getLastTransactionIndexOnOrBeforeDate(p.transactions, d);
 
-			if ((ii >= 0) && !Common.isEffectivelyZero(p.shrBalance.get(ii))) {
+			if ((ii < 0) || !Common.isEffectivelyZero(p.shrBalance.get(ii))) {
 				return false;
 			}
 		}

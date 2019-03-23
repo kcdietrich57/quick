@@ -20,16 +20,16 @@ import qif.data.SimpleTxn;
 import qif.data.TxAction;
 
 class TransactionCleaner {
-	// Housekeeping info while processing related transfer transactions.
-	// The imported data does not connect transfers, so we need to do it.
-	// These keep track of successful and unsuccessful attempts to connect
-	// transfers.
+	/**
+	 * Housekeeping info for processing related transfer transactions.<br>
+	 * The imported data does not connect transfers, so we need to do it. These keep
+	 * track of successful and unsuccessful attempts to connect transfers.
+	 */
 	private static final List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
 	private static int totalXfers = 0;
 	private static int failedXfers = 0;
 
 	public void cleanUpTransactions() {
-		// TODO transactions should already be sorted?
 		sortAccountTransactionsByDate();
 		cleanUpSplits();
 		calculateRunningTotals();
@@ -39,6 +39,7 @@ class TransactionCleaner {
 	}
 
 	private void sortAccountTransactionsByDate() {
+		// TODO transactions should already be sorted?
 		for (Account a : Account.getAccounts()) {
 			Common.sortTransactionsByDate(a.transactions);
 		}
@@ -63,21 +64,21 @@ class TransactionCleaner {
 
 		final NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
 
-		for (int ii = 0; ii < nitxn.split.size(); ++ii) {
-			final SimpleTxn stxn = nitxn.split.get(ii);
+		for (int ii = 0; ii < nitxn.splits.size(); ++ii) {
+			final SimpleTxn stxn = nitxn.splits.get(ii);
 			if (stxn.getCatid() >= 0) {
 				continue;
 			}
 
 			MultiSplitTxn mtxn = null;
 
-			for (int jj = ii + 1; jj < nitxn.split.size(); ++jj) {
-				final SimpleTxn stxn2 = nitxn.split.get(jj);
+			for (int jj = ii + 1; jj < nitxn.splits.size(); ++jj) {
+				final SimpleTxn stxn2 = nitxn.splits.get(jj);
 
 				if (stxn.getCatid() == stxn2.getCatid()) {
 					if (mtxn == null) {
 						mtxn = new MultiSplitTxn(txn.acctid);
-						nitxn.split.set(ii, mtxn);
+						nitxn.splits.set(ii, mtxn);
 
 						mtxn.setAmount(stxn.getAmount());
 						mtxn.setCatid(stxn.getCatid());
@@ -87,7 +88,7 @@ class TransactionCleaner {
 					mtxn.setAmount(mtxn.getAmount().add(stxn2.getAmount()));
 					mtxn.subsplits.add(stxn2);
 
-					nitxn.split.remove(jj);
+					nitxn.splits.remove(jj);
 					--jj;
 				}
 			}
@@ -122,8 +123,8 @@ class TransactionCleaner {
 	}
 
 	private void connectTransfers(GenericTxn txn) {
-		if ((txn instanceof NonInvestmentTxn) && !((NonInvestmentTxn) txn).split.isEmpty()) {
-			for (final SimpleTxn stxn : ((NonInvestmentTxn) txn).split) {
+		if ((txn instanceof NonInvestmentTxn) && !((NonInvestmentTxn) txn).splits.isEmpty()) {
+			for (final SimpleTxn stxn : ((NonInvestmentTxn) txn).splits) {
 				connectTransfers(stxn, txn.getDate());
 			}
 		} else if ((txn.getCatid() < 0) && //
@@ -133,9 +134,13 @@ class TransactionCleaner {
 		}
 	}
 
+	/**
+	 * Given a transaction that is a transfer, search the associated account's
+	 * transactions for a suitable mate for this transaction.
+	 */
 	private void connectTransfers(SimpleTxn txn, QDate date) {
-		// Opening balance appears as a transfer to the same acct
-		if ((txn.getCatid() >= 0) || (txn.getCatid() == -txn.getXferAcctid())) {
+		// TODO Opening balance appears as a transfer to the same acct
+		if ((txn.getCatid() >= 0)) {
 			return;
 		}
 
@@ -162,7 +167,10 @@ class TransactionCleaner {
 		if (matchingTxns.size() == 1) {
 			xtxn = matchingTxns.get(0);
 		} else {
-			Common.reportWarning("Multiple matching transactions - using the first one.");
+			Common.reportWarning("Multiple matching transactions (" //
+					+ matchingTxns.size() //
+					+ ") - using the first one.");
+			// TODO use the earliest choice
 			xtxn = matchingTxns.get(0);
 		}
 
@@ -173,31 +181,38 @@ class TransactionCleaner {
 	private void findMatchesForTransfer(Account acct, SimpleTxn txn, QDate date, boolean strict) {
 		matchingTxns.clear();
 
-		final int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(acct.transactions, date);
+		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(acct.transactions, date);
 		if (idx < 0) {
-			return;
+			// TODO we can't do this, as we will look forwards from the date
+			// return;
 		}
 
-		boolean datematch = false;
+		boolean exactDateMatch = false;
 
-		for (int inc = 0; datematch || (inc < 10); ++inc) {
-			datematch = false;
+		for (int inc = 0; inc < 10; ++inc) {
+			// Check matching/preceding transactions
+			if (idx >= inc) {
+				GenericTxn gtxn = acct.transactions.get(idx - inc);
 
-			if (idx + inc < acct.transactions.size()) {
-				final GenericTxn gtxn = acct.transactions.get(idx + inc);
-				datematch = date.equals(gtxn.getDate());
+				boolean dateeq = date.equals(gtxn.getDate());
 
-				final SimpleTxn match = checkMatchForTransfer(txn, gtxn, strict);
-				if (match != null) {
-					matchingTxns.add(match);
+				// Check earlier date only if we haven't found a match
+				if (dateeq || !exactDateMatch) {
+					SimpleTxn match = checkMatchForTransfer(txn, gtxn, strict);
+
+					if (match != null) {
+						matchingTxns.add(match);
+						exactDateMatch |= dateeq;
+					}
 				}
 			}
 
-			if (inc > 0 && idx >= inc) {
-				final GenericTxn gtxn = acct.transactions.get(idx - inc);
-				datematch = datematch || date.equals(gtxn.getDate());
+			// Check following transaction (date must be later)
+			// Skip if exact match has already been found
+			if (!exactDateMatch && (idx + inc < acct.transactions.size())) {
+				GenericTxn gtxn = acct.transactions.get(idx + inc);
 
-				final SimpleTxn match = checkMatchForTransfer(txn, gtxn, strict);
+				SimpleTxn match = checkMatchForTransfer(txn, gtxn, strict);
 				if (match != null) {
 					matchingTxns.add(match);
 				}
@@ -205,19 +220,22 @@ class TransactionCleaner {
 		}
 	}
 
+	/** Locate a match for txn in gtxn (either gtxn itself, or a split) */
 	private SimpleTxn checkMatchForTransfer(SimpleTxn txn, GenericTxn gtxn, boolean strict) {
 		assert -txn.getCatid() == gtxn.acctid;
 
 		if (!gtxn.hasSplits()) {
 			if ((gtxn.getXferAcctid() == txn.acctid) //
+					&& (gtxn.getXtxn() == null) //
 					&& gtxn.amountIsEqual(txn, strict)) {
 				return gtxn;
 			}
 		} else {
-			for (final SimpleTxn splitxn : gtxn.getSplits()) {
-				if ((splitxn.getXferAcctid() == txn.acctid) //
-						&& splitxn.amountIsEqual(txn, strict)) {
-					return splitxn;
+			for (SimpleTxn splittTxn : gtxn.getSplits()) {
+				if ((splittTxn.getXferAcctid() == txn.acctid) //
+						&& (splittTxn.getXtxn() == null) //
+						&& splittTxn.amountIsEqual(txn, strict)) {
+					return splittTxn;
 				}
 			}
 		}

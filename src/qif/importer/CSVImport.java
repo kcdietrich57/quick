@@ -15,7 +15,6 @@ import qif.data.Category;
 import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.InvestmentTxn;
-import qif.data.Lot;
 import qif.data.NonInvestmentTxn;
 import qif.data.QDate;
 import qif.data.QifDom;
@@ -214,7 +213,7 @@ public class CSVImport {
 		if (txn instanceof NonInvestmentTxn) {
 			NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
 			nitxn.chkNumber = cknum;
-			nitxn.split = new ArrayList<SimpleTxn>();
+			nitxn.splits = new ArrayList<SimpleTxn>();
 		}
 
 		if (txn instanceof InvestmentTxn) {
@@ -223,12 +222,10 @@ public class CSVImport {
 			itxn.amountTransferred = BigDecimal.ZERO;
 			itxn.setCatid(0);
 			itxn.commission = BigDecimal.ZERO;
-			itxn.lotsDisposed = new ArrayList<Lot>();
 			itxn.price = BigDecimal.ZERO;
 			itxn.security = null;
-			itxn.lotsCreated = new ArrayList<Lot>();
-			// itxn.textFirstLine = null;
 			itxn.xferTxns = null;
+			// itxn.textFirstLine = null;
 		}
 
 //		public int xacctid;

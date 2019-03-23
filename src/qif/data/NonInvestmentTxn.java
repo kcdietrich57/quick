@@ -5,11 +5,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/** Transaction for non-investment account */
 public class NonInvestmentTxn extends GenericTxn {
 	public String chkNumber;
 
 //	public List<String> address;
-	public List<SimpleTxn> split;
+	public List<SimpleTxn> splits;
 
 	public NonInvestmentTxn(int acctid) {
 		super(acctid);
@@ -17,24 +18,7 @@ public class NonInvestmentTxn extends GenericTxn {
 		this.chkNumber = "";
 
 //		this.address = new ArrayList<String>();
-		this.split = new ArrayList<SimpleTxn>();
-	}
-
-	public NonInvestmentTxn(NonInvestmentTxn other) {
-		super(other);
-
-		this.chkNumber = other.chkNumber;
-
-//		this.address = new ArrayList<String>();
-//		for (final String a : other.address) {
-//			this.address.add(new String(a));
-//		}
-
-		this.split = new ArrayList<SimpleTxn>();
-
-		for (final SimpleTxn st : other.split) {
-			this.split.add(st);
-		}
+		this.splits = new ArrayList<SimpleTxn>();
 	}
 
 	public int getCheckNumber() {
@@ -47,21 +31,22 @@ public class NonInvestmentTxn extends GenericTxn {
 	}
 
 	public boolean hasSplits() {
-		return !this.split.isEmpty();
+		return !this.splits.isEmpty();
 	}
 
 	public List<SimpleTxn> getSplits() {
-		return this.split;
+		return this.splits;
 	}
 
+	/** Do sanity check of splits */
 	public void verifySplit() {
-		if (this.split.isEmpty()) {
+		if (this.splits.isEmpty()) {
 			return;
 		}
 
 		BigDecimal dec = BigDecimal.ZERO;
 
-		for (final SimpleTxn txn : this.split) {
+		for (final SimpleTxn txn : this.splits) {
 			dec = dec.add(txn.getAmount());
 		}
 
@@ -125,10 +110,10 @@ public class NonInvestmentTxn extends GenericTxn {
 //			}
 //		}
 
-		if ((this.split != null) && !this.split.isEmpty()) {
+		if ((this.splits != null) && !this.splits.isEmpty()) {
 			s += "\n  splits \n";
 
-			for (final SimpleTxn txn : this.split) {
+			for (final SimpleTxn txn : this.splits) {
 				s += "  " + getCategory();
 				s += " " + txn.getAmount();
 				s += " " + txn.getMemo();
