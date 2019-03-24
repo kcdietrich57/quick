@@ -1,5 +1,6 @@
 package qif.importer;
 
+/** Enum for various field types we can encounter in QIF input files */
 public enum FieldType {
 	EndOfSection, //
 

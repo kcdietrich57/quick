@@ -30,21 +30,22 @@ class TransactionCleaner {
 	private static int failedXfers = 0;
 
 	public void cleanUpTransactions() {
-		sortAccountTransactionsByDate();
+		// TODO transactions should already be sorted?
+		// sortAccountTransactionsByDate();
 		cleanUpSplits();
 		calculateRunningTotals();
 		connectTransfers();
 		connectSecurityTransfers();
-		new LotProcessor().setupSecurityLots();
+		LotProcessor.setupSecurityLots();
 	}
 
 	private void sortAccountTransactionsByDate() {
-		// TODO transactions should already be sorted?
 		for (Account a : Account.getAccounts()) {
 			Common.sortTransactionsByDate(a.transactions);
 		}
 	}
 
+	/** Correct any issues with split transactions */
 	private void cleanUpSplits() {
 		for (Account a : Account.getAccounts()) {
 			for (GenericTxn txn : a.transactions) {
@@ -53,27 +54,25 @@ class TransactionCleaner {
 		}
 	}
 
-	// This handles the case where we have multiple splits that involve
-	// transferring from another account. The other account may have a single
-	// entry that corresponds to more than one split in the other account.
-	// N.B. Alternatively, we could merge the splits into one.
+	/** A txn may have multiple splits transferring to/from another account. */
 	private void massageSplits(GenericTxn txn) {
 		if (!(txn instanceof NonInvestmentTxn)) {
 			return;
 		}
 
-		final NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
+		NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
 
 		for (int ii = 0; ii < nitxn.splits.size(); ++ii) {
-			final SimpleTxn stxn = nitxn.splits.get(ii);
+			SimpleTxn stxn = nitxn.splits.get(ii);
 			if (stxn.getCatid() >= 0) {
 				continue;
 			}
 
 			MultiSplitTxn mtxn = null;
 
+			// Gather multiple splits into a MultiSplit if necessary
 			for (int jj = ii + 1; jj < nitxn.splits.size(); ++jj) {
-				final SimpleTxn stxn2 = nitxn.splits.get(jj);
+				SimpleTxn stxn2 = nitxn.splits.get(jj);
 
 				if (stxn.getCatid() == stxn2.getCatid()) {
 					if (mtxn == null) {
@@ -95,6 +94,10 @@ class TransactionCleaner {
 		}
 	}
 
+	/**
+	 * Go through acct txns and plug in running balance values.<br>
+	 * Also update account current and cleared balance values.
+	 */
 	private void calculateRunningTotals() {
 		for (Account a : Account.getAccounts()) {
 			a.clearedBalance = a.balance = BigDecimal.ZERO;
@@ -104,16 +107,18 @@ class TransactionCleaner {
 
 				if (!amt.equals(BigDecimal.ZERO)) {
 					a.balance = a.balance.add(amt);
-					t.runningTotal = a.balance;
 
 					if (t.isCleared()) {
 						a.clearedBalance = a.clearedBalance.add(amt);
 					}
 				}
+
+				t.runningTotal = a.balance;
 			}
 		}
 	}
 
+	/** Connect transfer transactions between accounts */
 	private void connectTransfers() {
 		for (Account a : Account.getAccounts()) {
 			for (GenericTxn txn : a.transactions) {
@@ -122,13 +127,14 @@ class TransactionCleaner {
 		}
 	}
 
+	/** Connect transfers for a transaction */
 	private void connectTransfers(GenericTxn txn) {
-		if ((txn instanceof NonInvestmentTxn) && !((NonInvestmentTxn) txn).splits.isEmpty()) {
-			for (final SimpleTxn stxn : ((NonInvestmentTxn) txn).splits) {
+		if (txn.hasSplits()) {
+			for (SimpleTxn stxn : ((NonInvestmentTxn) txn).splits) {
 				connectTransfers(stxn, txn.getDate());
 			}
 		} else if ((txn.getCatid() < 0) && //
-		// opening balance shows up as xfer to same acct
+		// NB opening balance shows up as xfer to same acct
 				(-txn.getCatid() != txn.acctid)) {
 			connectTransfers(txn, txn.getDate());
 		}
@@ -139,12 +145,11 @@ class TransactionCleaner {
 	 * transactions for a suitable mate for this transaction.
 	 */
 	private void connectTransfers(SimpleTxn txn, QDate date) {
-		// TODO Opening balance appears as a transfer to the same acct
 		if ((txn.getCatid() >= 0)) {
 			return;
 		}
 
-		final Account a = Account.getAccountByID(-txn.getCatid());
+		Account a = Account.getAccountByID(-txn.getCatid());
 
 		findMatchesForTransfer(a, txn, date, true);
 
@@ -178,6 +183,7 @@ class TransactionCleaner {
 		xtxn.setXtxn(txn);
 	}
 
+	/** Look for transfer candidates in an account */
 	private void findMatchesForTransfer(Account acct, SimpleTxn txn, QDate date, boolean strict) {
 		matchingTxns.clear();
 
@@ -243,10 +249,12 @@ class TransactionCleaner {
 		return null;
 	}
 
+	/** Process transfers of securities between accounts */
 	private void connectSecurityTransfers() {
 		List<InvestmentTxn> xins = new ArrayList<InvestmentTxn>();
 		List<InvestmentTxn> xouts = new ArrayList<InvestmentTxn>();
 
+		// Gather all transfers
 		for (GenericTxn txn : GenericTxn.getAllTransactions()) {
 			if (txn instanceof InvestmentTxn) {
 				if ((txn.getAction() == TxAction.SHRS_IN)) {
@@ -257,9 +265,11 @@ class TransactionCleaner {
 			}
 		}
 
+		// Connect the transfers
 		connectSecurityTransfers(xins, xouts);
 	}
 
+	/** Go through security transfers and connect in/out transactions */
 	private void connectSecurityTransfers(List<InvestmentTxn> xins, List<InvestmentTxn> xouts) {
 		Comparator<InvestmentTxn> cpr = (o1, o2) -> {
 			int diff;
@@ -337,7 +347,7 @@ class TransactionCleaner {
 		}
 
 		if (QifDom.verbose && !unmatched.isEmpty()) {
-			for (final InvestmentTxn t : unmatched) {
+			for (InvestmentTxn t : unmatched) {
 				String pad = (t.getAction() == TxAction.SHRS_IN) //
 						? "" //
 						: "           ";
@@ -354,6 +364,7 @@ class TransactionCleaner {
 		}
 	}
 
+	/** Collect transactions for a security transfer on a given date */
 	private BigDecimal gatherTransactionsForSecurityTransfer( //
 			List<InvestmentTxn> rettxns, // OUT txs for xfer
 			List<InvestmentTxn> srctxns, // IN all remaining txs

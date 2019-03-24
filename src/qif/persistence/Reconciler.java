@@ -6,79 +6,18 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.PrintWriter;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 import qif.data.Account;
 import qif.data.Common;
 import qif.data.GenericTxn;
-import qif.data.InvestmentTxn;
-import qif.data.NonInvestmentTxn;
-import qif.data.QDate;
 import qif.data.QifDom;
-import qif.data.Security;
 import qif.data.Statement;
 import qif.importer.StatementDetails;
+import qif.importer.StatementTxInfo;
 
 public class Reconciler {
-
-	public static class TxInfo {
-		public QDate date;
-		public String action;
-		public int cknum;
-		public BigDecimal cashAmount;
-		public Security security;
-		public BigDecimal shares;
-
-		public static TxInfo factory(GenericTxn tx) {
-			if (tx instanceof NonInvestmentTxn) {
-				return new TxInfo((NonInvestmentTxn) tx);
-			}
-
-			if (tx instanceof InvestmentTxn) {
-				return new TxInfo((InvestmentTxn) tx);
-			}
-
-			return null;
-		}
-
-		public TxInfo() {
-			this.cknum = 0;
-			this.action = null;
-			this.security = null;
-			this.shares = null;
-		}
-
-		private TxInfo(GenericTxn tx) {
-			this();
-
-			this.cashAmount = tx.getCashAmount();
-		}
-
-		public TxInfo(NonInvestmentTxn tx) {
-			this((GenericTxn) tx);
-
-			this.cknum = tx.getCheckNumber();
-		}
-
-		public TxInfo(InvestmentTxn tx) {
-			this((GenericTxn) tx);
-
-			this.action = tx.getAction().toString();
-
-			if (tx.security != null) {
-				this.security = tx.security;
-				this.shares = tx.getShares();
-			}
-		}
-
-		public String toString() {
-			return String.format("%s %5d %s", //
-					this.date.toString(), this.cknum, //
-					Common.formatAmount(this.cashAmount));
-		}
-	}
 
 	// Read statement log file, filling in statement details.
 	public static void processStatementLog() {
@@ -101,7 +40,7 @@ public class Reconciler {
 
 			s = stmtLogReader.readLine();
 			while (s != null) {
-				final StatementDetails d = //
+				StatementDetails d = //
 						new StatementDetails(s, QifDom.loadedStatementsVersion);
 
 				details.add(d);
@@ -110,13 +49,13 @@ public class Reconciler {
 			}
 
 			processStatementDetails(details);
-		} catch (final Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			if (stmtLogReader != null) {
 				try {
 					stmtLogReader.close();
-				} catch (final IOException e) {
+				} catch (IOException e) {
 				}
 			}
 		}
@@ -155,14 +94,14 @@ public class Reconciler {
 		s.transactions.clear();
 		s.unclearedTransactions.clear();
 
-		final List<GenericTxn> txns = a.gatherTransactionsForStatement(s);
-		final List<TxInfo> badinfo = new ArrayList<TxInfo>();
+		List<GenericTxn> txns = a.gatherTransactionsForStatement(s);
+		List<StatementTxInfo> badinfo = new ArrayList<StatementTxInfo>();
 
-		for (final TxInfo info : d.transactions) {
+		for (StatementTxInfo info : d.transactions) {
 			boolean found = false;
 
 			for (int ii = 0; ii < txns.size(); ++ii) {
-				final GenericTxn t = txns.get(ii);
+				GenericTxn t = txns.get(ii);
 
 				if (info.date.compareTo(t.getDate()) == 0) {
 					if ((info.cknum == t.getCheckNumber()) //
@@ -197,7 +136,7 @@ public class Reconciler {
 			return;
 		}
 
-		for (final GenericTxn t : s.transactions) {
+		for (GenericTxn t : s.transactions) {
 			t.stmtdate = s.date;
 		}
 
@@ -229,13 +168,13 @@ public class Reconciler {
 	// version
 	// Save the previous file as <name>.N
 	public static void rewriteStatementLogFile() {
-		final String basename = Statement.stmtLogFile.getName();
-		final File tmpLogFile = new File(QifDom.qifDir, basename + ".tmp");
+		String basename = Statement.stmtLogFile.getName();
+		File tmpLogFile = new File(QifDom.qifDir, basename + ".tmp");
 
 		PrintWriter pw = null;
 		try {
 			pw = new PrintWriter(new FileWriter(tmpLogFile));
-		} catch (final IOException e) {
+		} catch (IOException e) {
 			Common.reportError("Can't open tmp stmt log file: " //
 					+ Statement.stmtLogFile.getAbsolutePath());
 			return;
@@ -252,7 +191,7 @@ public class Reconciler {
 			if (pw != null) {
 				pw.close();
 			}
-		} catch (final Exception e) {
+		} catch (Exception e) {
 		}
 
 		File logFileBackup = null;
@@ -278,7 +217,7 @@ public class Reconciler {
 	private static PrintWriter openStatementsLogFile() {
 		try {
 			return new PrintWriter(new FileWriter(Statement.stmtLogFile, true));
-		} catch (final Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 

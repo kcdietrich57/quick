@@ -21,6 +21,7 @@ import qif.data.QPrice;
 import qif.data.QifDom;
 import qif.data.Security;
 
+/** Download security history from online service */
 public class QuoteDownloader {
 	private static final String queryPattern = "%s/query?function=%s&symbol=%s%s&apikey=%s";
 
@@ -44,6 +45,7 @@ public class QuoteDownloader {
 		return extractQuoteHistory(symbol, quotes);
 	}
 
+	/** Process JSON results to get quote data */
 	private static List<QPrice> extractQuoteHistory(String symbol, JSONObject quotes) {
 		JSONObject quoteObj = null;
 
@@ -91,12 +93,21 @@ public class QuoteDownloader {
 		return prices;
 	}
 
+	/**
+	 * Load quotes for a security
+	 * 
+	 * @param symbol   Ticker symbol
+	 * @param function Load function (e.g. "TIME_SERIES_DAILY_ADJUSTED")
+	 * @param full     True - full history, False - recent prices
+	 * @return JSON results
+	 */
 	private static JSONObject loadQuoteHistory(String symbol, String function, boolean full) {
 		StringBuilder sb = new StringBuilder();
 		String json = "No quotes";
 		File outdir = new File(QifDom.qifDir, "quotes");
 		File outfile = new File(outdir, symbol + ".quote");
 
+		// Read the file if present
 		if (outfile.isFile() && outfile.canRead()) {
 			try {
 				LineNumberReader rdr = new LineNumberReader(new FileReader(outfile));
@@ -116,6 +127,7 @@ public class QuoteDownloader {
 				Common.reportError("Error opening/reading file " + outfile.toString());
 			}
 		} else {
+			// Download quotes
 			String charset = "UTF-8";
 
 			URLConnection connection = null;

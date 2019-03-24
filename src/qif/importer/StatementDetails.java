@@ -11,29 +11,31 @@ import qif.data.QDate;
 import qif.data.Security;
 import qif.data.SecurityPosition;
 import qif.data.Statement;
-import qif.persistence.Reconciler.TxInfo;
 
-// StatementDetails represents a reconciled statement as stored in the
-// statements log file.
+/** Represents a reconciled statement as stored in the statements log file */
 public class StatementDetails {
 	public static final int CURRENT_VERSION = 4;
 
-	public int acctid;
-	public QDate date;
+	//[name;numtx[;txidx;shrbal]]
+	private static class StatementPositionTx {
+		int txidx;
+		BigDecimal shrbal;
+	}
 
-	// This is the cumulative account value
-	public BigDecimal closingBalance;
+	private static class StatementPosition {
+		Security sec;
+		List<StatementPositionTx> transactions = new ArrayList<StatementPositionTx>();
+	}
 
-	// This is the net cash change
-	BigDecimal closingCashBalance;
+	private static class StatementHoldings {
+		List<StatementPosition> positions = new ArrayList<StatementPosition>();
+	}
 
-	// This is the change to security positions (and closing price)
-	StatementHoldings holdings;
-
-	public List<TxInfo> transactions;
-	public List<TxInfo> unclearedTransactions;
-
-	// name;date;stmtBal;cashBal;numTx;numPos;[cashTx;][sec;numTx[txIdx;shareBal;]]
+	/**
+	 * Create a string representation of the statement for saving<br>
+	 * Format:<br>
+	 * acctname;date;bal;cashBal;numTx;numPos;[cashTx;][sec;numTx[txIdx;shareBal;]]
+	 */
 	public static String formatStatementForSave(Statement stmt) {
 		Account a = Account.getAccountByID(stmt.acctid);
 
@@ -45,57 +47,76 @@ public class StatementDetails {
 				stmt.transactions.size(), //
 				stmt.holdings.positions.size());
 
-		for (final GenericTxn t : stmt.transactions) {
+		for (GenericTxn t : stmt.transactions) {
 			s += ";" + t.formatForSave();
 		}
 
-		for (final SecurityPosition p : stmt.holdings.positions) {
+		for (SecurityPosition p : stmt.holdings.positions) {
 			s += ";" + p.formatForSave(stmt);
 		}
 
 		return s;
 	}
 
+	// TODO make fields final; use factory to construct
+	public int acctid;
+	public QDate date;
+
+	/** Cumulative account value on closing date (cash + securities) */
+	public BigDecimal closingBalance;
+
+	/** Cash balance */
+	BigDecimal closingCashBalance;
+
+	/** Change to security positions (and closing price) since last statement */
+	StatementHoldings holdings;
+
+	/** Transactions covered by this statement */
+	public List<StatementTxInfo> transactions;
+
+	/** All Uncleared transactions as of closing date */
+	public List<StatementTxInfo> unclearedTransactions;
+
 	private StatementDetails() {
 		this.closingCashBalance = BigDecimal.ZERO;
-		this.transactions = new ArrayList<TxInfo>();
-		this.unclearedTransactions = new ArrayList<TxInfo>();
+		this.transactions = new ArrayList<StatementTxInfo>();
+		this.unclearedTransactions = new ArrayList<StatementTxInfo>();
 
 		this.holdings = new StatementHoldings();
 	}
 
-	// Load details object from file
+	/** Construct details by loading from file */
 	public StatementDetails(String s, int version) {
 		this();
+
+		if (version < CURRENT_VERSION) {
+			Common.reportError("Can't load old statement file: version " + version);
+		}
 
 		parseStatementDetails(s, version);
 	}
 
 	private void parseStatementDetails(String s, int version) {
-		final String[] ss = s.split(";");
+		String[] ss = s.split(";");
 		int ssx = 0;
 
-		final String acctname = ss[ssx++].trim();
-		final String dateStr = ss[ssx++].trim();
-		final String closeStr = ss[ssx++].trim();
-		final String closeCashStr = ss[ssx++].trim();
-		final String txCountStr = ss[ssx++].trim();
-		final String secCountStr = (version > 1) ? ss[ssx++].trim() : "0";
+		String acctname = ss[ssx++].trim();
+		String dateStr = ss[ssx++].trim();
+		String closeStr = ss[ssx++].trim();
+		String closeCashStr = ss[ssx++].trim();
+		String txCountStr = ss[ssx++].trim();
+		String secCountStr = (version > 1) ? ss[ssx++].trim() : "0";
 
 		this.acctid = Account.findAccount(acctname).acctid;
 		this.date = Common.parseQDate(dateStr);
-		if (version < 3) {
-			this.closingBalance = this.closingCashBalance = new BigDecimal(closeCashStr);
-		} else {
-			this.closingBalance = new BigDecimal(closeStr);
-			this.closingCashBalance = new BigDecimal(closeCashStr);
-		}
+		this.closingBalance = new BigDecimal(closeStr);
+		this.closingCashBalance = new BigDecimal(closeCashStr);
 
-		final int txcount = Integer.parseInt(txCountStr);
-		final int seccount = Integer.parseInt(secCountStr);
+		int txcount = Integer.parseInt(txCountStr);
+		int seccount = Integer.parseInt(secCountStr);
 
 		for (int ii = 0; ii < txcount; ++ii) {
-			final TxInfo txinfo = new TxInfo();
+			StatementTxInfo txinfo = new StatementTxInfo();
 
 			String txtypeStr = "";
 			try {
@@ -126,7 +147,7 @@ public class StatementDetails {
 				cknumStr = ss[ssx++].trim();
 			}
 
-			final String amtStr = ss[ssx++].trim();
+			String amtStr = ss[ssx++].trim();
 
 			txinfo.date = Common.parseQDate(tdateStr);
 			txinfo.action = actStr;
@@ -142,22 +163,22 @@ public class StatementDetails {
 
 		// sec;numtx[;txidx;bal]
 		for (int ii = 0; ii < seccount; ++ii) {
-			final String symStr = ss[ssx++].trim();
-			final String numtxStr = ss[ssx++].trim();
+			String symStr = ss[ssx++].trim();
+			String numtxStr = ss[ssx++].trim();
 
 			Security sec = Security.findSecurity(symStr);
 
-			final StatementPosition spos = new StatementPosition();
+			StatementPosition spos = new StatementPosition();
 			spos.sec = sec;
 			this.holdings.positions.add(spos);
 
-			final int numtx = Integer.parseInt(numtxStr);
+			int numtx = Integer.parseInt(numtxStr);
 
 			for (int jj = 0; jj < numtx; ++jj) {
-				final String txidxStr = ss[ssx++].trim();
-				final String shrbalStr = ss[ssx++].trim();
+				String txidxStr = ss[ssx++].trim();
+				String shrbalStr = ss[ssx++].trim();
 
-				final StatementPositionTx tx = new StatementPositionTx();
+				StatementPositionTx tx = new StatementPositionTx();
 				tx.txidx = Integer.parseInt(txidxStr);
 				tx.shrbal = new BigDecimal(shrbalStr);
 
@@ -167,7 +188,7 @@ public class StatementDetails {
 	}
 
 	public String toString() {
-		final String s = "" + this.acctid + " " //
+		String s = "" + this.acctid + " " //
 				+ this.date.toString() //
 				+ String.format("%s  %s %d tx", //
 						Common.formatAmount(this.closingBalance), //
@@ -176,78 +197,4 @@ public class StatementDetails {
 
 		return s;
 	}
-}
-
-// This represents the information stored in the statementLog file for each
-// transaction that is part of a statement.
-//class TxInfo {
-//	QDate date;
-//	String action;
-//	int cknum;
-//	BigDecimal cashAmount;
-//	Security security;
-//	BigDecimal shares;
-//
-//	public static TxInfo factory(GenericTxn tx) {
-//		if (tx instanceof NonInvestmentTxn) {
-//			return new TxInfo((NonInvestmentTxn) tx);
-//		}
-//
-//		if (tx instanceof InvestmentTxn) {
-//			return new TxInfo((InvestmentTxn) tx);
-//		}
-//
-//		return null;
-//	}
-//
-//	public TxInfo() {
-//		this.cknum = 0;
-//		this.action = null;
-//		this.security = null;
-//		this.shares = null;
-//	}
-//
-//	private TxInfo(GenericTxn tx) {
-//		this();
-//
-//		this.cashAmount = tx.getCashAmount();
-//	}
-//
-//	public TxInfo(NonInvestmentTxn tx) {
-//		this((GenericTxn) tx);
-//
-//		this.cknum = tx.getCheckNumber();
-//	}
-//
-//	public TxInfo(InvestmentTxn tx) {
-//		this((GenericTxn) tx);
-//
-//		this.action = tx.getAction().toString();
-//
-//		if (tx.security != null) {
-//			this.security = tx.security;
-//			this.shares = tx.getShares();
-//		}
-//	}
-//
-//	public String toString() {
-//		return String.format("%s %5d %s", //
-//				this.date.toString(), this.cknum, //
-//				Common.formatAmount(this.cashAmount));
-//	}
-//}
-
-// [name;numtx[;txidx;shrbal]]
-class StatementPositionTx {
-	int txidx;
-	BigDecimal shrbal;
-}
-
-class StatementPosition {
-	Security sec;
-	List<StatementPositionTx> transactions = new ArrayList<StatementPositionTx>();
-}
-
-class StatementHoldings {
-	List<StatementPosition> positions = new ArrayList<StatementPosition>();
 }

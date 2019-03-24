@@ -5,6 +5,7 @@ import qif.data.AccountType;
 import qif.data.Common;
 import qif.data.QDate;
 
+/** Load Account Section of input QIF file */
 class AccountProcessor {
 	private QifDomReader qrdr;
 
@@ -29,7 +30,7 @@ class AccountProcessor {
 	}
 
 	private Account loadAccount() {
-		final QFileReader.QLine qline = new QFileReader.QLine();
+		QFileReader.QLine qline = new QFileReader.QLine();
 
 		AccountType type = null;
 		String name = null;

@@ -72,26 +72,31 @@ import java.io.LineNumberReader;
 
 import qif.data.Common;
 
+/** Reader to process input QIF files */
 public class QFileReader {
-	SectionType currSectionType;
-	LineNumberReader rdr;
-	String nextline = null;
-
-	public enum SectionType {
+	/** Various sections that occur in QIF files */
+	public static enum SectionType {
 		EndOfFile, Account, Statement, Statements, //
 		Bank, Cash, Category, CreditCard, Investment, //
 		Asset, Liability, MemorizedTransaction, QClass, Prices, Security, Tag
 	};
 
+	/** Contains decomposed line from QIF file */
 	public static class QLine {
+		/** The type of field for the line */
 		public FieldType type;
+		/** Type marker character */
 		public char typechar;
+		/** Value portion of the line for the field */
 		public String value;
 
 		public String toString() {
 			return this.type + ": " + this.value;
 		}
 	}
+
+	private LineNumberReader rdr;
+	private String lookaheadLine = null;
 
 	public QFileReader(File file) {
 		try {
@@ -101,18 +106,11 @@ public class QFileReader {
 		}
 	}
 
-	public void reset() {
-		if (this.rdr == null) {
-			this.currSectionType = SectionType.EndOfFile;
-			return;
-		}
-	}
-
 	public String readLine() {
 		try {
-			if (this.nextline != null) {
-				final String ret = this.nextline;
-				this.nextline = null;
+			if (this.lookaheadLine != null) {
+				String ret = this.lookaheadLine;
+				this.lookaheadLine = null;
 
 				return ret;
 			}
@@ -126,19 +124,22 @@ public class QFileReader {
 	}
 
 	public String peekLine() {
-		final String line = readLine();
+		String line = readLine();
 		unreadLine(line);
 		return line;
 	}
 
-	public void unreadLine(String line) {
-		assert this.nextline == null;
-		this.nextline = line;
+	private void unreadLine(String line) {
+		if (this.lookaheadLine != null) {
+			Common.reportError("Attempted to push back two lines:\n" //
+					+ "[1]: " + this.lookaheadLine + "\n" //
+					+ "[2]: " + line + "\n");
+		}
+
+		this.lookaheadLine = line;
 	}
 
 	public SectionType findFirstSection() {
-		reset();
-
 		return nextSection();
 	}
 
@@ -146,15 +147,14 @@ public class QFileReader {
 		try {
 			for (;;) {
 				String line = readLine();
-
 				if (line == null) {
 					return SectionType.EndOfFile;
 				}
 
-				if (line.startsWith("!") && !line.startsWith("!Option") && !line.startsWith("!Clear")) {
-					line = line.trim();
-					final SectionType st = parseSectionType(line);
-					return st;
+				if (line.startsWith("!") //
+						&& !line.startsWith("!Option") //
+						&& !line.startsWith("!Clear")) {
+					return parseSectionType(line.trim());
 				}
 			}
 		} catch (final Exception e) {
@@ -303,8 +303,15 @@ public class QFileReader {
 		line.type = FieldType.EndOfSection;
 	}
 
+	/**
+	 * Get the next QIF file line
+	 * 
+	 * @param line Structure to fill with line info
+	 * @return True if a line is found; false if EOF
+	 * @throws Exception
+	 */
 	private boolean nextLine(QLine line) throws Exception {
-		final String s = readLine();
+		String s = readLine();
 
 		if (s == null) {
 			line.type = FieldType.EndOfSection;
@@ -321,7 +328,7 @@ public class QFileReader {
 		return true;
 	}
 
-	FieldType securityFieldType(char key) {
+	private static FieldType securityFieldType(char key) {
 		switch (key) {
 		case END:
 			return FieldType.EndOfSection;
@@ -340,7 +347,7 @@ public class QFileReader {
 		}
 	}
 
-	FieldType priceFieldType(char key) {
+	private static FieldType priceFieldType(char key) {
 		switch (key) {
 		case END:
 			return FieldType.EndOfSection;
@@ -351,7 +358,7 @@ public class QFileReader {
 		}
 	}
 
-	FieldType accountFieldType(char key) {
+	private static FieldType accountFieldType(char key) {
 		switch (key) {
 		case END:
 			return FieldType.EndOfSection;
@@ -380,7 +387,7 @@ public class QFileReader {
 		}
 	}
 
-	FieldType statementsFieldType(char key) {
+	private static FieldType statementsFieldType(char key) {
 		switch (key) {
 		case END:
 			return FieldType.EndOfSection;
@@ -403,7 +410,7 @@ public class QFileReader {
 		}
 	}
 
-	FieldType categoryFieldType(char key) {
+	private static FieldType categoryFieldType(char key) {
 		switch (key) {
 		case END:
 			return FieldType.EndOfSection;
@@ -429,7 +436,7 @@ public class QFileReader {
 		}
 	}
 
-	FieldType txnFieldType(char key) {
+	private static FieldType txnFieldType(char key) {
 		switch (key) {
 		case END:
 			return FieldType.EndOfSection;
@@ -464,7 +471,7 @@ public class QFileReader {
 		}
 	}
 
-	FieldType invFieldType(char key) {
+	private static FieldType invFieldType(char key) {
 		switch (key) {
 		case END:
 			return FieldType.EndOfSection;

@@ -13,16 +13,33 @@ import qif.data.QPrice;
 import qif.data.Security;
 import qif.data.Security.SplitInfo;
 
+/**
+ * Load quotes from CSV file<br>
+ * <br>
+ * Start of line specifies content:<br>
+ * Format:<br>
+ * chlvd/dohlcv: switch format (Close High Low Volume Date Open)<br>
+ * date price: switch to dp format<br>
+ * price date: switch to pd format<br>
+ * <br>
+ * split adjusted: The quotes account for stock splits<br>
+ * weekly: Quotes are weekly (not daily)<br>
+ * <br>
+ * split: split ratio<br>
+ * <br>
+ * otherwise: quote data<br>
+ */
 class QQuoteLoader {
-	public void loadQuoteFile(Security sec, File f) {
+	public static void loadQuoteFile(Security sec, File f) {
 		if (!f.getName().endsWith(".csv")) {
 			return;
 		}
 
-		final List<QPrice> prices = sec.prices;
-		final List<SplitInfo> splits = sec.splits;
+		List<QPrice> prices = sec.prices;
+		List<SplitInfo> splits = sec.splits;
 
 		assert prices.isEmpty() && splits.isEmpty();
+
 		prices.clear();
 		splits.clear();
 
@@ -46,53 +63,47 @@ class QQuoteLoader {
 			line = rdr.readLine();
 
 			while (line != null) {
-				boolean isHeader = false;
+				boolean isHeader = true;
 
 				if (line.startsWith("split adjusted")) {
 					isSplitAdjusted = true;
-					isHeader = true;
 				} else if (line.startsWith("weekly")) {
 					isWeekly = true;
-					isHeader = true;
 				} else if (line.startsWith("date")) {
 					chlvd = false;
 					dohlcv = false;
 					dateprice = true;
-					isHeader = true;
 				} else if (line.startsWith("price")) {
 					chlvd = false;
 					dohlcv = false;
 					dateprice = false;
-					isHeader = true;
 				} else if (line.startsWith("chlvd")) {
 					chlvd = true;
 					dohlcv = false;
 					dateprice = false;
-					isHeader = true;
 				} else if (line.startsWith("dohlcv")) {
 					chlvd = false;
 					dohlcv = true;
 					dateprice = false;
-					isHeader = true;
 				} else if (line.startsWith("split")) {
-					final String[] ss = line.split(" ");
+					String[] ss = line.split(" ");
 					int ssx = 1;
 
-					final String newshrStr = ss[ssx++];
-					final String oldshrStr = ss[ssx++];
-					final String dateStr = ss[ssx++];
+					String newshrStr = ss[ssx++];
+					String oldshrStr = ss[ssx++];
+					String dateStr = ss[ssx++];
 
-					final BigDecimal splitAdjust = new BigDecimal(newshrStr).divide(new BigDecimal(oldshrStr));
+					BigDecimal splitAdjust = new BigDecimal(newshrStr).divide(new BigDecimal(oldshrStr));
 					splitDate = Common.parseQDate(dateStr);
 
-					final SplitInfo si = new SplitInfo();
+					SplitInfo si = new SplitInfo();
 					si.splitDate = splitDate;
 					si.splitRatio = splitAdjust;
 
 					splits.add(si);
 					Collections.sort(splits, (o1, o2) -> o1.splitDate.compareTo(o2.splitDate));
-
-					isHeader = true;
+				} else {
+					isHeader = false;
 				}
 
 				if (isHeader) {
@@ -100,12 +111,13 @@ class QQuoteLoader {
 					continue;
 				}
 
-				final String[] ss = line.split(",");
+				String[] ss = line.split(",");
 				int ssx = 0;
 
 				String pricestr;
 				String datestr;
 
+				// Extract date/price depending on line format
 				if (chlvd) {
 					pricestr = ss[ssx++];
 					++ssx;
@@ -127,6 +139,7 @@ class QQuoteLoader {
 				}
 
 				QDate date = Common.parseQDate(datestr);
+
 				BigDecimal price = null;
 				try {
 					price = new BigDecimal(pricestr);
@@ -136,18 +149,21 @@ class QQuoteLoader {
 				}
 
 				if (isWeekly) {
-					// I am suspicious of this - go to middle of the week?
+					// NB unused: Suspicious - go to middle of the week?
 					date = date.addDays(4);
 				}
 
-				final BigDecimal splitRatio = sec.getSplitRatioForDate(date);
+				BigDecimal splitRatio = sec.getSplitRatioForDate(date);
 
 				BigDecimal saprice;
 
 				if (isSplitAdjusted) {
+					// Value if held until now (i.e. accounting for future splits)
 					saprice = price;
+					// Price as of the date of the quote
 					price = price.multiply(splitRatio);
 				} else {
+					// NB unused: this is not normal
 					saprice = price.divide(splitRatio);
 				}
 

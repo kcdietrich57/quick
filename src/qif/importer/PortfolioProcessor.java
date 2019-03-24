@@ -8,14 +8,10 @@ import qif.data.SecurityPortfolio;
 import qif.data.SecurityPosition;
 import qif.data.TxAction;
 
+/** Post-process portfolios after loading data */
 class PortfolioProcessor {
-	// private QifDomReader qrdr;
-
-	public PortfolioProcessor(QifDomReader qrdr) {
-		// this.qrdr = qrdr;
-	}
-
-	public void fixPortfolios() {
+	/** Update global portfolio and each account portfolio */
+	public static void fixPortfolios() {
 		fixPortfolio(SecurityPortfolio.portfolio);
 
 		for (Account a : Account.getAccounts()) {
@@ -25,17 +21,19 @@ class PortfolioProcessor {
 		}
 	}
 
-	private void fixPortfolio(SecurityPortfolio port) {
-		for (final SecurityPosition pos : port.positions) {
+	/** Update positions in a portfolio */
+	private static void fixPortfolio(SecurityPortfolio port) {
+		for (SecurityPosition pos : port.positions) {
 			fixPosition(pos);
 		}
 	}
 
-	private void fixPosition(SecurityPosition p) {
+	/** Update running share totals in a position */
+	private static void fixPosition(SecurityPosition p) {
 		BigDecimal shrbal = BigDecimal.ZERO;
 		p.shrBalance.clear();
 
-		for (final InvestmentTxn t : p.transactions) {
+		for (InvestmentTxn t : p.transactions) {
 			if (t.getAction() == TxAction.STOCKSPLIT) {
 				shrbal = shrbal.multiply(t.getSplitRatio());
 			} else if (t.getShares() != null) {

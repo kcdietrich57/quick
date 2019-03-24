@@ -11,6 +11,7 @@ import qif.data.Security;
 import qif.data.SimpleTxn;
 import qif.data.TxAction;
 
+/** Inputs transactions from input QIF file */
 class TransactionProcessor {
 	private static int findCategoryID(String s) {
 		if (s.startsWith("[")) {
@@ -32,7 +33,7 @@ class TransactionProcessor {
 		return (cat != null) ? (cat.catid) : 0;
 	}
 
-	private QifDomReader qrdr;
+	private final QifDomReader qrdr;
 
 	public TransactionProcessor(QifDomReader qrdr) {
 		this.qrdr = qrdr;
@@ -58,6 +59,7 @@ class TransactionProcessor {
 				txn.security.addTransaction(txn);
 			}
 
+			// TODO Does the transaction not already reference the account?
 			Account.currAccountBeingLoaded.addTransaction(txn);
 		}
 	}

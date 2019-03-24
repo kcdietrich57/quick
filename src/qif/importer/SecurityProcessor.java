@@ -15,12 +15,9 @@ import qif.data.SecurityPortfolio;
 import qif.data.SecurityPosition;
 import qif.data.StockOption;
 
-/**
- * Helper class for loading securities and setting up security and lot details
- * afterwards.
- */
+/** Load securities and set up security and lot details afterwards. */
 class SecurityProcessor {
-	private QifDomReader qrdr;
+	private final QifDomReader qrdr;
 
 	public SecurityProcessor(QifDomReader qrdr) {
 		this.qrdr = qrdr;
@@ -91,14 +88,14 @@ class SecurityProcessor {
 			Common.reportError("No name or symbol for security");
 		}
 
-		if (symbol == null) {
-			// Common.reportWarning("No ticker symbol for '" + name + "'");
+		if (QifDom.verbose && (symbol == null)) {
+			Common.reportWarning("No ticker symbol for '" + name + "'");
 		}
 
 		return new Security(symbol, name, type, goal);
 	}
 
-	/** Process security transactions for all accounts after loading from QIF */
+	/** Process security txns (global, accounts) after loading from QIF */
 	public void processSecurities() {
 		// Process global porfolio info
 		processSecurities2(SecurityPortfolio.portfolio, GenericTxn.getAllTransactions());
@@ -137,17 +134,13 @@ class SecurityProcessor {
 			case REINV_SH:
 			case BUYX:
 			case REINV_INT:
+				pos.endingShares = pos.endingShares.add(txn.getShares());
+				break;
+
 			case SHRS_OUT:
 			case SELL:
 			case SELLX:
 				pos.endingShares = pos.endingShares.add(txn.getShares());
-				break;
-
-			case GRANT:
-			case VEST:
-			case EXERCISE:
-			case EXERCISEX:
-			case EXPIRE:
 				break;
 
 			case STOCKSPLIT:
@@ -155,6 +148,13 @@ class SecurityProcessor {
 
 				pos.endingShares = pos.endingShares.multiply(txn.getShares());
 				pos.endingShares = pos.endingShares.divide(BigDecimal.TEN);
+				break;
+
+			case GRANT:
+			case VEST:
+			case EXERCISE:
+			case EXERCISEX:
+			case EXPIRE:
 				break;
 
 			case CASH:
@@ -175,18 +175,19 @@ class SecurityProcessor {
 			return;
 		}
 
-		final File quoteFiles[] = quoteDirectory.listFiles();
+		File quoteFiles[] = quoteDirectory.listFiles();
 
-		for (final File f : quoteFiles) {
-			String symbol = f.getName();
-			symbol = symbol.replaceFirst(".csv", "");
-			final Security sec = Security.findSecurityBySymbol(symbol);
+		// Load saved quote data
+		for (File f : quoteFiles) {
+			String symbol = f.getName().replaceFirst(".csv", "");
+			Security sec = Security.findSecurityBySymbol(symbol);
 
 			if (sec != null) {
-				new QQuoteLoader().loadQuoteFile(sec, f);
+				QQuoteLoader.loadQuoteFile(sec, f);
 			}
 		}
 
+		// Download quotes from service
 		for (Security sec : Security.getSecurities()) {
 			String symbol = sec.getSymbol();
 

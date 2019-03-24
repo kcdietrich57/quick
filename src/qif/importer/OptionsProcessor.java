@@ -17,12 +17,19 @@ import qif.data.QifDom;
 import qif.data.Security;
 import qif.data.StockOption;
 
+/**
+ * Process stock option activity from loaded transactions and extra info missing
+ * from the QIF input files
+ */
 class OptionsProcessor {
-	public void processStockOptions() {
+	private final static String OPTIONS_DATA_FILENAME = "options.txt";
+
+	/** Initial load information about stock options from additional data file */
+	public static void processStockOptions() {
 		LineNumberReader rdr = null;
 
 		try {
-			File optfile = new File(QifDom.qifDir, "options.txt");
+			File optfile = new File(QifDom.qifDir, OPTIONS_DATA_FILENAME);
 			assert optfile.isFile() && optfile.canRead();
 
 			rdr = new LineNumberReader(new FileReader(optfile));
@@ -110,7 +117,8 @@ class OptionsProcessor {
 		Common.reportInfo("\nOpen Stock Options:\n" + openOptions.toString());
 	}
 
-	public void processOptions() {
+	/** Post-load processing for stock options */
+	public static void processOptions() {
 		processOptions(// SecurityPortfolio.portfolio,
 				GenericTxn.getAllTransactions());
 
@@ -121,7 +129,8 @@ class OptionsProcessor {
 		}
 	}
 
-	private void processOptions(List<GenericTxn> txns) {
+	/** Process options (either global for all txns, or one account's txns) */
+	private static void processOptions(List<GenericTxn> txns) {
 		for (GenericTxn gtxn : txns) {
 			if (!(gtxn instanceof InvestmentTxn) //
 					|| (((InvestmentTxn) gtxn).security == null)) {

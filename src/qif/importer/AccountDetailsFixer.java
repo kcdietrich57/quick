@@ -5,6 +5,7 @@ import qif.data.AccountType;
 import qif.data.Common;
 import qif.data.QDate;
 
+/** Helper class to correct account information after QIF load */
 public class AccountDetailsFixer {
 	/** Repair Quicken's confusion about specific account types */
 	public static AccountType fixType(String name, AccountType type) {

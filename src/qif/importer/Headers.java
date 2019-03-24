@@ -1,6 +1,6 @@
 package qif.importer;
 
-// The transaction type headers.
+/** Section and Field markers in QIF input files */
 public interface Headers {
 	// ---------------------------------------------------------
 	// Section markers

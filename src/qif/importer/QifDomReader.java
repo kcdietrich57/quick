@@ -7,24 +7,31 @@ import qif.data.QifDom;
 import qif.importer.QFileReader.SectionType;
 import qif.persistence.Reconciler;
 
+/** Class which loads quicken exported data (plus some additional info) */
 public class QifDomReader {
-	private File curFile = null;
-	private QFileReader filerdr = null;
-	private File qifDir;
-
+	/** The main load method - processes all files in qifdir */
 	public static void loadDom(String[] qifFiles) {
 		QifDom.qifDir = new File(qifFiles[0]).getParentFile();
 
-		final QifDomReader rdr = new QifDomReader(QifDom.qifDir);
+		QifDomReader rdr = new QifDomReader(QifDom.qifDir);
 
-		// Process all the QIF files
-		for (final String fn : qifFiles) {
+		// Process all the QIF files we can find
+		for (String fn : qifFiles) {
 			rdr.load(fn, true);
 		}
 
 		// Additional processing once the data is loaded (quotes, stmts, etc)
 		rdr.postLoad();
 	}
+
+	/** Where data files live */
+	private File qifDir;
+
+	/** The current file being processed */
+	private File curFile = null;
+
+	/** Reader for data files */
+	private QFileReader filerdr = null;
 
 	public QifDomReader(File qifDir) {
 		this.qifDir = qifDir;
@@ -34,7 +41,9 @@ public class QifDomReader {
 		return this.filerdr;
 	}
 
+	/** Load a single input file */
 	public void load(String fileName, boolean doCleanup) {
+		/** Check windows and unix paths */
 		if (!new File(fileName).exists()) {
 			if (new File("c:" + fileName).exists()) {
 				fileName = "c:" + fileName;
@@ -53,16 +62,17 @@ public class QifDomReader {
 		}
 	}
 
+	/** Process security info, statments, etc after all basic data is loaded */
 	private void postLoad() {
-		final File d = new File(this.qifDir, "quotes");
+		File d = new File(this.qifDir, "quotes");
 		new SecurityProcessor(this).loadSecurityPriceHistory(d);
 
-		new OptionsProcessor().processStockOptions();
+		OptionsProcessor.processStockOptions();
 		new SecurityProcessor(this).processSecurities();
-		new OptionsProcessor().processOptions();
-		new PortfolioProcessor(this).fixPortfolios();
+		OptionsProcessor.processOptions();
+		PortfolioProcessor.fixPortfolios();
 
-		final File dd = new File(this.qifDir, "statements");
+		File dd = new File(this.qifDir, "statements");
 		new StatementProcessor(this).processStatementFiles(dd);
 
 		// Process saved statement reconciliation information
@@ -84,9 +94,8 @@ public class QifDomReader {
 		this.filerdr = new QFileReader(f);
 	}
 
+	/** Process a file, loading the various sections via helper classes */
 	private void processFile() {
-		this.filerdr.reset();
-
 		for (SectionType sectype = this.filerdr.findFirstSection(); //
 				sectype != SectionType.EndOfFile; //
 				sectype = this.filerdr.nextSection()) {
@@ -137,7 +146,7 @@ public class QifDomReader {
 			}
 		}
 	}
-	
+
 	public String toString() {
 		return "DomReader[" + this.curFile.getPath() + "]";
 	}

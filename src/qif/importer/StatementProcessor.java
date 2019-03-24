@@ -4,6 +4,8 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import qif.data.Account;
@@ -14,6 +16,7 @@ import qif.data.SecurityPortfolio;
 import qif.data.SecurityPosition;
 import qif.data.Statement;
 
+/** Load statements from extra quasi-QIF input file */
 class StatementProcessor {
 	private QifDomReader qrdr;
 
@@ -21,6 +24,31 @@ class StatementProcessor {
 		this.qrdr = qrdr;
 	}
 
+	/** Load each statement file (one per account) in the statements directory */
+	public void processStatementFiles(File stmtDirectory) {
+		if (!stmtDirectory.isDirectory()) {
+			return;
+		}
+
+		File stmtFiles[] = stmtDirectory.listFiles();
+
+		for (File f : stmtFiles) {
+			if (!f.getName().endsWith(".qif")) {
+				continue;
+			}
+
+			try {
+				qrdr.load(f.getAbsolutePath(), false);
+			} catch (final Exception e) {
+				e.printStackTrace();
+			}
+		}
+
+		// Post-processing of loaded statements
+		buildStatementChains();
+	}
+
+	/** Load statements for an account from the quasi-QIF file */
 	public void loadStatements(File file) {
 		for (;;) {
 			String s = this.qrdr.getFileReader().peekLine();
@@ -29,6 +57,7 @@ class StatementProcessor {
 			}
 
 			List<Statement> stmts = loadStatementsSection(this.qrdr.getFileReader());
+
 			for (Statement stmt : stmts) {
 				Account.currAccountBeingLoaded.statements.add(stmt);
 				Account.currAccountBeingLoaded.statementFile = file;
@@ -37,8 +66,8 @@ class StatementProcessor {
 	}
 
 	private List<Statement> loadStatementsSection(QFileReader qfr) {
-		final QFileReader.QLine qline = new QFileReader.QLine();
-		final List<Statement> stmts = new ArrayList<Statement>();
+		QFileReader.QLine qline = new QFileReader.QLine();
+		List<Statement> stmts = new ArrayList<Statement>();
 
 		Statement currstmt = null;
 
@@ -50,8 +79,8 @@ class StatementProcessor {
 				return stmts;
 
 			case StmtsAccount: {
-				final String aname = qline.value;
-				final Account a = Account.findAccount(aname);
+				String aname = qline.value;
+				Account a = Account.findAccount(aname);
 				if (a == null) {
 					Common.reportError("Can't find account: " + aname);
 				}
@@ -62,15 +91,17 @@ class StatementProcessor {
 			}
 
 			case StmtsMonthly: {
-				final String[] ss = qline.value.split(" ");
+				String[] ss = qline.value.split(" ");
 				int ssx = 0;
 
-				final String datestr = ss[ssx++];
-				final int slash1 = datestr.indexOf('/');
-				final int slash2 = (slash1 < 0) ? -1 : datestr.indexOf('/', slash1 + 1);
+				String datestr = ss[ssx++];
+				int slash1 = datestr.indexOf('/');
+				int slash2 = (slash1 < 0) ? -1 : datestr.indexOf('/', slash1 + 1);
+
 				int day = 0; // last day of month
 				int month = 1;
 				int year = 0;
+
 				if (slash2 > 0) {
 					month = Integer.parseInt(datestr.substring(0, slash1));
 					day = Integer.parseInt(datestr.substring(slash1 + 1, slash2));
@@ -94,12 +125,12 @@ class StatementProcessor {
 						balStr = "0.00";
 					}
 
-					final BigDecimal bal = new BigDecimal(balStr);
-					final QDate d = (day == 0) //
+					BigDecimal bal = new BigDecimal(balStr);
+					QDate d = (day == 0) //
 							? QDate.getDateForEndOfMonth(year, month) //
 							: new QDate(year, month, day);
 
-					final Statement prevstmt = (stmts.isEmpty() ? null : stmts.get(stmts.size() - 1));
+					Statement prevstmt = (stmts.isEmpty() ? null : stmts.get(stmts.size() - 1));
 
 					currstmt = new Statement(Account.currAccountBeingLoaded.acctid, d);
 					currstmt.closingBalance = currstmt.cashBalance = bal;
@@ -120,11 +151,11 @@ class StatementProcessor {
 				break;
 
 			case StmtsSecurity: {
-				final String[] ss = qline.value.split(";");
+				String[] ss = qline.value.split(";");
 				int ssx = 0;
 
 				// S<SYM>;[<order>;]QTY;VALUE;PRICE
-				final String secStr = ss[ssx++];
+				String secStr = ss[ssx++];
 
 				String ordStr = ss[ssx];
 				if ("qpv".indexOf(ordStr.charAt(0)) < 0) {
@@ -133,26 +164,27 @@ class StatementProcessor {
 					++ssx;
 				}
 
-				final int qidx = ordStr.indexOf('q');
-				final int vidx = ordStr.indexOf('v');
-				final int pidx = ordStr.indexOf('p');
+				// Quantity, Price, Value can occur in different order
+				int qidx = ordStr.indexOf('q');
+				int vidx = ordStr.indexOf('v');
+				int pidx = ordStr.indexOf('p');
 
-				final String qtyStr = ((qidx >= 0) && (qidx + ssx < ss.length)) ? ss[qidx + ssx] : "x";
-				final String valStr = ((vidx >= 0) && (vidx + ssx < ss.length)) ? ss[vidx + ssx] : "x";
-				final String priceStr = ((pidx >= 0) && (pidx + ssx < ss.length)) ? ss[pidx + ssx] : "x";
+				String qtyStr = ((qidx >= 0) && (qidx + ssx < ss.length)) ? ss[qidx + ssx] : "x";
+				String valStr = ((vidx >= 0) && (vidx + ssx < ss.length)) ? ss[vidx + ssx] : "x";
+				String priceStr = ((pidx >= 0) && (pidx + ssx < ss.length)) ? ss[pidx + ssx] : "x";
 
-				final Security sec = Security.findSecurity(secStr);
+				Security sec = Security.findSecurity(secStr);
 				if (sec == null) {
 					Common.reportError("Unknown security: " + secStr);
 				}
 
-				final SecurityPortfolio h = currstmt.holdings;
-				final SecurityPosition p = new SecurityPosition(sec);
+				SecurityPortfolio h = currstmt.holdings;
+				SecurityPosition p = new SecurityPosition(sec);
 
 				p.value = (valStr.equals("x")) ? null : new BigDecimal(valStr);
 				p.endingShares = (qtyStr.equals("x")) ? null : new BigDecimal(qtyStr);
 				BigDecimal price = (priceStr.equals("x")) ? null : new BigDecimal(priceStr);
-				final BigDecimal price4date = sec.getPriceForDate(currstmt.date).getPrice();
+				BigDecimal price4date = sec.getPriceForDate(currstmt.date).getPrice();
 
 				// We care primarily about the number of shares. If that is not
 				// present, the other two must be set for us to calculate the
@@ -193,34 +225,17 @@ class StatementProcessor {
 		}
 	}
 
-	public void processStatementFiles(File stmtDirectory) {
-		if (!stmtDirectory.isDirectory()) {
-			return;
-		}
-
-		File stmtFiles[] = stmtDirectory.listFiles();
-
-		for (final File f : stmtFiles) {
-			if (!f.getName().endsWith(".qif")) {
-				continue;
-			}
-
-			try {
-				qrdr.load(f.getAbsolutePath(), false);
-			} catch (final Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		buildStatementChains();
-	}
-
 	private void buildStatementChains() {
 		for (Account a : Account.getAccounts()) {
 			Statement last = null;
 
+			Collections.sort(a.statements, new Comparator<Statement>() {
+				public int compare(Statement s1, Statement s2) {
+					return s1.date.compareTo(s2.date);
+				}
+			});
+
 			for (Statement s : a.statements) {
-				assert (last == null) || (last.date.compareTo(s.date) < 0);
 				s.prevStatement = last;
 				last = s;
 			}

@@ -20,6 +20,7 @@ import qif.data.QDate;
 import qif.data.QifDom;
 import qif.data.SimpleTxn;
 
+/** Import data from CSV file exported from MacOS Quicken */
 public class CSVImport {
 	private static int SPLIT_IDX = -1;
 	private static int ACCOUNT_IDX = -1;
