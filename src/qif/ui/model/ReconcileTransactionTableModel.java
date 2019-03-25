@@ -8,8 +8,6 @@ import java.util.List;
 import qif.data.Account;
 import qif.data.Common;
 import qif.data.GenericTxn;
-import qif.data.InvestmentTxn;
-import qif.data.QDate;
 import qif.data.SecurityPortfolio;
 import qif.data.Statement;
 import qif.persistence.Reconciler;
@@ -21,32 +19,61 @@ public class ReconcileTransactionTableModel //
 		extends GenericTableModel //
 		implements AccountSelectionListener, StatementSelectionListener {
 
-	private Object curObject;
-	private Account acct;
-	private Statement stmt;
-
-	private final List<GenericTxn> allTransactions;
 	private final List<GenericTxn> clearedTransactions;
 
 	public ReconcileTransactionTableModel() {
 		super("reconcileTransactionTable");
 
-		this.curObject = null;
-		this.acct = null;
-		this.stmt = null;
-		this.allTransactions = new ArrayList<GenericTxn>();
 		this.clearedTransactions = new ArrayList<GenericTxn>();
 	}
 
+	protected void setObject(Object obj, boolean update) {
+		if (!update && (obj == this.curObject)) {
+			return;
+		}
+
+		if (obj == null) {
+			this.curStatement = null;
+			this.curAccount = null;
+
+			setTransactions();
+		} else if (obj instanceof Statement) {
+			this.curStatement = (Statement) obj;
+			this.curAccount = Account.getAccountByID(curStatement.acctid);
+
+			setTransactions();
+		} else {
+			return;
+		}
+
+		this.curObject = obj;
+	}
+
+	private void setTransactions() {
+		this.allTransactions.clear();
+		this.clearedTransactions.clear();
+
+		if (this.curStatement != null) {
+			this.clearedTransactions.addAll(this.curStatement.transactions);
+
+			this.allTransactions.addAll(this.clearedTransactions);
+			this.allTransactions.addAll(this.curStatement.unclearedTransactions);
+
+			sortTransactionsForDisplay();
+		}
+
+		fireTableDataChanged();
+	}
+
 	public SecurityPortfolio getPortfolioDelta() {
-		return (this.stmt != null) //
-				? this.stmt.getPortfolioDelta(this.clearedTransactions) //
+		return (this.curStatement != null) //
+				? this.curStatement.getPortfolioDelta(this.clearedTransactions) //
 				: null;
 	}
 
 	public Statement createNextStatementToReconcile() {
-		return (this.acct != null) //
-				? this.acct.getNextStatementToReconcile() //
+		return (this.curAccount != null) //
+				? this.curAccount.getNextStatementToReconcile() //
 				: null;
 	}
 
@@ -54,53 +81,27 @@ public class ReconcileTransactionTableModel //
 		return this.clearedTransactions.contains(txn);
 	}
 
-	public void accountSelected(Account acct, boolean update) {
-		if (update || (acct != this.acct)) {
-			setObject(acct);
-		}
-	}
-
-	public void statementSelected(Statement stmt) {
-		setObject(stmt);
-	}
-
 	public void finishStatement() {
-		if (this.stmt != null) {
-			this.stmt.unclearAllTransactions();
-			this.stmt.clearTransactions(this.clearedTransactions);
+		if (this.curStatement != null) {
+			this.curStatement.unclearAllTransactions();
+			this.curStatement.clearTransactions(this.clearedTransactions);
 
-			BigDecimal clearedbal = this.stmt.getClearedCashBalance();
+			BigDecimal clearedbal = this.curStatement.getClearedCashBalance();
 
 			if ((clearedbal != null) //
-					&& Common.isEffectivelyEqual(clearedbal, this.stmt.cashBalance)) {
-				this.stmt.isBalanced = true;
+					&& Common.isEffectivelyEqual(clearedbal, this.curStatement.cashBalance)) {
+				this.curStatement.isBalanced = true;
 
-				if (!this.acct.statements.contains(this.stmt)) {
-					this.acct.statements.add(this.stmt);
+				if (!this.curAccount.statements.contains(this.curStatement)) {
+					this.curAccount.statements.add(this.curStatement);
 				}
 
-				this.stmt.dirty = true;
-				Reconciler.saveReconciledStatement(this.stmt);
+				this.curStatement.dirty = true;
+				Reconciler.saveReconciledStatement(this.curStatement);
 			} else {
 				System.out.println("Can't finish statement");
 			}
 		}
-	}
-
-	private void setTransactions() {
-		this.allTransactions.clear();
-		this.clearedTransactions.clear();
-
-		if (this.stmt != null) {
-			this.clearedTransactions.addAll(this.stmt.transactions);
-
-			this.allTransactions.addAll(this.clearedTransactions);
-			this.allTransactions.addAll(this.stmt.unclearedTransactions);
-
-			sortTransactionsForDisplay();
-		}
-
-		fireTableDataChanged();
 	}
 
 	private void sortTransactionsForDisplay() {
@@ -142,63 +143,17 @@ public class ReconcileTransactionTableModel //
 	}
 
 	public BigDecimal getClearedCashBalance() {
-		if (this.stmt == null) {
+		if (this.curStatement == null) {
 			return BigDecimal.ZERO;
 		}
 
-		BigDecimal tot = stmt.getOpeningCashBalance();
+		BigDecimal tot = curStatement.getOpeningCashBalance();
 
 		for (GenericTxn txn : this.clearedTransactions) {
 			tot = tot.add(txn.getCashAmount());
 		}
 
 		return tot;
-	}
-
-	private void setObject(Object obj) {
-		if (obj == this.curObject) {
-			return;
-		}
-
-		if (obj == null) {
-			this.stmt = null;
-			this.acct = null;
-
-			setTransactions();
-		} else if (obj instanceof Statement) {
-			this.stmt = (Statement) obj;
-			this.acct = Account.getAccountByID(stmt.acctid);
-
-			setTransactions();
-		} else {
-			return;
-		}
-
-		this.curObject = obj;
-	}
-
-	public void setStatementDate(QDate date) {
-		if ((date == null) || (acct == null)) {
-			return;
-		}
-
-		Statement s = acct.getStatement(date, null);
-		if (s != null) {
-			this.stmt = s;
-			setTransactions();
-		}
-	}
-
-	public int getRowCount() {
-		return allTransactions.size();
-	}
-
-	public GenericTxn getTransactionAt(int row) {
-		if (row < 0 || row >= this.allTransactions.size()) {
-			return null;
-		}
-
-		return this.allTransactions.get(row);
 	}
 
 	public void clearAll() {
@@ -229,82 +184,4 @@ public class ReconcileTransactionTableModel //
 
 		sortTransactionsForDisplay();
 	}
-
-	public Object getValueAt(int row, int col) {
-		GenericTxn tx = getTransactionAt(row);
-
-		if ((tx == null) || (col < 0) || (col >= getColumnCount())) {
-			return null;
-		}
-
-		switch (col) {
-		case 0:
-			return tx.getDate().toString();
-
-		case 1:
-			return tx.getAction().toString();
-
-		case 2:
-			if (tx instanceof InvestmentTxn) {
-				InvestmentTxn itx = (InvestmentTxn) tx;
-
-				if (itx.security != null) {
-					return itx.security.getName();
-				}
-			}
-
-			return Common.stringValue(tx.getPayee());
-
-		case 3:
-			return Common.stringValue(tx.getAmount());
-
-		case 4:
-			return tx.getCategory();
-
-		case 5:
-			return tx.getMemo();
-
-		case 6:
-			if (tx instanceof InvestmentTxn) {
-				InvestmentTxn itx = (InvestmentTxn) tx;
-
-				if (itx.security != null) {
-					return Common.formatAmount3(itx.getShares()).trim() + "@" //
-							+ Common.formatAmount3(itx.getShareCost()).trim();
-				}
-			}
-
-			return "";
-
-		case 7:
-			return Common.stringValue(tx.runningTotal);
-		}
-
-		return null;
-	}
-
-	// public Class getColumnClass(int c) {
-	// return getValueAt(0, c).getClass();
-	// }
-
-	// Don't need to implement this method unless your table's editable.
-	// public boolean isCellEditable(int row, int col) {
-	// // Note that the data/cell address is constant,
-	// // no matter where the cell appears onscreen.
-	// if (col < 2) {
-	// return false;
-	// } else {
-	// return true;
-	// }
-	// }
-
-	// Don't need to implement this method unless your table's editable.
-	// public void setValueAt(Object value, int row, int col) {
-	// while (values.size() <= row) {
-	// values.add(null);
-	// }
-	//
-	// //values.get(row)[col] = value;
-	// fireTableCellUpdated(row, col);
-	// }
 }
