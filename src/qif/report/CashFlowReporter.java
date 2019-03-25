@@ -2,6 +2,7 @@ package qif.report;
 
 import java.util.Date;
 
+/** TODO not implemented - Report Cash Flow - used by obsolete QifLoader */
 public class CashFlowReporter {
 
 	public static void reportCashFlow(Date d1, Date d2) {

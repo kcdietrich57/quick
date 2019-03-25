@@ -5,6 +5,7 @@ import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.Statement;
 
+/** Report account info - used by obsolete QifLoader */
 public class AccountReporter {
 
 	public static void reportStatus(Account acct, String interval) {

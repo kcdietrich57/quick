@@ -202,20 +202,20 @@ public class Common {
 		return formatDate(date, "MM/dd/yy");
 	}
 
-	/** Format a date mm/dd/yyyy */
-	public static String formatDateLong(QDate date) {
-		return formatDate(date, "MM/dd/yyyy");
-	}
-
-	/** Format a date mm/dd */
-	public static String formatDateShort(QDate date) {
-		return formatDate(date, "MM/dd");
-	}
-
-	/** Format a date mm/yyyy */
-	public static String formatDateMonthYear(QDate date) {
-		return formatDate(date, "MM/yyyy");
-	}
+//	/** Format a date mm/dd/yyyy */
+//	private static String formatDateLong(QDate date) {
+//		return formatDate(date, "MM/dd/yyyy");
+//	}
+//
+//	/** Format a date mm/dd */
+//	private static String formatDateShort(QDate date) {
+//		return formatDate(date, "MM/dd");
+//	}
+//
+//	/** Format a date mm/yyyy */
+//	private static String formatDateMonthYear(QDate date) {
+//		return formatDate(date, "MM/yyyy");
+//	}
 
 	/** Format a date (possibly null) with a given SimpleDateFormat format */
 	private static String formatDate(QDate date, String format) {

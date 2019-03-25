@@ -9,6 +9,7 @@ import qif.report.StatusForDateModel.AccountSummary;
 import qif.report.StatusForDateModel.Section;
 import qif.report.StatusForDateModel.SecuritySummary;
 
+/** Create text based net worth summary report */
 public class NetWorthReporter {
 
 	public static class Balances {
@@ -21,10 +22,12 @@ public class NetWorthReporter {
 		public BigDecimal liabilities = BigDecimal.ZERO;
 	}
 
+	/** Current net worth - obsolete QifLoader only */
 	public static void reportCurrentNetWorth() {
 		reportNetWorthForDate(QDate.today());
 	}
 
+	/** Net worth for date - obsolete QifLoader only */
 	public static void reportNetWorthForDate(QDate d) {
 		StatusForDateModel model = new StatusForDateModel(d);
 
@@ -33,8 +36,9 @@ public class NetWorthReporter {
 		System.out.println(s);
 	}
 
-	// ===============================================================
+	// TODO the following methods/functions could be relocated into a better spot
 
+	/** Generate itemized list of account information and net worth summary */
 	public static String generateReportStatusForDate(StatusForDateModel model) {
 		StringBuilder sb = new StringBuilder();
 
@@ -90,6 +94,7 @@ public class NetWorthReporter {
 		return sb.toString();
 	}
 
+	/** Calculate/return summary balance information for a date */
 	public static Balances getBalancesForDate(QDate d) {
 		final Balances b = new Balances();
 

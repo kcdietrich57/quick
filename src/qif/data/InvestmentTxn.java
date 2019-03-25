@@ -499,7 +499,7 @@ public class InvestmentTxn extends GenericTxn {
 		String ret = "";
 
 		// organizeLots();
-		String datestr = Common.formatDate(getDate());
+		String datestr = getDate().toString();
 
 		if (this.security != null) {
 			// All security positions for date

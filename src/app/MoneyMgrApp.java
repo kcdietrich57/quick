@@ -28,6 +28,7 @@ public class MoneyMgrApp {
 		MoneyMgrApp.scn = new Scanner(System.in);
 		QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
 
+		// TODO experimental code
 		InvestmentPerformanceModel model = new InvestmentPerformanceModel( //
 				new QDate(2018, 8, 1), //
 				QDate.today());

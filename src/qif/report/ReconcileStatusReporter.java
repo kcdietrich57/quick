@@ -14,7 +14,26 @@ import qif.data.QDate;
 import qif.data.Statement;
 import qif.report.ReconcileStatusReporter.ReconcileStatusModel.AccountInfo;
 
+/** Generate report on reconciliation status for all accounts */
 public class ReconcileStatusReporter {
+
+	/** Comparator for ranking accounts by most recent statement date */
+	private static final Comparator<Account> compareLastBalancedStatementDate = (o1, o2) -> {
+		if (o1.statements.isEmpty()) {
+			return (o2.statements.isEmpty()) ? 0 : -1;
+		}
+
+		if (o1 == null || o2 == null) {
+			return (o1 == null) ? ((o2 == null) ? 0 : 1) : -1;
+		}
+
+		QDate d1 = o1.getLastBalancedStatementDate();
+		QDate d2 = o2.getLastBalancedStatementDate();
+
+		return (o2.statements.isEmpty()) ? 1 : d1.compareTo(d2);
+	};
+
+	/** Print reconcile status report - obsolete QifLoader only */
 	public static void reportStatus() {
 		ReconcileStatusModel model = buildReportStatusModel();
 		String s = generateReportStatus(model);
@@ -107,46 +126,34 @@ public class ReconcileStatusReporter {
 		}
 	}
 
+	/** Create a model with current reconciliation information */
 	public static ReconcileStatusModel buildReportStatusModel() {
 		ReconcileStatusModel model = new ReconcileStatusModel();
 
-		final List<Account> ranking = new ArrayList<Account>(Account.getAccounts());
+		List<Account> accountsByLastStatement = new ArrayList<Account>(Account.getAccounts());
 
-		final Comparator<Account> cmp = (o1, o2) -> {
-			if (o1.statements.isEmpty()) {
-				return (o2.statements.isEmpty()) ? 0 : -1;
-			}
+		Collections.sort(accountsByLastStatement, compareLastBalancedStatementDate);
 
-			if (o1 == null || o2 == null) {
-				return (o1 == null) ? ((o2 == null) ? 0 : 1) : -1;
-			}
-
-			QDate d1 = o1.getLastBalancedStatementDate();
-			QDate d2 = o2.getLastBalancedStatementDate();
-
-			return (o2.statements.isEmpty()) ? 1 : d1.compareTo(d2);
-		};
-
-		Collections.sort(ranking, cmp);
-
-		for (Account a : ranking) {
+		for (Account a : accountsByLastStatement) {
 			model.add(new AccountInfo(a));
 		}
 
 		return model;
 	}
 
+	/** Format one account's information */
 	private static String formatAccountInfo(int anum, AccountInfo ainfo) {
 		return String.format("%3d   %-35s : %8s  %s : %5d/%5d :    %8s", //
 				anum, //
 				ainfo.name, //
-				((ainfo.lastStatementDate != null) ? ainfo.lStatDate.toString() : "null"), //
+				((ainfo.lastStatementDate != null) ? ainfo.lStatDate.toString() : "N/A"), //
 				Common.formatAmount(ainfo.balance), //
 				ainfo.ucount, //
 				ainfo.tcount, //
-				((ainfo.firstUnclearedTxDate != null) ? ainfo.firstUnclearedTxDate.toString() : null));
+				((ainfo.firstUnclearedTxDate != null) ? ainfo.firstUnclearedTxDate.toString() : "N/A"));
 	}
 
+	/** Output a section for accounts with a range of dates since the last stmt */
 	private static int appendAccountSection(StringBuilder sb, //
 			int anum, String header, List<AccountInfo> accts) {
 		sb.append("\n");
@@ -161,6 +168,7 @@ public class ReconcileStatusReporter {
 		return anum;
 	}
 
+	/** Produce a text report with accounts ranked by when last reconciled */
 	public static String generateReportStatus(ReconcileStatusModel model) {
 		StringBuilder sb = new StringBuilder();
 

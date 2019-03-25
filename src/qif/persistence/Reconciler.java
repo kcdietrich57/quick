@@ -19,7 +19,7 @@ import qif.importer.StatementTxInfo;
 
 public class Reconciler {
 
-	// Read statement log file, filling in statement details.
+	/** After loading QIF data, read statement log file, filling in details. */
 	public static void processStatementLog() {
 		if (!Statement.stmtLogFile.isFile()) {
 			return;
@@ -38,10 +38,10 @@ public class Reconciler {
 
 			QifDom.loadedStatementsVersion = Integer.parseInt(s.trim());
 
+			// Ingest statements (each input line)
 			s = stmtLogReader.readLine();
 			while (s != null) {
-				StatementDetails d = //
-						new StatementDetails(s, QifDom.loadedStatementsVersion);
+				StatementDetails d = new StatementDetails(s);
 
 				details.add(d);
 
@@ -66,6 +66,9 @@ public class Reconciler {
 		for (StatementDetails d : details) {
 			Account a = Account.getAccountByID(d.acctid);
 
+			// We've loaded basic statement info (date, closing balance)
+			// We must connect the statements with the associated transactions
+			// that are specified in the statementLog (StatementDetails objects)
 			Statement s = a.getStatement(d.date, d.closingBalance);
 			if (s == null) {
 				Common.reportError("Can't find statement for details: " //
@@ -85,7 +88,7 @@ public class Reconciler {
 		}
 	}
 
-	/** Match up loaded transactions with statement details from log. */
+	/** Match up statement and its transactions using statement details. */
 	private static void getTransactionsFromDetails(Account a, Statement s, StatementDetails d) {
 		if (s.isBalanced) {
 			return;
@@ -143,6 +146,7 @@ public class Reconciler {
 		s.isBalanced = true;
 	}
 
+	/** Add a reconciled statement's info to the statement log file */
 	public static void saveReconciledStatement(Statement stat) {
 		PrintWriter pw = null;
 		try {
@@ -164,9 +168,10 @@ public class Reconciler {
 		}
 	}
 
-	// Recreate log file when we have changed the format from the previous
-	// version
-	// Save the previous file as <name>.N
+	/**
+	 * Recreate log file when the format has changed from the previous version.<br>
+	 * Save the previous file as <name>.N
+	 */
 	public static void rewriteStatementLogFile() {
 		String basename = Statement.stmtLogFile.getName();
 		File tmpLogFile = new File(QifDom.qifDir, basename + ".tmp");
@@ -214,6 +219,7 @@ public class Reconciler {
 		QifDom.loadedStatementsVersion = StatementDetails.CURRENT_VERSION;
 	}
 
+	/** Open the statement log file for appending */
 	private static PrintWriter openStatementsLogFile() {
 		try {
 			return new PrintWriter(new FileWriter(Statement.stmtLogFile, true));

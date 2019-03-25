@@ -173,7 +173,7 @@ public class Lot {
 
 	public String toString() {
 		String ret = "[" + this.lotid + "] " + this.acctid + " " + //
-				Common.formatDate(getAcquisitionDate()) + " " + //
+				getAcquisitionDate().toString() + " " + //
 				Security.getSecurity(this.secid).getSymbol() + " " + //
 				Common.formatAmount3(this.shares) + " " + //
 				Common.formatAmount(getCostBasis());

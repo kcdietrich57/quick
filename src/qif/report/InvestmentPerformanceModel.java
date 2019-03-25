@@ -17,7 +17,7 @@ import qif.data.SecurityPortfolio;
 import qif.data.SecurityPosition;
 
 /**
- * This models investment performance for a period.
+ * TODO experimental; Investment performance for a period.
  * 
  * Summary details are available for the entire portfolio, individual account,
  * account category, and individual security.

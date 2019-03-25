@@ -86,17 +86,13 @@ public class StatementDetails {
 	}
 
 	/** Construct details by loading from file */
-	public StatementDetails(String s, int version) {
+	public StatementDetails(String s) {
 		this();
 
-		if (version < CURRENT_VERSION) {
-			Common.reportError("Can't load old statement file: version " + version);
-		}
-
-		parseStatementDetails(s, version);
+		parseStatementDetails(s);
 	}
 
-	private void parseStatementDetails(String s, int version) {
+	private void parseStatementDetails(String s) {
 		String[] ss = s.split(";");
 		int ssx = 0;
 
@@ -105,7 +101,7 @@ public class StatementDetails {
 		String closeStr = ss[ssx++].trim();
 		String closeCashStr = ss[ssx++].trim();
 		String txCountStr = ss[ssx++].trim();
-		String secCountStr = (version > 1) ? ss[ssx++].trim() : "0";
+		String secCountStr = ss[ssx++].trim();
 
 		this.acctid = Account.findAccount(acctname).acctid;
 		this.date = Common.parseQDate(dateStr);

@@ -15,7 +15,7 @@ import qif.report.NetWorthReporter;
 import qif.report.QifReporter;
 import qif.report.ReconcileStatusReporter;
 
-/** Old text-based frontend to quicken model */
+/** Old (obsolete) text-based frontend to quicken model */
 public class QifLoader {
 	public static Scanner scn;
 

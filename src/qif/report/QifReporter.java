@@ -5,6 +5,7 @@ import java.util.Date;
 import qif.data.Account;
 import qif.data.GenericTxn;
 
+/** Various reporting functions - used by obsolete QifLoader */
 public class QifReporter {
 	public static void reportActivity(Date d1, Date d2) {
 		// Auto-generated method stub

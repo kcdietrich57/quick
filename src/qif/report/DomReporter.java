@@ -10,6 +10,7 @@ import qif.data.QifDom;
 import qif.data.SecurityPortfolio;
 import qif.data.SecurityPosition;
 
+/** TODO unused */
 public class DomReporter {
 
 	public static boolean compact = false;
@@ -123,8 +124,8 @@ public class DomReporter {
 		System.out.println("" + ntran + " transactions");
 
 		if (ntran > 0) {
-			final GenericTxn ft = a.transactions.get(0);
-			final GenericTxn lt = a.transactions.get(ntran - 1);
+			GenericTxn ft = a.transactions.get(0);
+			GenericTxn lt = a.transactions.get(ntran - 1);
 
 			System.out.println("Date range: " //
 					+ ft.getDate().toString() + " - " + lt.getDate().toString());
@@ -135,7 +136,7 @@ public class DomReporter {
 	}
 
 	private static void reportPortfolio(SecurityPortfolio port) {
-		for (final SecurityPosition p : port.positions) {
+		for (SecurityPosition p : port.positions) {
 			System.out.println("Sec: " + p.security.getName());
 
 			System.out.println(String.format( //
@@ -143,10 +144,10 @@ public class DomReporter {
 					"Date", "Action", "Shares", "Balance"));
 
 			for (int ii = 0; ii < p.transactions.size(); ++ii) {
-				final InvestmentTxn t = p.transactions.get(ii);
+				InvestmentTxn t = p.transactions.get(ii);
 
 				if (t.getShares() != null) {
-					final BigDecimal shrbal = p.shrBalance.get(ii);
+					BigDecimal shrbal = p.shrBalance.get(ii);
 
 					System.out.println(String.format( //
 							"  %-12s  %-10s  %s  %s", //
@@ -172,10 +173,10 @@ public class DomReporter {
 					"Date", "Account", "Action", "Shares", "Balance"));
 
 			for (int ii = 0; ii < p.transactions.size(); ++ii) {
-				final InvestmentTxn t = p.transactions.get(ii);
+				InvestmentTxn t = p.transactions.get(ii);
 
 				if (t.getShares() != null) {
-					final BigDecimal shrbal = p.shrBalance.get(ii);
+					BigDecimal shrbal = p.shrBalance.get(ii);
 
 					System.out.println(String.format( //
 							"  %-12s  %-20s  %-10s  %s  %s", //
@@ -192,5 +193,4 @@ public class DomReporter {
 
 		System.out.println("----------------------------");
 	}
-
 }
