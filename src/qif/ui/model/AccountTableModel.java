@@ -10,6 +10,7 @@ import qif.data.Common;
 import qif.data.QDate;
 import qif.ui.MainWindow;
 
+/** Model for account list - categorized, open vs closed by date */
 @SuppressWarnings("serial")
 public class AccountTableModel extends AbstractTableModel {
 
@@ -19,20 +20,14 @@ public class AccountTableModel extends AbstractTableModel {
 
 	private boolean showOpenAccounts = true;
 
+	/** Reload data and set to show open vs closed accounts */
 	public void reload(boolean showOpenAccounts) {
 		this.showOpenAccounts = showOpenAccounts;
 
 		reload();
 	}
 
-	private boolean accountIsOpenInPeriod(Account acct) {
-		QDate start = MainWindow.instance.startAsOfDate;
-		QDate end = MainWindow.instance.asOfDate;
-
-		return (acct.getOpenDate().compareTo(end) <= 0) //
-				&& ((acct.closeDate == null) || (acct.closeDate.compareTo(start) >= 0));
-	}
-
+	/** Refresh model data */
 	public void reload() {
 		this.accounts.clear();
 
@@ -46,10 +41,22 @@ public class AccountTableModel extends AbstractTableModel {
 		fireTableDataChanged();
 	}
 
+	/** Return whether an account is open in the date period being shown */
+	private boolean accountIsOpenInPeriod(Account acct) {
+		QDate start = MainWindow.instance.startAsOfDate;
+		QDate end = MainWindow.instance.asOfDate;
+
+		return acct.isOpenDuring(start, end);
+//		return (acct.getOpenDate().compareTo(end) <= 0) //
+//				&& ((acct.closeDate == null) || (acct.closeDate.compareTo(start) >= 0));
+	}
+
+	/** Get the position of the account in the displayed list */
 	public int getAccountIndex(Account acct) {
 		return this.accounts.indexOf(acct);
 	}
 
+	/** Get the account at a given position in the displayed list */
 	public Account getAccountAt(int row) {
 		if ((row < 0) || (row >= this.accounts.size())) {
 			return null;

@@ -10,12 +10,10 @@ import qif.ui.AccountSelectionListener;
 import qif.ui.MainWindow;
 import qif.ui.StatementSelectionListener;
 
-/**
- * Model for TransactionTable - supply transactions in an account or statement
- */
+/** Model for TransactionTable - txns in an account or statement */
 @SuppressWarnings("serial")
 public class TransactionTableModel //
-		extends GenericTableModel //
+		extends GenericTransactionTableModel //
 		implements AccountSelectionListener, StatementSelectionListener {
 
 	public TransactionTableModel() {

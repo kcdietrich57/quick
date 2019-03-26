@@ -5,7 +5,12 @@ import java.util.List;
 
 import qif.data.QifDom;
 
+/**
+ * Persistable properties for a displayed table.<br>
+ * (e.g. column width/positions/visibility)
+ */
 public class TableProperties {
+	/** Properties of one column */
 	public class ColumnProperties {
 		public String name;
 		public int id;
@@ -24,12 +29,14 @@ public class TableProperties {
 
 	private List<ColumnProperties> columns = new ArrayList<ColumnProperties>();
 
+	/** Construct with default column properties */
 	public TableProperties(String[] columnNames) {
 		for (String cname : columnNames) {
 			addColumn(cname, 100);
 		}
 	}
 
+	/** Load settings from property archive */
 	public void load(String keyroot) {
 		for (ColumnProperties cprop : columns) {
 			String key = String.format("%s.%s", keyroot, cprop.name);
@@ -46,6 +53,7 @@ public class TableProperties {
 		}
 	}
 
+	/** Save settings in property archive */
 	public void save(String keyroot) {
 		for (ColumnProperties cprop : columns) {
 			String key = String.format("%s.%s", keyroot, cprop.name);
@@ -74,6 +82,11 @@ public class TableProperties {
 		return numvis;
 	}
 
+	/**
+	 * Get properties of a column, only considering visible columns.
+	 * 
+	 * @param idx Visible column index (skipping hidden columns)
+	 */
 	public ColumnProperties getVisibleColumnProperties(int idx) {
 		for (ColumnProperties cprop : this.columns) {
 			if (cprop.visible && cprop.position == idx) {
@@ -84,20 +97,31 @@ public class TableProperties {
 		return null;
 	}
 
+	/**
+	 * Get width of a column, only considering visible columns.
+	 * 
+	 * @param idx Visible column index (skipping hidden columns)
+	 */
 	public int getVisibleColumnWidth(int idx) {
 		ColumnProperties cprop = getVisibleColumnProperties(idx);
 
 		return (cprop != null) ? cprop.width : -1;
 	}
 
-	public void setVisibleColumnWidth(int ii, int width) {
-		ColumnProperties cprop = getVisibleColumnProperties(ii);
+	/**
+	 * Set width of a column, only considering visible columns.
+	 * 
+	 * @param idx Visible column index (skipping hidden columns)
+	 */
+	public void setVisibleColumnWidth(int idx, int width) {
+		ColumnProperties cprop = getVisibleColumnProperties(idx);
 
 		if (cprop != null) {
 			cprop.width = width;
 		}
 	}
 
+	/** Add a column with a specified name and width */
 	public void addColumn(String name, int width) {
 		int id = this.columns.size();
 
@@ -106,6 +130,7 @@ public class TableProperties {
 		this.columns.add(cprop);
 	}
 
+	/** Get properties of a column at the given position */
 	public ColumnProperties getColumnProperties(int idx) {
 		return ((idx >= 0) && (idx < this.columns.size())) //
 				? this.columns.get(idx) //

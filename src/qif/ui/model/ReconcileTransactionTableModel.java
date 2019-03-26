@@ -14,9 +14,10 @@ import qif.persistence.Reconciler;
 import qif.ui.AccountSelectionListener;
 import qif.ui.StatementSelectionListener;
 
+/** Manage txns in a statement being reconciled */
 @SuppressWarnings("serial")
 public class ReconcileTransactionTableModel //
-		extends GenericTableModel //
+		extends GenericTransactionTableModel //
 		implements AccountSelectionListener, StatementSelectionListener {
 
 	private final List<GenericTxn> clearedTransactions;
@@ -35,16 +36,17 @@ public class ReconcileTransactionTableModel //
 		if (obj == null) {
 			this.curStatement = null;
 			this.curAccount = null;
-
-			setTransactions();
+		} else if (obj instanceof Account) {
+			this.curStatement = null;
+			this.curAccount = (Account)obj;
 		} else if (obj instanceof Statement) {
 			this.curStatement = (Statement) obj;
 			this.curAccount = Account.getAccountByID(curStatement.acctid);
-
-			setTransactions();
 		} else {
 			return;
 		}
+
+		setTransactions();
 
 		this.curObject = obj;
 	}
@@ -65,22 +67,26 @@ public class ReconcileTransactionTableModel //
 		fireTableDataChanged();
 	}
 
+	/** Get portfolio changes for the current statement */
 	public SecurityPortfolio getPortfolioDelta() {
 		return (this.curStatement != null) //
 				? this.curStatement.getPortfolioDelta(this.clearedTransactions) //
 				: null;
 	}
 
+	/** Manufacture a dummy statement from uncleared transactions for display */
 	public Statement createNextStatementToReconcile() {
 		return (this.curAccount != null) //
 				? this.curAccount.getNextStatementToReconcile() //
 				: null;
 	}
 
+	/** Is a transaction marked as cleared */
 	public boolean isCleared(GenericTxn txn) {
 		return this.clearedTransactions.contains(txn);
 	}
 
+	/** Accept our cleared transactions for the current statement */
 	public void finishStatement() {
 		if (this.curStatement != null) {
 			this.curStatement.unclearAllTransactions();
@@ -104,6 +110,7 @@ public class ReconcileTransactionTableModel //
 		}
 	}
 
+	/** Sort statement transactions - if cleared, then basic compare */
 	private void sortTransactionsForDisplay() {
 		if (this.allTransactions != null) {
 			Collections.sort(this.allTransactions, (t1, t2) -> {
@@ -118,6 +125,7 @@ public class ReconcileTransactionTableModel //
 		}
 	}
 
+	/** Sum the credit transactions in this statement */
 	public BigDecimal getCredits() {
 		BigDecimal tot = BigDecimal.ZERO;
 
@@ -130,6 +138,7 @@ public class ReconcileTransactionTableModel //
 		return tot;
 	}
 
+	/** Sum the debit transactions in this statement */
 	public BigDecimal getDebits() {
 		BigDecimal tot = BigDecimal.ZERO;
 
@@ -142,6 +151,7 @@ public class ReconcileTransactionTableModel //
 		return tot;
 	}
 
+	/** Calculate the current cleared cash balance */
 	public BigDecimal getClearedCashBalance() {
 		if (this.curStatement == null) {
 			return BigDecimal.ZERO;
@@ -156,6 +166,7 @@ public class ReconcileTransactionTableModel //
 		return tot;
 	}
 
+	/** Mark all txns as cleared */
 	public void clearAll() {
 		if (this.clearedTransactions.size() < this.allTransactions.size()) {
 			this.clearedTransactions.clear();
@@ -166,15 +177,18 @@ public class ReconcileTransactionTableModel //
 		}
 	}
 
+	/** Mark all txns as uncleared */
 	public void unclearAll() {
 		if (!this.clearedTransactions.isEmpty()) {
 			this.clearedTransactions.clear();
 
 			sortTransactionsForDisplay();
+
 			fireTableDataChanged();
 		}
 	}
 
+	/** Toggle the cleared state of a transaction */
 	public void toggleTransactionCleared(GenericTxn txn) {
 		if (clearedTransactions.contains(txn)) {
 			clearedTransactions.remove(txn);
@@ -183,5 +197,7 @@ public class ReconcileTransactionTableModel //
 		}
 
 		sortTransactionsForDisplay();
+
+		fireTableDataChanged();
 	}
 }

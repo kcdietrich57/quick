@@ -17,15 +17,18 @@ import qif.data.InvestmentTxn;
 import qif.data.Statement;
 import qif.ui.model.TableProperties.ColumnProperties;
 
+/** Generic transaction table model */
 @SuppressWarnings("serial")
-abstract class GenericTableModel extends AbstractTableModel {
+abstract class GenericTransactionTableModel //
+		extends AbstractTableModel {
 
+	/** Listen for column resize events */
 	public class ColumnWidthListener implements PropertyChangeListener {
-		private final GenericTableModel tableModel;
+		private final GenericTransactionTableModel tableModel;
 		private final TableColumnModel columnModel;
 
 		public ColumnWidthListener( //
-				GenericTableModel tableModel, //
+				GenericTransactionTableModel tableModel, //
 				TableColumnModel columnModel) {
 			this.tableModel = tableModel;
 			this.columnModel = columnModel;
@@ -37,7 +40,10 @@ abstract class GenericTableModel extends AbstractTableModel {
 				int index = columnModel.getColumnIndex(tableColumn.getHeaderValue());
 
 				int newval = ((Integer) e.getNewValue()).intValue();
-				System.out.println(propertyName + ": setting width " + index + " to " + newval);
+				// System.out.println(propertyName + ": setting width " + index + " to " +
+				// newval);
+
+				// Update properties with new width
 				this.tableModel.setColumnWidth(index, newval);
 			}
 		}
@@ -49,11 +55,11 @@ abstract class GenericTableModel extends AbstractTableModel {
 
 	protected final List<GenericTxn> allTransactions;
 
-	private String propertyName;
+	private String tableName;
 	private TableProperties properties = null;
 
-	public GenericTableModel(String propName) {
-		this.propertyName = propName;
+	public GenericTransactionTableModel(String tableName) {
+		this.tableName = tableName;
 
 		this.curObject = null;
 		this.curAccount = null;
@@ -66,7 +72,7 @@ abstract class GenericTableModel extends AbstractTableModel {
 					"Category", "Memo", "Shares", "Cash Balance" //
 			});
 
-			properties.load(this.propertyName);
+			properties.load(this.tableName);
 		}
 	}
 
@@ -183,7 +189,7 @@ abstract class GenericTableModel extends AbstractTableModel {
 	}
 
 	public void updateQifColumnProperties() {
-		properties.save(this.propertyName);
+		properties.save(this.tableName);
 	}
 
 	public void setColumnWidths(TableColumnModel tranColumnModel) {

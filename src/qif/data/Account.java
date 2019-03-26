@@ -261,6 +261,24 @@ public class Account {
 				: QDate.today();
 	}
 
+	/** Was the account open on a given date */
+	public boolean isOpenOn(QDate d) {
+		if (d == null) {
+			d = QDate.today();
+		}
+
+		return isOpenAsOf(d) && !isClosedAsOf(d);
+	}
+
+	/** Was the account any time between two dates */
+	public boolean isOpenDuring(QDate start, QDate end) {
+		if (end == null) {
+			end = QDate.today();
+		}
+
+		return !(isClosedAsOf(start) || !isOpenAsOf(end));
+	}
+
 	/** Was the account opened on or before a date */
 	public boolean isOpenAsOf(QDate d) {
 		QDate openDate = getOpenDate();
@@ -271,15 +289,6 @@ public class Account {
 	/** Was the account closed on or before date */
 	private boolean isClosedAsOf(QDate d) {
 		return (this.closeDate != null) && (this.closeDate.compareTo(d) <= 0);
-	}
-
-	/** Was the account open on a given date */
-	public boolean isOpenOn(QDate d) {
-		if (d == null) {
-			d = QDate.today();
-		}
-
-		return isOpenAsOf(d) && !isClosedAsOf(d);
 	}
 
 	public void addTransaction(GenericTxn txn) {

@@ -29,45 +29,48 @@ public class StatementTableModel //
 			"Debits", //
 			"NumTx" };
 
-	private Account account = null;
+	private Account curAccount = null;
 
 	private final List<Statement> statements = new ArrayList<Statement>();
 
 	public void accountSelected(Account acct, boolean update) {
-		if (update || (acct != this.account)) {
-			this.account = acct;
-			this.statements.clear();
+		if (!update && (acct == this.curAccount)) {
+			return;
+		}
 
-			Statement unclearedStmt = null;
+		this.curAccount = acct;
+		this.statements.clear();
 
-			if (acct != null) {
-				if (MainWindow.instance.asOfDate.compareTo(QDate.today()) < 0) {
-					Statement laststmt = null;
+		Statement unclearedStmt = null;
 
-					for (Statement stmt : acct.statements) {
-						if (MainWindow.instance.asOfDate.compareTo(stmt.date) >= 0) {
-							this.statements.add(stmt);
-							laststmt = stmt;
-						}
+		if (acct != null) {
+			if (MainWindow.instance.asOfDate.compareTo(QDate.today()) < 0) {
+				Statement laststmt = null;
+
+				for (Statement stmt : acct.statements) {
+					if (MainWindow.instance.asOfDate.compareTo(stmt.date) >= 0) {
+						this.statements.add(stmt);
+						laststmt = stmt;
 					}
-
-					// TODO do we keep creating statements each time the acct is selected?
-					unclearedStmt = acct.createUnclearedStatement(laststmt);
-				} else {
-					this.statements.addAll(acct.statements);
-
-					unclearedStmt = acct.getUnclearedStatement();
 				}
 
-				if (unclearedStmt != null) {
-					this.statements.add(unclearedStmt);
-				}
+				// TODO do we keep creating statements each time the acct is selected?
+				unclearedStmt = acct.createUnclearedStatement(laststmt);
+			} else {
+				this.statements.addAll(acct.statements);
+
+				unclearedStmt = acct.getUnclearedStatement();
 			}
 
-			fireTableDataChanged();
+			if (unclearedStmt != null) {
+				this.statements.add(unclearedStmt);
+			}
 		}
+
+		fireTableDataChanged();
 	}
 
+	/** Return the statement at a given position in the list */
 	public Statement getStatementAt(int row) {
 		if (row < 0 || row >= this.statements.size()) {
 			return null;
@@ -76,6 +79,7 @@ public class StatementTableModel //
 		return this.statements.get(row);
 	}
 
+	/** Return the statement date at a given position in the list */
 	public Date getDate(int rownum) {
 		String datestr = Common.stringValue(getValueAt(rownum, 0));
 
