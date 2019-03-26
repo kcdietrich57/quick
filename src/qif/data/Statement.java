@@ -171,15 +171,15 @@ public class Statement {
 
 	/** Clear a group of transactions */
 	public void clearTransactions(List<GenericTxn> txns) {
-		for (GenericTxn t : txns) {
-			clearTransaction(t);
+		for (int idx = txns.size() - 1; idx >= 0; --idx) {
+			clearTransaction(txns.get(idx));
 		}
 	}
 
 	/** Unclear a group of transactions */
 	public void unclearTransactions(List<GenericTxn> txns) {
-		for (GenericTxn t : txns) {
-			unclearTransaction(t);
+		for (int idx = txns.size() - 1; idx >= 0; --idx) {
+			unclearTransaction(txns.get(idx));
 		}
 	}
 
