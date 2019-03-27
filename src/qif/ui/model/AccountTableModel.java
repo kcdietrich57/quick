@@ -12,7 +12,8 @@ import qif.ui.MainWindow;
 
 /** Model for account list - categorized, open vs closed by date */
 @SuppressWarnings("serial")
-public class AccountTableModel extends AbstractTableModel {
+public class AccountTableModel //
+		extends AbstractTableModel {
 
 	private static final String[] columnNames = { "Name", "Type", "Balance" };
 

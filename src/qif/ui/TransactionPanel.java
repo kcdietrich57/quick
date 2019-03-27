@@ -19,6 +19,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -34,7 +35,7 @@ public class TransactionPanel //
 		extends JPanel //
 		implements AccountSelectionListener, StatementSelectionListener {
 
-	public JTextArea textArea;
+	private JTextArea transactionDetailsPanel;
 	private TransactionTableModel transactionTableModel;
 	private JTable transactionTable;
 	private List<TransactionSelectionListener> txnSelListeners;
@@ -42,7 +43,7 @@ public class TransactionPanel //
 	public TransactionPanel(boolean highlighting) {
 		setLayout(new BorderLayout());
 
-		this.txnSelListeners = new ArrayList<TransactionSelectionListener>();
+		this.txnSelListeners = new ArrayList<>();
 
 		JPanel titlePanel = new JPanel(new GridBagLayout());
 		titlePanel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));
@@ -60,14 +61,14 @@ public class TransactionPanel //
 
 		add(titlePanel, BorderLayout.NORTH);
 
-		this.textArea = new JTextArea(10, 90);
-		this.textArea.setText("Transaction info goes here");
-		
-		JScrollPane sp = new JScrollPane(this.textArea);
+		this.transactionDetailsPanel = new JTextArea(10, 90);
+		this.transactionDetailsPanel.setText("Transaction info goes here");
+
+		JScrollPane sp = new JScrollPane(this.transactionDetailsPanel);
 		add(sp, BorderLayout.SOUTH);
 
 		this.transactionTableModel = new TransactionTableModel();
-		this.transactionTable = new JTable(transactionTableModel);
+		this.transactionTable = new JTable(this.transactionTableModel);
 		JScrollPane scrollPane = new JScrollPane(this.transactionTable);
 
 		add(scrollPane, BorderLayout.CENTER);
@@ -78,13 +79,13 @@ public class TransactionPanel //
 				new TransactionTableCellRenderer(highlighting));
 
 		this.transactionTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		transactionTableModel.setColumnWidths(this.transactionTable.getColumnModel());
-		transactionTableModel.addColumnWidthListeners(this.transactionTable);
+		this.transactionTableModel.setColumnWidths(this.transactionTable.getColumnModel());
+		this.transactionTableModel.addColumnWidthListeners(this.transactionTable);
 
 		this.transactionTable.setRowSelectionAllowed(true);
 		this.transactionTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e) {
-				int row = transactionTable.getSelectedRow();
+				int row = TransactionPanel.this.transactionTable.getSelectedRow();
 
 				if (row >= 0) {
 					transactionSelected(row);
@@ -93,20 +94,21 @@ public class TransactionPanel //
 		});
 
 		// Scroll to display the last (most recent) transaction
-		transactionTable.addComponentListener(new ComponentAdapter() {
+		this.transactionTable.addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent e) {
 				super.componentResized(e);
 
-				Rectangle lastRow = transactionTable.getCellRect( //
-						transactionTable.getRowCount() - 1, 0, true);
-				transactionTable.scrollRectToVisible(lastRow);
+				Rectangle lastRow = TransactionPanel.this.transactionTable.getCellRect( //
+						TransactionPanel.this.transactionTable.getRowCount() - 1, 0, true);
+				TransactionPanel.this.transactionTable.scrollRectToVisible(lastRow);
 			}
 
 			// TODO componentShown() does not seem to fire
 			public void componentShown(ComponentEvent e) {
 				super.componentShown(e);
 
-				transactionTableModel.setColumnWidths(transactionTable.getColumnModel());
+				TransactionPanel.this.transactionTableModel
+						.setColumnWidths(TransactionPanel.this.transactionTable.getColumnModel());
 			}
 		});
 	}
@@ -115,7 +117,7 @@ public class TransactionPanel //
 		GenericTxn txn = this.transactionTableModel.getTransactionAt(row);
 
 		// TODO implement transactions property pane
-		this.textArea.setText(txn.formatValue());
+		this.transactionDetailsPanel.setText(txn.formatValue());
 
 		for (TransactionSelectionListener l : this.txnSelListeners) {
 			l.transactionSelected(txn);
@@ -151,7 +153,7 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 	private static Color futureColor = Color.GRAY;
 
 	private static Color defaultBackground = Color.WHITE;
-	private static Color presentBackground = UICommon.LIGHT_GRAY;
+	private static Color presentBackground = UIConstants.LIGHT_GRAY;
 	private static Color futureBackground = Color.WHITE;
 
 	private boolean highlighting;
@@ -167,7 +169,7 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 		TransactionTableModel model = (TransactionTableModel) table.getModel();
 		GenericTxn tx = model.getTransactionAt(row);
 
-		boolean cleared = (tx != null && tx.isCleared());
+		boolean cleared = ((tx != null) && tx.isCleared());
 		boolean future = ((tx != null) //
 				&& (tx.getDate().compareTo(MainWindow.instance.asOfDate) > 0));
 
@@ -189,10 +191,10 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 			c.setBackground(presentBackground);
 		}
 
-		if (col == 3 || col == 6) {
-			setHorizontalAlignment(JLabel.RIGHT);
+		if ((col == 3) || (col == 6)) {
+			setHorizontalAlignment(SwingConstants.RIGHT);
 		} else {
-			setHorizontalAlignment(JLabel.LEFT);
+			setHorizontalAlignment(SwingConstants.LEFT);
 		}
 		return c;
 	}

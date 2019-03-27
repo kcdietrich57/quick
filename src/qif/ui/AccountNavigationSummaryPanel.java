@@ -14,12 +14,12 @@ import qif.report.NetWorthReporter.Balances;
 
 /** This panel displays a short summary of the overall status */
 @SuppressWarnings("serial")
-public class SummaryPanel extends JPanel {
+public class AccountNavigationSummaryPanel extends JPanel {
 	private JLabel assLabel;
 	private JLabel liabLabel;
 	private JLabel netLabel;
 
-	public SummaryPanel() {
+	public AccountNavigationSummaryPanel() {
 		super(new GridBagLayout());
 
 		setBorder(new EmptyBorder(10, 0, 10, 0));

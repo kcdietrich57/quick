@@ -6,23 +6,25 @@ import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+/** Top level application frame */
 public class MainFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 
+	public static MainFrame appFrame;
+
 	public MainWindow mainWindow;
-	public static MainFrame frame;
 
 	/** Create the GUI and show it. (Run in event-dispatching thread). */
 	private static void createAndShowGUI() {
-		frame = new MainFrame("Money Manager");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		appFrame = new MainFrame("Money Manager");
+		appFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		MainWindow mainWindow = new MainWindow();
 		mainWindow.setOpaque(true);
-		frame.setContentPane(mainWindow);
-		frame.mainWindow = mainWindow;
+		appFrame.setContentPane(mainWindow);
+		appFrame.mainWindow = mainWindow;
 
-		frame.addWindowListener(new WindowAdapter() {
+		appFrame.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent winEvt) {
 				mainWindow.saveProperties();
 
@@ -30,8 +32,8 @@ public class MainFrame extends JFrame {
 			}
 		});
 
-		frame.pack();
-		frame.setVisible(true);
+		appFrame.pack();
+		appFrame.setVisible(true);
 
 		mainWindow.setSplitPosition();
 	}

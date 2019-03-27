@@ -20,6 +20,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 
@@ -32,7 +33,7 @@ import qif.ui.model.ReconcileTransactionTableModel;
  * user include/exclude the transactions
  */
 @SuppressWarnings("serial")
-class ReconcileTransactionsPanel //
+class AccountInfoReconcileTransactionsPanel
 		extends JPanel //
 		implements StatementSelectionListener {
 
@@ -42,7 +43,7 @@ class ReconcileTransactionsPanel //
 
 	private List<TransactionSelectionListener> txnSelListeners;
 
-	public ReconcileTransactionsPanel() {
+	public AccountInfoReconcileTransactionsPanel() {
 		super(new BorderLayout());
 
 		setLayout(new BorderLayout());
@@ -64,34 +65,34 @@ class ReconcileTransactionsPanel //
 		add(titlePanel, BorderLayout.NORTH);
 
 		this.reconcileTransactionTableModel = new ReconcileTransactionTableModel();
-		this.reconcileTransactionTable = new JTable(reconcileTransactionTableModel);
+		this.reconcileTransactionTable = new JTable(this.reconcileTransactionTableModel);
 		JScrollPane transactionScrollPane = new JScrollPane(this.reconcileTransactionTable);
 
 		add(transactionScrollPane, BorderLayout.CENTER);
 
-		reconcileTransactionTable.setFillsViewportHeight(true);
+		this.reconcileTransactionTable.setFillsViewportHeight(true);
 
 		this.reconcileTransactionTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		this.reconcileTransactionTableModel.setColumnWidths(reconcileTransactionTable.getColumnModel());
+		this.reconcileTransactionTableModel.setColumnWidths(this.reconcileTransactionTable.getColumnModel());
 		this.reconcileTransactionTableModel.addColumnWidthListeners(this.reconcileTransactionTable);
 
-		reconcileTransactionTable.setDefaultRenderer(Object.class, //
+		this.reconcileTransactionTable.setDefaultRenderer(Object.class, //
 				new ReconcileTransactionTableCellRenderer());
 
-		this.txnSelListeners = new ArrayList<TransactionSelectionListener>();
+		this.txnSelListeners = new ArrayList<>();
 
 		// Scroll to display the last (most recent) transaction
-		reconcileTransactionTable.addComponentListener(new ComponentAdapter() {
+		this.reconcileTransactionTable.addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent e) {
-				Rectangle lastRow = reconcileTransactionTable.getCellRect( //
-						reconcileTransactionTable.getRowCount() - 1, 0, true);
-				reconcileTransactionTable.scrollRectToVisible(lastRow);
+				Rectangle lastRow = AccountInfoReconcileTransactionsPanel.this.reconcileTransactionTable.getCellRect( //
+						AccountInfoReconcileTransactionsPanel.this.reconcileTransactionTable.getRowCount() - 1, 0, true);
+				AccountInfoReconcileTransactionsPanel.this.reconcileTransactionTable.scrollRectToVisible(lastRow);
 			}
 		});
 
 		this.reconcileTransactionTable.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent evt) {
-				int row = reconcileTransactionTable.rowAtPoint(evt.getPoint());
+				int row = AccountInfoReconcileTransactionsPanel.this.reconcileTransactionTable.rowAtPoint(evt.getPoint());
 
 				if (row >= 0) {
 					clickTransactionHandler(row);
@@ -105,11 +106,11 @@ class ReconcileTransactionsPanel //
 	}
 
 	protected void clickTransactionHandler(int row) {
-		GenericTxn txn = reconcileTransactionTableModel.getTransactionAt(row);
+		GenericTxn txn = this.reconcileTransactionTableModel.getTransactionAt(row);
 
-		reconcileTransactionTableModel.toggleTransactionCleared(txn);
-		reconcileTransactionTableModel.fireTableRowsUpdated( //
-				0, reconcileTransactionTableModel.getRowCount() - 1);
+		this.reconcileTransactionTableModel.toggleTransactionCleared(txn);
+		this.reconcileTransactionTableModel.fireTableRowsUpdated( //
+				0, this.reconcileTransactionTableModel.getRowCount() - 1);
 
 		for (TransactionSelectionListener l : this.txnSelListeners) {
 			l.transactionSelected(txn);
@@ -157,7 +158,7 @@ class ReconcileTransactionTableCellRenderer extends DefaultTableCellRenderer {
 	private static Color clearedColor = Color.BLUE;
 
 	private static Color unclearedBackground = Color.WHITE;
-	private static Color clearedBackground = UICommon.LIGHT_BLUE;
+	private static Color clearedBackground = UIConstants.LIGHT_BLUE;
 
 	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
 			int row, int col) {
@@ -179,10 +180,10 @@ class ReconcileTransactionTableCellRenderer extends DefaultTableCellRenderer {
 			c.setBackground(unclearedBackground);
 		}
 
-		if (col == 3 || col == 6) {
-			setHorizontalAlignment(JLabel.RIGHT);
+		if ((col == 3) || (col == 6)) {
+			setHorizontalAlignment(SwingConstants.RIGHT);
 		} else {
-			setHorizontalAlignment(JLabel.LEFT);
+			setHorizontalAlignment(SwingConstants.LEFT);
 		}
 		return c;
 	}

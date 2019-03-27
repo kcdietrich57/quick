@@ -7,23 +7,23 @@ import javax.swing.JPanel;
 /** This panel displays accounts and selection drives AccountPanel */
 @SuppressWarnings("serial")
 public class AccountNavigationPanel extends JPanel {
-	private AccountControlPanel controlsPanel;
-	private AccountListPanel accountListPanel;
-	private SummaryPanel summaryPanel;
+	private AccountNavigationControlsPanel controlsPanel;
+	private AccountNavigationListPanel accountListPanel;
+	private AccountNavigationSummaryPanel summaryPanel;
 
 	public AccountNavigationPanel() {
 		setLayout(new BorderLayout());
 
-		controlsPanel = new AccountControlPanel(this);
+		this.controlsPanel = new AccountNavigationControlsPanel(this);
 
-		accountListPanel = new AccountListPanel(true);
+		this.accountListPanel = new AccountNavigationListPanel(true);
 		MainWindow.instance.accountListPanel = this.accountListPanel;
-		summaryPanel = new SummaryPanel();
+		this.summaryPanel = new AccountNavigationSummaryPanel();
 		MainWindow.instance.summaryPanel = this.summaryPanel;
 
-		add(controlsPanel, BorderLayout.NORTH);
-		add(accountListPanel, BorderLayout.CENTER);
-		add(summaryPanel, BorderLayout.SOUTH);
+		add(this.controlsPanel, BorderLayout.NORTH);
+		add(this.accountListPanel, BorderLayout.CENTER);
+		add(this.summaryPanel, BorderLayout.SOUTH);
 	}
 
 	public void refreshAccountList() {
@@ -31,7 +31,7 @@ public class AccountNavigationPanel extends JPanel {
 	}
 
 	public void showOpenAccounts(boolean yesno) {
-		accountListPanel.showOpenAccounts(yesno);
+		this.accountListPanel.showOpenAccounts(yesno);
 	}
 
 	public void addAccountSelectionListener(AccountSelectionListener listener) {

@@ -1,4 +1,4 @@
-package qif.ui;
+package qif.ui.chart;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +8,7 @@ import qif.data.AccountCategory;
 import qif.data.QDate;
 import qif.report.StatusForDateModel;
 import qif.report.StatusForDateModel.Section;
+import qif.ui.MainWindow;
 import qif.ui.MainWindow.IntervalUnit;
 
 /** This data class is used by various charts */

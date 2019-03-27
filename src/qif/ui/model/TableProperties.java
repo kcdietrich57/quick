@@ -12,8 +12,8 @@ import qif.data.QifDom;
 public class TableProperties {
 	/** Properties of one column */
 	public class ColumnProperties {
-		public String name;
-		public int id;
+		public final String name;
+		public final int id;
 		public int position;
 		public int width;
 		public boolean visible;
@@ -27,7 +27,7 @@ public class TableProperties {
 		}
 	}
 
-	private List<ColumnProperties> columns = new ArrayList<ColumnProperties>();
+	private final List<ColumnProperties> columns = new ArrayList<ColumnProperties>();
 
 	/** Construct with default column properties */
 	public TableProperties(String[] columnNames) {

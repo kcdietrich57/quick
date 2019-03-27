@@ -1,4 +1,4 @@
-package qif.ui;
+package qif.ui.chart;
 
 import java.awt.Color;
 
@@ -12,12 +12,17 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.DatasetRenderingOrder;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
+import org.jfree.chart.renderer.category.StackedAreaRenderer;
 import org.jfree.data.category.CategoryDataset;
+import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DatasetUtilities;
 
+import qif.data.AccountCategory;
 import qif.data.QDate;
+import qif.ui.MainWindow;
+import qif.ui.UIConstants;
 
-public class NetWorthChart {
+public class BalanceChart {
 	JFreeChart chart = null;
 
 	public JPanel createChartPanel() {
@@ -35,12 +40,20 @@ public class NetWorthChart {
 
 		BalanceChartData balanceData = new BalanceChartData(start, end);
 
+		DefaultCategoryDataset catDataset = //
+				(DefaultCategoryDataset) DatasetUtilities.createCategoryDataset( //
+						"AccountType", "Value", balanceData.accountCategoryValues);
+
 		CategoryDataset networthDataset = DatasetUtilities.createCategoryDataset( //
 				"NetWorth", "Value", balanceData.netWorthValues);
+		catDataset.setRowKeys(balanceData.accountCategoryLabels);
+
+		StackedAreaRenderer areaRenderer = new StackedAreaRenderer();
+		setSeriesColor(areaRenderer);
 
 		LineAndShapeRenderer lineRenderer = new LineAndShapeRenderer();
 		lineRenderer.setSeriesShapesVisible(0, false);
-		lineRenderer.setSeriesPaint(0, Color.BLACK);
+		lineRenderer.setSeriesPaint(0, Color.WHITE);
 
 		CategoryAxis xAxis = new CategoryAxis("Type");
 		xAxis.setLabel("Date");
@@ -53,12 +66,24 @@ public class NetWorthChart {
 		yAxis.setLabel("$1000");
 		yAxis.setAutoRange(true);
 
-		CategoryPlot plot = new CategoryPlot(networthDataset, xAxis, yAxis, lineRenderer);
+		CategoryPlot plot = new CategoryPlot(catDataset, xAxis, yAxis, areaRenderer);
+		plot.setDataset(1, networthDataset);
+		plot.setRenderer(1, lineRenderer);
 		plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
+		plot.setBackgroundPaint(new Color(220, 220, 220));
 
-		JFreeChart chart = new JFreeChart("Net Worth", JFreeChart.DEFAULT_TITLE_FONT, plot, true);
+		JFreeChart chart = new JFreeChart("Balances", JFreeChart.DEFAULT_TITLE_FONT, plot, true);
 
 		return chart;
+	}
+
+	private void setSeriesColor(StackedAreaRenderer r) {
+		for (int idx = 0; idx < AccountCategory.numCategories(); ++idx) {
+			AccountCategory acat = AccountCategory.values()[idx];
+			Color c = UIConstants.acctCategoryColor.get(acat);
+
+			r.setSeriesPaint(idx, c);
+		}
 	}
 
 	public void update() {
@@ -67,13 +92,20 @@ public class NetWorthChart {
 
 		BalanceChartData balanceData = new BalanceChartData(start, end);
 
+		DefaultCategoryDataset catDataset = //
+				(DefaultCategoryDataset) DatasetUtilities.createCategoryDataset( //
+						"AccountType", "Value", balanceData.accountCategoryValues);
+
 		CategoryDataset networthDataset = DatasetUtilities.createCategoryDataset( //
 				"NetWorth", "Value", balanceData.netWorthValues);
+		catDataset.setRowKeys(balanceData.accountCategoryLabels);
 
-		this.chart.getCategoryPlot().setDataset(networthDataset);
+		CategoryPlot plot = this.chart.getCategoryPlot();
+		plot.setDataset(0, catDataset);
+		plot.setDataset(1, networthDataset);
 
 		CategoryAxis xAxis = this.chart.getCategoryPlot().getDomainAxis();
 		xAxis.tickLabels = balanceData.dates;
-		// xAxis.setVisible(balanceData.dates.length <= 100);
+		// xAxis.setVisible(true); //balanceData.dates.length <= 100);
 	}
 }

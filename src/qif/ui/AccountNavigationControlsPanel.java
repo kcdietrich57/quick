@@ -11,38 +11,38 @@ import javax.swing.JPanel;
 
 /** This panel contains controls affecting the account list */
 @SuppressWarnings("serial")
-public class AccountControlPanel extends JPanel {
+public class AccountNavigationControlsPanel extends JPanel {
 	private JButton openButton;
 	private JButton closedButton;
 
-	public AccountControlPanel(AccountNavigationPanel anp) {
+	public AccountNavigationControlsPanel(AccountNavigationPanel anp) {
 		super(new GridBagLayout());
 
-		openButton = new JButton("Open Accounts");
-		closedButton = new JButton("Closed Accounts");
+		this.openButton = new JButton("Open Accounts");
+		this.closedButton = new JButton("Closed Accounts");
 
-		setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, UICommon.DARK_GRAY));
+		setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, UIConstants.DARK_GRAY));
 
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.fill = GridBagConstraints.BOTH;
-		add(openButton, gbc);
+		add(this.openButton, gbc);
 
 		gbc.gridx = 1;
-		add(closedButton, gbc);
+		add(this.closedButton, gbc);
 
 		addListeners(anp);
 	}
 
 	public void addListeners(AccountNavigationPanel anp) {
-		openButton.addActionListener(new ActionListener() {
+		this.openButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				anp.showOpenAccounts(true);
 			}
 		});
 
-		closedButton.addActionListener(new ActionListener() {
+		this.closedButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				anp.showOpenAccounts(false);
 			}

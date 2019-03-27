@@ -13,7 +13,7 @@ import qif.data.Statement;
 
 /** This panel displays details about the selected statement */
 @SuppressWarnings("serial")
-public class StatementDetailsPanel //
+public class AccountInfoStatementDetailsPanel
 		extends JPanel //
 		implements StatementSelectionListener {
 
@@ -22,14 +22,14 @@ public class StatementDetailsPanel //
 
 	private TransactionPanel transactionPanel;
 
-	public StatementDetailsPanel() {
+	public AccountInfoStatementDetailsPanel() {
 		setLayout(new BorderLayout());
 
 		JPanel infoPanel = new JPanel(new BorderLayout());
 		JPanel infoPanel2 = new JPanel(new GridBagLayout());
 
 		infoPanel2.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-		infoPanel.setBorder(BorderFactory.createLineBorder(UICommon.DARK_GRAY));
+		infoPanel.setBorder(BorderFactory.createLineBorder(UIConstants.DARK_GRAY));
 
 		Font bfont = new Font("Helvetica", Font.BOLD, 16);
 		Font font = new Font("Helvetica", Font.PLAIN, 16);
@@ -57,15 +57,15 @@ public class StatementDetailsPanel //
 
 	private void setStatement(Statement stmt) {
 		if (stmt == null) {
-			dateValue.setText("");
-			numTransactionsValue.setText("");
+			this.dateValue.setText("");
+			this.numTransactionsValue.setText("");
 
-			transactionPanel.statementSelected(null);
+			this.transactionPanel.statementSelected(null);
 		} else {
-			dateValue.setText(stmt.date.toString());
-			numTransactionsValue.setText(Integer.toString(stmt.transactions.size()));
+			this.dateValue.setText(stmt.date.toString());
+			this.numTransactionsValue.setText(Integer.toString(stmt.transactions.size()));
 
-			transactionPanel.statementSelected(stmt);
+			this.transactionPanel.statementSelected(stmt);
 		}
 	}
 }

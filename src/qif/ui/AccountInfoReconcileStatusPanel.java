@@ -33,7 +33,7 @@ import qif.ui.model.ReconcileTransactionTableModel;
  * perform actions
  */
 @SuppressWarnings("serial")
-class ReconcileStatusPanel //
+class AccountInfoReconcileStatusPanel
 		extends JPanel //
 		implements StatementSelectionListener, TransactionSelectionListener {
 	private Statement stmt;
@@ -58,7 +58,7 @@ class ReconcileStatusPanel //
 	private JTable holdingsTable;
 	private HoldingsTableModel holdingsTableModel;
 
-	public ReconcileStatusPanel() {
+	public AccountInfoReconcileStatusPanel() {
 		super(new BorderLayout());
 
 		JPanel infoPanel = new JPanel(new GridBagLayout());
@@ -118,27 +118,27 @@ class ReconcileStatusPanel //
 		this.deselectAllButton = new JButton("Deselect All");
 		this.finishButton = new JButton("Finish");
 
-		buttonPanel.add(selectAllButton, gbc);
-		buttonPanel.add(deselectAllButton, gbc);
-		buttonPanel.add(finishButton, gbc);
+		buttonPanel.add(this.selectAllButton, gbc);
+		buttonPanel.add(this.deselectAllButton, gbc);
+		buttonPanel.add(this.finishButton, gbc);
 
 		updateValues();
 
-		selectAllButton.addActionListener(new ActionListener() {
+		this.selectAllButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				MainWindow.instance.reconcileTransactionsPanel.reconcileTransactionTableModel.clearAll();
 				updateValues();
 			}
 		});
 
-		deselectAllButton.addActionListener(new ActionListener() {
+		this.deselectAllButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				MainWindow.instance.reconcileTransactionsPanel.reconcileTransactionTableModel.unclearAll();
 				updateValues();
 			}
 		});
 
-		finishButton.addActionListener(new ActionListener() {
+		this.finishButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				finishStatement();
 			}
@@ -182,7 +182,7 @@ class ReconcileStatusPanel //
 		// != null))//
 		// ? Common.formatAmount(this.stmt.cashBalance) //
 		// : "Enter closing balance");
-		Statement laststmt = (stmt != null) ? stmt.prevStatement : null;
+		Statement laststmt = (this.stmt != null) ? this.stmt.prevStatement : null;
 		this.lastStmtDateLabel.setText((laststmt != null) //
 				? laststmt.date.longString //
 				: "---");
@@ -217,8 +217,8 @@ class ReconcileStatusPanel //
 			str = Common.formatAmount(this.clearedCashBalance);
 
 			if (!isBalanced) {
-				String dval = (cashDiffValue != null) //
-						? Common.formatAmount(cashDiffValue).trim() //
+				String dval = (this.cashDiffValue != null) //
+						? Common.formatAmount(this.cashDiffValue).trim() //
 						: "N/A";
 				str += "(" + dval + ")";
 			}

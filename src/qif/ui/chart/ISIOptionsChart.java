@@ -1,4 +1,4 @@
-package qif.ui;
+package qif.ui.chart;
 
 import java.awt.Color;
 import java.math.BigDecimal;
@@ -21,6 +21,7 @@ import org.jfree.data.general.DatasetUtilities;
 import qif.data.Account;
 import qif.data.QDate;
 import qif.data.StockOption;
+import qif.ui.MainWindow;
 import qif.ui.MainWindow.IntervalUnit;
 
 class StatusForOptionsModel {

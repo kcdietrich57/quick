@@ -23,10 +23,10 @@ public class Dashboard extends JPanel {
 		super(new BorderLayout());
 
 		this.balancesText = new JTextArea();
-		balancesText.setFont(new Font("Courier", Font.PLAIN, 12));
+		this.balancesText.setFont(new Font("Courier", Font.PLAIN, 12));
 
 		this.reconcileStatusText = new JTextArea();
-		reconcileStatusText.setFont(new Font("Courier", Font.PLAIN, 12));
+		this.reconcileStatusText.setFont(new Font("Courier", Font.PLAIN, 12));
 
 		JScrollPane scroller = new JScrollPane(this.balancesText);
 		JScrollPane reconcileStatusScroller = new JScrollPane(this.reconcileStatusText);

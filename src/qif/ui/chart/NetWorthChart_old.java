@@ -1,4 +1,4 @@
-package qif.ui;
+package qif.ui.chart;
 
 import java.util.List;
 
@@ -7,6 +7,7 @@ import org.knowm.xchart.XYChart;
 
 import qif.data.QDate;
 import qif.report.StatusForDateModel;
+import qif.ui.MainWindow;
 
 public class NetWorthChart_old {
 

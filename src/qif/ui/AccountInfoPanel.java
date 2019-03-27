@@ -1,52 +1,78 @@
 package qif.ui;
 
 import java.awt.BorderLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 
-import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
 
 import qif.data.Account;
+import qif.data.GenericTxn;
 
-/** This panel displays summary information about the selected account */
+/**
+ * This panel contains views/operations based on selected account (register,
+ * statements, reconcile)
+ */
 @SuppressWarnings("serial")
-public class AccountInfoPanel //
+public class AccountInfoPanel
 		extends JPanel //
 		implements AccountSelectionListener {
-	Account account = null;
+	private AccountInfoHeaderPanel acctInfoPanel;
 
-	JLabel accountName;
-	JLabel accountType;
-	JLabel accountDescription;
-	JLabel accountOpen;
-	JLabel accountClose;
-	JLabel accountBalance;
+	private JSplitPane statementViewSplit;
+	private AccountInfoStatementPanel statementPanel;
+	private AccountInfoStatementDetailsPanel statementDetailsPanel;
+
+	private AccountInfoReconcilePanel reconcilePanel;
+
+	private TransactionPanel registerTransactionPanel;
 
 	public AccountInfoPanel() {
-		super(new BorderLayout());
+		setLayout(new BorderLayout());
 
-		JPanel innerPanel = new JPanel(new GridBagLayout());
-		add(innerPanel, BorderLayout.WEST);
+		this.acctInfoPanel = new AccountInfoHeaderPanel();
+		MainWindow.instance.acctInfoPanel = this.acctInfoPanel;
+		this.registerTransactionPanel = new TransactionPanel(true);
+		MainWindow.instance.registerTransactionPanel = this.registerTransactionPanel;
+		this.statementPanel = new AccountInfoStatementPanel();
+		MainWindow.instance.statementPanel = this.statementPanel;
+		this.statementDetailsPanel = new AccountInfoStatementDetailsPanel();
+		MainWindow.instance.statementDetailsPanel = this.statementDetailsPanel;
+		this.reconcilePanel = new AccountInfoReconcilePanel();
+		MainWindow.reconcilePanel = this.reconcilePanel;
 
-		GridBagConstraints gbc = new GridBagConstraints();
+		this.statementViewSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, //
+				this.statementPanel, this.statementDetailsPanel);
 
-		gbc.insets = new Insets(10, 5, 10, 5);
-		gbc.fill = GridBagConstraints.BOTH;
-		gbc.gridwidth = 2;
-		this.accountName = GridBagUtility.addValue( //
-				innerPanel, gbc, 0, 0, GridBagUtility.bold16);
-		this.accountDescription = GridBagUtility.addValue( //
-				innerPanel, gbc, 0, 2, 14);
+		JTabbedPane acctTabbedPane = new JTabbedPane();
+		acctTabbedPane.addTab("Register", this.registerTransactionPanel);
+		acctTabbedPane.add("Statements", this.statementViewSplit);
+		acctTabbedPane.add("Reconcile", this.reconcilePanel);
+
+		add(this.acctInfoPanel, BorderLayout.NORTH);
+		add(acctTabbedPane, BorderLayout.CENTER);
+
+		this.registerTransactionPanel.addTransactionSelectionListener(new TransactionSelectionListener() {
+			public void transactionSelected(GenericTxn transaction) {
+				System.out.println("Selected transaction: " + transaction.toString());
+			}
+		});
+		this.statementPanel.addStatementSelectionListener(this.statementDetailsPanel);
 	}
 
 	public void accountSelected(Account acct, boolean update) {
-		if (update || (acct != this.account)) {
-			this.account = acct;
+		this.acctInfoPanel.accountSelected(acct, update);
+		this.statementPanel.accountSelected(acct, update);
+		this.registerTransactionPanel.accountSelected(acct, update);
+		this.reconcilePanel.accountSelected(acct, update);
+	}
 
-			this.accountName.setText((acct != null) ? acct.name : "---");
-			this.accountDescription.setText((acct != null) ? acct.description : "");
-		}
+	public void setSplitPosition() {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				AccountInfoPanel.this.statementViewSplit.setDividerLocation(.25);
+			}
+		});
 	}
 }

@@ -20,54 +20,38 @@ import javax.swing.SwingUtilities;
 import qif.data.GenericTxn;
 import qif.data.QDate;
 import qif.data.QifDom;
+import qif.ui.chart.BalanceChart;
+import qif.ui.chart.BalanceChart_old;
+import qif.ui.chart.ISIOptionsChart;
+import qif.ui.chart.ISIOptionsChart_old;
+import qif.ui.chart.NetWorthChart;
+import qif.ui.chart.NetWorthChart_old;
 
 @SuppressWarnings("serial")
 public class MainWindow extends JPanel {
+
 	public static MainWindow instance;
 
-	public JTabbedPane contentPanel;
-	// content->account
-	public AccountPanel accountPanel;
-	// content->account->accountNav
-	public AccountNavigationPanel accountNavigationPanel;
-	// content->account->accountNav->summary
-	public SummaryPanel summaryPanel;
-	// content->account->accountNav->accounts
-	public AccountListPanel accountListPanel;
-	// content->account->account->accountInfo
-	public AccountInfoPanel acctInfoPanel;
-	// content->account->transactions
-	public TransactionPanel registerTransactionPanel;
-	// content->account->statements
-	public StatementPanel statementPanel;
-	// content->account->statementDetails
-	public StatementDetailsPanel statementDetailsPanel;
-	// content->account->statements->statementDetails
-	public TransactionPanel statementTransactionPanel;
-	// content->account->reconcile
-	public static ReconcilePanel reconcilePanel;
-	// content->account->reconcile->reconcileStatus
-	public ReconcileStatusPanel reconcileStatusPanel;
-	// content->account->reconcile->reconcileTransactions
-	public ReconcileTransactionsPanel reconcileTransactionsPanel;
-	// AsOfDatePanel
-	public TimeSliderPanel asOfDatePanel;
-
+	/** Time span for charts */
 	public enum IntervalLength {
 		All, TenYear, FiveYear, OneYear, Quarter, Month, Week, Day
 	}
 
+	/** Resolution for charts */
 	public enum IntervalUnit {
 		Year, Quarter, Month, Week, Day;
 
+		/** Calculate the next date for this date resolution value */
 		public QDate nextDate(QDate d) {
 			int year = d.getYear();
 			int month = d.getMonth();
 			int day = d.getDay();
 
+			// TODO this is messy
 			switch (this) {
 			case Year:
-				if (month < 12 || day < 31) {
+				if ((month < 12) || (day < 31)) {
+					// End of current year
 					month = 12;
 					day = 31;
 				} else {
@@ -76,8 +60,10 @@ public class MainWindow extends JPanel {
 				break;
 
 			case Quarter:
+				// Pick month/year
 				if ((month % 3) != 0) {
-					month = month + 3 - month % 3;
+					// Ending month of current quarter
+					month = (month + 3) - (month % 3);
 				} else if (day == QDate.getDateForEndOfMonth(year, month).getDay()) {
 					month += 3;
 					if (month > 12) {
@@ -93,9 +79,14 @@ public class MainWindow extends JPanel {
 				int eomday = QDate.getDateForEndOfMonth(year, month).getDay();
 
 				if (day < eomday) {
+					// End of current month
 					day = eomday;
 				} else {
-					++month;
+					if (++month > 12) {
+						month = 1;
+						++year;
+					}
+
 					day = QDate.getDateForEndOfMonth(year, month).getDay();
 				}
 				break;
@@ -116,7 +107,7 @@ public class MainWindow extends JPanel {
 
 			QDate dd = QDate.getDateForEndOfMonth(year, month);
 			if (day > dd.getDay()) {
-				if (this != Week && this != Day) {
+				if ((this != Week) && (this != Day)) {
 					day = dd.getDay();
 				} else {
 					++month;
@@ -133,17 +124,57 @@ public class MainWindow extends JPanel {
 		}
 	}
 
+	// UI Organization:
+	// -----------------------------------------------------
+	// content->account
+	// content->account->accountNav
+	// content->account->accountNav->summary
+	// content->account->accountNav->accounts
+	// content->account->account->accountInfo
+	// content->account->transactions
+	// content->account->statements
+	// content->account->statementDetails
+	// content->account->statements->statementDetails
+	// content->account->reconcile
+	// content->account->reconcile->reconcileStatus
+	// content->account->reconcile->reconcileTransactions
+	// AsOfDatePanel
+	// -----------------------------------------------------
+
+	public JTabbedPane contentPanel;
+	public AccountInfoPanel accountPanel;
+	public AccountNavigationPanel accountNavigationPanel;
+	public AccountNavigationSummaryPanel summaryPanel;
+	public AccountNavigationListPanel accountListPanel;
+	public AccountInfoHeaderPanel acctInfoPanel;
+	public TransactionPanel registerTransactionPanel;
+	public AccountInfoStatementPanel statementPanel;
+	public AccountInfoStatementDetailsPanel statementDetailsPanel;
+	public TransactionPanel statementTransactionPanel;
+	public static AccountInfoReconcilePanel reconcilePanel;
+	public AccountInfoReconcileStatusPanel reconcileStatusPanel;
+	public AccountInfoReconcileTransactionsPanel reconcileTransactionsPanel;
+	public TimeSliderPanel asOfDatePanel;
+
+	private JSplitPane accountViewSplit;
+	public Dashboard dashboardPanel;
+
+	/** Chart parameters */
 	public QDate startAsOfDate;
 	public QDate asOfDate;
 	public IntervalLength reportPeriod;
 	public IntervalUnit reportUnit;
 
-	public Dashboard dashboardPanel;
+	private boolean chartNeedsRefresh = true;
+	private boolean chartsVisible = false;
+	private boolean nwVisible = false;
+	private boolean balVisible = false;
+	private boolean optVisible = false;
+
 	public JPanel chartPanel;
 	private BalanceChart balChart;
 	private NetWorthChart nwChart;
 	private ISIOptionsChart optChart;
-	private JSplitPane accountViewSplit;
 
 	private BalanceChart_old balChartXCHART;
 	private NetWorthChart_old nwChartXCHART;
@@ -164,11 +195,12 @@ public class MainWindow extends JPanel {
 		createTimeSlider();
 		createContentPanel();
 
-		add(contentPanel, BorderLayout.CENTER);
+		add(this.contentPanel, BorderLayout.CENTER);
 		add(this.asOfDatePanel, BorderLayout.SOUTH);
 		// add(new JButton("Status Bar Goes Here"), BorderLayout.SOUTH);
 	}
 
+	/** Calculate the starting date given the end (asOfDate-period) */
 	public QDate getIntervalStart() {
 		QDate first = this.asOfDate;
 
@@ -206,6 +238,7 @@ public class MainWindow extends JPanel {
 		return first;
 	}
 
+	/** Calculate the ending date given the start (start+period) */
 	public QDate getIntervalEnd() {
 		QDate last = getIntervalStart();
 
@@ -243,6 +276,7 @@ public class MainWindow extends JPanel {
 		return last;
 	}
 
+	/** Load persistent UI properties from file */
 	public void loadProperties() {
 		File propfile = new File(QifDom.qifDir, "properties");
 
@@ -259,6 +293,7 @@ public class MainWindow extends JPanel {
 		QifDom.qifProperties = p;
 	}
 
+	/** Write persistent UI properties to file */
 	public void saveProperties() {
 		if (QifDom.qifProperties == null) {
 			QifDom.qifProperties = new Properties();
@@ -278,14 +313,17 @@ public class MainWindow extends JPanel {
 		}
 	}
 
+	// TODO time slider manipulation - seems these could be TimeSliderPanel methods
 	private void createTimeSlider() {
 		this.asOfDatePanel = new TimeSliderPanel();
 	}
 
+	/** Move the time slider to a new position */
 	public void setSliderPosition(QDate date) {
 		this.asOfDatePanel.setSliderPosition(date);
 	}
 
+	/** Change current display date */
 	private void updateAsOfDate(QDate date) {
 		this.asOfDate = date;
 
@@ -299,6 +337,7 @@ public class MainWindow extends JPanel {
 		this.startAsOfDate = new QDate(year, lastMonth, 1).getLastDayOfMonth();
 	}
 
+	/** Set current display date */
 	public void setAsOfDate(QDate date) {
 		if (date.compareTo(GenericTxn.getFirstTransactionDate()) < 0) {
 			date = GenericTxn.getFirstTransactionDate();
@@ -307,7 +346,7 @@ public class MainWindow extends JPanel {
 			date = GenericTxn.getLastTransactionDate();
 		}
 
-		if (!date.equals(asOfDate)) {
+		if (!date.equals(this.asOfDate)) {
 			updateAsOfDate(date);
 
 			// TODO use AsOfDateListeners to update UI
@@ -322,25 +361,25 @@ public class MainWindow extends JPanel {
 	}
 
 	private void createContentPanel() {
-		dashboardPanel = new Dashboard();
+		this.dashboardPanel = new Dashboard();
 		createAccountsPanel();
 		createChartsPanel();
 
-		contentPanel = new JTabbedPane();
+		this.contentPanel = new JTabbedPane();
 
-		contentPanel.add("Accounts", accountViewSplit);
-		contentPanel.add("Investments", new JButton("Investments go here"));
-		contentPanel.add("Dashboard", dashboardPanel);
-		contentPanel.add("Charts", chartPanel);
+		this.contentPanel.add("Accounts", this.accountViewSplit);
+		this.contentPanel.add("Investments", new JButton("Investments go here"));
+		this.contentPanel.add("Dashboard", this.dashboardPanel);
+		this.contentPanel.add("Charts", this.chartPanel);
 	}
 
 	private void createAccountsPanel() {
-		accountNavigationPanel = new AccountNavigationPanel();
-		accountPanel = new AccountPanel();
+		this.accountNavigationPanel = new AccountNavigationPanel();
+		this.accountPanel = new AccountInfoPanel();
 
-		accountViewSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, //
-				accountNavigationPanel, accountPanel);
-		accountViewSplit.setPreferredSize(new Dimension(1200, 800));
+		this.accountViewSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, //
+				this.accountNavigationPanel, this.accountPanel);
+		this.accountViewSplit.setPreferredSize(new Dimension(1200, 800));
 
 		this.accountNavigationPanel.addAccountSelectionListener(this.accountPanel);
 	}
@@ -384,45 +423,39 @@ public class MainWindow extends JPanel {
 
 		ComponentListener chartListener = new ComponentAdapter() {
 			public void componentShown(ComponentEvent e) {
-				if (e.getComponent() == chartPanel) {
-					chartsVisible = true;
+				if (e.getComponent() == MainWindow.this.chartPanel) {
+					MainWindow.this.chartsVisible = true;
 				} else if (e.getComponent() == balPanel) {
-					balVisible = true;
+					MainWindow.this.balVisible = true;
 				} else if (e.getComponent() == nwPanel) {
-					nwVisible = true;
+					MainWindow.this.nwVisible = true;
 				} else if (e.getComponent() == optPanel) {
-					optVisible = true;
+					MainWindow.this.optVisible = true;
 				}
 
-				chartNeedsRefresh = true;
+				MainWindow.this.chartNeedsRefresh = true;
 				updateChartPanel(false);
 			}
 
 			public void componentHidden(ComponentEvent e) {
-				if (e.getComponent() == chartPanel) {
-					chartsVisible = false;
+				if (e.getComponent() == MainWindow.this.chartPanel) {
+					MainWindow.this.chartsVisible = false;
 				} else if (e.getComponent() == balPanel) {
-					balVisible = false;
+					MainWindow.this.balVisible = false;
 				} else if (e.getComponent() == nwPanel) {
-					nwVisible = false;
+					MainWindow.this.nwVisible = false;
 				} else if (e.getComponent() == optPanel) {
-					optVisible = false;
+					MainWindow.this.optVisible = false;
 				}
 			}
 		};
 
-		chartPanel.addComponentListener(chartListener);
+		this.chartPanel.addComponentListener(chartListener);
 
 		balPanel.addComponentListener(chartListener);
 		nwPanel.addComponentListener(chartListener);
 		optPanel.addComponentListener(chartListener);
 	}
-
-	private boolean chartNeedsRefresh = true;
-	private boolean chartsVisible = false;
-	private boolean nwVisible = false;
-	private boolean balVisible = false;
-	private boolean optVisible = false;
 
 	public void updateChartPanel(boolean refresh) {
 		if (!this.chartsVisible) {
@@ -440,7 +473,7 @@ public class MainWindow extends JPanel {
 		} else if (this.nwVisible) {
 			this.nwChart.update();
 			this.nwChartXCHART.update();
-		} else if (optVisible) {
+		} else if (this.optVisible) {
 			this.optChart.update();
 			this.optChartXCHART.update();
 		}
@@ -449,14 +482,14 @@ public class MainWindow extends JPanel {
 	}
 
 	public void addAccountSelectionListener(AccountSelectionListener listener) {
-		accountNavigationPanel.addAccountSelectionListener(listener);
+		this.accountNavigationPanel.addAccountSelectionListener(listener);
 	}
 
 	public void setSplitPosition() {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				accountViewSplit.setDividerLocation(.25);
-				accountPanel.setSplitPosition();
+				MainWindow.this.accountViewSplit.setDividerLocation(.25);
+				MainWindow.this.accountPanel.setSplitPosition();
 			}
 		});
 	}

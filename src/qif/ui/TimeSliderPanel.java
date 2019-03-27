@@ -16,6 +16,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.SwingConstants;
 
 import qif.data.GenericTxn;
 import qif.data.QDate;
@@ -35,13 +36,13 @@ public class TimeSliderPanel extends JPanel {
 
 		QDate start = GenericTxn.getFirstTransactionDate();
 		QDate end = GenericTxn.getLastTransactionDate();
-		int years = end.getYear() - start.getYear() + 1;
+		int years = (end.getYear() - start.getYear()) + 1;
 		int months = years * 12;
 
 		BoundedRangeModel timeModel = new DefaultBoundedRangeModel(months, 0, 0, months + 1);
 
 		this.asOfDateSlider = new JSlider(timeModel);
-		this.asOfDateSlider.setOrientation(JSlider.HORIZONTAL);
+		this.asOfDateSlider.setOrientation(SwingConstants.HORIZONTAL);
 		this.asOfDateSlider.setMajorTickSpacing(12);
 		this.asOfDateSlider.setPaintTicks(true);
 		this.asOfDateSlider.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
@@ -54,7 +55,7 @@ public class TimeSliderPanel extends JPanel {
 			sliderPositionChanged();
 		});
 
-		Hashtable<Integer, JLabel> labelTable = new Hashtable<Integer, JLabel>();
+		Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
 		int m = 0;
 		for (int y = start.getYear(); y <= end.getYear(); ++y, m += 12) {
 			labelTable.put(new Integer(m), new JLabel(String.format("%02d", y % 100)));
@@ -87,7 +88,7 @@ public class TimeSliderPanel extends JPanel {
 				MainWindow.IntervalLength.All //
 		};
 
-		JComboBox<MainWindow.IntervalLength> periodCombo = new JComboBox<MainWindow.IntervalLength>(periods);
+		JComboBox<MainWindow.IntervalLength> periodCombo = new JComboBox<>(periods);
 		periodCombo.setSelectedItem(MainWindow.instance.reportPeriod);
 
 		periodCombo.addActionListener(new ActionListener() {
@@ -110,7 +111,7 @@ public class TimeSliderPanel extends JPanel {
 				MainWindow.IntervalUnit.Year //
 		};
 
-		JComboBox<MainWindow.IntervalUnit> unitsCombo = new JComboBox<MainWindow.IntervalUnit>(units);
+		JComboBox<MainWindow.IntervalUnit> unitsCombo = new JComboBox<>(units);
 		unitsCombo.setSelectedItem(MainWindow.instance.reportUnit);
 
 		unitsCombo.addActionListener(new ActionListener() {

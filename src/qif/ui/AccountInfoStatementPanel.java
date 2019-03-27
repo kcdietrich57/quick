@@ -27,6 +27,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JViewport;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -49,7 +50,7 @@ import qif.ui.model.StatementTableModel;
  * This panel displays statements for the current account and supports selection
  */
 @SuppressWarnings("serial")
-public class StatementPanel //
+public class AccountInfoStatementPanel
 		extends JPanel //
 		implements AccountSelectionListener {
 
@@ -62,10 +63,10 @@ public class StatementPanel //
 	private JTable statementHoldingsTable;
 	private StatementHoldingsTableModel statementHoldingsTableModel;
 
-	public StatementPanel() {
+	public AccountInfoStatementPanel() {
 		setLayout(new BorderLayout());
 
-		stmtSelListeners = new ArrayList<StatementSelectionListener>();
+		this.stmtSelListeners = new ArrayList<>();
 
 		JPanel titlePanel = new JPanel(new GridBagLayout());
 		titlePanel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));
@@ -92,19 +93,19 @@ public class StatementPanel //
 		this.statementHoldingsTable.setMaximumSize(new Dimension(500, 75));
 		this.statementHoldingsTable.setPreferredScrollableViewportSize(new Dimension(200, 100));
 
-		statementTableModel = new StatementTableModel();
-		statementTable = new JTable(statementTableModel);
+		this.statementTableModel = new StatementTableModel();
+		this.statementTable = new JTable(this.statementTableModel);
 		this.scroller = new JScrollPane(this.statementTable);
-		statementTable.setFillsViewportHeight(true);
+		this.statementTable.setFillsViewportHeight(true);
 
-		statementTable.setDefaultRenderer(Object.class, //
+		this.statementTable.setDefaultRenderer(Object.class, //
 				new StatementTableCellRenderer());
 
 		add(titlePanel, BorderLayout.NORTH);
 		add(statementHoldingsTableScroller, BorderLayout.EAST);
 		add(this.scroller, BorderLayout.CENTER);
 
-		TableColumnModel statColumnModel = statementTable.getColumnModel();
+		TableColumnModel statColumnModel = this.statementTable.getColumnModel();
 
 		int swidths[] = { 30, 70, 80, 80, 80, 80, 80, 40 };
 		for (int i = 0; i < swidths.length; i++) {
@@ -112,14 +113,15 @@ public class StatementPanel //
 			statColumnModel.getColumn(i).setMaxWidth(swidths[i]);
 		}
 
-		ListSelectionModel statementSelectionModel = statementTable.getSelectionModel();
+		ListSelectionModel statementSelectionModel = this.statementTable.getSelectionModel();
 		statementSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		statementSelectionModel.addListSelectionListener( //
 				new ListSelectionListener() {
 					public void valueChanged(ListSelectionEvent e) {
-						if (e.getValueIsAdjusting())
+						if (e.getValueIsAdjusting()) {
 							return;
+						}
 
 						selectStatementHandler();
 					}
@@ -145,11 +147,11 @@ public class StatementPanel //
 		});
 
 		// Scroll to display the last (most recent) transaction
-		statementTable.addComponentListener(new ComponentAdapter() {
+		this.statementTable.addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent e) {
-				Rectangle lastRow = statementTable.getCellRect( //
-						statementTable.getRowCount() - 1, 0, true);
-				statementTable.scrollRectToVisible(lastRow);
+				Rectangle lastRow = AccountInfoStatementPanel.this.statementTable.getCellRect( //
+						AccountInfoStatementPanel.this.statementTable.getRowCount() - 1, 0, true);
+				AccountInfoStatementPanel.this.statementTable.scrollRectToVisible(lastRow);
 
 				// int firstvrow = getFirstVisibleStatementRow();
 				// System.out.println("fvr=" + firstvrow);
@@ -163,26 +165,27 @@ public class StatementPanel //
 
 		chooseStatItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				int idx = statementTable.getSelectionModel().getMinSelectionIndex();
-				Object a = statementTableModel.getValueAt(idx, 0);
+				int idx = AccountInfoStatementPanel.this.statementTable.getSelectionModel().getMinSelectionIndex();
+				Object a = AccountInfoStatementPanel.this.statementTableModel.getValueAt(idx, 0);
 
-				JOptionPane.showMessageDialog(MainFrame.frame, //
+				JOptionPane.showMessageDialog(MainFrame.appFrame, //
 						"You chose statement " + a.toString());
 			}
 		});
 
 		statPopupMenu.add(chooseStatItem);
-		statementTable.setComponentPopupMenu(statPopupMenu);
+		this.statementTable.setComponentPopupMenu(statPopupMenu);
 
 		statPopupMenu.addPopupMenuListener(new PopupMenuListener() {
 			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
-						int rowAtPoint = statementTable.rowAtPoint( //
-								SwingUtilities.convertPoint(statPopupMenu, new Point(0, 0), statementTable));
+						int rowAtPoint = AccountInfoStatementPanel.this.statementTable.rowAtPoint( //
+								SwingUtilities.convertPoint(statPopupMenu, new Point(0, 0),
+										AccountInfoStatementPanel.this.statementTable));
 
 						if (rowAtPoint > -1) {
-							statementTable.setRowSelectionInterval(rowAtPoint, rowAtPoint);
+							AccountInfoStatementPanel.this.statementTable.setRowSelectionInterval(rowAtPoint, rowAtPoint);
 						}
 					}
 				});
@@ -201,7 +204,7 @@ public class StatementPanel //
 	int getFirstVisibleStatementRow() {
 		JViewport viewport = this.scroller.getViewport();
 		Point p = viewport.getViewPosition();
-		int rowIndex = statementTable.rowAtPoint(p);
+		int rowIndex = this.statementTable.rowAtPoint(p);
 
 		return rowIndex;
 	}
@@ -233,7 +236,7 @@ public class StatementPanel //
 class StatementTableCellRenderer extends DefaultTableCellRenderer {
 	private static Font regularFont = new Font("Helvetica", Font.BOLD, 12);
 	private static Color regularColor = Color.BLACK;
-	private static Color regularBackground = UICommon.LIGHT_BLUE;
+	private static Color regularBackground = UIConstants.LIGHT_BLUE;
 
 	private static Font unclearedFont = new Font("Helvetica", Font.PLAIN, 12);
 	private static Color unclearedColor = Color.BLUE;
@@ -270,7 +273,7 @@ class StatementTableCellRenderer extends DefaultTableCellRenderer {
 		}
 
 		if (isSelected) {
-			c.setBackground(UICommon.LIGHT_YELLOW);
+			c.setBackground(UIConstants.LIGHT_YELLOW);
 		}
 
 		switch (col) {
@@ -279,7 +282,7 @@ class StatementTableCellRenderer extends DefaultTableCellRenderer {
 		case 5:
 		case 6:
 		case 7:
-			setHorizontalAlignment(JLabel.RIGHT);
+			setHorizontalAlignment(SwingConstants.RIGHT);
 			break;
 		}
 

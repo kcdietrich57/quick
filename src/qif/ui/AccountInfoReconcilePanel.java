@@ -12,22 +12,22 @@ import qif.data.Statement;
  * transactions). Contents are driven by account selection.
  */
 @SuppressWarnings("serial")
-public class ReconcilePanel //
+public class AccountInfoReconcilePanel
 		extends JPanel //
 		implements AccountSelectionListener {
 	private Account account;
 
-	private ReconcileStatusPanel reconcileStatusPanel;
-	private ReconcileTransactionsPanel reconcileTransactionsPanel;
+	private AccountInfoReconcileStatusPanel reconcileStatusPanel;
+	private AccountInfoReconcileTransactionsPanel reconcileTransactionsPanel;
 
-	public ReconcilePanel() {
+	public AccountInfoReconcilePanel() {
 		super(new BorderLayout());
 
-		this.reconcileTransactionsPanel = new ReconcileTransactionsPanel();
-		this.reconcileStatusPanel = new ReconcileStatusPanel();
+		this.reconcileTransactionsPanel = new AccountInfoReconcileTransactionsPanel();
+		this.reconcileStatusPanel = new AccountInfoReconcileStatusPanel();
 
-		add(reconcileStatusPanel, BorderLayout.NORTH);
-		add(reconcileTransactionsPanel, BorderLayout.CENTER);
+		add(this.reconcileStatusPanel, BorderLayout.NORTH);
+		add(this.reconcileTransactionsPanel, BorderLayout.CENTER);
 
 		this.reconcileTransactionsPanel.addTransactionSelectionListener(this.reconcileStatusPanel);
 
