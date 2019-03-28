@@ -46,30 +46,32 @@ import qif.data.SecurityPosition;
 import qif.data.Statement;
 import qif.ui.model.StatementTableModel;
 
+// TODO Holdings table is very lame
 /**
- * This panel displays statements for the current account and supports selection
+ * This displays statements for the current account and supports selection<br>
+ * Title<br>
+ * Statements | Holdings
  */
 @SuppressWarnings("serial")
-public class AccountInfoStatementPanel
-		extends JPanel //
+public class AccountInfoStatementPanel extends JPanel //
 		implements AccountSelectionListener {
 
+	private JPanel titlePanel;
 	private JTable statementTable;
 	private StatementTableModel statementTableModel;
 	private JScrollPane scroller;
-
-	private List<StatementSelectionListener> stmtSelListeners;
-
 	private JTable statementHoldingsTable;
 	private StatementHoldingsTableModel statementHoldingsTableModel;
+
+	private List<StatementSelectionListener> stmtSelListeners;
 
 	public AccountInfoStatementPanel() {
 		setLayout(new BorderLayout());
 
 		this.stmtSelListeners = new ArrayList<>();
 
-		JPanel titlePanel = new JPanel(new GridBagLayout());
-		titlePanel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));
+		this.titlePanel = new JPanel(new GridBagLayout());
+		this.titlePanel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));
 
 		JLabel title = new JLabel("Statements");
 		title.setFont(new Font("Helvetica", Font.BOLD, 14));
@@ -80,7 +82,7 @@ public class AccountInfoStatementPanel
 		gbc.gridy = 0;
 		gbc.fill = GridBagConstraints.BOTH;
 		gbc.insets = new Insets(3, 3, 3, 3);
-		titlePanel.add(title, gbc);
+		this.titlePanel.add(title, gbc);
 
 		this.statementHoldingsTableModel = new StatementHoldingsTableModel();
 		this.statementHoldingsTable = new JTable(this.statementHoldingsTableModel);
@@ -101,7 +103,7 @@ public class AccountInfoStatementPanel
 		this.statementTable.setDefaultRenderer(Object.class, //
 				new StatementTableCellRenderer());
 
-		add(titlePanel, BorderLayout.NORTH);
+		add(this.titlePanel, BorderLayout.NORTH);
 		add(statementHoldingsTableScroller, BorderLayout.EAST);
 		add(this.scroller, BorderLayout.CENTER);
 
@@ -152,51 +154,6 @@ public class AccountInfoStatementPanel
 				Rectangle lastRow = AccountInfoStatementPanel.this.statementTable.getCellRect( //
 						AccountInfoStatementPanel.this.statementTable.getRowCount() - 1, 0, true);
 				AccountInfoStatementPanel.this.statementTable.scrollRectToVisible(lastRow);
-
-				// int firstvrow = getFirstVisibleStatementRow();
-				// System.out.println("fvr=" + firstvrow);
-			}
-		});
-	}
-
-	private void addContextMenu() {
-		final JPopupMenu statPopupMenu = new JPopupMenu();
-		JMenuItem chooseStatItem = new JMenuItem("Choose Statement");
-
-		chooseStatItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				int idx = AccountInfoStatementPanel.this.statementTable.getSelectionModel().getMinSelectionIndex();
-				Object a = AccountInfoStatementPanel.this.statementTableModel.getValueAt(idx, 0);
-
-				JOptionPane.showMessageDialog(MainFrame.appFrame, //
-						"You chose statement " + a.toString());
-			}
-		});
-
-		statPopupMenu.add(chooseStatItem);
-		this.statementTable.setComponentPopupMenu(statPopupMenu);
-
-		statPopupMenu.addPopupMenuListener(new PopupMenuListener() {
-			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() {
-						int rowAtPoint = AccountInfoStatementPanel.this.statementTable.rowAtPoint( //
-								SwingUtilities.convertPoint(statPopupMenu, new Point(0, 0),
-										AccountInfoStatementPanel.this.statementTable));
-
-						if (rowAtPoint > -1) {
-							AccountInfoStatementPanel.this.statementTable.setRowSelectionInterval(rowAtPoint, rowAtPoint);
-						}
-					}
-				});
-			}
-
-			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-				// Auto-generated method stub
-			}
-
-			public void popupMenuCanceled(PopupMenuEvent e) {
-				// Auto-generated method stub
 			}
 		});
 	}
@@ -229,6 +186,49 @@ public class AccountInfoStatementPanel
 		for (StatementSelectionListener l : this.stmtSelListeners) {
 			l.statementSelected(stmt);
 		}
+	}
+
+	private void addContextMenu() {
+		final JPopupMenu statPopupMenu = new JPopupMenu();
+		JMenuItem chooseStatItem = new JMenuItem("Choose Statement");
+
+		chooseStatItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				int idx = AccountInfoStatementPanel.this.statementTable.getSelectionModel().getMinSelectionIndex();
+				Object a = AccountInfoStatementPanel.this.statementTableModel.getValueAt(idx, 0);
+
+				JOptionPane.showMessageDialog(MainFrame.appFrame, //
+						"You chose statement " + a.toString());
+			}
+		});
+
+		statPopupMenu.add(chooseStatItem);
+		this.statementTable.setComponentPopupMenu(statPopupMenu);
+
+		statPopupMenu.addPopupMenuListener(new PopupMenuListener() {
+			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						int rowAtPoint = AccountInfoStatementPanel.this.statementTable.rowAtPoint( //
+								SwingUtilities.convertPoint(statPopupMenu, new Point(0, 0),
+										AccountInfoStatementPanel.this.statementTable));
+
+						if (rowAtPoint > -1) {
+							AccountInfoStatementPanel.this.statementTable.setRowSelectionInterval(rowAtPoint,
+									rowAtPoint);
+						}
+					}
+				});
+			}
+
+			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+				// Auto-generated method stub
+			}
+
+			public void popupMenuCanceled(PopupMenuEvent e) {
+				// Auto-generated method stub
+			}
+		});
 	}
 }
 

@@ -26,27 +26,23 @@ import qif.data.Common;
 import qif.data.GenericTxn;
 import qif.data.SecurityPortfolio;
 import qif.data.Statement;
-import qif.ui.model.ReconcileTransactionTableModel;
 
 /**
  * This panel shows info about the reconcile process, and has controls to
- * perform actions
+ * perform actions<br>
+ * Info | Holdings | Buttons
  */
 @SuppressWarnings("serial")
-class AccountInfoReconcileStatusPanel
-		extends JPanel //
+class AccountInfoReconcileStatusPanel extends JPanel //
 		implements StatementSelectionListener, TransactionSelectionListener {
 	private Statement stmt;
 
 	private JLabel dateLabel;
-	// private JTextField closingCashField;
-	private JLabel openBalanceLabel;
 	private JLabel lastStmtDateLabel;
+	private JLabel openBalanceLabel;
 	private JLabel creditsLabel;
 	private JLabel debitsLabel;
 	private JLabel clearedCashBalanceLabel;
-	// private JLabel cashDiffLabel;
-	// private JLabel portfolioOKLabel;
 
 	private BigDecimal clearedCashBalance;
 	private BigDecimal cashDiffValue;
@@ -90,8 +86,6 @@ class AccountInfoReconcileStatusPanel
 		gbc.insets = new Insets(5, 5, 0, 0);
 		this.clearedCashBalanceLabel = GridBagUtility.addLabeledValue( //
 				infoPanel, gbc, 5, 0, "Cleared Balance", 13);
-		// this.cashDiffLabel = GridBagUtility.addLabeledValue( //
-		// infoPanel, gbc, 5, 1, "Difference", 14);
 
 		gbc.insets = new Insets(0, 5, 0, 0);
 
@@ -126,14 +120,14 @@ class AccountInfoReconcileStatusPanel
 
 		this.selectAllButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				MainWindow.instance.reconcileTransactionsPanel.reconcileTransactionTableModel.clearAll();
+				MainWindow.instance.reconcileTransactionsPanel.clearAll();
 				updateValues();
 			}
 		});
 
 		this.deselectAllButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				MainWindow.instance.reconcileTransactionsPanel.reconcileTransactionTableModel.unclearAll();
+				MainWindow.instance.reconcileTransactionsPanel.unclearAll();
 				updateValues();
 			}
 		});
@@ -151,13 +145,11 @@ class AccountInfoReconcileStatusPanel
 		add(buttonPanel, BorderLayout.EAST);
 	}
 
+	/** Save the newly reconciled statement to the statement log */
 	private void finishStatement() {
-		ReconcileTransactionTableModel model = //
-				MainWindow.instance.reconcileTransactionsPanel.reconcileTransactionTableModel;
+		MainWindow.instance.reconcileTransactionsPanel.finishStatement();
 
-		model.finishStatement();
-
-		Statement stmt = model.createNextStatementToReconcile();
+		Statement stmt = MainWindow.instance.reconcileTransactionsPanel.createNextStatementToReconcile();
 		Account acct = Account.getAccountByID(stmt.acctid);
 
 		// Update list of statements to include the new statement
@@ -175,34 +167,32 @@ class AccountInfoReconcileStatusPanel
 		}
 	}
 
+	/** Refresh the information in this pane */
 	private void updateValues() {
 		String datestr = (this.stmt != null) ? this.stmt.date.longString : "---";
 		this.dateLabel.setText(datestr);
-		// this.closingCashField.setText(((this.stmt != null) && (this.stmt.cashBalance
-		// != null))//
-		// ? Common.formatAmount(this.stmt.cashBalance) //
-		// : "Enter closing balance");
+
 		Statement laststmt = (this.stmt != null) ? this.stmt.prevStatement : null;
 		this.lastStmtDateLabel.setText((laststmt != null) //
 				? laststmt.date.longString //
 				: "---");
 
-		ReconcileTransactionTableModel model = (this.stmt != null) //
-				? MainWindow.instance.reconcileTransactionsPanel.reconcileTransactionTableModel //
+		AccountInfoReconcileTransactionsPanel reconcilePanel = (this.stmt != null) //
+				? MainWindow.instance.reconcileTransactionsPanel //
 				: null;
 
 		this.openBalanceLabel.setText((this.stmt != null) //
 				? Common.formatAmount(this.stmt.getOpeningCashBalance()) //
 				: "---");
-		this.creditsLabel.setText((model != null) //
-				? Common.formatAmount(model.getCredits()) //
+		this.creditsLabel.setText((reconcilePanel != null) //
+				? Common.formatAmount(reconcilePanel.getCredits()) //
 				: "---");
-		this.debitsLabel.setText((model != null) //
-				? Common.formatAmount(model.getDebits()) //
+		this.debitsLabel.setText((reconcilePanel != null) //
+				? Common.formatAmount(reconcilePanel.getDebits()) //
 				: "---");
 
-		this.clearedCashBalance = (model != null) //
-				? model.getClearedCashBalance() //
+		this.clearedCashBalance = (reconcilePanel != null) //
+				? reconcilePanel.getClearedCashBalance() //
 				: BigDecimal.ZERO;
 		this.cashDiffValue = ((this.stmt != null) && (this.stmt.cashBalance != null)) //
 				? this.stmt.cashBalance.subtract(this.clearedCashBalance) //
@@ -231,7 +221,7 @@ class AccountInfoReconcileStatusPanel
 
 		if ((this.stmt != null) && (this.stmt.holdings != null)) {
 			SecurityPortfolio.HoldingsComparison comparison = //
-					this.stmt.holdings.comparisonTo(model.getPortfolioDelta());
+					this.stmt.holdings.comparisonTo(reconcilePanel.getPortfolioDelta());
 			this.holdingsTableModel.holdingsComparision = comparison;
 			holdingsMatch = comparison.holdingsMatch();
 		}
@@ -299,6 +289,7 @@ class HoldingsTableModel extends AbstractTableModel {
 
 @SuppressWarnings("serial")
 class HoldingsTableCellRenderer extends DefaultTableCellRenderer {
+	// TODO put colors into UIConstants for consistency
 	private static final Font BALANCED_FONT = new Font("Helvetica", Font.PLAIN, 12);
 	private static final Color BALANCED_COLOR = Color.BLACK;
 	private static final Font UNBALANCED_FONT = new Font("Helvetica", Font.BOLD, 14);

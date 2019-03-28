@@ -12,46 +12,49 @@ import qif.data.GenericTxn;
 
 /**
  * This panel contains views/operations based on selected account (register,
- * statements, reconcile)
+ * statements, reconcile)<br>
+ * AccountInfo<br>
+ * AccountTabs<br>
+ * Register | StatementView | Reconcile<br>
+ * Statements | StatementDetails
  */
 @SuppressWarnings("serial")
-public class AccountInfoPanel
-		extends JPanel //
+public class AccountInfoPanel extends JPanel //
 		implements AccountSelectionListener {
 	private AccountInfoHeaderPanel acctInfoPanel;
-
 	private JSplitPane statementViewSplit;
 	private AccountInfoStatementPanel statementPanel;
+	private JTabbedPane acctTabbedPane;
 	private AccountInfoStatementDetailsPanel statementDetailsPanel;
-
 	private AccountInfoReconcilePanel reconcilePanel;
-
 	private TransactionPanel registerTransactionPanel;
 
 	public AccountInfoPanel() {
 		setLayout(new BorderLayout());
 
 		this.acctInfoPanel = new AccountInfoHeaderPanel();
-		MainWindow.instance.acctInfoPanel = this.acctInfoPanel;
 		this.registerTransactionPanel = new TransactionPanel(true);
-		MainWindow.instance.registerTransactionPanel = this.registerTransactionPanel;
 		this.statementPanel = new AccountInfoStatementPanel();
-		MainWindow.instance.statementPanel = this.statementPanel;
 		this.statementDetailsPanel = new AccountInfoStatementDetailsPanel();
-		MainWindow.instance.statementDetailsPanel = this.statementDetailsPanel;
 		this.reconcilePanel = new AccountInfoReconcilePanel();
-		MainWindow.reconcilePanel = this.reconcilePanel;
+
+		MainWindow.instance.acctInfoPanel = this.acctInfoPanel;
+		MainWindow.instance.registerTransactionPanel = this.registerTransactionPanel;
+		MainWindow.instance.statementPanel = this.statementPanel;
+		MainWindow.instance.statementDetailsPanel = this.statementDetailsPanel;
+		MainWindow.instance.reconcilePanel = this.reconcilePanel;
 
 		this.statementViewSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, //
 				this.statementPanel, this.statementDetailsPanel);
 
-		JTabbedPane acctTabbedPane = new JTabbedPane();
-		acctTabbedPane.addTab("Register", this.registerTransactionPanel);
-		acctTabbedPane.add("Statements", this.statementViewSplit);
-		acctTabbedPane.add("Reconcile", this.reconcilePanel);
+		this.acctTabbedPane = new JTabbedPane();
+
+		this.acctTabbedPane.addTab("Register", this.registerTransactionPanel);
+		this.acctTabbedPane.add("Statements", this.statementViewSplit);
+		this.acctTabbedPane.add("Reconcile", this.reconcilePanel);
 
 		add(this.acctInfoPanel, BorderLayout.NORTH);
-		add(acctTabbedPane, BorderLayout.CENTER);
+		add(this.acctTabbedPane, BorderLayout.CENTER);
 
 		this.registerTransactionPanel.addTransactionSelectionListener(new TransactionSelectionListener() {
 			public void transactionSelected(GenericTxn transaction) {

@@ -12,6 +12,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,21 +26,24 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import qif.data.GenericTxn;
+import qif.data.SecurityPortfolio;
 import qif.data.Statement;
 import qif.ui.model.ReconcileTransactionTableModel;
 
 /**
  * This panel shows transactions for a statement being reconciled and lets the
- * user include/exclude the transactions
+ * user include/exclude the transactions<br>
+ * Title<br>
+ * Transactions
  */
 @SuppressWarnings("serial")
-class AccountInfoReconcileTransactionsPanel
-		extends JPanel //
+class AccountInfoReconcileTransactionsPanel extends JPanel //
 		implements StatementSelectionListener {
 
+	private JPanel titlePanel;
+	private JLabel title;
 	private JTable reconcileTransactionTable;
-	// TODO make this private
-	public ReconcileTransactionTableModel reconcileTransactionTableModel;
+	private ReconcileTransactionTableModel reconcileTransactionTableModel;
 
 	private List<TransactionSelectionListener> txnSelListeners;
 
@@ -48,21 +52,21 @@ class AccountInfoReconcileTransactionsPanel
 
 		setLayout(new BorderLayout());
 
-		JPanel titlePanel = new JPanel(new GridBagLayout());
-		titlePanel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));
+		this.titlePanel = new JPanel(new GridBagLayout());
+		this.titlePanel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));
 
-		JLabel title = new JLabel("Transactions");
-		title.setFont(new Font("Helvetica", Font.BOLD, 14));
-		title.setForeground(Color.DARK_GRAY);
+		this.title = new JLabel("Transactions");
+		this.title.setFont(new Font("Helvetica", Font.BOLD, 14));
+		this.title.setForeground(Color.DARK_GRAY);
 
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.fill = GridBagConstraints.BOTH;
 		gbc.insets = new Insets(3, 3, 3, 3);
-		titlePanel.add(title, gbc);
+		this.titlePanel.add(this.title, gbc);
 
-		add(titlePanel, BorderLayout.NORTH);
+		add(this.titlePanel, BorderLayout.NORTH);
 
 		this.reconcileTransactionTableModel = new ReconcileTransactionTableModel();
 		this.reconcileTransactionTable = new JTable(this.reconcileTransactionTableModel);
@@ -85,20 +89,54 @@ class AccountInfoReconcileTransactionsPanel
 		this.reconcileTransactionTable.addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent e) {
 				Rectangle lastRow = AccountInfoReconcileTransactionsPanel.this.reconcileTransactionTable.getCellRect( //
-						AccountInfoReconcileTransactionsPanel.this.reconcileTransactionTable.getRowCount() - 1, 0, true);
+						AccountInfoReconcileTransactionsPanel.this.reconcileTransactionTable.getRowCount() - 1, 0,
+						true);
 				AccountInfoReconcileTransactionsPanel.this.reconcileTransactionTable.scrollRectToVisible(lastRow);
 			}
 		});
 
 		this.reconcileTransactionTable.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent evt) {
-				int row = AccountInfoReconcileTransactionsPanel.this.reconcileTransactionTable.rowAtPoint(evt.getPoint());
+				int row = AccountInfoReconcileTransactionsPanel.this.reconcileTransactionTable
+						.rowAtPoint(evt.getPoint());
 
 				if (row >= 0) {
 					clickTransactionHandler(row);
 				}
 			}
 		});
+	}
+
+	public void unclearAll() {
+		this.reconcileTransactionTableModel.unclearAll();
+	}
+
+	public void clearAll() {
+		this.reconcileTransactionTableModel.clearAll();
+	}
+
+	public void finishStatement() {
+		this.reconcileTransactionTableModel.finishStatement();
+	}
+
+	public Statement createNextStatementToReconcile() {
+		return this.reconcileTransactionTableModel.createNextStatementToReconcile();
+	}
+
+	public BigDecimal getDebits() {
+		return this.reconcileTransactionTableModel.getDebits();
+	}
+
+	public BigDecimal getClearedCashBalance() {
+		return this.reconcileTransactionTableModel.getClearedCashBalance();
+	}
+
+	public SecurityPortfolio getPortfolioDelta() {
+		return this.reconcileTransactionTableModel.getPortfolioDelta();
+	}
+
+	public BigDecimal getCredits() {
+		return this.reconcileTransactionTableModel.getCredits();
 	}
 
 	public void addTransactionSelectionListener(TransactionSelectionListener listener) {

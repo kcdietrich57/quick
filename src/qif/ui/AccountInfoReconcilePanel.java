@@ -9,7 +9,9 @@ import qif.data.Statement;
 
 /**
  * This panel contains the UI for reconciling a statement (status/control +
- * transactions). Contents are driven by account selection.
+ * transactions). Contents are driven by account selection.<br>
+ * Status<br>
+ * Transactions
  */
 @SuppressWarnings("serial")
 public class AccountInfoReconcilePanel
@@ -23,8 +25,8 @@ public class AccountInfoReconcilePanel
 	public AccountInfoReconcilePanel() {
 		super(new BorderLayout());
 
-		this.reconcileTransactionsPanel = new AccountInfoReconcileTransactionsPanel();
 		this.reconcileStatusPanel = new AccountInfoReconcileStatusPanel();
+		this.reconcileTransactionsPanel = new AccountInfoReconcileTransactionsPanel();
 
 		add(this.reconcileStatusPanel, BorderLayout.NORTH);
 		add(this.reconcileTransactionsPanel, BorderLayout.CENTER);

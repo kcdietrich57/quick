@@ -151,7 +151,7 @@ public class MainWindow extends JPanel {
 	public AccountInfoStatementPanel statementPanel;
 	public AccountInfoStatementDetailsPanel statementDetailsPanel;
 	public TransactionPanel statementTransactionPanel;
-	public static AccountInfoReconcilePanel reconcilePanel;
+	public AccountInfoReconcilePanel reconcilePanel;
 	public AccountInfoReconcileStatusPanel reconcileStatusPanel;
 	public AccountInfoReconcileTransactionsPanel reconcileTransactionsPanel;
 	public TimeSliderPanel asOfDatePanel;

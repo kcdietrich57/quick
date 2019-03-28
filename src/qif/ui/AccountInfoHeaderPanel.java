@@ -10,19 +10,21 @@ import javax.swing.JPanel;
 
 import qif.data.Account;
 
-/** This panel displays summary information about the selected account */
+/**
+ * This panel displays summary information about the selected account<br>
+ * Name | Description
+ */
 @SuppressWarnings("serial")
-public class AccountInfoHeaderPanel
-		extends JPanel //
+public class AccountInfoHeaderPanel extends JPanel //
 		implements AccountSelectionListener {
-	Account account = null;
+	private Account account = null;
 
-	JLabel accountName;
-	JLabel accountType;
-	JLabel accountDescription;
-	JLabel accountOpen;
-	JLabel accountClose;
-	JLabel accountBalance;
+	private JLabel accountName;
+	private JLabel accountDescription;
+	// private JLabel accountType;
+	// private JLabel accountOpen;
+	// private JLabel accountClose;
+	// private JLabel accountBalance;
 
 	public AccountInfoHeaderPanel() {
 		super(new BorderLayout());
