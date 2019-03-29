@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -29,60 +30,36 @@ import qif.data.GenericTxn;
 import qif.data.Statement;
 import qif.ui.model.TransactionTableModel;
 
-/** This panel displays transactions in an account or statement */
+/**
+ * This panel displays transactions in an account or statement<br>
+ * Title<br>
+ * Transactions<br>
+ * TransactionDetails
+ */
 @SuppressWarnings("serial")
 public class TransactionPanel //
 		extends JPanel //
 		implements AccountSelectionListener, StatementSelectionListener {
 
 	private JTextArea transactionDetailsPanel;
-	private TransactionTableModel transactionTableModel;
 	private JTable transactionTable;
+	private TransactionTableModel transactionTableModel;
+
 	private List<TransactionSelectionListener> txnSelListeners;
 
 	public TransactionPanel(boolean highlighting) {
 		setLayout(new BorderLayout());
 
+		JPanel transactionTitlePanel = createTitlePanel();
+		JComponent transactionsTable = createTransactionsTable(highlighting);
+		JComponent transactionDetails = createTransactionDetails();
+
+		add(transactionTitlePanel, BorderLayout.NORTH);
+		add(transactionsTable, BorderLayout.CENTER);
+		add(transactionDetails, BorderLayout.SOUTH);
+
 		this.txnSelListeners = new ArrayList<>();
 
-		JPanel titlePanel = new JPanel(new GridBagLayout());
-		titlePanel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));
-
-		JLabel title = new JLabel("Transactions");
-		title.setFont(new Font("Helvetica", Font.BOLD, 14));
-		title.setForeground(Color.DARK_GRAY);
-
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.fill = GridBagConstraints.BOTH;
-		gbc.insets = new Insets(3, 3, 3, 3);
-		titlePanel.add(title, gbc);
-
-		add(titlePanel, BorderLayout.NORTH);
-
-		this.transactionDetailsPanel = new JTextArea(10, 90);
-		this.transactionDetailsPanel.setText("Transaction info goes here");
-
-		JScrollPane sp = new JScrollPane(this.transactionDetailsPanel);
-		add(sp, BorderLayout.SOUTH);
-
-		this.transactionTableModel = new TransactionTableModel();
-		this.transactionTable = new JTable(this.transactionTableModel);
-		JScrollPane scrollPane = new JScrollPane(this.transactionTable);
-
-		add(scrollPane, BorderLayout.CENTER);
-
-		this.transactionTable.setFillsViewportHeight(true);
-
-		this.transactionTable.setDefaultRenderer(Object.class, //
-				new TransactionTableCellRenderer(highlighting));
-
-		this.transactionTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		this.transactionTableModel.setColumnWidths(this.transactionTable.getColumnModel());
-		this.transactionTableModel.addColumnWidthListeners(this.transactionTable);
-
-		this.transactionTable.setRowSelectionAllowed(true);
 		this.transactionTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e) {
 				int row = TransactionPanel.this.transactionTable.getSelectedRow();
@@ -111,6 +88,49 @@ public class TransactionPanel //
 						.setColumnWidths(TransactionPanel.this.transactionTable.getColumnModel());
 			}
 		});
+	}
+
+	private JPanel createTitlePanel() {
+		JPanel transactionTitlePanel = new JPanel(new GridBagLayout());
+		transactionTitlePanel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));
+
+		JLabel title = new JLabel("Transactions");
+		title.setFont(new Font("Helvetica", Font.BOLD, 14));
+		title.setForeground(Color.DARK_GRAY);
+
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.fill = GridBagConstraints.BOTH;
+		gbc.insets = new Insets(3, 3, 3, 3);
+		transactionTitlePanel.add(title, gbc);
+
+		return transactionTitlePanel;
+	}
+
+	private JComponent createTransactionsTable(boolean highlighting) {
+		this.transactionTableModel = new TransactionTableModel();
+		this.transactionTable = new JTable(this.transactionTableModel);
+
+		this.transactionTable.setFillsViewportHeight(true);
+
+		this.transactionTable.setDefaultRenderer(Object.class, //
+				new TransactionTableCellRenderer(highlighting));
+
+		this.transactionTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		this.transactionTableModel.setColumnWidths(this.transactionTable.getColumnModel());
+		this.transactionTableModel.addColumnWidthListeners(this.transactionTable);
+
+		this.transactionTable.setRowSelectionAllowed(true);
+
+		return new JScrollPane(this.transactionTable);
+	}
+
+	private JComponent createTransactionDetails() {
+		this.transactionDetailsPanel = new JTextArea(10, 90);
+		this.transactionDetailsPanel.setText("Transaction info goes here");
+
+		return new JScrollPane(this.transactionDetailsPanel);
 	}
 
 	private void transactionSelected(int row) {

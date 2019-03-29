@@ -29,14 +29,17 @@ import qif.data.QDate;
 import qif.data.Statement;
 import qif.ui.model.AccountTableModel;
 
-/** This panel displays accounts, and drives the content of AccountPanel */
+/**
+ * This panel displays accounts, and drives the content of AccountPanel<br>
+ * AccountTable
+ */
 @SuppressWarnings("serial")
 public class AccountNavigationListPanel extends JScrollPane {
 
-	private AccountTableModel accountTableModel;
-	private JTable accountTable;
-
 	private boolean showOpenAccounts = true;
+
+	private JTable accountTable;
+	private AccountTableModel accountTableModel;
 
 	private List<AccountSelectionListener> acctSelListeners;
 
@@ -80,7 +83,6 @@ public class AccountNavigationListPanel extends JScrollPane {
 	}
 
 	public void refreshAccountList() {
-		// int selrow = this.accountTable.getSelectedRow();
 		Account acct = this.getSelectedAccount();
 		this.accountTableModel.reload();
 
@@ -152,7 +154,8 @@ public class AccountNavigationListPanel extends JScrollPane {
 										AccountNavigationListPanel.this.accountTable));
 
 						if (rowAtPoint > -1) {
-							AccountNavigationListPanel.this.accountTable.setRowSelectionInterval(rowAtPoint, rowAtPoint);
+							AccountNavigationListPanel.this.accountTable.setRowSelectionInterval(rowAtPoint,
+									rowAtPoint);
 						}
 					}
 				});
@@ -229,10 +232,10 @@ class AccountTableCellRenderer extends DefaultTableCellRenderer {
 			c.setFont(dueFont);
 
 			if ((stat != null) && (stat.cashBalance.signum() != 0)) {
-				// c.setForeground(dueColor);
+				c.setForeground(dueColor);
 				c.setBackground(dueBackground);
 			} else {
-				// c.setForeground(normalColor);
+				c.setForeground(dueColor);
 				c.setBackground(normalBackground);
 			}
 		} else {

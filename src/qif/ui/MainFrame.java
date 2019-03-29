@@ -7,9 +7,8 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 /** Top level application frame */
+@SuppressWarnings("serial")
 public class MainFrame extends JFrame {
-	private static final long serialVersionUID = 1L;
-
 	public static MainFrame appFrame;
 
 	public MainWindow mainWindow;

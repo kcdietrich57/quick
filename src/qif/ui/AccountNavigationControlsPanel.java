@@ -9,9 +9,13 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
-/** This panel contains controls affecting the account list */
+/**
+ * This panel contains controls affecting the account list<br>
+ * OpenBut CloseBut
+ */
 @SuppressWarnings("serial")
-public class AccountNavigationControlsPanel extends JPanel {
+public class AccountNavigationControlsPanel //
+		extends JPanel {
 	private JButton openButton;
 	private JButton closedButton;
 

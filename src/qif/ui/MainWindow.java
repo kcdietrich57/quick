@@ -171,7 +171,7 @@ public class MainWindow extends JPanel {
 	private boolean balVisible = false;
 	private boolean optVisible = false;
 
-	public JPanel chartPanel;
+	private JPanel chartPanel;
 	private BalanceChart balChart;
 	private NetWorthChart nwChart;
 	private ISIOptionsChart optChart;

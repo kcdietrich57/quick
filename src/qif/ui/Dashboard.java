@@ -13,7 +13,10 @@ import qif.report.ReconcileStatusReporter;
 import qif.report.ReconcileStatusReporter.ReconcileStatusModel;
 import qif.report.StatusForDateModel;
 
-/** This panel displays overall information */
+/**
+ * This panel displays overall information<br>
+ * Balances | ReconcileStatus
+ */
 @SuppressWarnings("serial")
 public class Dashboard extends JPanel {
 	private JTextArea balancesText;

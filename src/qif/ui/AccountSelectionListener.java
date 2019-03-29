@@ -4,6 +4,7 @@ import qif.data.Account;
 
 /** Interface for paying attention to selections in the account list */
 public interface AccountSelectionListener {
+
 	/**
 	 * Process an account selection
 	 *
@@ -12,4 +13,5 @@ public interface AccountSelectionListener {
 	 *                If true, force the selection action regardless.
 	 */
 	void accountSelected(Account account, boolean update);
+
 }

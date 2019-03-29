@@ -17,7 +17,9 @@ import javax.swing.JPanel;
 import javax.swing.JRootPane;
 import javax.swing.KeyStroke;
 
-/** Dialog from context menu for account list */
+/**
+ * Dialog from context menu for account list
+ */
 public class ChooseAccountDialog extends JDialog {
 	private static final long serialVersionUID = 1L;
 

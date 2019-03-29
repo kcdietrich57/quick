@@ -21,6 +21,10 @@ import javax.swing.SwingConstants;
 import qif.data.GenericTxn;
 import qif.data.QDate;
 
+/**
+ * Controls to shift the date for displaying data<br>
+ * DatePanel | DateSlider
+ */
 @SuppressWarnings("serial")
 public class TimeSliderPanel extends JPanel {
 	private JLabel asOfDateLabel;
@@ -34,48 +38,22 @@ public class TimeSliderPanel extends JPanel {
 
 		this.sliderDate = MainWindow.instance.asOfDate;
 
-		QDate start = GenericTxn.getFirstTransactionDate();
-		QDate end = GenericTxn.getLastTransactionDate();
-		int years = (end.getYear() - start.getYear()) + 1;
-		int months = years * 12;
+		createDateSlider();
+		JPanel datePanel = createDatePanel();
 
-		BoundedRangeModel timeModel = new DefaultBoundedRangeModel(months, 0, 0, months + 1);
+		add(datePanel, BorderLayout.WEST);
+		add(this.asOfDateSlider, BorderLayout.CENTER);
 
-		this.asOfDateSlider = new JSlider(timeModel);
-		this.asOfDateSlider.setOrientation(SwingConstants.HORIZONTAL);
-		this.asOfDateSlider.setMajorTickSpacing(12);
-		this.asOfDateSlider.setPaintTicks(true);
-		this.asOfDateSlider.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
-
-		this.asOfDateSlider.addChangeListener(e -> {
-			if (this.asOfDateSlider.getValueIsAdjusting()) {
-				return;
-			}
-
-			sliderPositionChanged();
-		});
-
-		Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
-		int m = 0;
-		for (int y = start.getYear(); y <= end.getYear(); ++y, m += 12) {
-			labelTable.put(new Integer(m), new JLabel(String.format("%02d", y % 100)));
-		}
-
-		this.asOfDateSlider.setLabelTable(labelTable);
-
-		this.asOfDateSlider.setPaintLabels(true);
-
-		this.asOfDateSliderLabel = new JLabel("FOO");
-		this.asOfDateSliderLabel.setFont(new Font("Helvetica", Font.BOLD, 12));
-		this.asOfDateSliderLabel.setForeground(Color.BLUE);
-		this.asOfDateSliderLabel.setPreferredSize(new Dimension(100, 20));
-
-		this.asOfDateLabel = new JLabel("BAR");
-		this.asOfDateLabel.setFont(new Font("Helvetica", Font.BOLD, 12));
-		this.asOfDateLabel.setForeground(Color.GRAY);
-
+		updateValues();
+	}
+	
+	private JPanel createDatePanel() {
 		JPanel datePanel = new JPanel(new GridLayout(1, 3));
 		datePanel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
+
+		this.asOfDateLabel = new JLabel("---");
+		this.asOfDateLabel.setFont(new Font("Helvetica", Font.BOLD, 12));
+		this.asOfDateLabel.setForeground(Color.GRAY);
 
 		MainWindow.IntervalLength[] periods = new MainWindow.IntervalLength[] { //
 				MainWindow.IntervalLength.Day, //
@@ -128,11 +106,46 @@ public class TimeSliderPanel extends JPanel {
 
 		datePanel.add(this.asOfDateLabel);
 		datePanel.add(this.asOfDateSliderLabel);
+		
+		return datePanel;
+	}
 
-		add(datePanel, BorderLayout.WEST);
-		add(this.asOfDateSlider, BorderLayout.CENTER);
+	private void createDateSlider() {
+		QDate start = GenericTxn.getFirstTransactionDate();
+		QDate end = GenericTxn.getLastTransactionDate();
+		int years = (end.getYear() - start.getYear()) + 1;
+		int months = years * 12;
 
-		updateValues();
+		BoundedRangeModel timeModel = new DefaultBoundedRangeModel(months, 0, 0, months + 1);
+
+		this.asOfDateSlider = new JSlider(timeModel);
+		this.asOfDateSlider.setOrientation(SwingConstants.HORIZONTAL);
+		this.asOfDateSlider.setMajorTickSpacing(12);
+		this.asOfDateSlider.setPaintTicks(true);
+		this.asOfDateSlider.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
+
+		this.asOfDateSlider.addChangeListener(e -> {
+			if (this.asOfDateSlider.getValueIsAdjusting()) {
+				return;
+			}
+
+			sliderPositionChanged();
+		});
+
+		Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
+		int m = 0;
+		for (int y = start.getYear(); y <= end.getYear(); ++y, m += 12) {
+			labelTable.put(new Integer(m), new JLabel(String.format("%02d", y % 100)));
+		}
+
+		this.asOfDateSlider.setLabelTable(labelTable);
+
+		this.asOfDateSlider.setPaintLabels(true);
+
+		this.asOfDateSliderLabel = new JLabel("---");
+		this.asOfDateSliderLabel.setFont(new Font("Helvetica", Font.BOLD, 12));
+		this.asOfDateSliderLabel.setForeground(Color.BLUE);
+		this.asOfDateSliderLabel.setPreferredSize(new Dimension(100, 20));
 	}
 
 	private void sliderPositionChanged() {
@@ -160,6 +173,7 @@ public class TimeSliderPanel extends JPanel {
 		this.asOfDateSlider.setValue(TimeSliderPanel.convertDateToMonths(date));
 	}
 
+	/** Convert months since start of history to the date */
 	private QDate convertMonthsToDate(int months) {
 		int startyear = GenericTxn.getFirstTransactionDate().getYear();
 		QDate date = new QDate(startyear, 1, 1);
@@ -168,6 +182,7 @@ public class TimeSliderPanel extends JPanel {
 		return sdate;
 	}
 
+	/** Convert a date to months since the start of our history */
 	public static int convertDateToMonths(QDate date) {
 		int months = 0;
 

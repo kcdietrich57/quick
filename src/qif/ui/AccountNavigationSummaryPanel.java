@@ -12,7 +12,12 @@ import qif.data.Common;
 import qif.report.NetWorthReporter;
 import qif.report.NetWorthReporter.Balances;
 
-/** This panel displays a short summary of the overall status */
+/**
+ * This panel displays a short summary of the overall status<br>
+ * Assets<br>
+ * Liabilities<br>
+ * NetWorth
+ */
 @SuppressWarnings("serial")
 public class AccountNavigationSummaryPanel extends JPanel {
 	private JLabel assLabel;

@@ -4,7 +4,12 @@ import java.awt.BorderLayout;
 
 import javax.swing.JPanel;
 
-/** This panel displays accounts and selection drives AccountPanel */
+/**
+ * This panel displays accounts and selection drives AccountPanel<br>
+ * Controls<br>
+ * Accounts<br>
+ * Summary
+ */
 @SuppressWarnings("serial")
 public class AccountNavigationPanel extends JPanel {
 	private AccountNavigationControlsPanel controlsPanel;
