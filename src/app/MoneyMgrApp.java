@@ -2,11 +2,11 @@ package app;
 
 import java.util.Scanner;
 
-import qif.data.QDate;
-import qif.importer.CSVImport;
-import qif.importer.QifDomReader;
-import qif.report.InvestmentPerformanceModel;
-import qif.ui.MainFrame;
+import moneymgr.io.cvs.CSVImport;
+import moneymgr.io.qif.QifDomReader;
+import moneymgr.report.InvestmentPerformanceModel;
+import moneymgr.ui.MainFrame;
+import moneymgr.util.QDate;
 
 /** Test program for importing output from Quicken on Mac */
 public class MoneyMgrApp {

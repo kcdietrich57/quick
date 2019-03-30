@@ -4,16 +4,16 @@ import java.util.Date;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 
-import qif.data.Account;
-import qif.data.Common;
-import qif.data.QDate;
-import qif.importer.QifDomReader;
-import qif.persistence.Reconciler;
-import qif.report.AccountReporter;
-import qif.report.CashFlowReporter;
-import qif.report.NetWorthReporter;
-import qif.report.QifReporter;
-import qif.report.ReconcileStatusReporter;
+import moneymgr.io.Reconciler;
+import moneymgr.io.qif.QifDomReader;
+import moneymgr.model.Account;
+import moneymgr.report.AccountReporter;
+import moneymgr.report.CashFlowReporter;
+import moneymgr.report.NetWorthReporter;
+import moneymgr.report.QifReporter;
+import moneymgr.report.ReconcileStatusReporter;
+import moneymgr.util.Common;
+import moneymgr.util.QDate;
 
 /** Old (obsolete) text-based frontend to quicken model */
 public class QifLoader {
