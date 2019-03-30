@@ -186,6 +186,8 @@ class AccountTableCellRenderer extends DefaultTableCellRenderer {
 	private static Font closedFont = new Font("Helvetica", Font.ITALIC, 12);
 	private static Color closedColor = Color.GRAY;
 
+	private static Color selectedBackground = UIConstants.LIGHT_BLUE;
+
 	public Component getTableCellRendererComponent(//
 			JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
 		Component c = super.getTableCellRendererComponent(//
@@ -196,63 +198,64 @@ class AccountTableCellRenderer extends DefaultTableCellRenderer {
 
 		boolean statementDue = acct.isStatementDue();
 
-		Color co = normalColor;
+		Color fgColor = normalColor;
+		Color bgColor = normalBackground;
+
 		switch (acct.type) {
 		case Asset:
-			co = Color.GREEN;
+			//fgColor = Color.GREEN;
+			bgColor = new Color(255, 255, 192);
 			break;
 		case Bank:
 		case Cash:
-			co = Color.RED;
+			//fgColor = Color.RED;
+			bgColor = normalBackground;
 			break;
 		case CCard:
-			co = Color.ORANGE;
+			//fgColor = Color.ORANGE;
+			bgColor = new Color(255, 192, 192);
 			break;
 		case Invest:
 		case InvMutual:
 		case InvPort:
-			co = Color.BLUE;
+			//fgColor = Color.BLUE;
+			bgColor = new Color(192, 192, 255);
 			break;
 		case Inv401k:
-			co = Color.DARK_GRAY;
+			//fgColor = Color.DARK_GRAY;
+			bgColor = new Color(128, 255, 128);
 			break;
 		case Liability:
-			co = Color.MAGENTA;
+			//fgColor = Color.MAGENTA;
+			bgColor = new Color(255, 192, 255);
 			break;
 		}
 
-		c.setForeground(co);
-
 		if (!acct.isOpenOn(QDate.today())) {
 			c.setFont(closedFont);
-			// c.setForeground(closedColor);
+			fgColor = closedColor;
 		} else if (statementDue) {
 			Statement stat = acct.getFirstUnbalancedStatement();
 
 			c.setFont(dueFont);
 
 			if ((stat != null) && (stat.cashBalance.signum() != 0)) {
-				c.setForeground(dueColor);
-				c.setBackground(dueBackground);
+				fgColor = dueColor;
+				// bgColor = dueBackground;
 			} else {
-				c.setForeground(dueColor);
-				c.setBackground(normalBackground);
+				fgColor = dueColor;
+				//bgColor = normalBackground;
 			}
 		} else {
 			c.setFont(normalFont);
-			// c.setForeground(normalColor);
-			c.setBackground(normalBackground);
 		}
 
 		if (col == 2) {
 			setHorizontalAlignment(SwingConstants.RIGHT);
 		}
 
-		if (isSelected) {
-			setBackground(UIConstants.LIGHT_BLUE);
-		} else {
-			setBackground(Color.WHITE);
-		}
+		c.setForeground(fgColor);
+		c.setBackground((isSelected) ? selectedBackground : bgColor);
 
 		return c;
 	}
