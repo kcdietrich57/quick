@@ -25,7 +25,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import moneymgr.model.Account;
-import moneymgr.model.Statement;
 import moneymgr.ui.model.AccountTableModel;
 import moneymgr.util.QDate;
 
@@ -180,8 +179,10 @@ class AccountTableCellRenderer extends DefaultTableCellRenderer {
 	private static Color normalBackground = Color.WHITE;
 
 	private static Font dueFont = new Font("Helvetica", Font.BOLD, 12);
-	private static Color dueColor = Color.BLUE;
-	private static Color dueBackground = Color.WHITE;
+	private static Color dueColor = Color.BLACK;
+
+	private static Font overdueFont = new Font("Helvetica", Font.BOLD, 12);
+	private static Color overdueColor = Color.BLUE;
 
 	private static Font closedFont = new Font("Helvetica", Font.ITALIC, 12);
 	private static Color closedColor = Color.GRAY;
@@ -196,37 +197,29 @@ class AccountTableCellRenderer extends DefaultTableCellRenderer {
 		AccountTableModel model = (AccountTableModel) table.getModel();
 		Account acct = model.getAccountAt(row);
 
-		boolean statementDue = acct.isStatementDue();
-
 		Color fgColor = normalColor;
 		Color bgColor = normalBackground;
 
 		switch (acct.type) {
 		case Asset:
-			//fgColor = Color.GREEN;
 			bgColor = new Color(255, 255, 192);
 			break;
 		case Bank:
 		case Cash:
-			//fgColor = Color.RED;
 			bgColor = normalBackground;
 			break;
 		case CCard:
-			//fgColor = Color.ORANGE;
 			bgColor = new Color(255, 192, 192);
 			break;
 		case Invest:
 		case InvMutual:
 		case InvPort:
-			//fgColor = Color.BLUE;
 			bgColor = new Color(192, 192, 255);
 			break;
 		case Inv401k:
-			//fgColor = Color.DARK_GRAY;
 			bgColor = new Color(128, 255, 128);
 			break;
 		case Liability:
-			//fgColor = Color.MAGENTA;
 			bgColor = new Color(255, 192, 255);
 			break;
 		}
@@ -234,18 +227,12 @@ class AccountTableCellRenderer extends DefaultTableCellRenderer {
 		if (!acct.isOpenOn(QDate.today())) {
 			c.setFont(closedFont);
 			fgColor = closedColor;
-		} else if (statementDue) {
-			Statement stat = acct.getFirstUnbalancedStatement();
-
+		} else if (acct.isStatementOverdue(5)) {
+			c.setFont(overdueFont);
+			fgColor = overdueColor;
+		} else if (acct.isStatementDue()) {
 			c.setFont(dueFont);
-
-			if ((stat != null) && (stat.cashBalance.signum() != 0)) {
-				fgColor = dueColor;
-				// bgColor = dueBackground;
-			} else {
-				fgColor = dueColor;
-				//bgColor = normalBackground;
-			}
+			fgColor = dueColor;
 		} else {
 			c.setFont(normalFont);
 		}

@@ -362,13 +362,33 @@ public class Account {
 		return getDaysUntilStatementIsDue() <= 0;
 	}
 
+	public boolean isStatementOverdue(int days) {
+		return getDaysUntilStatementIsDue() <= -days;
+	}
+
 	public int getDaysUntilStatementIsDue() {
 		QDate laststmt = getLastBalancedStatementDate();
 		if ((laststmt == null) || (this.statementFrequency <= 0)) {
 			return -1;
 		}
 
-		QDate duedate = laststmt.addDays(this.statementFrequency);
+		QDate duedate;
+
+		switch (this.statementFrequency) {
+		case 30:
+			duedate = laststmt.addMonths(1);
+			break;
+		case 90:
+			duedate = laststmt.addMonths(3);
+			break;
+		case 360:
+			duedate = laststmt.addMonths(12);
+			break;
+		default:
+			duedate = laststmt.addDays(this.statementFrequency);
+			break;
+		}
+
 		return duedate.subtract(QDate.today());
 	}
 
