@@ -11,6 +11,7 @@ import java.util.List;
 
 import app.QifDom;
 import moneymgr.model.GenericTxn;
+import moneymgr.model.QPrice;
 
 /** Useful utility functions */
 public class Common {
@@ -149,15 +150,25 @@ public class Common {
 		return parseDate(datestr);
 	}
 
-	/** Format a string, possibly null, to maximum length */
+	/** Pad/truncate a string, possibly null, to maximum length */
 	public static String formatString(String s, int maxlen) {
 		if (s == null) {
 			s = "N/A";
 		}
 
-		return (s.length() > maxlen) //
-				? s.substring(0, maxlen) //
-				: String.format("%" + maxlen + "s", s);
+		boolean leftJustify = false;
+		
+		if (maxlen < 0) {
+			leftJustify = true;
+			maxlen = -maxlen;
+		}
+
+		if (s.length() > maxlen) {
+			return s.substring(0, maxlen);
+		}
+		
+		String pattern = "%" + ((leftJustify) ? "-" : "") + maxlen + "s";
+		return String.format(pattern, s);
 	}
 
 	/** Safely get the string representation of an object, possibly null */
@@ -175,29 +186,32 @@ public class Common {
 
 	/** Format a decimal value to two places */
 	public static String formatAmount(BigDecimal amt) {
-		if (amt == null) {
-			return "null";
-		}
-
-		return String.format("%10.2f", amt);
+		return (amt != null) ? String.format("%10.2f", amt) : "null";
 	}
 
 	/** Format a decimal value as integer */
 	public static String formatAmount0(BigDecimal amt) {
-		if (amt == null) {
-			return "null";
-		}
-
-		return String.format("%,10.0f", amt);
+		return (amt != null) ? String.format("%,10.0f", amt) : "null";
 	}
 
 	/** Format a decimal value to three places */
 	public static String formatAmount3(BigDecimal amt) {
-		if (amt == null) {
-			return "null";
-		}
+		return (amt != null) ? String.format("%10.3f", amt) : "null";
+	}
 
-		return String.format("%10.3f", amt);
+	/** Format a decimal value to two places */
+	public static String formatAmount(QPrice amt) {
+		return (amt != null) ? formatAmount(amt.getPrice()) : "null";
+	}
+
+	/** Format a decimal value as integer */
+	public static String formatAmount0(QPrice amt) {
+		return (amt != null) ? formatAmount0(amt.getPrice()) : "null";
+	}
+
+	/** Format a decimal value to three places */
+	public static String formatAmount3(QPrice amt) {
+		return (amt != null) ? formatAmount3(amt.getPrice()) : "null";
 	}
 
 	/** Format a date mm/dd/yy */

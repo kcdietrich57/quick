@@ -11,7 +11,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -141,7 +140,21 @@ public class MainWindow extends JPanel {
 	// AsOfDatePanel
 	// -----------------------------------------------------
 
+	/** Chart parameters */
+	public QDate startAsOfDate;
+	public QDate asOfDate;
+	public IntervalLength reportPeriod;
+	public IntervalUnit reportUnit;
+
+	private boolean chartNeedsRefresh = true;
+	private boolean chartsVisible = false;
+	private boolean nwVisible = false;
+	private boolean balVisible = false;
+	private boolean optVisible = false;
+
 	public JTabbedPane contentPanel;
+
+	private JSplitPane accountViewSplit;
 	public AccountInfoPanel accountPanel;
 	public AccountNavigationPanel accountNavigationPanel;
 	public AccountNavigationSummaryPanel summaryPanel;
@@ -156,20 +169,9 @@ public class MainWindow extends JPanel {
 	public AccountInfoReconcileTransactionsPanel reconcileTransactionsPanel;
 	public TimeSliderPanel asOfDatePanel;
 
-	private JSplitPane accountViewSplit;
+	public InvestmentsPanel investmentsPanel;
+
 	public Dashboard dashboardPanel;
-
-	/** Chart parameters */
-	public QDate startAsOfDate;
-	public QDate asOfDate;
-	public IntervalLength reportPeriod;
-	public IntervalUnit reportUnit;
-
-	private boolean chartNeedsRefresh = true;
-	private boolean chartsVisible = false;
-	private boolean nwVisible = false;
-	private boolean balVisible = false;
-	private boolean optVisible = false;
 
 	private JPanel chartPanel;
 	private BalanceChart balChart;
@@ -350,8 +352,9 @@ public class MainWindow extends JPanel {
 			updateAsOfDate(date);
 
 			// TODO use AsOfDateListeners to update UI
-			this.dashboardPanel.changeDate();
 			this.accountNavigationPanel.refreshAccountList();
+			this.investmentsPanel.changeDate();
+			this.dashboardPanel.changeDate();
 			this.summaryPanel.updateValues();
 
 			if (this.reportPeriod != IntervalLength.All) {
@@ -363,12 +366,13 @@ public class MainWindow extends JPanel {
 	private void createContentPanel() {
 		this.dashboardPanel = new Dashboard();
 		createAccountsPanel();
+		createInvestmentsPanel();
 		createChartsPanel();
 
 		this.contentPanel = new JTabbedPane();
 
 		this.contentPanel.add("Accounts", this.accountViewSplit);
-		this.contentPanel.add("Investments", new JButton("Investments go here"));
+		this.contentPanel.add("Investments", this.investmentsPanel);
 		this.contentPanel.add("Dashboard", this.dashboardPanel);
 		this.contentPanel.add("Charts", this.chartPanel);
 	}
@@ -382,6 +386,10 @@ public class MainWindow extends JPanel {
 		this.accountViewSplit.setPreferredSize(new Dimension(1200, 800));
 
 		this.accountNavigationPanel.addAccountSelectionListener(this.accountPanel);
+	}
+
+	private void createInvestmentsPanel() {
+		this.investmentsPanel = new InvestmentsPanel();
 	}
 
 	private void createChartsPanel() {

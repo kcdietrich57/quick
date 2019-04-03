@@ -10,8 +10,8 @@ import javax.swing.JTextArea;
 
 import moneymgr.report.NetWorthReporter;
 import moneymgr.report.ReconcileStatusReporter;
-import moneymgr.report.StatusForDateModel;
 import moneymgr.report.ReconcileStatusReporter.ReconcileStatusModel;
+import moneymgr.report.StatusForDateModel;
 
 /**
  * This panel displays overall information<br>
@@ -21,6 +21,7 @@ import moneymgr.report.ReconcileStatusReporter.ReconcileStatusModel;
 public class Dashboard extends JPanel {
 	private JTextArea balancesText;
 	private JTextArea reconcileStatusText;
+	private JPanel balancePanel;
 
 	public Dashboard() {
 		super(new BorderLayout());
@@ -31,16 +32,16 @@ public class Dashboard extends JPanel {
 		this.reconcileStatusText = new JTextArea();
 		this.reconcileStatusText.setFont(new Font("Courier", Font.PLAIN, 12));
 
-		JScrollPane scroller = new JScrollPane(this.balancesText);
+		JScrollPane balancesScroller = new JScrollPane(this.balancesText);
 		JScrollPane reconcileStatusScroller = new JScrollPane(this.reconcileStatusText);
 
-		JPanel balancePane = new JPanel(new BorderLayout());
+		this.balancePanel = new JPanel(new BorderLayout());
 
-		balancePane.add(scroller, BorderLayout.CENTER);
+		this.balancePanel.add(balancesScroller, BorderLayout.CENTER);
 
 		JTabbedPane tabs = new JTabbedPane();
 
-		tabs.add("Balances", balancePane);
+		tabs.add("Balances", this.balancePanel);
 		tabs.add("Reconcile Status", reconcileStatusScroller);
 
 		add(tabs, BorderLayout.CENTER);
@@ -56,5 +57,9 @@ public class Dashboard extends JPanel {
 		StatusForDateModel balancesModel = new StatusForDateModel(MainWindow.instance.asOfDate);
 		this.balancesText.setText(NetWorthReporter.generateReportStatusForDate(balancesModel));
 		this.balancesText.setCaretPosition(0);
+
+		// TODO reset this when we reconcile a statement instead
+		ReconcileStatusModel reconcileStatusModel = ReconcileStatusReporter.buildReportStatusModel();
+		this.reconcileStatusText.setText(ReconcileStatusReporter.generateReportStatus(reconcileStatusModel));
 	}
 }
