@@ -46,7 +46,7 @@ public class Dashboard extends JPanel {
 
 		add(tabs, BorderLayout.CENTER);
 
-		StatusForDateModel balancesModel = new StatusForDateModel(MainWindow.instance.asOfDate);
+		StatusForDateModel balancesModel = new StatusForDateModel(MainWindow.instance.asOfDate());
 		this.balancesText.setText(NetWorthReporter.generateReportStatusForDate(balancesModel));
 
 		ReconcileStatusModel reconcileStatusModel = ReconcileStatusReporter.buildReportStatusModel();
@@ -54,7 +54,7 @@ public class Dashboard extends JPanel {
 	}
 
 	public void changeDate() {
-		StatusForDateModel balancesModel = new StatusForDateModel(MainWindow.instance.asOfDate);
+		StatusForDateModel balancesModel = new StatusForDateModel(MainWindow.instance.asOfDate());
 		this.balancesText.setText(NetWorthReporter.generateReportStatusForDate(balancesModel));
 		this.balancesText.setCaretPosition(0);
 

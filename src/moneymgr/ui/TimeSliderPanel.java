@@ -36,7 +36,7 @@ public class TimeSliderPanel extends JPanel {
 	public TimeSliderPanel() {
 		super(new BorderLayout());
 
-		this.sliderDate = MainWindow.instance.asOfDate;
+		this.sliderDate = MainWindow.instance.asOfDate();
 
 		createDateSlider();
 		JPanel datePanel = createDatePanel();
@@ -146,6 +146,18 @@ public class TimeSliderPanel extends JPanel {
 		this.asOfDateSliderLabel.setFont(new Font("Helvetica", Font.BOLD, 12));
 		this.asOfDateSliderLabel.setForeground(Color.BLUE);
 		this.asOfDateSliderLabel.setPreferredSize(new Dimension(100, 20));
+		
+//		this.asOfDateSliderLabel.addActionListener(new ActionListener() {
+//			public void actionPerformed(ActionEvent e) {
+//				JDatePicker dp = new JDatePicker();
+//				dp.setMainWindow.instance.asOfDate().toDate());
+//				JFormattedTextField tf = dp.getFormattedTextField();
+//				String s = tf.getText();
+//				System.out.println(s);
+//				
+//				dp.setVisible(true);
+//			}
+//		});
 	}
 
 	private void sliderPositionChanged() {
@@ -153,7 +165,7 @@ public class TimeSliderPanel extends JPanel {
 
 		this.sliderDate = convertMonthsToDate(smonths);
 
-		if (!MainWindow.instance.asOfDate.equals(this.sliderDate)) {
+		if (!MainWindow.instance.asOfDate().equals(this.sliderDate)) {
 			MainWindow.instance.setAsOfDate(this.sliderDate);
 
 			updateValues();
@@ -162,8 +174,9 @@ public class TimeSliderPanel extends JPanel {
 
 	public void updateValues() {
 		this.asOfDateSliderLabel.setText(this.sliderDate.toString());
-		if (!this.sliderDate.equals(MainWindow.instance.asOfDate)) {
-			this.asOfDateLabel.setText(MainWindow.instance.asOfDate.toString());
+
+		if (!this.sliderDate.equals(MainWindow.instance.asOfDate())) {
+			this.asOfDateLabel.setText(MainWindow.instance.asOfDate().toString());
 		} else {
 			this.asOfDateLabel.setText("");
 		}

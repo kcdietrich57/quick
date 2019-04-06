@@ -44,7 +44,7 @@ public class AccountNavigationSummaryPanel extends JPanel {
 
 	public void updateValues() {
 		Balances bals = NetWorthReporter.getBalancesForDate( //
-				MainWindow.instance.asOfDate);
+				MainWindow.instance.asOfDate());
 
 		this.assLabel.setText(Common.formatAmount(bals.assets));
 		this.liabLabel.setText(Common.formatAmount(bals.liabilities));

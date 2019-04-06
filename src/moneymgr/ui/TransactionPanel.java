@@ -191,7 +191,7 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 
 		boolean cleared = ((tx != null) && tx.isCleared());
 		boolean future = ((tx != null) //
-				&& (tx.getDate().compareTo(MainWindow.instance.asOfDate) > 0));
+				&& (tx.getDate().compareTo(MainWindow.instance.currentDate()) > 0));
 
 		if (!this.highlighting) {
 			c.setFont(regularFont);

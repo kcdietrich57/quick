@@ -51,9 +51,9 @@ public class TransactionTableModel //
 		this.allTransactions.clear();
 
 		if ((txns != null) && !txns.isEmpty()) {
-			if (MainWindow.instance.asOfDate.compareTo(QDate.today()) < 0) {
+			if (MainWindow.instance.asOfDate().compareTo(QDate.today()) < 0) {
 				for (GenericTxn txn : txns) {
-					if (MainWindow.instance.asOfDate.compareTo(txn.getDate()) >= 0) {
+					if (MainWindow.instance.asOfDate().compareTo(txn.getDate()) >= 0) {
 						this.allTransactions.add(txn);
 					}
 				}

@@ -141,8 +141,9 @@ public class MainWindow extends JPanel {
 	// -----------------------------------------------------
 
 	/** Chart parameters */
+	private QDate _currentDate;
 	public QDate startAsOfDate;
-	public QDate asOfDate;
+	private QDate _asOfDate;
 	public IntervalLength reportPeriod;
 	public IntervalUnit reportUnit;
 
@@ -202,9 +203,17 @@ public class MainWindow extends JPanel {
 		// add(new JButton("Status Bar Goes Here"), BorderLayout.SOUTH);
 	}
 
+	public QDate asOfDate() {
+		return this._asOfDate;
+	}
+
+	public QDate currentDate() {
+		return this._currentDate;
+	}
+
 	/** Calculate the starting date given the end (asOfDate-period) */
 	public QDate getIntervalStart() {
-		QDate first = this.asOfDate;
+		QDate first = this._asOfDate;
 
 		switch (this.reportPeriod) {
 		case Day:
@@ -327,10 +336,14 @@ public class MainWindow extends JPanel {
 
 	/** Change current display date */
 	private void updateAsOfDate(QDate date) {
-		this.asOfDate = date;
+		this._asOfDate = this._currentDate = date;
 
-		int year = this.asOfDate.getYear();
-		int lastMonth = this.asOfDate.getMonth() - 1;
+		if (this._currentDate.compareTo(QDate.today()) > 0) {
+			this._currentDate = QDate.today();
+		}
+
+		int year = this._asOfDate.getYear();
+		int lastMonth = this._asOfDate.getMonth() - 1;
 		if (lastMonth < 1) {
 			lastMonth += 12;
 			--year;
@@ -348,7 +361,10 @@ public class MainWindow extends JPanel {
 			date = GenericTxn.getLastTransactionDate();
 		}
 
-		if (!date.equals(this.asOfDate)) {
+		// TODO distinguish between effective date (for calculating balances, etc)
+		// and display date (limiting accounts/transactions that appear)
+		// always effective <= display
+		if (!date.equals(this._asOfDate)) {
 			updateAsOfDate(date);
 
 			// TODO use AsOfDateListeners to update UI

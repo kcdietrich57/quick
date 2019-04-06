@@ -116,8 +116,8 @@ public class Account {
 			return a1.type.compareTo(a2.type);
 		}
 
-		BigDecimal cv1 = a1.getValueForDate(MainWindow.instance.asOfDate).abs();
-		BigDecimal cv2 = a2.getValueForDate(MainWindow.instance.asOfDate).abs();
+		BigDecimal cv1 = a1.getValueForDate(MainWindow.instance.asOfDate()).abs();
+		BigDecimal cv2 = a2.getValueForDate(MainWindow.instance.asOfDate()).abs();
 
 		diff = cv2.subtract(cv1).signum();
 		return (diff != 0) //
@@ -130,7 +130,7 @@ public class Account {
 		List<Account> accts = new ArrayList<>();
 
 		for (Account acct : accounts) {
-			if (acct.isOpenAsOf(MainWindow.instance.asOfDate)) {
+			if (acct.isOpenAsOf(MainWindow.instance.asOfDate())) {
 				accts.add(acct);
 			}
 		}
@@ -492,10 +492,10 @@ public class Account {
 
 		Statement stat = null;
 
-		if (MainWindow.instance.asOfDate.compareTo(QDate.today()) < 0) {
-			stat = getFirstStatementAfter(MainWindow.instance.asOfDate);
+		if (MainWindow.instance.asOfDate().compareTo(QDate.today()) < 0) {
+			stat = getFirstStatementAfter(MainWindow.instance.asOfDate());
 			if (stat == null) {
-				stat = new Statement(this.acctid, MainWindow.instance.asOfDate);
+				stat = new Statement(this.acctid, MainWindow.instance.asOfDate());
 			}
 		} else {
 			List<GenericTxn> txns = getUnclearedTransactions();
@@ -533,7 +533,7 @@ public class Account {
 			addTransactionsToAsOfDate(txns, this.transactions);
 		}
 
-		Statement stmt = new Statement(this.acctid, MainWindow.instance.asOfDate);
+		Statement stmt = new Statement(this.acctid, MainWindow.instance.asOfDate());
 		Common.sortTransactionsByDate(txns);
 		stmt.addTransactions(txns);
 
@@ -543,7 +543,7 @@ public class Account {
 	/** Add txns from one list to another if date <= current date */
 	private void addTransactionsToAsOfDate(List<GenericTxn> txns, List<GenericTxn> srctxns) {
 		for (GenericTxn txn : srctxns) {
-			if ((txn.getDate().compareTo(MainWindow.instance.asOfDate) <= 0) //
+			if ((txn.getDate().compareTo(MainWindow.instance.asOfDate()) <= 0) //
 					&& !txns.contains(txn)) {
 				txns.add(txn);
 			}

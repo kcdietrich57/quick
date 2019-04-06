@@ -45,7 +45,7 @@ public class AccountTableModel //
 	/** Return whether an account is open in the date period being shown */
 	private boolean accountIsOpenInPeriod(Account acct) {
 		QDate start = MainWindow.instance.startAsOfDate;
-		QDate end = MainWindow.instance.asOfDate;
+		QDate end = MainWindow.instance.asOfDate();
 
 		return acct.isOpenDuring(start, end);
 //		return (acct.getOpenDate().compareTo(end) <= 0) //
@@ -95,7 +95,7 @@ public class AccountTableModel //
 		case 1:
 			return a.type.toString();
 		case 2:
-			return Common.formatAmount0(a.getValueForDate(MainWindow.instance.asOfDate));
+			return Common.formatAmount0(a.getValueForDate(MainWindow.instance.asOfDate()));
 		}
 
 		return null;

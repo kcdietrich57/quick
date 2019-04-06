@@ -73,7 +73,7 @@ class ISIOptionsChartData {
 	 * later
 	 */
 	public static List<StatusForOptionsModel> getOptionsData() {
-		return getOptionsData(null, MainWindow.instance.asOfDate, //
+		return getOptionsData(null, MainWindow.instance.asOfDate(), //
 				MainWindow.instance.reportUnit);
 	}
 
