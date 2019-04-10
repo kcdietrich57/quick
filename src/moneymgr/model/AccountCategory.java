@@ -21,20 +21,31 @@ public enum AccountCategory {
 			new AccountType[] { AccountType.Liability });
 
 	/** Ordering (bottom to top) of categories in the itemized/stacked charts */
-	public static final AccountCategory[] accountCategoryInfo;
-	public static final List<String> accountCategoryLabels;
+	public static final AccountCategory[] accountCategoryInfoForChart;
+	public static final AccountCategory[] accountCategoryInfoForStatus;
+	public static final List<String> accountCategoryLabelsForChart;
+	public static final List<String> accountCategoryLabelsForStatus;
 
 	/** Ordering (top to bottom) of account categories in the Accounts list */
 	private static final List<AccountCategory> listOrder;
 
 	static {
-		accountCategoryInfo = new AccountCategory[] { //
+		accountCategoryInfoForChart = new AccountCategory[] { //
 				ASSET, RETIREMENT, INVESTMENT, BANK, CREDITCARD, LOAN //
 		};
 
-		accountCategoryLabels = new ArrayList<>(accountCategoryInfo.length);
-		for (int idx = 0; idx < accountCategoryInfo.length; ++idx) {
-			accountCategoryLabels.add(idx, accountCategoryInfo[idx].label);
+		accountCategoryInfoForStatus = new AccountCategory[] { //
+				BANK, CREDITCARD, RETIREMENT, INVESTMENT, ASSET, LOAN //
+		};
+
+		accountCategoryLabelsForChart = new ArrayList<>(accountCategoryInfoForChart.length);
+		for (int idx = 0; idx < accountCategoryInfoForChart.length; ++idx) {
+			accountCategoryLabelsForChart.add(idx, accountCategoryInfoForChart[idx].label);
+		}
+
+		accountCategoryLabelsForStatus = new ArrayList<>(accountCategoryInfoForStatus.length);
+		for (int idx = 0; idx < accountCategoryInfoForStatus.length; ++idx) {
+			accountCategoryLabelsForStatus.add(idx, accountCategoryInfoForStatus[idx].label);
 		}
 
 		listOrder = Arrays.asList(new AccountCategory[] { //
@@ -47,7 +58,7 @@ public enum AccountCategory {
 	}
 
 	public static int numCategories() {
-		return accountCategoryInfo.length;
+		return accountCategoryInfoForChart.length;
 	}
 
 	public static AccountCategory forAccountType(AccountType type) {

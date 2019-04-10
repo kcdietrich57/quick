@@ -13,10 +13,18 @@ import moneymgr.util.QDate;
 
 /** This data class is used by various charts */
 public class BalanceChartData {
+	/** Date for each value */
 	public QDate[] dates;
+
+	/** Label for each category */
 	public List<String> accountCategoryLabels;
+	
+	/** Values for each category/date */
 	public double[][] accountCategoryValues;
+
+	/** NetWorth Value for each date (size of first dimension is 1) */
 	public double[][] netWorthValues;
+
 	// TODO per-account values
 	// TODO break out by money source
 
@@ -32,7 +40,7 @@ public class BalanceChartData {
 
 	private void getData(List<StatusForDateModel> balances) {
 		this.dates = new QDate[balances.size()];
-		this.accountCategoryLabels = AccountCategory.accountCategoryLabels;
+		this.accountCategoryLabels = AccountCategory.accountCategoryLabelsForChart;
 		this.accountCategoryValues = new double[AccountCategory.numCategories()][balances.size()];
 		this.netWorthValues = new double[1][balances.size()];
 

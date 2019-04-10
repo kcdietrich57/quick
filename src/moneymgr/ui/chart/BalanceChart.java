@@ -79,7 +79,7 @@ public class BalanceChart {
 
 	private void setSeriesColor(StackedAreaRenderer r) {
 		for (int idx = 0; idx < AccountCategory.numCategories(); ++idx) {
-			AccountCategory acat = AccountCategory.values()[idx];
+			AccountCategory acat = AccountCategory.accountCategoryInfoForChart[idx];
 			Color c = UIConstants.acctCategoryColor.get(acat);
 
 			r.setSeriesPaint(idx, c);
