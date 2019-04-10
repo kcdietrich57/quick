@@ -16,14 +16,29 @@ import javax.swing.JPanel;
 @SuppressWarnings("serial")
 public class AccountNavigationControlsPanel //
 		extends JPanel {
-	private JButton openButton;
-	private JButton closedButton;
+
+	private static final String[] SHOW_OPEN_LABELS = { //
+			"Show Closed", "Hide Closed" //
+	};
+
+	private static final String[] INCLUDE_ZERO_LABELS = { //
+			"Show Zero", "Hide Zero" //
+	};
+
+	private AccountNavigationPanel acctNavigationPanel;
+	private JButton includeClosedButton;
+	private JButton includeZeroBalanceButton;
+	private int closedLabelIdx;
+	private int zeroLabelIdx;
 
 	public AccountNavigationControlsPanel(AccountNavigationPanel anp) {
 		super(new GridBagLayout());
 
-		this.openButton = new JButton("Open Accounts");
-		this.closedButton = new JButton("Closed Accounts");
+		this.acctNavigationPanel = anp;
+		this.closedLabelIdx = this.zeroLabelIdx = 0;
+
+		this.includeClosedButton = new JButton(SHOW_OPEN_LABELS[this.closedLabelIdx]);
+		this.includeZeroBalanceButton = new JButton(INCLUDE_ZERO_LABELS[this.zeroLabelIdx]);
 
 		setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, UIConstants.DARK_GRAY));
 
@@ -31,24 +46,36 @@ public class AccountNavigationControlsPanel //
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.fill = GridBagConstraints.BOTH;
-		add(this.openButton, gbc);
+		add(this.includeClosedButton, gbc);
 
 		gbc.gridx = 1;
-		add(this.closedButton, gbc);
+		add(this.includeZeroBalanceButton, gbc);
 
 		addListeners(anp);
 	}
 
+	private void toggleIncludeClosedAccounts() {
+		this.closedLabelIdx = 1 - this.closedLabelIdx;
+		this.includeClosedButton.setText(SHOW_OPEN_LABELS[this.closedLabelIdx]);
+		this.acctNavigationPanel.setIncludeClosedAccounts(this.closedLabelIdx > 0);
+	}
+
+	private void toggleIncludeZeroBalanceAccounts() {
+		this.zeroLabelIdx = 1 - this.zeroLabelIdx;
+		this.includeZeroBalanceButton.setText(INCLUDE_ZERO_LABELS[this.zeroLabelIdx]);
+		this.acctNavigationPanel.setIncludeZeroBalanceAccounts(this.zeroLabelIdx > 0);
+	}
+
 	public void addListeners(AccountNavigationPanel anp) {
-		this.openButton.addActionListener(new ActionListener() {
+		this.includeClosedButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				anp.showOpenAccounts(true);
+				toggleIncludeClosedAccounts();
 			}
 		});
 
-		this.closedButton.addActionListener(new ActionListener() {
+		this.includeZeroBalanceButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				anp.showOpenAccounts(false);
+				toggleIncludeZeroBalanceAccounts();
 			}
 		});
 	}

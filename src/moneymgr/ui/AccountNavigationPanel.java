@@ -21,7 +21,7 @@ public class AccountNavigationPanel extends JPanel {
 
 		this.controlsPanel = new AccountNavigationControlsPanel(this);
 
-		this.accountListPanel = new AccountNavigationListPanel(true);
+		this.accountListPanel = new AccountNavigationListPanel(false, false);
 		MainWindow.instance.accountListPanel = this.accountListPanel;
 		this.summaryPanel = new AccountNavigationSummaryPanel();
 		MainWindow.instance.summaryPanel = this.summaryPanel;
@@ -35,8 +35,12 @@ public class AccountNavigationPanel extends JPanel {
 		this.accountListPanel.refreshAccountList();
 	}
 
-	public void showOpenAccounts(boolean yesno) {
-		this.accountListPanel.showOpenAccounts(yesno);
+	public void setIncludeClosedAccounts(boolean yesno) {
+		this.accountListPanel.setIncludeClosedAccounts(yesno);
+	}
+
+	public void setIncludeZeroBalanceAccounts(boolean yesno) {
+		this.accountListPanel.setIncludeZeroBalanceAccounts(yesno);
 	}
 
 	public void addAccountSelectionListener(AccountSelectionListener listener) {

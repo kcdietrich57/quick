@@ -35,17 +35,21 @@ import moneymgr.util.QDate;
 @SuppressWarnings("serial")
 public class AccountNavigationListPanel extends JScrollPane {
 
-	private boolean showOpenAccounts = true;
+	private boolean includeClosedAccounts;
+	private boolean includeZeroBalanceAccounts;
 
 	private JTable accountTable;
 	private AccountTableModel accountTableModel;
 
 	private List<AccountSelectionListener> acctSelListeners;
 
-	public AccountNavigationListPanel(boolean showOpenAccounts) {
+	public AccountNavigationListPanel( //
+			boolean showOpenAccounts, //
+			boolean showZeroBalanceAccounts) {
 		super(new JTable(new AccountTableModel()));
 
-		this.showOpenAccounts = showOpenAccounts;
+		this.includeClosedAccounts = showOpenAccounts;
+		this.includeZeroBalanceAccounts = showZeroBalanceAccounts;
 
 		this.acctSelListeners = new ArrayList<>();
 
@@ -56,7 +60,7 @@ public class AccountNavigationListPanel extends JScrollPane {
 				new AccountTableCellRenderer());
 
 		this.accountTableModel = (AccountTableModel) this.accountTable.getModel();
-		this.accountTableModel.reload(this.showOpenAccounts);
+		this.accountTableModel.reload(this.includeClosedAccounts, this.includeZeroBalanceAccounts);
 
 		TableColumnModel acctColumnModel = this.accountTable.getColumnModel();
 
@@ -97,12 +101,26 @@ public class AccountNavigationListPanel extends JScrollPane {
 		this.acctSelListeners.add(listener);
 	}
 
-	public void showOpenAccounts(boolean yesno) {
-		if (this.showOpenAccounts != yesno) {
-			this.showOpenAccounts = yesno;
-
-			this.accountTableModel.reload(this.showOpenAccounts);
+	public void setIncludeClosedAccounts(boolean yesno) {
+		if (this.includeClosedAccounts == yesno) {
+			return;
 		}
+
+		this.includeClosedAccounts = yesno;
+
+		this.accountTableModel.reload( //
+				this.includeClosedAccounts, this.includeZeroBalanceAccounts);
+	}
+
+	public void setIncludeZeroBalanceAccounts(boolean yesno) {
+		if (this.includeZeroBalanceAccounts == yesno) {
+			return;
+		}
+
+		this.includeZeroBalanceAccounts = yesno;
+
+		this.accountTableModel.reload( //
+				this.includeClosedAccounts, this.includeZeroBalanceAccounts);
 	}
 
 	protected void accountSelected() {

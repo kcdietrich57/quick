@@ -19,11 +19,13 @@ public class AccountTableModel //
 
 	private final List<Account> accounts = new ArrayList<Account>();
 
-	private boolean showOpenAccounts = true;
+	private boolean includeClosedAccounts = false;
+	private boolean includeZeroBalanceAccounts = false;
 
 	/** Reload data and set to show open vs closed accounts */
-	public void reload(boolean showOpenAccounts) {
-		this.showOpenAccounts = showOpenAccounts;
+	public void reload(boolean includeClosedAccounts, boolean includeZeroBalanceAccounts) {
+		this.includeClosedAccounts = includeClosedAccounts;
+		this.includeZeroBalanceAccounts = includeZeroBalanceAccounts;
 
 		reload();
 	}
@@ -34,7 +36,7 @@ public class AccountTableModel //
 
 		List<Account> accts = Account.getSortedAccounts();
 		for (Account acct : accts) {
-			if (this.showOpenAccounts == accountIsOpenInPeriod(acct)) {
+			if (accountIsVisible(acct)) {
 				this.accounts.add(acct);
 			}
 		}
@@ -43,13 +45,15 @@ public class AccountTableModel //
 	}
 
 	/** Return whether an account is open in the date period being shown */
-	private boolean accountIsOpenInPeriod(Account acct) {
+	private boolean accountIsVisible(Account acct) {
 		QDate start = MainWindow.instance.startAsOfDate;
 		QDate end = MainWindow.instance.asOfDate();
 
-		return acct.isOpenDuring(start, end);
-//		return (acct.getOpenDate().compareTo(end) <= 0) //
-//				&& ((acct.closeDate == null) || (acct.closeDate.compareTo(start) >= 0));
+		boolean isopen = acct.isOpenDuring(start, end);
+		boolean isnonzero = !Common.isEffectivelyZero(acct.getValueForDate(end));
+
+		return (isopen || this.includeClosedAccounts) //
+				&& (isnonzero || this.includeZeroBalanceAccounts);
 	}
 
 	/** Get the position of the account in the displayed list */
