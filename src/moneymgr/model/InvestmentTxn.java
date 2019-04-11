@@ -500,77 +500,8 @@ public class InvestmentTxn extends GenericTxn {
 	public String formatValue() {
 		String ret = "";
 
-		// organizeLots();
 		String datestr = getDate().toString();
 
-		if (this.security != null) {
-			// All security positions for date
-			Map<Security, PositionInfo> allPositionsForDate = //
-					SecurityPortfolio.portfolio.getOpenPositionsForDate(getDate());
-
-			ret += "\nAll security positions on " + datestr;
-			ret += "\n--------------------------------------";
-			for (PositionInfo pinfo : allPositionsForDate.values()) {
-				if (!Common.isEffectivelyZero(pinfo.shares)) {
-					ret += "\n";
-					ret += pinfo.toString();
-				}
-			}
-
-			PositionInfo overallValue = allPositionsForDate.get(this.security);
-
-			ret += "\n\nTotal holdings for security '" + this.security.symbol + "' on " + datestr;
-			ret += "\n--------------------------------------";
-			if (overallValue != null) {
-				ret += "\n";
-				ret += overallValue.toString();
-				ret += "  :  ";
-			}
-
-			// Current account position for date
-			Map<Security, PositionInfo> accountPositionsForDate = //
-					getAccount().getOpenPositionsForDate(getDate());
-
-			ret += "\n\nAll positions for account '" + getAccount().name + "' on " + datestr;
-			ret += "\n--------------------------------------";
-			for (PositionInfo pinfo : accountPositionsForDate.values()) {
-				if (!Common.isEffectivelyZero(pinfo.shares)) {
-					ret += "\n";
-					ret += pinfo.toString();
-				}
-			}
-
-			// Position for the current account
-			PositionInfo acctValue = accountPositionsForDate.get(this.security);
-
-			ret += "\n\nPosition for security '" + this.security.symbol + "'" //
-					+ " for account '" + getAccount().name + "' on " + datestr;
-			ret += "\n--------------------------------------";
-			if (acctValue != null) {
-				ret += "\n";
-				ret += acctValue.toString();
-			}
-
-			// Positions in security for each account for date
-			Map<Account, PositionInfo> allAccountPositionsByDate = //
-					SecurityPortfolio.portfolio.getOpenPositionsForDateByAccount( //
-							this.security, getDate());
-
-			ret += "\n\nPosition for all accounts" //
-					+ " for security '" + this.security.symbol + ";" //
-					+ " on " + datestr;
-			ret += "\n--------------------------------------";
-			for (PositionInfo pinfo : allAccountPositionsByDate.values()) {
-				if (!Common.isEffectivelyZero(pinfo.shares)) {
-					ret += "\n";
-					ret += pinfo.toString();
-				}
-			}
-		}
-
-		ret += "\n\n===================================";
-
-		ret += "\n";
 		ret += String.format("Transaction[%d] %10s %d %5s", this.txid, //
 				datestr, //
 				this.acctid, //
@@ -610,6 +541,7 @@ public class InvestmentTxn extends GenericTxn {
 				ret += "   create " + lot.toString();
 			}
 		}
+
 		if ((this.lotsDisposed != null) && !this.lotsDisposed.isEmpty()) {
 			for (Lot lot : this.lotsDisposed) {
 				ret += "\n";
@@ -619,13 +551,8 @@ public class InvestmentTxn extends GenericTxn {
 
 		ret += "\n=========================================";
 
-		ret += "\n\nTransaction info";
-		ret += "\n===================================";
-
 		if ((getAction() == TxAction.SELL) || (getAction() == TxAction.SELLX)) {
-			ret += "\n\n";
-			ret += toString();
-			ret += "\nLots sold:\n---------------\n";
+			ret += "\n\nLots sold:\n---------------\n";
 
 			for (Lot lot : this.lots) {
 				ret += "\n - " + lot.toString();
@@ -640,8 +567,6 @@ public class InvestmentTxn extends GenericTxn {
 					Common.formatAmount(getAmount()), //
 					Common.formatAmount(getAmount().subtract(info.totalCost)));
 		}
-
-		ret += "\n===================================";
 
 		System.out.println("\n=============================\n" + ret + "\n");
 
