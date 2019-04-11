@@ -16,7 +16,10 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.JSpinner;
 import javax.swing.SwingConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import moneymgr.model.GenericTxn;
 import moneymgr.util.QDate;
@@ -28,6 +31,7 @@ import moneymgr.util.QDate;
 @SuppressWarnings("serial")
 public class TimeSliderPanel extends JPanel {
 	private JLabel asOfDateLabel;
+	private JSpinner daySpinner;
 	private JLabel asOfDateSliderLabel;
 	private JSlider asOfDateSlider;
 
@@ -46,11 +50,12 @@ public class TimeSliderPanel extends JPanel {
 
 		updateValues();
 	}
-	
+
 	private JPanel createDatePanel() {
 		JPanel datePanel = new JPanel(new GridLayout(1, 3));
 		datePanel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
 
+		this.daySpinner = new JSpinner();
 		this.asOfDateLabel = new JLabel("---");
 		this.asOfDateLabel.setFont(new Font("Helvetica", Font.BOLD, 12));
 		this.asOfDateLabel.setForeground(Color.GRAY);
@@ -102,11 +107,38 @@ public class TimeSliderPanel extends JPanel {
 			}
 		});
 
+		this.daySpinner.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				int day = ((Integer) ((JSpinner) e.getSource()).getValue()).intValue();
+
+				QDate curdate = MainWindow.instance.asOfDate();
+
+				if (curdate.getDay() != day) {
+					if (day < 1) {
+						int mday = curdate.getDay();
+						curdate = curdate.addDays(-mday);
+						day = curdate.getDay();
+					} else if (day > curdate.getLastDayOfMonth().getDay()) {
+						curdate = curdate.addDays(day - curdate.getLastDayOfMonth().getDay());
+						day = curdate.getDay();
+					}
+
+					QDate newdate = new QDate(curdate.getYear(), curdate.getMonth(), day);
+
+					MainWindow.instance.setAsOfDate(newdate);
+					updateValues();
+
+					daySpinner.setValue(new Integer(day));
+				}
+			}
+		});
+
 		datePanel.add(unitsCombo);
 
 		datePanel.add(this.asOfDateLabel);
+		datePanel.add(this.daySpinner);
 		datePanel.add(this.asOfDateSliderLabel);
-		
+
 		return datePanel;
 	}
 
@@ -146,7 +178,7 @@ public class TimeSliderPanel extends JPanel {
 		this.asOfDateSliderLabel.setFont(new Font("Helvetica", Font.BOLD, 12));
 		this.asOfDateSliderLabel.setForeground(Color.BLUE);
 		this.asOfDateSliderLabel.setPreferredSize(new Dimension(100, 20));
-		
+
 //		this.asOfDateSliderLabel.addActionListener(new ActionListener() {
 //			public void actionPerformed(ActionEvent e) {
 //				JDatePicker dp = new JDatePicker();
@@ -167,6 +199,7 @@ public class TimeSliderPanel extends JPanel {
 
 		if (!MainWindow.instance.asOfDate().equals(this.sliderDate)) {
 			MainWindow.instance.setAsOfDate(this.sliderDate);
+			this.daySpinner.setValue(new Integer(this.sliderDate.getDay()));
 
 			updateValues();
 		}
