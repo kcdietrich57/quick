@@ -3,6 +3,7 @@ package moneymgr.ui;
 import java.awt.BorderLayout;
 
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
@@ -28,12 +29,14 @@ public class AccountInfoPanel extends JPanel //
 	private AccountInfoStatementDetailsPanel statementDetailsPanel;
 	private AccountInfoReconcilePanel reconcilePanel;
 	private TransactionPanel registerTransactionPanel;
+	private AccountSecuritiesPanel securitiesPanel;
 
 	public AccountInfoPanel() {
 		setLayout(new BorderLayout());
 
 		this.acctInfoPanel = new AccountInfoHeaderPanel();
 		this.registerTransactionPanel = new TransactionPanel(true);
+		this.securitiesPanel = new AccountSecuritiesPanel();
 		this.statementPanel = new AccountInfoStatementPanel();
 		this.statementDetailsPanel = new AccountInfoStatementDetailsPanel();
 		this.reconcilePanel = new AccountInfoReconcilePanel();
@@ -50,6 +53,7 @@ public class AccountInfoPanel extends JPanel //
 		this.acctTabbedPane = new JTabbedPane();
 
 		this.acctTabbedPane.addTab("Register", this.registerTransactionPanel);
+		this.acctTabbedPane.addTab("Securities", new JScrollPane(this.securitiesPanel));
 		this.acctTabbedPane.add("Statements", this.statementViewSplit);
 		this.acctTabbedPane.add("Reconcile", this.reconcilePanel);
 
@@ -69,6 +73,8 @@ public class AccountInfoPanel extends JPanel //
 		this.statementPanel.accountSelected(acct, update);
 		this.registerTransactionPanel.accountSelected(acct, update);
 		this.reconcilePanel.accountSelected(acct, update);
+
+		this.securitiesPanel.accountSelected(acct, update);
 	}
 
 	public void setSplitPosition() {

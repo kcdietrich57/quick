@@ -150,14 +150,17 @@ public class Common {
 		return parseDate(datestr);
 	}
 
-	/** Pad/truncate a string, possibly null, to maximum length */
+	/**
+	 * Pad/truncate a string, possibly null, to maximum length<br>
+	 * If maxlen is negative, left justify the result.
+	 */
 	public static String formatString(String s, int maxlen) {
 		if (s == null) {
 			s = "N/A";
 		}
 
 		boolean leftJustify = false;
-		
+
 		if (maxlen < 0) {
 			leftJustify = true;
 			maxlen = -maxlen;
@@ -166,7 +169,7 @@ public class Common {
 		if (s.length() > maxlen) {
 			return s.substring(0, maxlen);
 		}
-		
+
 		String pattern = "%" + ((leftJustify) ? "-" : "") + maxlen + "s";
 		return String.format(pattern, s);
 	}
