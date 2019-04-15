@@ -6,10 +6,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import app.QifDom;
-import moneymgr.model.SecurityPosition.PositionInfo;
 import moneymgr.util.Common;
 
 /** Transaction for investment account (may involve security) */
@@ -25,6 +23,7 @@ public class InvestmentTxn extends GenericTxn {
 	private TxAction action;
 
 	public Security security;
+	public StockOption option;
 	public BigDecimal price;
 	private BigDecimal quantity;
 	public BigDecimal commission;
@@ -44,6 +43,7 @@ public class InvestmentTxn extends GenericTxn {
 
 		this.action = TxAction.OTHER;
 		this.security = null;
+		this.option = null;
 		this.price = BigDecimal.ZERO;
 		this.quantity = BigDecimal.ZERO;
 		// this.textFirstLine = "";
@@ -70,6 +70,7 @@ public class InvestmentTxn extends GenericTxn {
 
 		this.action = txn.action;
 		this.security = txn.security;
+		this.option = txn.option;
 		this.price = txn.price;
 		this.quantity = txn.quantity;
 		// this.textFirstLine = "";
@@ -104,6 +105,10 @@ public class InvestmentTxn extends GenericTxn {
 	}
 
 	private boolean isStockOptionTransaction() {
+		if (this.option != null) {
+			return true;
+		}
+
 		switch (getAction()) {
 		case GRANT:
 		case VEST:
@@ -469,6 +474,10 @@ public class InvestmentTxn extends GenericTxn {
 
 		s += " " + ((this.security != null) ? this.security.getSymbol() : getPayee());
 
+		if (isStockOptionTransaction() && (this.option != null)) {
+			s += "  Option info: " + this.option.toString();
+		}
+
 		return s;
 	}
 
@@ -491,6 +500,9 @@ public class InvestmentTxn extends GenericTxn {
 		s += " comm=" + this.commission;
 		s += " xact=" + this.accountForTransfer;
 		s += " xamt=" + this.amountTransferred;
+		if (isStockOptionTransaction() && (this.option != null)) {
+			s += "\n  Option info: " + this.option.toString();
+		}
 		s += "\n";
 
 		return s;
@@ -502,15 +514,18 @@ public class InvestmentTxn extends GenericTxn {
 
 		String datestr = getDate().toString();
 
-		ret += String.format("Transaction[%d] %10s %d %5s", this.txid, //
+		ret += String.format("Transaction[%d] %10s %d %5s %s", this.txid, //
 				datestr, //
 				this.acctid, //
-				getAction().name());
+				getAction().name(), //
+				Common.formatAmount(getAmount()));
 
-		ret += "\n    ";
 		if (this.amountTransferred != null) {
-			ret += String.format(" XFER(%d %s)", //
-					getXferAcctid(), //
+			Account xacct = Account.getAccountByID(getXferAcctid());
+			String xacctname = (xacct != null) ? xacct.name : null;
+
+			ret += String.format("  XFER(%s, %s)", //
+					Common.formatString(xacctname, 20).trim(), //
 					Common.formatAmount(this.amountTransferred).trim());
 		}
 
@@ -518,11 +533,19 @@ public class InvestmentTxn extends GenericTxn {
 			List<Lot> lots = new ArrayList<>(this.lotsCreated);
 			lots.addAll(this.lotsDisposed);
 
-			ret += String.format(" SEC(%s %s %s, %d lots)", //
+			ret += "\n";
+			ret += String.format("  SEC(%s %s %s, %d lots)", //
 					this.security.getSymbol(), //
 					Common.formatAmount3(this.quantity).trim(), //
 					Common.formatAmount(this.price).trim(), //
 					lots.size());
+		}
+
+		if (isStockOptionTransaction() && (this.option != null)) {
+			ret += "\n";
+			ret += "  Option info : " + this.option.toString();
+			ret += "\n";
+			ret += "  Option value: " + this.option.formatInfo(getDate());
 		}
 
 		ret += "\n";

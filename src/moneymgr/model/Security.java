@@ -161,7 +161,9 @@ public class Security {
 	 * If a different quote for that day exists, we replace it and return false.
 	 */
 	public boolean addPrice(QPrice newPrice) {
-		if (newPrice == null) {
+		if ((newPrice == null) //
+				// Price in options txns is zero
+				|| Common.isEffectivelyZero(newPrice.getPrice())) {
 			return true;
 		}
 

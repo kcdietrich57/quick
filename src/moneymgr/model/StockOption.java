@@ -29,6 +29,38 @@ public class StockOption {
 	public static final List<StockOption> options = new ArrayList<>();
 
 	/**
+	 * ESPP Purchase of discounted ESPP shares.
+	 *
+	 * @param date     Date the grant is given
+	 * @param acctid   Account tracking the grant
+	 * @param secid    Security being granted
+	 * @param shares   Number of shares granted
+	 * @param buyPrice The share price paid
+	 * @param cost     The total price paid
+	 * @param mktPrice The market price on the purchase date
+	 * @param value    The value of the shares on the purchase date
+	 *
+	 * @return A new option object
+	 */
+	public static StockOption esppPurchase( //
+			QDate date, //
+			int acctid, //
+			int secid, //
+			BigDecimal shares, //
+			BigDecimal buyPrice, //
+			BigDecimal cost, //
+			BigDecimal mktPrice, //
+			BigDecimal value) {
+		StockOption opt = new StockOption(date, acctid, secid, //
+				shares, buyPrice, cost, mktPrice, value);
+
+		options.add(opt);
+
+		return opt;
+
+	}
+
+	/**
 	 * GRANT Grantor gives an option to the grantee.
 	 *
 	 * @param name           Meaningful name given to identify the grant
@@ -113,14 +145,17 @@ public class StockOption {
 	 */
 	public static StockOption expire(String name, QDate date) {
 		StockOption src = getOpenOption(name);
-		StockOption dst = null;
 
-		if (src != null) {
-			dst = new StockOption(src, date);
-			options.add(dst);
-
-			assert getOpenOption(name) == null;
+		if (src == null) {
+			Common.reportWarning("Stock option expired with no option object");
+			return null;
 		}
+
+		StockOption dst = new StockOption(src, date);
+
+		options.add(dst);
+
+		assert getOpenOption(name) == null;
 
 		return dst;
 	}
@@ -149,12 +184,12 @@ public class StockOption {
 	 * @return New option object representing the exercised shares
 	 */
 	public static StockOption exercise(String name, QDate date, BigDecimal shares) {
-		StockOption opt = getOpenOption(name);
-		if (opt == null) {
+		StockOption src = getOpenOption(name);
+		if (src == null) {
 			Common.reportError("Can't find option for exercise");
 		}
 
-		StockOption dst = new StockOption(opt, date, shares);
+		StockOption dst = new StockOption(src, date, shares);
 
 		// if ((shares.compareTo(opt.getAvailableShares(false)) < 0) //
 		// || (opt.vestCurrent < opt.vestCount)) {
@@ -165,12 +200,40 @@ public class StockOption {
 		return dst;
 	}
 
+	/** Match up an ESPP transaction with the option object */
+	public static void processEspp(InvestmentTxn txn) {
+		for (StockOption opt : options) {
+			if ((opt.srcOption == null) //
+					&& opt.date.equals(txn.getDate()) //
+					&& (opt.secid == txn.security.secid) //
+					&& (opt.acctid == txn.acctid)) {
+				if (// QifDom.verbose &&
+				!opt.grantShares.equals(txn.getShares())) {
+					// TODO grant transactions in quicken have 0 shares
+					Common.reportWarning(String.format( //
+							"ESPP shares (%s) don't match tx (%s)", //
+							Common.formatAmount3(opt.grantShares).trim(), //
+							Common.formatAmount3(txn.getShares()).trim()));
+				}
+
+				opt.transaction = txn;
+				txn.option = opt;
+				return;
+			}
+		}
+
+		if (QifDom.verbose) {
+			Common.reportWarning("Can't find match for ESPP transaction " + txn.security.getSymbol());
+		}
+	}
+
 	/** Match up a grant transaction with the option object */
 	public static void processGrant(InvestmentTxn txn) {
 		for (StockOption opt : options) {
 			if ((opt.srcOption == null) //
 					&& opt.date.equals(txn.getDate()) //
-					&& (opt.secid == txn.security.secid)) {
+					&& (opt.secid == txn.security.secid) //
+					&& (opt.acctid == txn.acctid)) {
 				if (QifDom.verbose && !opt.grantShares.equals(txn.getShares())) {
 					// TODO grant transactions in quicken have 0 shares
 					Common.reportWarning(String.format( //
@@ -180,6 +243,7 @@ public class StockOption {
 				}
 
 				opt.transaction = txn;
+				txn.option = opt;
 				return;
 			}
 		}
@@ -197,6 +261,7 @@ public class StockOption {
 					&& opt.date.equals(txn.getDate()) //
 					&& (opt.vestCurrent != opt.srcOption.vestCurrent)) {
 				opt.transaction = txn;
+				txn.option = opt;
 				return;
 			}
 		}
@@ -218,6 +283,7 @@ public class StockOption {
 					&& (opt.grantShares.compareTo(opt.srcOption.grantShares) != 0) //
 					&& (opt.strikePrice.compareTo(opt.srcOption.strikePrice) != 0)) {
 				opt.transaction = txn;
+				txn.option = opt;
 				found = true;
 			}
 		}
@@ -239,6 +305,7 @@ public class StockOption {
 					&& (opt.getAvailableShares(true).compareTo( //
 							opt.srcOption.getAvailableShares(true)) < 0)) {
 				opt.transaction = txn;
+				txn.option = opt;
 				return;
 			}
 		}
@@ -258,6 +325,7 @@ public class StockOption {
 					&& (opt.vestCurrent == opt.srcOption.vestCurrent) //
 					&& (opt.getAvailableShares(false).signum() == 0)) {
 				opt.transaction = txn;
+				txn.option = opt;
 				return;
 
 			}
@@ -316,10 +384,15 @@ public class StockOption {
 
 	public final int acctid;
 	public final int secid;
-	public final BigDecimal strikePrice;
 	public final BigDecimal grantShares;
-	public final int lifetimeMonths;
 
+	public final BigDecimal strikePrice;
+	public final BigDecimal marketPrice;
+	public final BigDecimal cost;
+	public final BigDecimal marketValueAtPurchase;
+
+	// Vesting info
+	public final int lifetimeMonths;
 	public final int vestFrequencyMonths;
 	public final int vestCount;
 	public final int vestCurrent;
@@ -330,6 +403,49 @@ public class StockOption {
 	public InvestmentTxn transaction;
 
 	public QDate cancelDate;
+
+	/**
+	 * Create a new option for an ESPP purchase
+	 * 
+	 * @param date     Purchase date
+	 * @param acctid   Account holding shares
+	 * @param secid    Security purchased
+	 * @param shares   Number of shares purchased
+	 * @param buyPrice Cost per share paid for security
+	 * @param cost     Total cost for shares purchased
+	 * @param mktPrice Market share price on purchase date
+	 * @param mktValue    Market value of shares on purchase date
+	 */
+	public StockOption( //
+			QDate date, //
+			int acctid, //
+			int secid, //
+			BigDecimal shares, //
+			BigDecimal buyPrice, //
+			BigDecimal cost, //
+			BigDecimal mktPrice, //
+			BigDecimal mktValue) {
+		this.srcOption = null;
+		this.cancelDate = null;
+
+		this.name = "espp";
+		this.date = date;
+
+		this.acctid = acctid;
+		this.secid = secid;
+		this.grantShares = shares;
+		this.strikePrice = buyPrice;
+		this.cost = cost;
+		this.marketPrice = mktPrice;
+		this.marketValueAtPurchase = mktValue;
+
+		this.lifetimeMonths = -1;
+		this.sharesRemaining = shares;
+		this.vestCount = 0;
+		this.vestFrequencyMonths = 0;
+		this.vestCurrent = 0;
+
+	}
 
 	/** Create a new option (GRANT) */
 	public StockOption( //
@@ -352,11 +468,14 @@ public class StockOption {
 		this.secid = secid;
 		this.grantShares = shares;
 		this.strikePrice = price;
+		this.marketPrice = null;
+		this.cost = null;
+		this.marketValueAtPurchase = null;
 
+		this.lifetimeMonths = lifetimeMonths;
 		this.vestFrequencyMonths = vestPeriod;
 		this.vestCount = vestCount;
 		this.vestCurrent = 0;
-		this.lifetimeMonths = lifetimeMonths;
 
 		this.sharesRemaining = this.grantShares;
 	}
@@ -376,6 +495,9 @@ public class StockOption {
 		this.secid = src.secid;
 		this.grantShares = src.grantShares;
 		this.strikePrice = src.strikePrice;
+		this.marketPrice = null;
+		this.cost = null;
+		this.marketValueAtPurchase = null;
 
 		this.vestFrequencyMonths = src.vestFrequencyMonths;
 		this.vestCount = src.vestCount;
@@ -404,6 +526,9 @@ public class StockOption {
 
 		this.grantShares = src.grantShares.multiply(ratio);
 		this.strikePrice = src.strikePrice.divide(ratio);
+		this.marketPrice = null;
+		this.cost = null;
+		this.marketValueAtPurchase = null;
 
 		this.vestFrequencyMonths = src.vestFrequencyMonths;
 		this.vestCount = src.vestCount;
@@ -428,6 +553,9 @@ public class StockOption {
 		this.secid = src.secid;
 		this.grantShares = src.grantShares;
 		this.strikePrice = src.strikePrice;
+		this.marketPrice = null;
+		this.cost = null;
+		this.marketValueAtPurchase = null;
 
 		this.vestFrequencyMonths = src.vestFrequencyMonths;
 		this.vestCount = src.vestCount;
@@ -453,6 +581,18 @@ public class StockOption {
 
 	}
 
+	public BigDecimal getDiscount() {
+		if (this.marketValueAtPurchase == null || this.cost == null) {
+			return BigDecimal.ZERO;
+		}
+		return this.marketValueAtPurchase.subtract(this.cost);
+	}
+
+	public BigDecimal getBasisPrice(QDate date) {
+		// TODO apply rules for holding periods
+		return this.strikePrice;
+	}
+
 	/** Return the option value on a given date (zero if underwater) */
 	public BigDecimal getValueForDate(QDate date) {
 		if (!isLiveOn(date)) {
@@ -468,7 +608,12 @@ public class StockOption {
 
 	/** Get the number of shares currently available */
 	public BigDecimal getAvailableShares() {
-		return getAvailableShares(false);
+		return getAvailableShares(null, false);
+	}
+
+	/** Get the number of shares currently available on a given date */
+	public BigDecimal getAvailableShares(QDate date) {
+		return getAvailableShares(date, false);
 	}
 
 	/**
@@ -476,12 +621,29 @@ public class StockOption {
 	 * options)
 	 */
 	public BigDecimal getAvailableShares(boolean ignoreCancel) {
-		if (((this.cancelDate != null) && !ignoreCancel) //
-				|| (this.vestCurrent <= 0)) {
+		return getAvailableShares(null, ignoreCancel);
+	}
+
+	/**
+	 * Get the number of shares available on a date (optionally include canceled
+	 * options)
+	 */
+	private BigDecimal getAvailableShares(QDate date, boolean ignoreCancel) {
+		StockOption opt = this;
+		while ((date != null) && (opt.srcOption != null) && //
+				date.compareTo(srcOption.date) < 0) {
+			opt = opt.srcOption;
+		}
+
+		boolean canceledOnDate = (opt.cancelDate != null) //
+				&& ((date == null) || (opt.cancelDate.compareTo(date) <= 0));
+
+		if ((canceledOnDate && !ignoreCancel) //
+				|| (opt.getVestNum(date) <= 0)) {
 			return BigDecimal.ZERO;
 		}
 
-		BigDecimal vestRatio = new BigDecimal(this.vestCurrent) //
+		BigDecimal vestRatio = new BigDecimal(this.getVestNum(date)) //
 				.divide(new BigDecimal(this.vestCount));
 
 		BigDecimal totalUnvestedShares = this.grantShares.subtract( //
@@ -490,19 +652,109 @@ public class StockOption {
 		return this.sharesRemaining.subtract(totalUnvestedShares);
 	}
 
+	public QDate getGrantDate() {
+		StockOption opt = this;
+		while (opt.srcOption != null) {
+			opt = opt.srcOption;
+		}
+
+		return opt.date;
+	}
+
+	public int getVestNum(QDate date) {
+		if (date == null) {
+			return this.vestCurrent;
+		}
+
+		QDate gd = getGrantDate();
+
+		int days = date.subtract(gd);
+
+		int months = 0;
+		int vestnum = 0;
+		while (days >= 365) {
+			months += 12;
+			days -= 365;
+			++vestnum; // TODO assuming yearly vesting
+		}
+
+		return Math.min(vestnum, this.vestCount);
+	}
+
 	public String toString() {
 		String s = "Option(";
 
-		s += this.name + ", ";
-		s += this.date.longString + ", ";
-		s += Security.getSecurity(this.secid).getSymbol() + ", ";
-		s += String.format("vest %d/%d, ", this.vestCurrent, this.vestCount);
-		s += "remain=" + Common.formatAmount3(this.sharesRemaining).trim() + ", ";
-		s += "avail=" + Common.formatAmount3(getAvailableShares(true)).trim() + ", ";
-		s += "price=" + Common.formatAmount3(this.strikePrice).trim() + ", ";
+		s += this.name;
+		s += ", " + this.date.longString;
+		s += ", " + Account.getAccountByID(this.acctid).name;
+		s += ", " + Security.getSecurity(this.secid).getSymbol();
+		s += ", " + this.grantShares;
+		s += ":" + Common.formatAmount3(this.strikePrice).trim();
+		s += ", disc=" + Common.formatAmount3(getDiscount()).trim();
+
+		Object o;
+		o = this.marketPrice;
+		//o = this.cost;
+		//o = this.marketValueAtPurchase;
+
+		if (this.vestCount > 0) {
+			s += ", " + String.format("VESTED %d/%d ", this.vestCurrent, this.vestCount);
+			s += ", (" + Common.formatAmount0(getAvailableShares(true)).trim();
+			s += ", " + Common.formatAmount0(this.sharesRemaining).trim() + ")";
+			o = this.lifetimeMonths;
+		}
 
 		s += ")";
 
 		return s;
+	}
+
+	public String formatInfo(QDate date) {
+		StringBuffer ret = new StringBuffer(this.toString());
+
+		Security sec = Security.getSecurity(this.secid);
+
+		ret.append("\n");
+
+		BigDecimal price = sec.getPriceForDate(date).getPrice();
+
+		BigDecimal val = this.sharesRemaining.multiply(price);
+		BigDecimal cost = this.sharesRemaining.multiply(this.strikePrice);
+		BigDecimal basis = this.sharesRemaining.multiply(getBasisPrice(date));
+		BigDecimal discount = val.subtract(cost);
+		BigDecimal gain = val.subtract(basis);
+
+		BigDecimal availshares = getAvailableShares(date);
+		BigDecimal vval = availshares.multiply(price);
+		BigDecimal vcost = availshares.multiply(this.strikePrice);
+		BigDecimal vbasis = availshares.multiply(getBasisPrice(date));
+		BigDecimal vdiscount = vval.subtract(vcost);
+		BigDecimal vgain = vval.subtract(vbasis);
+
+		ret.append("\n");
+		ret.append(String.format("As of: %s  strike: %s  price: %s vest %d/%d\n", //
+				Common.formatDate(date), //
+				Common.formatAmount(this.strikePrice), //
+				Common.formatAmount(price), //
+				getVestNum(date), //
+				this.vestCount));
+		ret.append(String.format("Value    : %12s  %12s\n", //
+				Common.formatAmount(val), Common.formatAmount(vval)));
+		ret.append(String.format("Cost     : %12s  %12s\n", //
+				Common.formatAmount(cost), Common.formatAmount(vcost)));
+		ret.append(String.format("Basis    : %12s  %12s\n", //
+				Common.formatAmount(basis), Common.formatAmount(vbasis)));
+		ret.append(String.format("Discount : %12s  %12s\n", //
+				Common.formatAmount(discount), Common.formatAmount(vdiscount)));
+		ret.append(String.format("Gain/loss: %12s  %12s\n", //
+				Common.formatAmount(gain), Common.formatAmount(vgain)));
+
+//		ret.append(String.format("\nVested value: %12s", Common.formatAmount(val)));
+//		ret.append(String.format("  cost: %12s", Common.formatAmount(cost)));
+//		ret.append(String.format("  basis: %12s", Common.formatAmount(basis)));
+//		ret.append(String.format("  discount: %12s", Common.formatAmount(discount)));
+//		ret.append(String.format("  gain: %12s", Common.formatAmount(basis)));
+
+		return ret.toString();
 	}
 }

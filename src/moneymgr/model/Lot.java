@@ -7,7 +7,14 @@ import java.util.List;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
-/** Track a block of shares bought or sold as a unit */
+/**
+ * Track a block of shares bought or sold as a unit<br>
+ * Particular bits of relevant information:<br>
+ * 1. Acquisition date (for basis/gain, see getAcquisitionDate())<br>
+ * 2. Cost (what is actually paid for the shares, see getCostBasis())<br>
+ * 3. Value at acquisition (determines basis + discount for options/ESPP)<br>
+ * 4. Disposal date (determines short/long term gains, from disposing txn)
+ */
 public class Lot {
 	private static int nextlotid = 1;
 
@@ -28,7 +35,7 @@ public class Lot {
 	public final InvestmentTxn createTransaction;
 
 	/** The transaction that invalidated this lot */
-	public InvestmentTxn expireTransaction;
+	public InvestmentTxn disposingTransaction;
 
 	/**
 	 * TODO unused<br>
@@ -62,7 +69,7 @@ public class Lot {
 		this.shares = shares.abs();
 		this.basisPrice = basisPrice;
 		this.createTransaction = createTxn;
-		this.expireTransaction = null;
+		this.disposingTransaction = null;
 		this.sourceLot = srcLot;
 		this.childLots = new ArrayList<>();
 	}
@@ -118,13 +125,13 @@ public class Lot {
 		srcTxn.lotsDisposed.add(srcLot);
 
 		// Dispose of the original lot if not already done
-		if (srcLot.expireTransaction == null) {
-			srcLot.expireTransaction = srcTxn;
+		if (srcLot.disposingTransaction == null) {
+			srcLot.disposingTransaction = srcTxn;
 		}
 	}
 
 	public boolean isOpen() {
-		return this.expireTransaction == null;
+		return this.disposingTransaction == null;
 	}
 
 	public QDate getAcquisitionDate() {
@@ -149,7 +156,7 @@ public class Lot {
 		Lot remainderLot = new Lot(this, this.acctid, this.shares.subtract(shares), txn);
 		Lot returnLot = new Lot(this, this.acctid, shares, txn);
 
-		this.expireTransaction = txn;
+		this.disposingTransaction = txn;
 
 		return new Lot[] { returnLot, remainderLot };
 	}

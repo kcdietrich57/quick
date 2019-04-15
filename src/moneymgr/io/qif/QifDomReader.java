@@ -65,7 +65,7 @@ public class QifDomReader {
 		}
 	}
 
-	/** Process security info, statments, etc after all basic data is loaded */
+	/** Process security info, statements, etc after all basic data is loaded */
 	private void postLoad() {
 		File d = new File(this.qifDir, "quotes");
 		new SecurityProcessor(this).loadSecurityPriceHistory(d);

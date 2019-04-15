@@ -13,7 +13,6 @@ import moneymgr.model.InvestmentTxn;
 import moneymgr.model.Security;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.SecurityPosition;
-import moneymgr.report.StatusForDateModel.Section;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 

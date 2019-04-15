@@ -128,7 +128,7 @@ public class TransactionPanel //
 
 	private JComponent createTransactionDetails() {
 		this.transactionDetailsPanel = new JTextArea(10, 90);
-		this.transactionDetailsPanel.setText("Transaction info goes here");
+		this.transactionDetailsPanel.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
 
 		return new JScrollPane(this.transactionDetailsPanel);
 	}

@@ -174,6 +174,16 @@ public class Common {
 		return String.format(pattern, s);
 	}
 
+	public static String repeatChar(char c, int length) {
+		StringBuffer sb = new StringBuffer();
+
+		while (length-- > 0) {
+			sb.append(c);
+		}
+
+		return sb.toString();
+	}
+
 	/** Safely get the string representation of an object, possibly null */
 	public static String stringValue(Object o) {
 		if (o == null) {

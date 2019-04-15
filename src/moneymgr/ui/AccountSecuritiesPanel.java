@@ -29,39 +29,68 @@ public class AccountSecuritiesPanel //
 
 		txt.append("\n");
 
+		QDate curdate = MainWindow.instance.asOfDate();
+
+		BigDecimal acctvalue = acct.getValueForDate(curdate);
+		BigDecimal secvalue = (acct.isInvestmentAccount()) //
+				? acct.securities.getPortfolioValueForDate(curdate) //
+				: BigDecimal.ZERO;
+		BigDecimal cashvalue = acctvalue.subtract(secvalue);
+
+		int idx = 1;
+
 		if (acct.isInvestmentAccount()) {
-			QDate curdate = MainWindow.instance.asOfDate();
-
-			int idx = 1;
-
-			BigDecimal pvalue = acct.securities.getPortfolioValueForDate(curdate);
-			BigDecimal cashvalue = acct.getValueForDate(curdate).subtract(pvalue);
-
-			if (!Common.isEffectivelyZero(cashvalue)) {
-				txt.append(String.format("%2d: %40s %s\n", //
-						idx, //
-						Common.formatString("Cash", 40), //
-						Common.formatAmount(cashvalue)));
-				++idx;
-			}
+			boolean hasSecurity = false;
 
 			for (SecurityPosition pos : acct.securities.positions) {
 				if (!Common.isEffectivelyZero(pos.getValueForDate(curdate))) {
-					txt.append(String.format("%2d: %-40s %10s %10s\n", //
+					txt.append(String.format("%2d: %-40s %12s %12s\n", //
 							idx, //
 							Common.formatString(pos.security.getName(), -40), //
 							Common.formatAmount3(pos.getSharesForDate(curdate)), //
 							Common.formatAmount(pos.getValueForDate(curdate)) //
 					));
+
+					hasSecurity = true;
 					++idx;
 				}
 			}
 
-			txt.append(String.format("    Total: %40s %s\n", //
-					"", Common.formatAmount(pvalue)));
-		} else {
-			txt.append("Not an investment account");
+			if (hasSecurity) {
+				txt.append(String.format("    %53s  %11s\n", //
+						Common.repeatChar('-', 53), //
+						Common.repeatChar('-', 11)));
+
+				txt.append(String.format("    %50s    %12s\n", //
+						Common.formatString("Securities Total", 50), //
+						Common.formatAmount(secvalue)));
+
+				txt.append("\n");
+
+				txt.append(String.format("    %53s  %11s\n", //
+						Common.repeatChar('-', 53), //
+						Common.repeatChar('-', 11)));
+			}
 		}
+//		else {
+//			txt.append("Not an investment account");
+//		}
+
+		txt.append(String.format("%2d: %50s    %12s\n", //
+				idx, //
+				Common.formatString("Cash", -50), //
+				Common.formatAmount(cashvalue)));
+		++idx;
+
+		txt.append("\n");
+
+		txt.append(String.format("    %53s  %11s\n", //
+				Common.repeatChar('=', 53), //
+				Common.repeatChar('=', 11)));
+
+		txt.append(String.format("    %50s    %12s\n", //
+				Common.formatString("Account Total", 50), //
+				Common.formatAmount(acctvalue)));
 
 		setText(txt.toString());
 	}

@@ -148,7 +148,7 @@ public class LotProcessor {
 		int idx = 0;
 		for (; idx < thelots.size(); ++idx) {
 			Lot lot = thelots.get(idx);
-			if (lot.expireTransaction != null) {
+			if (lot.disposingTransaction != null) {
 				continue;
 			}
 
@@ -246,7 +246,7 @@ public class LotProcessor {
 			}
 
 			// Consume source lot
-			srcLot.expireTransaction = txn;
+			srcLot.disposingTransaction = txn;
 			txn.lotsDisposed.add(srcLot);
 			txn.lots.add(srcLot);
 
@@ -347,7 +347,7 @@ public class LotProcessor {
 
 				sharesLeftInSrcTxn = sharesLeftInSrcTxn.subtract(newDstLot.shares);
 
-				srcLot.expireTransaction = srcTxn;
+				srcLot.disposingTransaction = srcTxn;
 				srcTxn.lots.add(srcLot);
 
 				if (sharesLeftInDstTxn.compareTo(newDstLot.shares) > 0) {
