@@ -49,8 +49,7 @@ public class SecurityPortfolio {
 				? pos.endingShares.multiply(itx.getSplitRatio()) //
 				: pos.endingShares.add(itx.getShares());
 
-		pos.transactions.add(itx);
-		pos.shrBalance.add(pos.endingShares);
+		pos.addTransaction(itx, pos.endingShares);
 	}
 
 	/** Build state from transactions in a statement */

@@ -106,7 +106,8 @@ public class InvestmentTxn extends GenericTxn {
 
 	private boolean isStockOptionTransaction() {
 		if (this.option != null) {
-			return true;
+			// TODO distinguish ESPP vs OPTION
+			// return true;
 		}
 
 		switch (getAction()) {

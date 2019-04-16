@@ -183,6 +183,37 @@ public class SecurityPosition {
 		this(other.security, other.endingShares);
 	}
 
+	private void addTransaction(InvestmentTxn txn) {
+		BigDecimal shrbal = (this.shrBalance.isEmpty()) //
+				? BigDecimal.ZERO //
+				: this.shrBalance.get(this.shrBalance.size() - 1);
+
+		this.transactions.add(txn);
+		// TODO this doesn't handle splits correctly
+		this.shrBalance.add(shrbal.add(txn.getShares()));
+	}
+
+	public void addTransaction(InvestmentTxn txn, BigDecimal shrbal) {
+		this.transactions.add(txn);
+		this.shrBalance.add(shrbal);
+	}
+
+	/** Update running share totals in a position */
+	public void updateShareBalances() {
+		BigDecimal shrbal = BigDecimal.ZERO;
+		this.shrBalance.clear();
+
+		for (InvestmentTxn t : this.transactions) {
+			if (t.getAction() == TxAction.STOCKSPLIT) {
+				shrbal = shrbal.multiply(t.getSplitRatio());
+			} else if (t.getShares() != null) {
+				shrbal = shrbal.add(t.getShares());
+			}
+
+			this.shrBalance.add(shrbal);
+		}
+	}
+
 	public BigDecimal getStartingShares() {
 		return this.startShares;
 	}

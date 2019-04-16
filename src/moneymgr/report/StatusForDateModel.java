@@ -90,26 +90,29 @@ public class StatusForDateModel {
 
 	/** Construct model from account info */
 	private void build() {
-		for (Account a : Account.getAccounts()) {
-			BigDecimal amt = a.getValueForDate(this.date);
-
-			if (!a.isOpenOn(this.date) //
-					|| (Common.isEffectivelyZero(amt) //
-							&& (a.getFirstUnclearedTransaction() == null) //
-							&& a.securities.isEmptyForDate(this.date))) {
+		for (Account acct : Account.getAccounts()) {
+			if (!acct.isOpenOn(this.date)) {
 				continue;
 			}
 
-			StatusForDateModel.Section modelsect = getSectionForAccount(a);
+			BigDecimal amt = acct.getValueForDate(this.date);
+
+			if (Common.isEffectivelyZero(amt) //
+					&& (acct.getFirstUnclearedTransaction() == null) //
+					&& acct.securities.isEmptyForDate(this.date)) {
+				continue;
+			}
+
+			StatusForDateModel.Section modelsect = getSectionForAccount(acct);
 
 			StatusForDateModel.AccountSummary asummary = new StatusForDateModel.AccountSummary();
 			modelsect.accounts.add(asummary);
 			modelsect.subtotal = modelsect.subtotal.add(amt);
 
-			asummary.name = a.getDisplayName(36);
+			asummary.name = acct.getDisplayName(36);
 			asummary.balance = asummary.cashBalance = amt;
 
-			List<StockOption> opts = StockOption.getOpenOptions(a, this.date);
+			List<StockOption> opts = StockOption.getOpenOptions(acct, this.date);
 			if (!opts.isEmpty()) {
 				StatusForDateModel.SecuritySummary ssummary = new StatusForDateModel.SecuritySummary();
 
@@ -124,13 +127,13 @@ public class StatusForDateModel {
 				asummary.securities.add(ssummary);
 			}
 
-			if (!a.securities.isEmptyForDate(this.date)) {
-				BigDecimal portValue = a.getSecuritiesValueForDate(this.date);
+			if (!acct.securities.isEmptyForDate(this.date)) {
+				BigDecimal portValue = acct.getSecuritiesValueForDate(this.date);
 
 				if (!Common.isEffectivelyZero(portValue)) {
 					asummary.cashBalance = amt.subtract(portValue);
 
-					for (SecurityPosition pos : a.securities.positions) {
+					for (SecurityPosition pos : acct.securities.positions) {
 						BigDecimal posval = pos.getValueForDate(this.date);
 
 						if (!Common.isEffectivelyZero(posval)) {
