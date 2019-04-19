@@ -2,10 +2,8 @@ package moneymgr.report;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 import moneymgr.model.Account;
@@ -23,7 +21,7 @@ public class ReconcileStatusReporter {
 			return (o2.statements.isEmpty()) ? 0 : -1;
 		}
 
-		if (o1 == null || o2 == null) {
+		if ((o1 == null) || (o2 == null)) {
 			return (o1 == null) ? ((o2 == null) ? 0 : 1) : -1;
 		}
 
@@ -43,6 +41,7 @@ public class ReconcileStatusReporter {
 	public static class ReconcileStatusModel {
 		public static class AccountInfo {
 			public boolean isClosed;
+			public QDate nextStatementDate;
 			public QDate lastStatementDate;
 			public BigDecimal balance;
 			public int ucount;
@@ -53,23 +52,21 @@ public class ReconcileStatusReporter {
 			public QDate firstUnclearedTxDate;
 
 			public AccountInfo(Account a) {
-				isClosed = !a.isOpenOn(null);
-				lastStatementDate = a.getLastBalancedStatementDate();
+				this.isClosed = !a.isOpenOn(null);
 
-				ucount = a.getUnclearedTransactionCount();
-				tcount = a.transactions.size();
+				this.lastStatementDate = a.getLastBalancedStatementDate();
+				this.nextStatementDate = a.getNextStatementDate();
+
+				this.ucount = a.getUnclearedTransactionCount();
+				this.tcount = a.transactions.size();
 
 				this.name = a.getDisplayName(25);
 				this.balance = a.balance;
 				this.lStat = a.getLastStatement();
-				this.lStatDate = (lStat != null) ? lStat.date : null;
+				this.lStatDate = (this.lStat != null) ? this.lStat.date : null;
 				this.firstUnclearedTxDate = a.getFirstUnclearedTransactionDate();
 			}
 		}
-
-		private QDate minus30;
-		private QDate minus60;
-		private QDate minus90;
 
 		public int unclracct_count = 0;
 		public int unclracct_utx_count = 0;
@@ -78,44 +75,45 @@ public class ReconcileStatusReporter {
 		public int clracct_count = 0;
 		public int clracct_tx_count = 0;
 
-		public List<AccountInfo> accountsWithNoStatements = new ArrayList<AccountInfo>();
-		public List<AccountInfo> accounts90 = new ArrayList<AccountInfo>();
-		public List<AccountInfo> accounts60 = new ArrayList<AccountInfo>();
-		public List<AccountInfo> accounts30 = new ArrayList<AccountInfo>();
-		public List<AccountInfo> accounts0 = new ArrayList<AccountInfo>();
+		public List<AccountInfo> accountsWithNoStatements = new ArrayList<>();
+		public List<AccountInfo> accounts60 = new ArrayList<>();
+		public List<AccountInfo> accounts30 = new ArrayList<>();
+		public List<AccountInfo> accounts0 = new ArrayList<>();
+		public List<AccountInfo> accounts_nostat = new ArrayList<>();
 
-		public ReconcileStatusModel() {
-			Calendar cal = Calendar.getInstance();
-			Date today = cal.getTime();
+		public void insertAccountInfo(List<AccountInfo> list, AccountInfo info) {
+			if (list.isEmpty()) {
+				list.add(info);
+			} else {
+				int idx = 0;
+				while (list.get(idx).nextStatementDate.compareTo(info.nextStatementDate) < 0) {
+					++idx;
+				}
 
-			long dayms = 1000L * 24 * 60 * 60;
-			long msCurrent = today.getTime();
-			minus30 = new QDate(msCurrent - 30 * dayms);
-			minus60 = new QDate(msCurrent - 60 * dayms);
-			minus90 = new QDate(msCurrent - 90 * dayms);
+				list.add(idx, info);
+			}
 		}
 
 		public void add(AccountInfo ainfo) {
 			if (!ainfo.isClosed) {
 				if (ainfo.lastStatementDate == null) {
 					this.accountsWithNoStatements.add(ainfo);
-				} else if (ainfo.lastStatementDate.compareTo(minus90) <= 0) {
-					this.accounts90.add(ainfo);
-				} else if (ainfo.lastStatementDate.compareTo(minus60) <= 0) {
-					this.accounts60.add(ainfo);
-				} else if (ainfo.lastStatementDate.compareTo(minus30) <= 0) {
-					this.accounts30.add(ainfo);
 				} else {
-					this.accounts0.add(ainfo);
+					int diff = QDate.today().subtract(ainfo.nextStatementDate);
+
+					if (diff >= 60) {
+						insertAccountInfo(this.accounts60, ainfo);
+					} else if (diff >= 30) {
+						insertAccountInfo(this.accounts30, ainfo);
+					} else if (diff > 0) {
+						insertAccountInfo(this.accounts0, ainfo);
+					} else {
+						insertAccountInfo(this.accounts_nostat, ainfo);
+					}
 				}
 			}
 
-			if ((ainfo.ucount > 0))// || !a.isClosedAsOf(null))
-			{
-				// if (a.isClosedAsOf(null)) {
-				// System.out.println("Warning! Account " + a.getName() + " is closed!");
-				// }
-
+			if ((ainfo.ucount > 0)) {
 				++this.unclracct_count;
 				this.unclracct_utx_count += ainfo.ucount;
 				this.unclracct_tx_count += ainfo.tcount;
@@ -130,7 +128,7 @@ public class ReconcileStatusReporter {
 	public static ReconcileStatusModel buildReportStatusModel() {
 		ReconcileStatusModel model = new ReconcileStatusModel();
 
-		List<Account> accountsByLastStatement = new ArrayList<Account>(Account.getAccounts());
+		List<Account> accountsByLastStatement = new ArrayList<>(Account.getAccounts());
 
 		Collections.sort(accountsByLastStatement, compareLastBalancedStatementDate);
 
@@ -143,10 +141,11 @@ public class ReconcileStatusReporter {
 
 	/** Format one account's information */
 	private static String formatAccountInfo(int anum, AccountInfo ainfo) {
-		return String.format("%3d   %-35s : %8s  %s : %5d/%5d :    %8s", //
+		return String.format("%3d   %-35s : %8s  %8s  %s : %5d/%5d :    %8s", //
 				anum, //
 				ainfo.name, //
 				((ainfo.lastStatementDate != null) ? ainfo.lStatDate.toString() : "N/A"), //
+				ainfo.nextStatementDate.toString(), //
 				Common.formatAmount(ainfo.balance), //
 				ainfo.ucount, //
 				ainfo.tcount, //
@@ -176,14 +175,14 @@ public class ReconcileStatusReporter {
 
 		int anum = 1;
 
-		sb.append(String.format("%3s   %-35s   %-8s  %-10s   %-5s %-5S      %-8s\n", //
-				"N", "Account", "LastStmt", "Balance", "UncTx", "TotTx", "FirstUnc"));
+		sb.append(String.format("%3s   %-35s   %-8s  %-8s  %-10s   %-5s %-5S      %-8s\n", //
+				"N", "Account", "LastStmt", "NextStmt", "Balance", "UncTx", "TotTx", "FirstUnc"));
 
 		anum = appendAccountSection(sb, anum, "### No statements", model.accountsWithNoStatements);
-		anum = appendAccountSection(sb, anum, "### More than 90 days", model.accounts90);
-		anum = appendAccountSection(sb, anum, "### 60-90 days", model.accounts60);
-		anum = appendAccountSection(sb, anum, "### 30-60 days", model.accounts30);
-		anum = appendAccountSection(sb, anum, "### Less than 30 days", model.accounts0);
+		anum = appendAccountSection(sb, anum, "### Overdue 60+ days", model.accounts60);
+		anum = appendAccountSection(sb, anum, "### Overdue 30-60 days", model.accounts30);
+		anum = appendAccountSection(sb, anum, "### Due <30 days", model.accounts0);
+		anum = appendAccountSection(sb, anum, "### Not due", model.accounts_nostat);
 
 		sb.append("\n");
 		sb.append(String.format("   %5d / %5d uncleared tx in %4d open accounts\n", //

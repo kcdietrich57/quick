@@ -19,7 +19,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -41,7 +40,7 @@ public class TransactionPanel //
 		extends JPanel //
 		implements AccountSelectionListener, StatementSelectionListener {
 
-	private JTextArea transactionDetailsPanel;
+	private TransactionDetailsPanel transactionDetailsPanel;
 	private JTable transactionTable;
 	private TransactionTableModel transactionTableModel;
 
@@ -127,8 +126,7 @@ public class TransactionPanel //
 	}
 
 	private JComponent createTransactionDetails() {
-		this.transactionDetailsPanel = new JTextArea(10, 90);
-		this.transactionDetailsPanel.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
+		this.transactionDetailsPanel = new TransactionDetailsPanel(10, 90);
 
 		return new JScrollPane(this.transactionDetailsPanel);
 	}

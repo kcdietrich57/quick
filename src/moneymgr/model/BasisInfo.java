@@ -32,7 +32,7 @@ public class BasisInfo {
 
 	public String toString() {
 		return String.format( //
-				"\nTotal shares: %s\nAvg price: %s\nCostBasis: %s\n", //
+				"\nTotal shares: %s\nAvg price   : %s\nCostBasis   : %s\n", //
 				Common.formatAmount3(this.totalShares), //
 				Common.formatAmount(this.averagePrice), //
 				Common.formatAmount(this.totalCost));

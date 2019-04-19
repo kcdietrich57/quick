@@ -92,7 +92,7 @@ public class QDate implements Comparable<QDate> {
 		return new QDate(getYear(), getMonth() + 1, 1).addDays(-1);
 	}
 
-	/** Calculate the date (given day of month) nearest to the current date */
+	/** Calculate the date (given day of month) nearest to this date */
 	public QDate getDateNearestTo(int day) {
 		if (day == getDay()) {
 			return this;

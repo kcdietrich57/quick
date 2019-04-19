@@ -104,8 +104,16 @@ public class InvestmentTxn extends GenericTxn {
 		this.quantity = qty;
 	}
 
-	private boolean isStockOptionTransaction() {
+	public boolean isStockOptionTransaction() {
 		if (this.option != null) {
+			if ((getAction() == TxAction.STOCKSPLIT) //
+					|| this.option.name.equals("espp")) {
+				return false;
+			}
+
+			if (this.quantity.signum() != 0) {
+				System.out.println();
+			}
 			// TODO distinguish ESPP vs OPTION
 			// return true;
 		}
@@ -587,7 +595,7 @@ public class InvestmentTxn extends GenericTxn {
 			BasisInfo info = Lot.getBasisInfo(this.lots);
 
 			ret += info.toString();
-			ret += String.format("Proceeds: %s\nGain/loss: %s\n", //
+			ret += String.format("Proceeds    : %s\nGain/loss   : %s\n", //
 					Common.formatAmount(getAmount()), //
 					Common.formatAmount(getAmount().subtract(info.totalCost)));
 		}

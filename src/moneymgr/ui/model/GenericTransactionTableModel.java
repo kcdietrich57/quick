@@ -2,6 +2,8 @@ package moneymgr.ui.model;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +16,7 @@ import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
 import moneymgr.model.Statement;
+import moneymgr.model.TxAction;
 import moneymgr.ui.model.TableProperties.ColumnProperties;
 import moneymgr.util.Common;
 
@@ -135,10 +138,43 @@ public abstract class GenericTransactionTableModel //
 			return tx.getMemo();
 
 		case 6:
+			if (tx.getAction() == TxAction.STOCKSPLIT) {
+				return "split";
+			}
+
 			if (tx instanceof InvestmentTxn) {
 				InvestmentTxn itx = (InvestmentTxn) tx;
 
-				if (itx.security != null) {
+				if (itx.isStockOptionTransaction()) {
+					if (itx.option == null) {
+						return "";
+					}
+
+					BigDecimal shrs = itx.option.grantShares;
+					if (itx.option.srcOption != null) {
+						shrs = shrs.subtract(itx.option.srcOption.grantShares);
+					}
+
+					switch (itx.getAction()) {
+					case GRANT:
+						return itx.security.symbol + " " + shrs.toString();
+					case VEST: {
+						BigDecimal gshrs = itx.option.grantShares;
+						BigDecimal cnt = new BigDecimal(itx.option.vestCount);
+						BigDecimal vshrs = gshrs.divide(cnt, RoundingMode.UNNECESSARY);
+						return itx.security.symbol + " " + vshrs.toString() //
+								+ "/" + gshrs.toString();
+					}
+					case EXERCISE:
+					case EXERCISEX:
+					case EXPIRE:
+						return itx.security.symbol + " " + itx.option.grantShares.toString();
+
+					default:
+						return "";
+
+					}
+				} else if (itx.security != null) {
 					return Common.formatAmount3(itx.getShares()).trim() + "@" //
 							+ Common.formatAmount3(itx.getShareCost()).trim();
 				}
