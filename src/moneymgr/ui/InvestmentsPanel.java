@@ -114,9 +114,11 @@ public class InvestmentsPanel extends JPanel {
 	private String buildAccountsModel() {
 		StringBuffer ret = new StringBuffer();
 
+		QDate curdate = MainWindow.instance.asOfDate();
+
 		ret.append("=====================================\n");
 		ret.append("Securities Holdings/Value by Account for ");
-		ret.append(Common.formatDate(MainWindow.instance.asOfDate()));
+		ret.append(Common.formatDate(curdate));
 		ret.append("\n");
 		ret.append("=====================================\n");
 		ret.append("\n");
@@ -125,16 +127,47 @@ public class InvestmentsPanel extends JPanel {
 		BigDecimal totalValue = BigDecimal.ZERO;
 
 		for (Account acct : Account.getAccounts()) {
-			BigDecimal value = acct.getValueForDate(MainWindow.instance.asOfDate());
-					//acct.securities.getPortfolioValueForDate(MainWindow.instance.asOfDate);
+			BigDecimal value = acct.getValueForDate(curdate);
+			// acct.securities.getPortfolioValueForDate(MainWindow.instance.asOfDate);
 
 			if (!acct.isInvestmentAccount() || Common.isEffectivelyZero(value)) {
 				continue;
 			}
 
-			ret.append(String.format("%-40s %13s\n", //
+			ret.append(String.format("%-40s %15s %13s\n", //
 					Common.formatString(acct.name, -30), //
+					"", //
+					""));
+
+			for (SecurityPosition pos : acct.securities.positions) {
+				BigDecimal shr = pos.getSharesForDate(curdate);
+				BigDecimal svalue = pos.getValueForDate(curdate);
+
+				if ((shr.signum() == 0) || Common.isEffectivelyZero(svalue)) {
+					continue;
+				}
+
+				ret.append(String.format("    %-30s %10s %10s %13s\n", //
+						Common.formatString(pos.security.getName(), -30), //
+						Common.formatAmount3(shr).trim(), //
+						Common.formatAmount3(pos.security.getPriceForDate(curdate)).trim(), //
+						Common.formatAmount(svalue).trim()));
+			}
+
+			BigDecimal cash = value.subtract(acct.securities.getPortfolioValueForDate(curdate));
+			if (!Common.isEffectivelyZero(cash)) {
+				ret.append(String.format("    %-30s %10s %10s %13s\n", //
+						Common.formatString("Cash", -30), //
+						"", //
+						"", //
+						Common.formatAmount(cash).trim()));
+			}
+
+			ret.append(String.format("%-40s %15s %13s\n", //
+					"", //
+					"Total", //
 					Common.formatAmount(value).trim()));
+
 			++num;
 
 			ret.append("\n");

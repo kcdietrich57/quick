@@ -2,9 +2,11 @@ package moneymgr.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Hashtable;
@@ -18,6 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.SwingConstants;
+import javax.swing.border.AbstractBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -30,7 +33,8 @@ import moneymgr.util.QDate;
  */
 @SuppressWarnings("serial")
 public class TimeSliderPanel extends JPanel {
-	private JLabel asOfDateLabel;
+	private JComboBox<MainWindow.IntervalLength> periodCombo;
+	private JComboBox<MainWindow.IntervalUnit> unitsCombo;
 	private JSpinner daySpinner;
 	private JLabel asOfDateSliderLabel;
 	private JSlider asOfDateSlider;
@@ -55,11 +59,6 @@ public class TimeSliderPanel extends JPanel {
 		JPanel datePanel = new JPanel(new GridLayout(1, 3));
 		datePanel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
 
-		this.daySpinner = new JSpinner();
-		this.asOfDateLabel = new JLabel("---");
-		this.asOfDateLabel.setFont(new Font("Helvetica", Font.BOLD, 12));
-		this.asOfDateLabel.setForeground(Color.GRAY);
-
 		MainWindow.IntervalLength[] periods = new MainWindow.IntervalLength[] { //
 				MainWindow.IntervalLength.Day, //
 				MainWindow.IntervalLength.Week, //
@@ -71,20 +70,20 @@ public class TimeSliderPanel extends JPanel {
 				MainWindow.IntervalLength.All //
 		};
 
-		JComboBox<MainWindow.IntervalLength> periodCombo = new JComboBox<>(periods);
-		periodCombo.setSelectedItem(MainWindow.instance.reportPeriod);
+		this.periodCombo = new JComboBox<>(periods);
+		this.periodCombo.setSelectedItem(MainWindow.instance.reportPeriod);
 
-		periodCombo.addActionListener(new ActionListener() {
+		this.daySpinner = new JSpinner();
+
+		this.periodCombo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				Object o = periodCombo.getSelectedItem();
+				Object o = TimeSliderPanel.this.periodCombo.getSelectedItem();
 				if (MainWindow.instance.reportPeriod != (MainWindow.IntervalLength) o) {
 					MainWindow.instance.reportPeriod = (MainWindow.IntervalLength) o;
 					MainWindow.instance.updateChartPanel(true);
 				}
 			}
 		});
-
-		datePanel.add(periodCombo);
 
 		MainWindow.IntervalUnit[] units = new MainWindow.IntervalUnit[] { //
 				MainWindow.IntervalUnit.Day, //
@@ -94,12 +93,12 @@ public class TimeSliderPanel extends JPanel {
 				MainWindow.IntervalUnit.Year //
 		};
 
-		JComboBox<MainWindow.IntervalUnit> unitsCombo = new JComboBox<>(units);
-		unitsCombo.setSelectedItem(MainWindow.instance.reportUnit);
+		this.unitsCombo = new JComboBox<>(units);
+		this.unitsCombo.setSelectedItem(MainWindow.instance.reportUnit);
 
-		unitsCombo.addActionListener(new ActionListener() {
+		this.unitsCombo.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				Object o = unitsCombo.getSelectedItem();
+				Object o = TimeSliderPanel.this.unitsCombo.getSelectedItem();
 				if (MainWindow.instance.reportUnit != (MainWindow.IntervalUnit) o) {
 					MainWindow.instance.reportUnit = (MainWindow.IntervalUnit) o;
 					MainWindow.instance.updateChartPanel(true);
@@ -128,16 +127,49 @@ public class TimeSliderPanel extends JPanel {
 					MainWindow.instance.setAsOfDate(newdate);
 					updateValues();
 
-					daySpinner.setValue(new Integer(day));
+					TimeSliderPanel.this.daySpinner.setValue(new Integer(day));
 				}
 			}
 		});
 
-		datePanel.add(unitsCombo);
+		this.asOfDateSliderLabel = new JLabel("---");
+		this.asOfDateSliderLabel.setFont(new Font("Helvetica", Font.BOLD, 18));
+		this.asOfDateSliderLabel.setForeground(Color.BLUE);
+		this.asOfDateSliderLabel.setPreferredSize(new Dimension(100, 20));
+		
+		JPanel pan = new JPanel(new BorderLayout());
+		pan.setBorder(new AbstractBorder() {
+			public Insets getBorderInsets(Component c) {
+				return new Insets(7, 20, 0, 0);
+			}
+		});
 
-		datePanel.add(this.asOfDateLabel);
-		datePanel.add(this.daySpinner);
-		datePanel.add(this.asOfDateSliderLabel);
+		pan.add(this.asOfDateSliderLabel, BorderLayout.CENTER);
+
+//		this.asOfDateSliderLabel.addActionListener(new ActionListener() {
+//			public void actionPerformed(ActionEvent e) {
+//				JDatePicker dp = new JDatePicker();
+//				dp.setMainWindow.instance.asOfDate().toDate());
+//				JFormattedTextField tf = dp.getFormattedTextField();
+//				String s = tf.getText();
+//				System.out.println(s);
+//
+//				dp.setVisible(true);
+//			}
+//		});
+
+		JPanel periodUnitsPanel = new JPanel(new BorderLayout());
+		periodUnitsPanel.add(this.periodCombo, BorderLayout.NORTH);
+		periodUnitsPanel.add(this.unitsCombo, BorderLayout.SOUTH);
+
+		datePanel.add(periodUnitsPanel);
+
+		JPanel sliderControlsPanel = new JPanel(new BorderLayout());
+		sliderControlsPanel.add(pan, BorderLayout.NORTH);
+		sliderControlsPanel.add(this.daySpinner, BorderLayout.SOUTH);
+
+		datePanel.add(sliderControlsPanel);
+		// datePanel.add(this.asOfDateLabel);
 
 		return datePanel;
 	}
@@ -155,6 +187,7 @@ public class TimeSliderPanel extends JPanel {
 		this.asOfDateSlider.setMajorTickSpacing(12);
 		this.asOfDateSlider.setPaintTicks(true);
 		this.asOfDateSlider.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 2));
+		this.asOfDateSlider.setFont(new Font(Font.DIALOG, Font.ITALIC, 5));
 
 		this.asOfDateSlider.addChangeListener(e -> {
 			if (this.asOfDateSlider.getValueIsAdjusting()) {
@@ -173,23 +206,6 @@ public class TimeSliderPanel extends JPanel {
 		this.asOfDateSlider.setLabelTable(labelTable);
 
 		this.asOfDateSlider.setPaintLabels(true);
-
-		this.asOfDateSliderLabel = new JLabel("---");
-		this.asOfDateSliderLabel.setFont(new Font("Helvetica", Font.BOLD, 12));
-		this.asOfDateSliderLabel.setForeground(Color.BLUE);
-		this.asOfDateSliderLabel.setPreferredSize(new Dimension(100, 20));
-
-//		this.asOfDateSliderLabel.addActionListener(new ActionListener() {
-//			public void actionPerformed(ActionEvent e) {
-//				JDatePicker dp = new JDatePicker();
-//				dp.setMainWindow.instance.asOfDate().toDate());
-//				JFormattedTextField tf = dp.getFormattedTextField();
-//				String s = tf.getText();
-//				System.out.println(s);
-//				
-//				dp.setVisible(true);
-//			}
-//		});
 	}
 
 	private void sliderPositionChanged() {
@@ -207,12 +223,6 @@ public class TimeSliderPanel extends JPanel {
 
 	public void updateValues() {
 		this.asOfDateSliderLabel.setText(this.sliderDate.toString());
-
-		if (!this.sliderDate.equals(MainWindow.instance.asOfDate())) {
-			this.asOfDateLabel.setText(MainWindow.instance.asOfDate().toString());
-		} else {
-			this.asOfDateLabel.setText("");
-		}
 	}
 
 	public void setSliderPosition(QDate date) {

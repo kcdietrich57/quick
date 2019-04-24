@@ -105,7 +105,7 @@ public class ReconcileStatusReporter {
 						insertAccountInfo(this.accounts60, ainfo);
 					} else if (diff >= 30) {
 						insertAccountInfo(this.accounts30, ainfo);
-					} else if (diff > 0) {
+					} else if (diff >= 0) {
 						insertAccountInfo(this.accounts0, ainfo);
 					} else {
 						insertAccountInfo(this.accounts_nostat, ainfo);

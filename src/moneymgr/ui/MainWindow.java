@@ -514,6 +514,7 @@ public class MainWindow extends JPanel {
 			public void run() {
 				MainWindow.this.accountViewSplit.setDividerLocation(.25);
 				MainWindow.this.accountPanel.setSplitPosition();
+				MainWindow.this.reconcilePanel.setSplitPosition();
 			}
 		});
 	}
