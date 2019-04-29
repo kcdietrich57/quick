@@ -62,13 +62,9 @@ public class Statement {
 	/** Add transactions to the cleared list, optionally checking their date */
 	public void addTransactions(Collection<GenericTxn> txns, boolean checkDate) {
 		// TODO should some/all txns go into unclearedTransactions?
-		if (!checkDate) {
-			this.transactions.addAll(txns);
-		} else {
-			for (GenericTxn t : txns) {
-				if (t.getDate().compareTo(this.date) <= 0) {
-					this.transactions.add(t);
-				}
+		for (GenericTxn t : txns) {
+			if (!checkDate || (t.getDate().compareTo(this.date) <= 0)) {
+				addTransaction(t);
 			}
 		}
 	}
@@ -76,6 +72,14 @@ public class Statement {
 	/** Add a transaction to the cleared transaction list */
 	public void addTransaction(GenericTxn txn) {
 		this.transactions.add(txn);
+		int n = this.holdings.positions.size();
+		this.holdings.addTransaction(txn);
+	}
+
+	public QDate getOpeningDate() {
+		return (this.prevStatement != null) //
+				? this.prevStatement.date //
+				: Account.getAccountByID(this.acctid).getFirstTransactionDate();
 	}
 
 	public BigDecimal getOpeningBalance() {
@@ -152,7 +156,7 @@ public class Statement {
 		if (this.unclearedTransactions.remove(txn)) {
 			txn.stmtdate = this.date;
 
-			this.transactions.add(txn);
+			addTransaction(txn);
 		}
 	}
 
@@ -161,6 +165,7 @@ public class Statement {
 		if (this.transactions.remove(txn)) {
 			txn.stmtdate = null;
 
+			this.holdings.removeTransaction(txn);
 			this.unclearedTransactions.add(txn);
 		}
 	}
@@ -265,20 +270,67 @@ public class Statement {
 				: new SecurityPortfolio();
 
 		for (GenericTxn t : txns) {
-			if (!(t instanceof InvestmentTxn)) {
-				continue;
+			if (t instanceof InvestmentTxn) {
+				clearedPositions.addTransaction((InvestmentTxn) t);
 			}
-
-			InvestmentTxn itx = (InvestmentTxn) t;
-
-			clearedPositions.addTransaction(itx);
 		}
 
 		return clearedPositions;
 	}
 
 	public String toString() {
-		final String s = this.date.toString() //
+		List<String> sname = new ArrayList<String>();
+		List<List<String>> sbal = new ArrayList<List<String>>();
+
+		for (SecurityPosition pos : this.holdings.positions) {
+			BigDecimal pbal = BigDecimal.ZERO;
+			if (this.prevStatement != null) {
+				pbal = this.prevStatement.holdings.getPosition(pos.security).getEndingShares();
+			}
+			sname.add(pos.security.getSymbol());
+			List<String> bals = new ArrayList<String>();
+			sbal.add(bals);
+			bals.add("-:" + Common.formatAmount3(pbal).trim());
+
+			for (InvestmentTxn txn : pos.transactions) {
+				BigDecimal shr = txn.getShares();
+				pbal = pbal.add(shr);
+				bals.add(Common.formatDate(txn.getDate()) + ":" + Common.formatAmount3(pbal).trim());
+			}
+
+			bals.add("close:" + Common.formatAmount3(pos.endingShares).trim());
+		}
+
+		for (int idx = 0; idx < sname.size(); ++idx) {
+			System.out.print(String.format("%20s  ", sname.get(idx)));
+		}
+		System.out.println();
+
+		int balidx = 0;
+		boolean empty;
+
+		do {
+			// Print another line with balances
+			empty = true;
+
+			for (int idx = 0; idx < sbal.size(); ++idx) {
+				List<String> bals = sbal.get(idx);
+				String bal = "-";
+
+				if (balidx < bals.size()) {
+					bal = bals.get(balidx);
+					empty = false;
+				}
+
+				System.out.print(String.format("%20s  ", bal));
+			}
+			System.out.println();
+
+			++balidx;
+		} while (!empty);
+
+		String s = this.date.toString() //
+				+ "  " + Account.getAccountByID(this.acctid).name //
 				+ "  " + this.closingBalance //
 				+ " tran=" + ((this.transactions != null) ? this.transactions.size() : null);
 

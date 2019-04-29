@@ -112,7 +112,7 @@ public class InvestmentTxn extends GenericTxn {
 			}
 
 			if (this.quantity.signum() != 0) {
-				System.out.println();
+				//System.out.println();
 			}
 			// TODO distinguish ESPP vs OPTION
 			// return true;

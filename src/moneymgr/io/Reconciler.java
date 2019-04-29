@@ -112,7 +112,7 @@ public class Reconciler {
 									+ t.toString());
 						}
 
-						s.transactions.add(t);
+						s.addTransaction(t);
 						txns.remove(ii);
 						found = true;
 

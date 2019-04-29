@@ -14,6 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,11 +41,14 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import moneymgr.model.Account;
+import moneymgr.model.GenericTxn;
+import moneymgr.model.InvestmentTxn;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.SecurityPosition;
 import moneymgr.model.Statement;
 import moneymgr.ui.model.StatementTableModel;
 import moneymgr.util.Common;
+import moneymgr.util.QDate;
 
 // TODO Holdings table is very lame
 /**
@@ -319,13 +323,18 @@ class StatementHoldingsTableModel extends AbstractTableModel {
 	public Object getValueAt(int row, int col) {
 		SecurityPosition pos = this.stmt.holdings.positions.get(row);
 
+		BigDecimal shares;
+		QDate open = stmt.getOpeningDate();
+
 		switch (col) {
 		case 0:
 			return pos.security.getName();
 		case 1:
-			return Common.formatAmount3(pos.getStartingShares());
+			shares = pos.getSharesForDate(open);
+			return Common.formatAmount3(shares);
 		case 2:
-			return Common.formatAmount3(pos.getEndingShares());
+			shares = pos.getSharesForDate(stmt.date);
+			return Common.formatAmount3(shares);
 		}
 
 		return "N/A";

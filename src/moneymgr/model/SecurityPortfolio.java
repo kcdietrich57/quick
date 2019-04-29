@@ -38,18 +38,35 @@ public class SecurityPortfolio {
 		}
 	}
 
-	public void addTransaction(InvestmentTxn itx) {
+	public void addTransaction(GenericTxn txn) {
+		if (!(txn instanceof InvestmentTxn)) {
+			return;
+		}
+
+		InvestmentTxn itx = (InvestmentTxn) txn;
 		if (itx.security == null) {
 			return;
 		}
 
 		SecurityPosition pos = getPosition(itx.security);
 
-		pos.endingShares = (itx.getAction() == TxAction.STOCKSPLIT) //
-				? pos.endingShares.multiply(itx.getSplitRatio()) //
-				: pos.endingShares.add(itx.getShares());
-
 		pos.addTransaction(itx, pos.endingShares);
+	}
+
+	public void removeTransaction(GenericTxn txn) {
+		if (!(txn instanceof InvestmentTxn)) {
+			return;
+		}
+
+		InvestmentTxn itx = (InvestmentTxn) txn;
+		if (itx.security == null) {
+			return;
+		}
+
+		SecurityPosition pos = getPosition(itx.security);
+		if (pos.transactions.remove(itx)) {
+			pos.setTransactions(pos.transactions, pos.getStartingShares());
+		}
 	}
 
 	/** Build state from transactions in a statement */

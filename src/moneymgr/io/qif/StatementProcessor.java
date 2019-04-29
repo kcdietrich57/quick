@@ -192,13 +192,15 @@ public class StatementProcessor {
 				// price on the day of the statement.
 				// If we know two of the values, we can calculate the third.
 				if (p.endingShares == null) {
-					if (p.value != null) {
-						if (price == null) {
-							price = price4date;
-						}
-
-						p.endingShares = p.value.divide(price, RoundingMode.HALF_UP);
+					if (p.value == null) {
+						Common.reportError("Missing security info in stmt");
 					}
+
+					if (price == null) {
+						price = price4date;
+					}
+
+					p.endingShares = p.value.divide(price, RoundingMode.HALF_UP);
 				} else if (p.value == null) {
 					if (p.endingShares != null) {
 						if (price == null) {
@@ -211,10 +213,6 @@ public class StatementProcessor {
 					price = price4date;
 				}
 
-				if (p.endingShares == null) {
-					Common.reportError("Missing security info in stmt");
-				}
-
 				h.positions.add(p);
 				break;
 			}
@@ -223,6 +221,7 @@ public class StatementProcessor {
 				Common.reportError("syntax error");
 			}
 		}
+
 	}
 
 	private void buildStatementChains() {

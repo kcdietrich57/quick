@@ -190,12 +190,15 @@ public class SecurityPosition {
 
 		this.transactions.add(txn);
 		// TODO this doesn't handle splits correctly
-		this.shrBalance.add(shrbal.add(txn.getShares()));
+		shrbal = shrbal.add(txn.getShares());
+		this.shrBalance.add(shrbal);
+		this.endingShares = shrbal;
 	}
 
 	public void addTransaction(InvestmentTxn txn, BigDecimal shrbal) {
 		this.transactions.add(txn);
 		this.shrBalance.add(shrbal);
+		this.endingShares = shrbal;
 	}
 
 	/** Update running share totals in a position */
@@ -219,7 +222,9 @@ public class SecurityPosition {
 	}
 
 	public BigDecimal getEndingShares() {
-		return this.endingShares;
+		return (this.shrBalance.isEmpty()) //
+				? this.endingShares //
+				: this.shrBalance.get(this.shrBalance.size() - 1);
 	}
 
 	/** Reset history with starting share balance and transactions */
@@ -262,7 +267,7 @@ public class SecurityPosition {
 	/** Get shares held on a given date */
 	public BigDecimal getSharesForDate(QDate date) {
 		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(this.transactions, date);
-		return (idx >= 0) ? this.shrBalance.get(idx) : BigDecimal.ZERO;
+		return (idx >= 0) ? this.shrBalance.get(idx) : this.startShares;
 	}
 
 	/** Create a PositionInfo summarizing the position/value on a given date */
