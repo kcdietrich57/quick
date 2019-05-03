@@ -86,7 +86,8 @@ public class ReconcileStatusReporter {
 				list.add(info);
 			} else {
 				int idx = 0;
-				while (list.get(idx).nextStatementDate.compareTo(info.nextStatementDate) < 0) {
+				while ((idx < list.size()) //
+						&& list.get(idx).nextStatementDate.compareTo(info.nextStatementDate) < 0) {
 					++idx;
 				}
 
