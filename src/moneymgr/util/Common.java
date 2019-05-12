@@ -77,7 +77,12 @@ public class Common {
 
 	/** Is a value zero (or very close) */
 	public static boolean isEffectivelyZero(BigDecimal n) {
-		return (CLOSE_ENOUGH_TO_ZERO.compareTo(n.abs()) > 0);
+		return CLOSE_ENOUGH_TO_ZERO.compareTo(n.abs()) > 0;
+	}
+
+	/** Is a value null or zero (or very close) */
+	public static boolean isEffectivelyZeroOrNull(BigDecimal n) {
+		return (n == null) || (CLOSE_ENOUGH_TO_ZERO.compareTo(n.abs()) > 0);
 	}
 
 	/** Are two values equal (or very close) */

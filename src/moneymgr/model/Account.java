@@ -218,7 +218,7 @@ public class Account {
 
 		this.transactions = new ArrayList<>();
 		this.statements = new ArrayList<>();
-		this.securities = new SecurityPortfolio();
+		this.securities = new SecurityPortfolio(null);
 
 		this.statementFile = null;
 	}
@@ -468,10 +468,7 @@ public class Account {
 		Statement stat = getFirstUnbalancedStatement();
 		if (stat == null) {
 			QDate laststmtdate = getLastBalancedStatementDate();
-			Statement laststmt = getStatement(laststmtdate);
-			stat = new Statement(this.acctid, getNextStatementDate());
-
-			stat.prevStatement = laststmt;
+			stat = new Statement(this.acctid, getNextStatementDate(), getLastStatement());
 		}
 
 		// Fill statement with transactions up to the closing date
@@ -493,9 +490,11 @@ public class Account {
 		Statement stat = null;
 
 		if (MainWindow.instance.asOfDate().compareTo(QDate.today()) < 0) {
+			// TODO I don't get this - when slider is before today - what if it is
+			// reconciled?
 			stat = getFirstStatementAfter(MainWindow.instance.asOfDate());
 			if (stat == null) {
-				stat = new Statement(this.acctid, MainWindow.instance.asOfDate());
+				stat = new Statement(this.acctid, MainWindow.instance.asOfDate(), getLastStatement());
 			}
 		} else {
 			List<GenericTxn> txns = getUnclearedTransactions();
@@ -504,7 +503,7 @@ public class Account {
 				return null;
 			}
 
-			stat = new Statement(this.acctid, QDate.today());
+			stat = new Statement(this.acctid, QDate.today(), getLastStatement());
 			stat.addTransactions(txns);
 		}
 
@@ -533,7 +532,7 @@ public class Account {
 			addTransactionsToAsOfDate(txns, this.transactions);
 		}
 
-		Statement stmt = new Statement(this.acctid, MainWindow.instance.asOfDate());
+		Statement stmt = new Statement(this.acctid, MainWindow.instance.asOfDate(), getLastStatement());
 		Common.sortTransactionsByDate(txns);
 		stmt.addTransactions(txns);
 

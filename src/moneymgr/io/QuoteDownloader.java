@@ -47,6 +47,10 @@ public class QuoteDownloader {
 
 	/** Process JSON results to get quote data */
 	private static List<QPrice> extractQuoteHistory(String symbol, JSONObject quotes) {
+		if (quotes == null) {
+			return null;
+		}
+
 		JSONObject quoteObj = null;
 
 		try {

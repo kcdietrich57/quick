@@ -17,16 +17,20 @@ public class ReconcileStatusReporter {
 
 	/** Comparator for ranking accounts by most recent statement date */
 	private static final Comparator<Account> compareLastBalancedStatementDate = (o1, o2) -> {
-		if (o1.statements.isEmpty()) {
-			return (o2.statements.isEmpty()) ? 0 : -1;
-		}
-
 		if ((o1 == null) || (o2 == null)) {
 			return (o1 == null) ? ((o2 == null) ? 0 : 1) : -1;
 		}
 
+		if (o1.statements.isEmpty()) {
+			return (o2.statements.isEmpty()) ? 0 : -1;
+		}
+
 		QDate d1 = o1.getLastBalancedStatementDate();
 		QDate d2 = o2.getLastBalancedStatementDate();
+
+		if ((d1 == null) || (d2 == null)) {
+			return (d1 == null) ? ((d2 == null) ? 0 : 1) : -1;
+		}
 
 		return (o2.statements.isEmpty()) ? 1 : d1.compareTo(d2);
 	};

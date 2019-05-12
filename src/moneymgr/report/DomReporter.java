@@ -1,6 +1,7 @@
 package moneymgr.report;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import app.QifDom;
 import moneymgr.model.Account;
@@ -143,8 +144,10 @@ public class DomReporter {
 					"  %-12s  %-10s  %10s  %10s", //
 					"Date", "Action", "Shares", "Balance"));
 
-			for (int ii = 0; ii < p.transactions.size(); ++ii) {
-				InvestmentTxn t = p.transactions.get(ii);
+			List<InvestmentTxn> txns = p.getTransactions();
+
+			for (int ii = 0; ii < txns.size(); ++ii) {
+				InvestmentTxn t = txns.get(ii);
 
 				if (t.getShares() != null) {
 					BigDecimal shrbal = p.shrBalance.get(ii);
@@ -172,8 +175,9 @@ public class DomReporter {
 					"  %-12s  %-20s  %-10s  %10s  %10s", //
 					"Date", "Account", "Action", "Shares", "Balance"));
 
-			for (int ii = 0; ii < p.transactions.size(); ++ii) {
-				InvestmentTxn t = p.transactions.get(ii);
+			List<InvestmentTxn> txns = p.getTransactions();
+			for (int ii = 0; ii < txns.size(); ++ii) {
+				InvestmentTxn t = txns.get(ii);
 
 				if (t.getShares() != null) {
 					BigDecimal shrbal = p.shrBalance.get(ii);

@@ -95,7 +95,7 @@ public class ReconcileTransactionTableModel //
 			BigDecimal clearedbal = this.curStatement.getClearedCashBalance();
 
 			if ((clearedbal != null) //
-					&& Common.isEffectivelyEqual(clearedbal, this.curStatement.cashBalance)) {
+					&& Common.isEffectivelyEqual(clearedbal, this.curStatement.getCashBalance())) {
 				this.curStatement.isBalanced = true;
 
 				if (!this.curAccount.statements.contains(this.curStatement)) {
@@ -190,6 +190,8 @@ public class ReconcileTransactionTableModel //
 
 	/** Toggle the cleared state of a transaction */
 	public void toggleTransactionCleared(GenericTxn txn) {
+		this.curStatement.toggleCleared(txn);
+
 		if (clearedTransactions.contains(txn)) {
 			clearedTransactions.remove(txn);
 		} else {

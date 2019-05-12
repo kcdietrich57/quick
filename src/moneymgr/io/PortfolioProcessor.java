@@ -3,6 +3,7 @@ package moneymgr.io;
 import moneymgr.model.Account;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.SecurityPosition;
+import moneymgr.model.Statement;
 
 /** Post-process portfolios after loading data */
 public class PortfolioProcessor {
@@ -13,6 +14,10 @@ public class PortfolioProcessor {
 		for (Account a : Account.getAccounts()) {
 			if (a.isInvestmentAccount()) {
 				fixPortfolio(a.securities);
+				
+				for (Statement stat : a.statements) {
+					fixPortfolio(stat.holdings);
+				}
 			}
 		}
 	}

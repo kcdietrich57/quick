@@ -3,6 +3,7 @@ package moneymgr.model;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import moneymgr.util.Common;
@@ -149,56 +150,195 @@ public class SecurityPosition {
 		}
 	}
 
+	public final SecurityPortfolio portfolio;
 	public final Security security;
-	private BigDecimal startShares;
-	public BigDecimal endingShares;
+	private BigDecimal actualEndingShares;
+	private BigDecimal expectedEndingShares;
 
 	/** Transactions for this security */
-	public final List<InvestmentTxn> transactions;
+	private final List<InvestmentTxn> transactions;
 
 	/** Running share balance per transaction */
-	public List<BigDecimal> shrBalance;
+	public final List<BigDecimal> shrBalance;
 
 	/** Set if this represents a PIT (i.e. statement). Null otherwise. */
-	public BigDecimal value;
+	public BigDecimal endingValue;
 
-	public SecurityPosition(Security sec, BigDecimal shares, BigDecimal value) {
+	/**
+	 * Create a position
+	 * 
+	 * @param portfolio The portfolio containing the position
+	 * @param sec       The security
+	 * @param endShares For a statement - the ending share count
+	 * @param value     For a statement - the ending value
+	 */
+	private SecurityPosition(SecurityPortfolio portfolio, Security sec, //
+			BigDecimal endShares, BigDecimal value) {
+		this.portfolio = portfolio;
 		this.security = sec;
-		this.endingShares = shares;
+
 		this.transactions = new ArrayList<>();
 		this.shrBalance = new ArrayList<>();
-		this.value = value;
+
+		this.expectedEndingShares = endShares;
+		this.endingValue = value;
+
+		// If this is statement holdings, start with the last stmt's closing
+		BigDecimal lastStmtEndshares = BigDecimal.ZERO;
+		if (portfolio.prevPortfolio != null) {
+			SecurityPosition ppos = portfolio.prevPortfolio.findPosition(sec);
+			if (ppos != null) {
+				lastStmtEndshares = ppos.getExpectedEndingShares();
+			}
+		}
+
+		// Prior to adding any txns, the ending shares are equal to last stmt
+		this.actualEndingShares = lastStmtEndshares;
 	}
 
-	public SecurityPosition(Security sec, BigDecimal shares) {
-		this(sec, shares, null);
+	/**
+	 * Create a security position
+	 * 
+	 * @param portfolio The portfolio containing the position
+	 * @param sec       The security
+	 * @param endShares For a statement - the ending share count
+	 */
+	private SecurityPosition(SecurityPortfolio portfolio, Security sec, //
+			BigDecimal endShares) {
+		this(portfolio, sec, endShares, null);
 	}
 
-	public SecurityPosition(Security sec) {
-		this(sec, BigDecimal.ZERO);
+	/**
+	 * Create a security position
+	 * 
+	 * @param portfolio The portfolio containing the position
+	 * @param sec       The security
+	 */
+	public SecurityPosition(SecurityPortfolio portfolio, Security sec) {
+		this(portfolio, sec, null);
 	}
 
 	/** Build a copy of a position (minus transactions) */
-	public SecurityPosition(SecurityPosition other) {
-		this(other.security, other.endingShares);
+	public SecurityPosition(SecurityPortfolio portfolio, SecurityPosition other) {
+		this(portfolio, other.security, other.actualEndingShares);
 	}
 
-	private void addTransaction(InvestmentTxn txn) {
-		BigDecimal shrbal = (this.shrBalance.isEmpty()) //
-				? BigDecimal.ZERO //
-				: this.shrBalance.get(this.shrBalance.size() - 1);
-
-		this.transactions.add(txn);
-		// TODO this doesn't handle splits correctly
-		shrbal = shrbal.add(txn.getShares());
-		this.shrBalance.add(shrbal);
-		this.endingShares = shrbal;
+	public boolean isEmpty() {
+		return this.transactions.isEmpty() //
+				&& Common.isEffectivelyZeroOrNull(getStartingShares()) //
+				&& Common.isEffectivelyZeroOrNull(this.expectedEndingShares);
 	}
 
-	public void addTransaction(InvestmentTxn txn, BigDecimal shrbal) {
-		this.transactions.add(txn);
-		this.shrBalance.add(shrbal);
-		this.endingShares = shrbal;
+	/** Check whether this position has any holdings on a given date */
+	public boolean isEmptyForDate(QDate d) {
+		int ii = GenericTxn.getLastTransactionIndexOnOrBeforeDate(getTransactions(), d);
+
+		return (ii >= 0) && Common.isEffectivelyZero(this.shrBalance.get(ii));
+	}
+
+	public void initializeTransactions() {
+		this.transactions.clear();
+		SecurityPosition ppos = getPreviousPosition();
+		this.actualEndingShares = (ppos != null) //
+				? ppos.getExpectedEndingShares() //
+				: BigDecimal.ZERO;
+	}
+
+	private SecurityPosition getPreviousPosition() {
+		return (this.portfolio.prevPortfolio != null) //
+				? this.portfolio.prevPortfolio.findPosition(this.security)//
+				: null;
+	}
+
+	public List<InvestmentTxn> getTransactions() {
+		return Collections.unmodifiableList(this.transactions);
+	}
+
+	public BigDecimal getEndingShares() {
+		return this.actualEndingShares;
+	}
+
+	public BigDecimal getExpectedEndingShares() {
+		if (this.expectedEndingShares == null) {
+			Common.reportWarning("Position expected ending shares not set");
+			this.expectedEndingShares = BigDecimal.ZERO;
+		}
+
+		return this.expectedEndingShares;
+	}
+
+	public void setExpectedEndingShares(BigDecimal shares) {
+		if (this.expectedEndingShares != null) {
+			Common.reportError("Position expected ending shares is immutable");
+		}
+
+		this.expectedEndingShares = shares;
+	}
+
+	public void addTransaction(InvestmentTxn txn) {
+		if (this.transactions.size() != this.shrBalance.size()) {
+			Common.reportError("SecurityPosition tx/bal sizes don't match");
+		}
+		if (this.transactions.contains(txn)) {
+			Common.reportError("Transaction added to portfolio twice");
+		}
+
+		int idx = 0;
+		while (idx < this.transactions.size() //
+				&& (compareByDate.compare(txn, this.transactions.get(idx)) > 0)) {
+			++idx;
+		}
+
+		this.transactions.add(idx, txn);
+		this.shrBalance.add(idx, null);
+
+		for (; idx < this.transactions.size(); ++idx) {
+			BigDecimal prevbal = (idx > 0) //
+					? this.shrBalance.get(idx - 1) //
+					: getStartingShares();
+
+			txn = this.transactions.get(idx);
+
+			BigDecimal shrbal = prevbal;
+
+			if (txn.getAction() == TxAction.STOCKSPLIT) {
+				shrbal = shrbal.multiply(txn.getSplitRatio());
+			} else {
+				BigDecimal shrs = txn.getShares();
+				if (shrs != null) {
+					shrbal = shrbal.add(shrs);
+				}
+			}
+
+			this.shrBalance.set(idx, shrbal);
+			this.actualEndingShares = shrbal;
+		}
+	}
+
+	private static Comparator<InvestmentTxn> compareByDate = //
+			(t1, t2) -> t1.getDate().compareTo(t2.getDate());
+
+	public void removeTransaction(InvestmentTxn itx) {
+		int idx = this.transactions.indexOf(itx);
+
+		if (idx >= 0) {
+			this.transactions.remove(idx);
+			this.shrBalance.remove(idx);
+
+			setTransactions(this.transactions); // , getStartingShares());
+		}
+	}
+
+	/** Reset history with starting share balance and transactions */
+	public void setTransactions(List<InvestmentTxn> txns) {// , BigDecimal startBal) {
+		Collections.sort(txns, compareByDate);
+
+		this.transactions.clear();
+		this.shrBalance.clear();
+
+		for (InvestmentTxn txn : this.transactions) {
+			addTransaction(txn);
+		}
 	}
 
 	/** Update running share totals in a position */
@@ -218,29 +358,11 @@ public class SecurityPosition {
 	}
 
 	public BigDecimal getStartingShares() {
-		return this.startShares;
-	}
+		SecurityPosition prevpos = getPreviousPosition();
 
-	public BigDecimal getEndingShares() {
-		return (this.shrBalance.isEmpty()) //
-				? this.endingShares //
-				: this.shrBalance.get(this.shrBalance.size() - 1);
-	}
-
-	/** Reset history with starting share balance and transactions */
-	public void setTransactions(List<InvestmentTxn> txns, BigDecimal startBal) {
-		Collections.sort(txns, (t1, t2) -> t1.getDate().compareTo(t2.getDate()));
-
-		this.transactions.clear();
-		this.transactions.addAll(txns);
-		this.shrBalance.clear();
-
-		this.startShares = startBal;
-
-		for (InvestmentTxn t : this.transactions) {
-			startBal = startBal.add(t.getShares());
-			this.shrBalance.add(startBal);
-		}
+		return (prevpos != null) //
+				? prevpos.getExpectedEndingShares() //
+				: BigDecimal.ZERO;
 	}
 
 	/** Get the value for the Nth transaction */
@@ -267,7 +389,7 @@ public class SecurityPosition {
 	/** Get shares held on a given date */
 	public BigDecimal getSharesForDate(QDate date) {
 		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(this.transactions, date);
-		return (idx >= 0) ? this.shrBalance.get(idx) : this.startShares;
+		return (idx >= 0) ? this.shrBalance.get(idx) : getStartingShares();
 	}
 
 	/** Create a PositionInfo summarizing the position/value on a given date */
@@ -283,33 +405,36 @@ public class SecurityPosition {
 						getValueForDate(date));
 	}
 
-	/** Encode position transactions for persistence: name;numtx[;txid;shrbal] */
-	public String formatForSave(Statement stat) {
-		int numtx = this.transactions.size();
-		String s = this.security.getName() + ";" + numtx;
-
-		for (int ii = 0; ii < numtx; ++ii) {
-			InvestmentTxn t = this.transactions.get(ii);
-			int txidx = stat.transactions.indexOf(t);
-			BigDecimal bal = this.shrBalance.get(ii);
-
-			assert txidx >= 0;
-
-			s += String.format(";%d;%f", txidx, bal);
-		}
-
-		return s;
-	}
+// TODO defunct
+//	/** Encode position transactions for persistence: name;numtx[;txid;shrbal] */
+//	public String formatForSave(Statement stat) {
+//		int numtx = this.transactions.size();
+//		String s = this.security.getName() + ";" + numtx;
+//
+//		for (int ii = 0; ii < numtx; ++ii) {
+//			InvestmentTxn t = this.transactions.get(ii);
+//			int txidx = stat.transactions.indexOf(t);
+//			BigDecimal bal = this.shrBalance.get(ii);
+//
+//			assert txidx >= 0;
+//
+//			s += String.format(";%d;%f", txidx, bal);
+//		}
+//
+//		return s;
+//	}
 
 	public String toString() {
 		String s = String.format( //
-				"%-20s   %s shrs  %d txns", //
+				"%-20s   %s shrs (expect %s, start %s)  %d tx ", //
 				this.security.getName(), //
-				Common.formatAmount3(this.endingShares), //
+				Common.formatAmount3(this.actualEndingShares).trim(), //
+				Common.formatAmount3(this.expectedEndingShares).trim(), //
+				Common.formatAmount3(getStartingShares()).trim(), //
 				this.transactions.size());
 
-		if (this.value != null) {
-			s += "  " + Common.formatAmount3(this.value);
+		if (this.endingValue != null) {
+			s += "  " + Common.formatAmount3(this.endingValue);
 		}
 
 		return s;

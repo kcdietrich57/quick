@@ -12,6 +12,8 @@ import java.util.List;
 import app.QifDom;
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
+import moneymgr.model.SecurityPortfolio;
+import moneymgr.model.SecurityPosition;
 import moneymgr.model.Statement;
 import moneymgr.util.Common;
 
@@ -57,6 +59,39 @@ public class Reconciler {
 				}
 			}
 		}
+
+		// TODO testing code
+		for (Account a : Account.getAccounts()) {
+			if (!a.isInvestmentAccount()) {
+				continue;
+			}
+
+			for (Statement s : a.statements) {
+				if (!s.isBalanced) {
+					continue;
+				}
+
+				Statement ps = s.prevStatement;
+				SecurityPortfolio pport = (ps != null) ? ps.holdings : null;
+
+				for (SecurityPosition pos : s.holdings.positions) {
+					if (pport != null) {
+						SecurityPosition ppos = pport.findPosition(pos.security);
+
+						if (ppos != null //
+								&& !Common.isEffectivelyEqual( //
+										ppos.getExpectedEndingShares(), //
+										pos.getStartingShares())) {
+							System.out.println("xyzzy");
+						}
+					}
+
+					if (!Common.isEffectivelyEqual(pos.getEndingShares(), pos.getExpectedEndingShares())) {
+						System.out.println("xyzzy");
+					}
+				}
+			}
+		}
 	}
 
 	/** Update statements with their reconciliation information */
@@ -94,6 +129,7 @@ public class Reconciler {
 
 		s.transactions.clear();
 		s.unclearedTransactions.clear();
+		s.holdings.initializeTransactions();
 
 		List<GenericTxn> txns = a.gatherTransactionsForStatement(s);
 		List<StatementTxInfo> badinfo = new ArrayList<StatementTxInfo>();

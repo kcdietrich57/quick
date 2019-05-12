@@ -22,7 +22,7 @@ public class QPrice implements Comparable<QPrice> {
 		this.splitAdjustedPrice = splitAdjPrice;
 
 		if (splitAdjPrice != null) {
-			// System.out.println();
+			// System.out.println("xyzzy");
 		}
 	}
 

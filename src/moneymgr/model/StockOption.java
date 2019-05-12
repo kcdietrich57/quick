@@ -215,10 +215,11 @@ public class StockOption {
 							Common.formatAmount3(opt.grantShares).trim(), //
 							Common.formatAmount3(txn.getShares()).trim()));
 				}
-
-				opt.transaction = txn;
-				txn.option = opt;
-				return;
+				if (opt.transaction == null) {
+					opt.transaction = txn;
+					txn.option = opt;
+					return;
+				}
 			}
 		}
 
@@ -230,6 +231,8 @@ public class StockOption {
 	/** Match up a grant transaction with the option object */
 	public static void processGrant(InvestmentTxn txn) {
 		for (StockOption opt : options) {
+// TODO match option name with transaction memo
+// TODO fix other actions similarly
 			if ((opt.srcOption == null) //
 					&& opt.date.equals(txn.getDate()) //
 					&& (opt.secid == txn.security.secid) //
@@ -242,9 +245,11 @@ public class StockOption {
 							Common.formatAmount3(txn.getShares()).trim()));
 				}
 
-				opt.transaction = txn;
-				txn.option = opt;
-				return;
+				if (opt.transaction == null) {
+					opt.transaction = txn;
+					txn.option = opt;
+					return;
+				}
 			}
 		}
 
@@ -260,9 +265,11 @@ public class StockOption {
 					&& (opt.secid == txn.security.secid) //
 					&& opt.date.equals(txn.getDate()) //
 					&& (opt.vestCurrent != opt.srcOption.vestCurrent)) {
-				opt.transaction = txn;
-				txn.option = opt;
-				return;
+				if (opt.transaction == null) {
+					opt.transaction = txn;
+					txn.option = opt;
+					return;
+				}
 			}
 		}
 
@@ -282,9 +289,11 @@ public class StockOption {
 					&& (opt.vestCurrent == opt.srcOption.vestCurrent) //
 					&& (opt.grantShares.compareTo(opt.srcOption.grantShares) != 0) //
 					&& (opt.strikePrice.compareTo(opt.srcOption.strikePrice) != 0)) {
-				opt.transaction = txn;
-				txn.option = opt;
-				found = true;
+				if (opt.transaction == null) {
+					opt.transaction = txn;
+					txn.option = opt;
+					found = true;
+				}
 			}
 		}
 
@@ -304,9 +313,11 @@ public class StockOption {
 					&& (opt.vestCurrent == opt.srcOption.vestCurrent) //
 					&& (opt.getAvailableShares(true).compareTo( //
 							opt.srcOption.getAvailableShares(true)) < 0)) {
-				opt.transaction = txn;
-				txn.option = opt;
-				return;
+				if (opt.transaction == null) {
+					opt.transaction = txn;
+					txn.option = opt;
+					return;
+				}
 			}
 		}
 
@@ -324,10 +335,11 @@ public class StockOption {
 					&& (opt.srcOption != null) //
 					&& (opt.vestCurrent == opt.srcOption.vestCurrent) //
 					&& (opt.getAvailableShares(false).signum() == 0)) {
-				opt.transaction = txn;
-				txn.option = opt;
-				return;
-
+				if (opt.transaction == null) {
+					opt.transaction = txn;
+					txn.option = opt;
+					return;
+				}
 			}
 		}
 
@@ -414,7 +426,7 @@ public class StockOption {
 	 * @param buyPrice Cost per share paid for security
 	 * @param cost     Total cost for shares purchased
 	 * @param mktPrice Market share price on purchase date
-	 * @param mktValue    Market value of shares on purchase date
+	 * @param mktValue Market value of shares on purchase date
 	 */
 	public StockOption( //
 			QDate date, //
@@ -694,8 +706,8 @@ public class StockOption {
 
 		Object o;
 		o = this.marketPrice;
-		//o = this.cost;
-		//o = this.marketValueAtPurchase;
+		// o = this.cost;
+		// o = this.marketValueAtPurchase;
 
 		if (this.vestCount > 0) {
 			s += ", " + String.format("VESTED %d/%d ", this.vestCurrent, this.vestCount);

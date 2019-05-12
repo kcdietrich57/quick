@@ -18,15 +18,15 @@ public class Statement {
 	public final int acctid;
 	public final QDate date;
 
-	public Statement prevStatement;
+	public final Statement prevStatement;
 
 	public boolean isBalanced;
 
 	/** Total closing balance, including cash and securities */
-	public BigDecimal closingBalance;
+	public final BigDecimal closingBalance;
 
 	/** Cash closing balance */
-	public BigDecimal cashBalance;
+	private BigDecimal cashBalance;
 
 	/** Information about security activity in the statement period */
 	public final SecurityPortfolio holdings;
@@ -40,18 +40,25 @@ public class Statement {
 	/** Whether this statement has been saved to the statement file */
 	public boolean dirty = false;
 
-	public Statement(int acctid, QDate date) {
+	public Statement(int acctid, QDate date, //
+			BigDecimal closebal, BigDecimal cashbal, Statement prevstat) {
 		this.isBalanced = false;
 		this.acctid = acctid;
 		this.date = date;
 
 		this.transactions = new ArrayList<>();
 		this.unclearedTransactions = new ArrayList<>();
-		this.holdings = new SecurityPortfolio();
 
-		this.prevStatement = null;
-		this.closingBalance = null;
-		this.cashBalance = null;
+		this.holdings = new SecurityPortfolio( //
+				(prevstat != null) ? prevstat.holdings : null);
+
+		this.prevStatement = prevstat;
+		this.closingBalance = closebal;
+		this.cashBalance = cashbal;
+	}
+
+	public Statement(int acctid, QDate date, Statement prevstat) {
+		this(acctid, date, BigDecimal.ZERO, BigDecimal.ZERO, prevstat);
 	}
 
 	/** Add transactions to this statement's cleared list */
@@ -69,11 +76,44 @@ public class Statement {
 		}
 	}
 
+	public void sanityCheck() {
+		// this.holdings.sanityCheck();
+	}
+
+	public BigDecimal getCashBalance() {
+		if (this.cashBalance == null) {
+			Common.reportWarning("Statement cash balance is not set");
+			this.cashBalance = BigDecimal.ZERO;
+		}
+
+		return this.cashBalance;
+	}
+
+	public void setCashBalance(BigDecimal val) {
+		if (this.cashBalance != null) {
+			Common.reportError("Statement cash balance is immutable");
+		}
+
+		this.cashBalance = val;
+	}
+
 	/** Add a transaction to the cleared transaction list */
 	public void addTransaction(GenericTxn txn) {
 		this.transactions.add(txn);
-		int n = this.holdings.positions.size();
-		this.holdings.addTransaction(txn);
+
+		if (txn instanceof InvestmentTxn) {
+			InvestmentTxn itxn = (InvestmentTxn) txn;
+
+			if (itxn.security != null) {
+				if (this.holdings.findPosition(itxn.security) == null) {
+					this.holdings.createPosition(itxn.security.secid);
+				}
+
+				this.holdings.addTransaction(txn);
+			}
+		}
+
+		sanityCheck();
 	}
 
 	public QDate getOpeningDate() {
@@ -90,7 +130,7 @@ public class Statement {
 
 	public BigDecimal getOpeningCashBalance() {
 		return (this.prevStatement != null) //
-				? this.prevStatement.cashBalance //
+				? this.prevStatement.getCashBalance() //
 				: BigDecimal.ZERO;
 	}
 
@@ -240,16 +280,16 @@ public class Statement {
 		for (SecurityPosition p : this.holdings.positions) {
 			SecurityPosition op = delta.getPosition(p.security);
 
-			return Common.isEffectivelyEqual(p.endingShares, //
-					(op != null) ? op.endingShares : BigDecimal.ZERO);
+			return Common.isEffectivelyEqual(p.getEndingShares(), //
+					(op != null) ? op.getEndingShares() : BigDecimal.ZERO);
 		}
 
-		for (final SecurityPosition p : delta.positions) {
+		for (SecurityPosition p : delta.positions) {
 			SecurityPosition op = this.holdings.getPosition(p.security);
 
 			return (op != null) //
-					? Common.isEffectivelyEqual(p.endingShares, op.endingShares) //
-					: Common.isEffectivelyZero(p.endingShares);
+					? Common.isEffectivelyEqual(p.getEndingShares(), op.getEndingShares()) //
+					: Common.isEffectivelyZero(p.getEndingShares());
 		}
 
 		return true;
@@ -267,7 +307,7 @@ public class Statement {
 	public SecurityPortfolio getPortfolioDelta(List<GenericTxn> txns) {
 		SecurityPortfolio clearedPositions = (this.prevStatement != null) //
 				? new SecurityPortfolio(this.prevStatement.holdings) //
-				: new SecurityPortfolio();
+				: new SecurityPortfolio(null);
 
 		for (GenericTxn t : txns) {
 			if (t instanceof InvestmentTxn) {
@@ -292,13 +332,13 @@ public class Statement {
 			sbal.add(bals);
 			bals.add("-:" + Common.formatAmount3(pbal).trim());
 
-			for (InvestmentTxn txn : pos.transactions) {
+			for (InvestmentTxn txn : pos.getTransactions()) {
 				BigDecimal shr = txn.getShares();
 				pbal = pbal.add(shr);
 				bals.add(Common.formatDate(txn.getDate()) + ":" + Common.formatAmount3(pbal).trim());
 			}
 
-			bals.add("close:" + Common.formatAmount3(pos.endingShares).trim());
+			bals.add("close:" + Common.formatAmount3(pos.getEndingShares()).trim());
 		}
 
 		for (int idx = 0; idx < sname.size(); ++idx) {
@@ -329,10 +369,11 @@ public class Statement {
 			++balidx;
 		} while (!empty);
 
-		String s = this.date.toString() //
-				+ "  " + Account.getAccountByID(this.acctid).name //
-				+ "  " + this.closingBalance //
-				+ " tran=" + ((this.transactions != null) ? this.transactions.size() : null);
+		String s = ((this.isBalanced) ? "*" : " ") //
+						+ this.date.toString() //
+						+ "  " + Account.getAccountByID(this.acctid).name //
+						+ "  " + this.closingBalance //
+						+ " tran=" + ((this.transactions != null) ? this.transactions.size() : null);
 
 		return s;
 	}

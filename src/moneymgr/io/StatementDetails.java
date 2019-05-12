@@ -6,6 +6,7 @@ import java.util.List;
 
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
+import moneymgr.model.InvestmentTxn;
 import moneymgr.model.Security;
 import moneymgr.model.SecurityPosition;
 import moneymgr.model.Statement;
@@ -16,7 +17,7 @@ import moneymgr.util.QDate;
 public class StatementDetails {
 	public static final int CURRENT_VERSION = 4;
 
-	//[name;numtx[;txidx;shrbal]]
+	// [name;numtx[;txidx;shrbal]]
 	private static class StatementPositionTx {
 		int txidx;
 		BigDecimal shrbal;
@@ -43,16 +44,72 @@ public class StatementDetails {
 				a.name, //
 				stmt.date.toString(), //
 				stmt.closingBalance, //
-				stmt.cashBalance, //
+				stmt.getCashBalance(), //
 				stmt.transactions.size(), //
 				stmt.holdings.positions.size());
 
 		for (GenericTxn t : stmt.transactions) {
-			s += ";" + t.formatForSave();
+			s += ";" + formatTransactionForSave(t);
 		}
 
 		for (SecurityPosition p : stmt.holdings.positions) {
-			s += ";" + p.formatForSave(stmt);
+			s += ";" + formatPositionForSave(stmt, p);
+		}
+
+		return s;
+	}
+
+	/**
+	 * Construct a string for persisting a generic transaction to a file<br>
+	 * Generic fmt: T;DATE;CKNUM;AMT
+	 */
+	public static String formatTransactionForSave(GenericTxn txn) {
+		if (txn instanceof InvestmentTxn) {
+			return formatInvestmentTransactionForSave((InvestmentTxn) txn);
+		}
+
+		String s = String.format("T;%s;%d;%5.2f", //
+				txn.getDate().toString(), //
+				txn.getCheckNumber(), //
+				txn.getCashAmount());
+		return s;
+	}
+
+	/**
+	 * Construct a string for persisting this transaction to a file<br>
+	 * Investment Format: I;DATE;ACTION;[SEC];[QTY];AMT
+	 */
+	public static String formatInvestmentTransactionForSave(InvestmentTxn txn) {
+		String secString = ";";
+		if (txn.security != null) {
+			secString = txn.security.getSymbol() + ";";
+			if (txn.getShares() != null) {
+				secString += String.format("%5.2f", txn.getShares());
+			}
+		}
+
+		String s = String.format("I;%s;%s;%s;%5.2f", //
+				txn.getDate().toString(), //
+				txn.getAction().toString(), //
+				secString, //
+				txn.getCashAmount());
+		return s;
+	}
+
+	/** Encode position transactions for persistence: name;numtx[;txid;shrbal] */
+	public static String formatPositionForSave(Statement stat, SecurityPosition pos) {
+		List<InvestmentTxn> txns = pos.getTransactions();
+		int numtx = txns.size();
+		String s = pos.security.getName() + ";" + numtx;
+
+		for (int ii = 0; ii < numtx; ++ii) {
+			InvestmentTxn t = txns.get(ii);
+			int txidx = stat.transactions.indexOf(t);
+			BigDecimal bal = pos.shrBalance.get(ii);
+
+			assert txidx >= 0;
+
+			s += String.format(";%d;%f", txidx, bal);
 		}
 
 		return s;

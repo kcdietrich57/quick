@@ -24,8 +24,8 @@ import moneymgr.util.QDate;
 public class OptionsProcessor {
 	private final static String OPTIONS_DATA_FILENAME = "options.txt";
 
-	/** Initial load information about stock options from additional data file */
-	public static void processStockOptions() {
+	/** Load information about stock options from additional data file */
+	public static void loadStockOptions() {
 		LineNumberReader rdr = null;
 
 		try {
@@ -144,19 +144,19 @@ public class OptionsProcessor {
 	}
 
 	/** Post-load processing for stock options */
-	public static void processOptions() {
-		processOptions(// SecurityPortfolio.portfolio,
-				GenericTxn.getAllTransactions());
+	public static void matchOptionsWithTransactions() {
+		matchOptionsWithTransactions(GenericTxn.getAllTransactions());
 
+		// TODO seems we are processing transactions twice here.
 		for (Account a : Account.getAccounts()) {
 			if (a.isInvestmentAccount()) {
-				processOptions(a.transactions);
+				matchOptionsWithTransactions(a.transactions);
 			}
 		}
 	}
 
 	/** Process options (either global for all txns, or one account's txns) */
-	private static void processOptions(List<GenericTxn> txns) {
+	private static void matchOptionsWithTransactions(List<GenericTxn> txns) {
 		for (GenericTxn gtxn : txns) {
 			if (!(gtxn instanceof InvestmentTxn) //
 					|| (((InvestmentTxn) gtxn).security == null)) {

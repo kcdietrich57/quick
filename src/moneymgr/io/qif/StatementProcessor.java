@@ -18,14 +18,8 @@ import moneymgr.util.QDate;
 
 /** Load statements from extra quasi-QIF input file */
 public class StatementProcessor {
-	private QifDomReader qrdr;
-
-	public StatementProcessor(QifDomReader qrdr) {
-		this.qrdr = qrdr;
-	}
-
 	/** Load each statement file (one per account) in the statements directory */
-	public void processStatementFiles(File stmtDirectory) {
+	public static void loadStatments(QifDomReader qrdr, File stmtDirectory) {
 		if (!stmtDirectory.isDirectory()) {
 			return;
 		}
@@ -40,7 +34,7 @@ public class StatementProcessor {
 			try {
 				qrdr.load(f.getAbsolutePath(), false);
 			} catch (final Exception e) {
-				e.printStackTrace();
+				Common.reportError("statement file loading failed");
 			}
 		}
 
@@ -49,23 +43,25 @@ public class StatementProcessor {
 	}
 
 	/** Load statements for an account from the quasi-QIF file */
-	public void loadStatements(File file) {
+	public static void loadStatements(QifDomReader qrdr, File file) {
 		for (;;) {
-			String s = this.qrdr.getFileReader().peekLine();
+			String s = qrdr.getFileReader().peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			List<Statement> stmts = loadStatementsSection(this.qrdr.getFileReader());
+			List<Statement> stmts = loadStatementsSection(qrdr.getFileReader());
 
 			for (Statement stmt : stmts) {
-				Account.currAccountBeingLoaded.statements.add(stmt);
-				Account.currAccountBeingLoaded.statementFile = file;
+				Account a = Account.currAccountBeingLoaded;
+
+				a.statements.add(stmt);
+				a.statementFile = file;
 			}
 		}
 	}
 
-	private List<Statement> loadStatementsSection(QFileReader qfr) {
+	private static List<Statement> loadStatementsSection(QFileReader qfr) {
 		QFileReader.QLine qline = new QFileReader.QLine();
 		List<Statement> stmts = new ArrayList<Statement>();
 
@@ -130,13 +126,21 @@ public class StatementProcessor {
 							? QDate.getDateForEndOfMonth(year, month) //
 							: new QDate(year, month, day);
 
-					Statement prevstmt = (stmts.isEmpty() ? null : stmts.get(stmts.size() - 1));
+					Account acct = Account.currAccountBeingLoaded;
+					Statement prevstmt = null;
 
-					currstmt = new Statement(Account.currAccountBeingLoaded.acctid, d);
-					currstmt.closingBalance = currstmt.cashBalance = bal;
-					if ((prevstmt != null) && (prevstmt.acctid == currstmt.acctid)) {
-						currstmt.prevStatement = prevstmt;
+					if (!acct.statements.isEmpty()) {
+						prevstmt = acct.statements.get(acct.statements.size() - 1);
 					}
+
+					if (!stmts.isEmpty()) {
+						Statement s = stmts.get(stmts.size() - 1);
+						if (s.acctid == acct.acctid) {
+							prevstmt = s;
+						}
+					}
+
+					currstmt = new Statement(acct.acctid, d, bal, null, prevstmt);
 
 					stmts.add(currstmt);
 
@@ -147,7 +151,7 @@ public class StatementProcessor {
 			}
 
 			case StmtsCash:
-				currstmt.cashBalance = Common.parseDecimal(qline.value);
+				currstmt.setCashBalance(Common.parseDecimal(qline.value));
 				break;
 
 			case StmtsSecurity: {
@@ -178,11 +182,12 @@ public class StatementProcessor {
 					Common.reportError("Unknown security: " + secStr);
 				}
 
-				SecurityPortfolio h = currstmt.holdings;
-				SecurityPosition p = new SecurityPosition(sec);
+				SecurityPortfolio hold = currstmt.holdings;
+				SecurityPosition pos = // new SecurityPosition(hold, sec);
+						hold.getPosition(sec);
 
-				p.value = (valStr.equals("x")) ? null : new BigDecimal(valStr);
-				p.endingShares = (qtyStr.equals("x")) ? null : new BigDecimal(qtyStr);
+				pos.endingValue = (valStr.equals("x")) ? null : new BigDecimal(valStr);
+				BigDecimal endingShares = (qtyStr.equals("x")) ? null : new BigDecimal(qtyStr);
 				BigDecimal price = (priceStr.equals("x")) ? null : new BigDecimal(priceStr);
 				BigDecimal price4date = sec.getPriceForDate(currstmt.date).getPrice();
 
@@ -191,8 +196,8 @@ public class StatementProcessor {
 				// number of shares. If the price is not present, we can use the
 				// price on the day of the statement.
 				// If we know two of the values, we can calculate the third.
-				if (p.endingShares == null) {
-					if (p.value == null) {
+				if (endingShares == null) {
+					if (pos.endingValue == null) {
 						Common.reportError("Missing security info in stmt");
 					}
 
@@ -200,20 +205,19 @@ public class StatementProcessor {
 						price = price4date;
 					}
 
-					p.endingShares = p.value.divide(price, RoundingMode.HALF_UP);
-				} else if (p.value == null) {
-					if (p.endingShares != null) {
-						if (price == null) {
-							price = price4date;
-						}
-
-						p.value = price.multiply(p.endingShares);
+					endingShares = pos.endingValue.divide(price, RoundingMode.HALF_UP);
+				} else if (pos.endingValue == null) {
+					if (price == null) {
+						price = price4date;
 					}
+
+					pos.endingValue = price.multiply(endingShares);
 				} else if (price == null) {
 					price = price4date;
 				}
 
-				h.positions.add(p);
+				pos.setExpectedEndingShares(endingShares);
+
 				break;
 			}
 
@@ -224,7 +228,8 @@ public class StatementProcessor {
 
 	}
 
-	private void buildStatementChains() {
+	// TODO defunct?
+	private static void buildStatementChains() {
 		for (Account a : Account.getAccounts()) {
 			Statement last = null;
 
@@ -235,7 +240,10 @@ public class StatementProcessor {
 			});
 
 			for (Statement s : a.statements) {
-				s.prevStatement = last;
+				if (a.isInvestmentAccount() && s.prevStatement != last) {
+		//			System.out.println("xyzzy");
+				}
+				// s.prevStatement = last;
 				last = s;
 			}
 		}

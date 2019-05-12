@@ -1,7 +1,6 @@
 package moneymgr.io.qif;
 
 import java.io.File;
-import java.math.BigDecimal;
 import java.util.List;
 
 import app.QifDom;
@@ -19,21 +18,15 @@ import moneymgr.util.Common;
 
 /** Load securities and set up security and lot details afterwards. */
 public class SecurityProcessor {
-	private final QifDomReader qrdr;
-
-	public SecurityProcessor(QifDomReader qrdr) {
-		this.qrdr = qrdr;
-	}
-
 	/** Process securities section of an input file and create security objects */
-	public void loadSecurities() {
+	public static void loadSecurities(QifDomReader qrdr) {
 		for (;;) {
-			String s = this.qrdr.getFileReader().peekLine();
+			String s = qrdr.getFileReader().peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			Security sec = loadSecurity();
+			Security sec = loadSecurity(qrdr);
 			if (sec == null) {
 				break;
 			}
@@ -53,7 +46,7 @@ public class SecurityProcessor {
 	}
 
 	/** Load an individual security from the input file */
-	private Security loadSecurity() {
+	private static Security loadSecurity(QifDomReader qrdr) {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
 		String symbol = null;
@@ -62,7 +55,7 @@ public class SecurityProcessor {
 		String goal = null;
 
 		loop: for (;;) {
-			this.qrdr.getFileReader().nextSecurityLine(qline);
+			qrdr.getFileReader().nextSecurityLine(qline);
 
 			switch (qline.type) {
 			case EndOfSection:
@@ -98,7 +91,7 @@ public class SecurityProcessor {
 	}
 
 	/** Process security txns (global, accounts) after loading from QIF */
-	public void processSecurities() {
+	public static void processSecurities() {
 		// Process global porfolio info
 		processSecurities2(SecurityPortfolio.portfolio, GenericTxn.getAllTransactions());
 
@@ -111,12 +104,13 @@ public class SecurityProcessor {
 	}
 
 	/**
+	 * TODO this can basically go away<br>
 	 * Process transactions for securities in a portfolio.<br>
 	 * Add transactions to positions appropriately.<br>
 	 * Add share balance to positions.<br>
 	 * Process splits along the way.
 	 */
-	private void processSecurities2(SecurityPortfolio port, List<GenericTxn> txns) {
+	private static void processSecurities2(SecurityPortfolio port, List<GenericTxn> txns) {
 		for (GenericTxn gtxn : txns) {
 			if (!(gtxn instanceof InvestmentTxn) //
 					|| (((InvestmentTxn) gtxn).security == null)) {
@@ -126,7 +120,6 @@ public class SecurityProcessor {
 			InvestmentTxn txn = (InvestmentTxn) gtxn;
 
 			SecurityPosition pos = port.getPosition(txn.security);
-			pos.transactions.add(txn);
 
 			switch (txn.getAction()) {
 			case BUY:
@@ -136,20 +129,19 @@ public class SecurityProcessor {
 			case REINV_SH:
 			case BUYX:
 			case REINV_INT:
-				pos.endingShares = pos.endingShares.add(txn.getShares());
+				pos.addTransaction(txn);
 				break;
 
 			case SHRS_OUT:
 			case SELL:
 			case SELLX:
-				pos.endingShares = pos.endingShares.add(txn.getShares());
+				pos.addTransaction(txn);
 				break;
 
 			case STOCKSPLIT:
 				StockOption.processSplit(txn);
 
-				pos.endingShares = pos.endingShares.multiply(txn.getShares());
-				pos.endingShares = pos.endingShares.divide(BigDecimal.TEN);
+				pos.addTransaction(txn);
 				break;
 
 			case GRANT:
@@ -172,7 +164,7 @@ public class SecurityProcessor {
 	}
 
 	/** Load quotes from CSV input files in a specified directory */
-	public void loadSecurityPriceHistory(File quoteDirectory) {
+	public static void loadSecurityPriceHistory(File quoteDirectory) {
 		if (!quoteDirectory.isDirectory()) {
 			return;
 		}
@@ -217,14 +209,14 @@ public class SecurityProcessor {
 	}
 
 	/** Load quotes from a QIF input file */
-	public void loadPrices() {
+	public static void loadPrices(QifDomReader qrdr) {
 		for (;;) {
-			String s = this.qrdr.getFileReader().peekLine();
+			String s = qrdr.getFileReader().peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			QPrice price = QPrice.load(this.qrdr.getFileReader());
+			QPrice price = QPrice.load(qrdr.getFileReader());
 			if (price == null) {
 				break;
 			}

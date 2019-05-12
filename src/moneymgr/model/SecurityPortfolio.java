@@ -18,23 +18,38 @@ import moneymgr.util.QDate;
 public class SecurityPortfolio {
 
 	/** The global history of all securities */
-	public static SecurityPortfolio portfolio = new SecurityPortfolio();
+	public static SecurityPortfolio portfolio = new SecurityPortfolio(null);
+
+	/** For statements, this references the prev stmt's ending holdings */
+	public final SecurityPortfolio prevPortfolio;
 
 	/** Position history for each security tracked in this portfolio */
 	public List<SecurityPosition> positions;
 
-	public SecurityPortfolio() {
+	/** Create a statement holdings object connected to previous statement */
+	public SecurityPortfolio(SecurityPortfolio prev) {
 		this.positions = new ArrayList<>();
+
+		this.prevPortfolio = prev;
+
+		if (prev != null) {
+			if (prev.positions == null) {
+				System.out.println("xyzzy");
+			} else {
+				for (SecurityPosition ppos : prev.positions) {
+					if (!ppos.isEmpty() //
+							|| !Common.isEffectivelyZeroOrNull(ppos.getExpectedEndingShares())) {
+						SecurityPosition pos = new SecurityPosition(this, ppos.security);
+						this.positions.add(pos);
+					}
+				}
+			}
+		}
 	}
 
-	/** Build a clone of another portfolio object, minus transactions */
-	public SecurityPortfolio(SecurityPortfolio other) {
-		this();
-
-		if (other != null) {
-			for (SecurityPosition p : other.positions) {
-				this.positions.add(new SecurityPosition(p));
-			}
+	public void initializeTransactions() {
+		for (SecurityPosition pos : this.positions) {
+			pos.initializeTransactions();
 		}
 	}
 
@@ -50,7 +65,7 @@ public class SecurityPortfolio {
 
 		SecurityPosition pos = getPosition(itx.security);
 
-		pos.addTransaction(itx, pos.endingShares);
+		pos.addTransaction(itx);
 	}
 
 	public void removeTransaction(GenericTxn txn) {
@@ -64,24 +79,7 @@ public class SecurityPortfolio {
 		}
 
 		SecurityPosition pos = getPosition(itx.security);
-		if (pos.transactions.remove(itx)) {
-			pos.setTransactions(pos.transactions, pos.getStartingShares());
-		}
-	}
-
-	/** Build state from transactions in a statement */
-	public void captureTransactions(Statement stat) {
-		SecurityPortfolio dport = stat.getPortfolioDelta();
-		SecurityPortfolio prevPort = (stat.prevStatement != null) //
-				? stat.prevStatement.holdings //
-				: new SecurityPortfolio();
-
-		for (SecurityPosition pos : this.positions) {
-			SecurityPosition dpos = dport.findPosition(pos.security);
-
-			BigDecimal prevbal = prevPort.getPosition(pos.security).endingShares;
-			pos.setTransactions(dpos.transactions, prevbal);
-		}
+		pos.removeTransaction(itx);
 	}
 
 	/** Find a position for a security, if it exists */
@@ -95,7 +93,12 @@ public class SecurityPortfolio {
 		return null;
 	}
 
-	/** Find a position for a security. Create it if it does not exist. */
+	/** Create a position for a statement, starting with the prev stmt pos */
+	public void createPosition(int secid) {
+		SecurityPosition pos = getPosition(secid);
+	}
+
+	/** Find a position for a security id. Create it if it does not exist. */
 	public SecurityPosition getPosition(int secid) {
 		return getPosition(Security.getSecurity(secid));
 	}
@@ -105,7 +108,7 @@ public class SecurityPortfolio {
 		SecurityPosition pos = findPosition(sec);
 
 		if (pos == null) {
-			pos = new SecurityPosition(sec);
+			pos = new SecurityPosition(this, sec);
 			this.positions.add(pos);
 		}
 
@@ -119,7 +122,7 @@ public class SecurityPortfolio {
 		while (iter.hasNext()) {
 			SecurityPosition p = iter.next();
 
-			if (Common.isEffectivelyZero(p.endingShares)) {
+			if (Common.isEffectivelyZero(p.getEndingShares())) {
 				iter.remove();
 			}
 		}
@@ -195,12 +198,12 @@ public class SecurityPortfolio {
 
 		public BigDecimal getDesiredShares(int idx) {
 			SecurityPosition pos = this.desiredPositions.get(idx);
-			return (pos != null) ? pos.endingShares : BigDecimal.ZERO;
+			return (pos != null) ? pos.getEndingShares() : BigDecimal.ZERO;
 		}
 
 		public BigDecimal getActualShares(int idx) {
 			SecurityPosition pos = this.actualPositions.get(idx);
-			return (pos != null) ? pos.endingShares : BigDecimal.ZERO;
+			return (pos != null) ? pos.getEndingShares() : BigDecimal.ZERO;
 		}
 
 		/** Return desired or actual position by index */
@@ -232,7 +235,7 @@ public class SecurityPortfolio {
 	/** Check if this portfolio has no data at all */
 	public boolean isEmpty() {
 		for (SecurityPosition p : this.positions) {
-			if (!p.transactions.isEmpty()) {
+			if (!p.isEmpty()) {
 				return false;
 			}
 		}
@@ -243,9 +246,7 @@ public class SecurityPortfolio {
 	/** Check whether this portfolio has any holdings on a given date */
 	public boolean isEmptyForDate(QDate d) {
 		for (SecurityPosition p : this.positions) {
-			int ii = GenericTxn.getLastTransactionIndexOnOrBeforeDate(p.transactions, d);
-
-			if ((ii < 0) || !Common.isEffectivelyZero(p.shrBalance.get(ii))) {
+			if (p.isEmptyForDate(d)) {
 				return false;
 			}
 		}
@@ -258,7 +259,7 @@ public class SecurityPortfolio {
 
 		int nn = 0;
 		for (final SecurityPosition p : this.positions) {
-			if (!p.transactions.isEmpty()) {
+			if (!p.isEmpty()) {
 				s += "  " + ++nn + ": " + p.toString() + "\n";
 			}
 		}

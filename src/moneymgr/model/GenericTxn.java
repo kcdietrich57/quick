@@ -310,14 +310,18 @@ public abstract class GenericTxn //
 		return this.date;
 	}
 
-	/** Construct a string for persisting this transaction to a file */
-	public String formatForSave() {
-		final String s = String.format("T;%s;%d;%5.2f", //
-				getDate().toString(), //
-				getCheckNumber(), //
-				getCashAmount());
-		return s;
-	}
+//	/**
+//	 * TODO defunct
+//   * Construct a string for persisting this transaction to a file<br>
+//	 * Generic fmt: T;DATE;CKNUM;AMT
+//	 */
+//	public String formatForSave() {
+//		final String s = String.format("T;%s;%d;%5.2f", //
+//				getDate().toString(), //
+//				getCheckNumber(), //
+//				getCashAmount());
+//		return s;
+//	}
 
 	/** Comparison by date and check number */
 	public int compareTo(GenericTxn other) {

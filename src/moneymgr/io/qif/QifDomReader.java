@@ -68,18 +68,28 @@ public class QifDomReader {
 	/** Process security info, statements, etc after all basic data is loaded */
 	private void postLoad() {
 		File d = new File(this.qifDir, "quotes");
-		new SecurityProcessor(this).loadSecurityPriceHistory(d);
+		SecurityProcessor.loadSecurityPriceHistory(d);
 
-		OptionsProcessor.processStockOptions();
-		new SecurityProcessor(this).processSecurities();
-		OptionsProcessor.processOptions();
-		PortfolioProcessor.fixPortfolios();
+		// TODO look at these and the proper order of actions
 
+		// Create option objects
+		OptionsProcessor.loadStockOptions();
+
+		// Load basic statement info
 		File dd = new File(this.qifDir, "statements");
-		new StatementProcessor(this).processStatementFiles(dd);
+		StatementProcessor.loadStatments(this, dd);
+
+		// Add transactions to portfolios/positions
+		SecurityProcessor.processSecurities();
+
+		OptionsProcessor.matchOptionsWithTransactions();
 
 		// Process saved statement reconciliation information
+		// Match statements with transactions
 		Reconciler.processStatementLog();
+
+		// Update share balances in all positions
+		PortfolioProcessor.fixPortfolios();
 
 		// Update statement reconciliation file if format has changed
 		if (QifDom.loadedStatementsVersion != StatementDetails.CURRENT_VERSION) {
@@ -125,15 +135,15 @@ public class QifDomReader {
 				break;
 
 			case Statements:
-				new StatementProcessor(this).loadStatements(this.curFile);
+				 StatementProcessor.loadStatements(this, this.curFile);
 				break;
 
 			case Security:
-				new SecurityProcessor(this).loadSecurities();
+				SecurityProcessor.loadSecurities(this);
 				break;
 
 			case Prices:
-				new SecurityProcessor(this).loadPrices();
+				SecurityProcessor.loadPrices(this);
 				break;
 
 			case QClass:

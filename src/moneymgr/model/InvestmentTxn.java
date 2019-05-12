@@ -112,7 +112,7 @@ public class InvestmentTxn extends GenericTxn {
 			}
 
 			if (this.quantity.signum() != 0) {
-				//System.out.println();
+				// System.out.println("xyzzy");
 			}
 			// TODO distinguish ESPP vs OPTION
 			// return true;
@@ -309,22 +309,27 @@ public class InvestmentTxn extends GenericTxn {
 		}
 	}
 
-	public String formatForSave() {
-		String secString = ";";
-		if (this.security != null) {
-			secString = this.security.getSymbol() + ";";
-			if (this.quantity != null) {
-				secString += String.format("%5.2f", this.quantity);
-			}
-		}
-
-		final String s = String.format("I;%s;%s;%s;%5.2f", //
-				getDate().toString(), //
-				getAction().toString(), //
-				secString, //
-				getCashAmount());
-		return s;
-	}
+//	/**
+//	 * TODO defunct
+//	 * Construct a string for persisting this transaction to a file<br>
+//	 * Investment Format: I;DATE;ACTION;[SEC];[QTY];AMT
+//	 */
+//	public String formatForSave() {
+//		String secString = ";";
+//		if (this.security != null) {
+//			secString = this.security.getSymbol() + ";";
+//			if (this.quantity != null) {
+//				secString += String.format("%5.2f", this.quantity);
+//			}
+//		}
+//
+//		final String s = String.format("I;%s;%s;%s;%5.2f", //
+//				getDate().toString(), //
+//				getAction().toString(), //
+//				secString, //
+//				getCashAmount());
+//		return s;
+//	}
 
 	/** Correct issues with this loaded transaction */
 	public void repair() {
@@ -501,7 +506,13 @@ public class InvestmentTxn extends GenericTxn {
 			s += " payee=" + getPayee();
 		}
 		s += " price=" + this.price;
-		s += " qty=" + this.quantity;
+		if (getAction() == TxAction.STOCKSPLIT) {
+			s += " spratio=" + getSplitRatio();
+
+		} else {
+			s += " qty=" + this.quantity;
+		}
+
 		s += " amt=" + getAmount();
 		// s += " clr=" + this.clearedStatus;
 		// s += " txt=" + this.textFirstLine;

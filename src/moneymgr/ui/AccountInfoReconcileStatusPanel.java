@@ -170,8 +170,8 @@ public class AccountInfoReconcileStatusPanel extends JPanel //
 		this.clearedCashBalance = (reconcilePanel != null) //
 				? reconcilePanel.getClearedCashBalance() //
 				: BigDecimal.ZERO;
-		this.cashDiffValue = ((this.stmt != null) && (this.stmt.cashBalance != null)) //
-				? this.stmt.cashBalance.subtract(this.clearedCashBalance) //
+		this.cashDiffValue = (this.stmt != null) //
+				? this.stmt.getCashBalance().subtract(this.clearedCashBalance) //
 				: null;
 
 		boolean isBalanced = (this.cashDiffValue != null) //
@@ -196,8 +196,9 @@ public class AccountInfoReconcileStatusPanel extends JPanel //
 		boolean holdingsMatch = true;
 
 		if ((this.stmt != null) && (this.stmt.holdings != null)) {
+			SecurityPortfolio delta = reconcilePanel.getPortfolioDelta();
 			SecurityPortfolio.HoldingsComparison comparison = //
-					this.stmt.holdings.comparisonTo(reconcilePanel.getPortfolioDelta());
+					this.stmt.holdings.comparisonTo(delta);
 			holdingsMatch = comparison.holdingsMatch();
 		}
 
