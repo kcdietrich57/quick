@@ -141,6 +141,8 @@ public class TransactionCleaner {
 		}
 	}
 
+	private static int multWarnCount = 0;
+
 	/**
 	 * Given a transaction that is a transfer, search the associated account's
 	 * transactions for a suitable mate for this transaction.
@@ -173,9 +175,12 @@ public class TransactionCleaner {
 		if (matchingTxns.size() == 1) {
 			xtxn = matchingTxns.get(0);
 		} else {
-			Common.reportWarning("Multiple matching transactions (" //
-					+ matchingTxns.size() //
-					+ ") - using the first one.");
+			if ((multWarnCount++ % 100) == 0) {
+				Common.reportWarning("Multiple matching transactions (" //
+						+ matchingTxns.size() //
+						+ ") - using the first one. (" + multWarnCount + " occurrences)");
+			}
+
 			// TODO use the earliest choice
 			xtxn = matchingTxns.get(0);
 		}

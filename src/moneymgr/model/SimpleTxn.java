@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import app.QifDom;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -167,9 +168,11 @@ public class SimpleTxn {
 			if (eq) {
 				++cashbad;
 
-				System.out.println(toString());
-				System.out.println(other.toString());
-				System.out.println("Cash ok=" + cashok + " bad=" + cashbad);
+				if (QifDom.verbose) {
+					System.out.println(toString());
+					System.out.println(other.toString());
+					System.out.println("Cash ok=" + cashok + " bad=" + cashbad);
+				}
 			} else {
 				++cashok;
 			}

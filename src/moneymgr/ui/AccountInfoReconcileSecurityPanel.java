@@ -12,6 +12,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import moneymgr.model.SecurityPortfolio;
+import moneymgr.model.SecurityPosition;
 import moneymgr.model.Statement;
 import moneymgr.util.Common;
 
@@ -62,11 +63,12 @@ public class AccountInfoReconcileSecurityPanel //
 class HoldingsTableModel extends AbstractTableModel {
 	private static final String headers[] = { "Security", "Desired", "Actual" };
 
+	// TODO just use holdings for the statement
 	public SecurityPortfolio.HoldingsComparison holdingsComparision;
 
 	public int getRowCount() {
 		return (this.holdingsComparision != null) //
-				? this.holdingsComparision.desiredPositions.size() //
+				? this.holdingsComparision.actualPositions.size() //
 				: 0;
 	}
 
@@ -79,13 +81,15 @@ class HoldingsTableModel extends AbstractTableModel {
 	}
 
 	public Object getValueAt(int row, int col) {
+		SecurityPosition pos = this.holdingsComparision.actualPositions.get(row);
+
 		switch (col) {
 		case 0:
-			return this.holdingsComparision.getSecurityName(row);
+			return pos.security.getName();
 		case 1:
-			return Common.formatAmount3(this.holdingsComparision.getDesiredShares(row));
+			return Common.formatAmount3(pos.getExpectedEndingShares());
 		case 2:
-			return Common.formatAmount3(this.holdingsComparision.getActualShares(row));
+			return Common.formatAmount3(pos.getEndingShares());
 		}
 
 		return "N/A";

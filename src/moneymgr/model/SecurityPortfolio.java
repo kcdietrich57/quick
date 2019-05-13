@@ -34,7 +34,7 @@ public class SecurityPortfolio {
 
 		if (prev != null) {
 			if (prev.positions == null) {
-				System.out.println("xyzzy");
+				System.out.println("xyzzy null prev stmt positions");
 			} else {
 				for (SecurityPosition ppos : prev.positions) {
 					if (!ppos.isEmpty() //
@@ -171,24 +171,17 @@ public class SecurityPortfolio {
 
 	/** Compares holdings to a target (e.g. for statement reconciliation) */
 	public static class HoldingsComparison {
-		public List<SecurityPosition> desiredPositions = new ArrayList<>();
 		public List<SecurityPosition> actualPositions = new ArrayList<>();
 
 		/** Set the positions to compare */
-		public void addPosition(SecurityPosition desired, SecurityPosition actual) {
-			this.desiredPositions.add(desired);
+		public void addPosition(SecurityPosition actual) {
 			this.actualPositions.add(actual);
-		}
-
-		public String getSecurityName(int idx) {
-			SecurityPosition pos = getPosition(idx);
-			return (pos != null) ? pos.security.getName() : "";
 		}
 
 		/** Compare desired/actual holdings for each security position */
 		public boolean holdingsMatch() {
-			for (int ii = 0; ii < this.desiredPositions.size(); ++ii) {
-				if (!Common.isEffectivelyEqual(getDesiredShares(ii), getActualShares(ii))) {
+			for (SecurityPosition pos : this.actualPositions) {
+				if (!Common.isEffectivelyEqual(pos.getEndingShares(), pos.getExpectedEndingShares())) {
 					return false;
 				}
 			}
@@ -196,20 +189,9 @@ public class SecurityPortfolio {
 			return true;
 		}
 
-		public BigDecimal getDesiredShares(int idx) {
-			SecurityPosition pos = this.desiredPositions.get(idx);
-			return (pos != null) ? pos.getEndingShares() : BigDecimal.ZERO;
-		}
-
-		public BigDecimal getActualShares(int idx) {
-			SecurityPosition pos = this.actualPositions.get(idx);
-			return (pos != null) ? pos.getEndingShares() : BigDecimal.ZERO;
-		}
-
-		/** Return desired or actual position by index */
-		private SecurityPosition getPosition(int idx) {
-			SecurityPosition pos = this.desiredPositions.get(idx);
-			return (pos != null) ? pos : this.actualPositions.get(idx);
+		public String toString() {
+			return String.format("Match %s, %d positions", //
+					Boolean.toString(holdingsMatch()), this.actualPositions.size());
 		}
 	}
 
@@ -218,16 +200,16 @@ public class SecurityPortfolio {
 		HoldingsComparison comp = new HoldingsComparison();
 
 		for (SecurityPosition pos : this.positions) {
-			comp.addPosition(pos, other.findPosition(pos.security));
+			comp.addPosition(pos);
 		}
 
-		for (SecurityPosition opos : other.positions) {
-			SecurityPosition pos = findPosition(opos.security);
-
-			if (pos == null) {
-				comp.addPosition(pos, opos);
-			}
-		}
+//		for (SecurityPosition opos : other.positions) {
+//			SecurityPosition pos = findPosition(opos.security);
+//
+//			if (pos == null) {
+//				comp.addPosition(pos);
+//			}
+//		}
 
 		return comp;
 	}

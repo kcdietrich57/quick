@@ -82,7 +82,7 @@ public class Statement {
 
 	public BigDecimal getCashBalance() {
 		if (this.cashBalance == null) {
-			Common.reportWarning("Statement cash balance is not set");
+			//Common.reportWarning("Statement cash balance is not set");
 			this.cashBalance = BigDecimal.ZERO;
 		}
 
@@ -90,6 +90,9 @@ public class Statement {
 	}
 
 	public void setCashBalance(BigDecimal val) {
+		if (this.isBalanced) {
+			Common.reportWarning("Changing cash balance of reconciled statement");
+		}
 		if (this.cashBalance != null) {
 			Common.reportError("Statement cash balance is immutable");
 		}
@@ -301,6 +304,7 @@ public class Statement {
 	}
 
 	/**
+	 * TODO defunct<br>
 	 * Build changes to the previous Portfolio position based on a list of cleared
 	 * transactions
 	 */

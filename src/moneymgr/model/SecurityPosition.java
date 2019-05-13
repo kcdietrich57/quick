@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import app.QifDom;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -260,7 +261,10 @@ public class SecurityPosition {
 
 	public BigDecimal getExpectedEndingShares() {
 		if (this.expectedEndingShares == null) {
-			Common.reportWarning("Position expected ending shares not set");
+			if (QifDom.verbose) {
+				Common.reportWarning("Position expected ending shares not set");
+			}
+
 			this.expectedEndingShares = BigDecimal.ZERO;
 		}
 
@@ -325,18 +329,21 @@ public class SecurityPosition {
 			this.transactions.remove(idx);
 			this.shrBalance.remove(idx);
 
-			setTransactions(this.transactions); // , getStartingShares());
+			setTransactions(this.transactions);
 		}
 	}
 
 	/** Reset history with starting share balance and transactions */
-	public void setTransactions(List<InvestmentTxn> txns) {// , BigDecimal startBal) {
+	public void setTransactions(List<InvestmentTxn> txns) {
+		if (txns == this.transactions) {
+			txns = new ArrayList<InvestmentTxn>(txns);
+		}
 		Collections.sort(txns, compareByDate);
 
 		this.transactions.clear();
 		this.shrBalance.clear();
 
-		for (InvestmentTxn txn : this.transactions) {
+		for (InvestmentTxn txn : txns) {
 			addTransaction(txn);
 		}
 	}
