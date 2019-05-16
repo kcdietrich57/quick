@@ -83,7 +83,7 @@ public class Statement {
 	public BigDecimal getCashBalance() {
 		if (this.cashBalance == null) {
 			//Common.reportWarning("Statement cash balance is not set");
-			this.cashBalance = BigDecimal.ZERO;
+			this.cashBalance = this.closingBalance;
 		}
 
 		return this.cashBalance;

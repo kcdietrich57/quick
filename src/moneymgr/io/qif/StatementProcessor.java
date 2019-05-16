@@ -39,7 +39,7 @@ public class StatementProcessor {
 		}
 
 		// Post-processing of loaded statements
-		buildStatementChains();
+// TODO defunct		buildStatementChains();
 	}
 
 	/** Load statements for an account from the quasi-QIF file */
@@ -56,7 +56,6 @@ public class StatementProcessor {
 				Account a = Account.currAccountBeingLoaded;
 
 				a.statements.add(stmt);
-				a.statementFile = file;
 			}
 		}
 	}
@@ -228,24 +227,23 @@ public class StatementProcessor {
 
 	}
 
-	// TODO defunct?
-	private static void buildStatementChains() {
-		for (Account a : Account.getAccounts()) {
-			Statement last = null;
-
-			Collections.sort(a.statements, new Comparator<Statement>() {
-				public int compare(Statement s1, Statement s2) {
-					return s1.date.compareTo(s2.date);
-				}
-			});
-
-			for (Statement s : a.statements) {
-				if (a.isInvestmentAccount() && s.prevStatement != last) {
-		//			System.out.println("xyzzy");
-				}
-				// s.prevStatement = last;
-				last = s;
-			}
-		}
-	}
+// TODO defunct private static void buildStatementChains() {
+//		for (Account a : Account.getAccounts()) {
+//			Statement last = null;
+//
+//			Collections.sort(a.statements, new Comparator<Statement>() {
+//				public int compare(Statement s1, Statement s2) {
+//					return s1.date.compareTo(s2.date);
+//				}
+//			});
+//
+//			for (Statement s : a.statements) {
+//				if (a.isInvestmentAccount() && s.prevStatement != last) {
+//		//			System.out.println("xyzzy");
+//				}
+//				// s.prevStatement = last;
+//				last = s;
+//			}
+//		}
+//	}
 }

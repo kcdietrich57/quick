@@ -19,7 +19,7 @@ public class InvestmentTxn extends GenericTxn {
 		NO_ACTION, NEW_SHARES, DISPOSE_SHARES, TRANSFER_OUT, TRANSFER_IN, SPLIT
 	}
 
-	/** TODO not for non-investment txns? Action taken by transaction */
+	/** TODO TxAction not for non-investment txns? Action taken by transaction */
 	private TxAction action;
 
 	public Security security;
@@ -310,8 +310,7 @@ public class InvestmentTxn extends GenericTxn {
 	}
 
 //	/**
-//	 * TODO defunct
-//	 * Construct a string for persisting this transaction to a file<br>
+//	 * TODO defunct Construct a string for persisting this transaction to a file<br>
 //	 * Investment Format: I;DATE;ACTION;[SEC];[QTY];AMT
 //	 */
 //	public String formatForSave() {
@@ -528,7 +527,7 @@ public class InvestmentTxn extends GenericTxn {
 		return s;
 	}
 
-	// TODO put this information into the UI appropriately
+	// TODO formatValue - put this information into the UI appropriately
 	public String formatValue() {
 		String ret = "";
 

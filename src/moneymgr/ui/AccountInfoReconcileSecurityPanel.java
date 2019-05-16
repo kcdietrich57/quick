@@ -11,7 +11,6 @@ import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
-import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.SecurityPosition;
 import moneymgr.model.Statement;
 import moneymgr.util.Common;
@@ -20,16 +19,11 @@ import moneymgr.util.Common;
 public class AccountInfoReconcileSecurityPanel //
 		extends JPanel //
 		implements StatementSelectionListener {
-	private AccountInfoReconcilePanel reconcilePanel;
 	private JTable holdingsTable;
 	private HoldingsTableModel holdingsTableModel;
 	private Statement stmt;
-	public boolean holdingsMatch = false;
 
-	public AccountInfoReconcileSecurityPanel( //
-			AccountInfoReconcilePanel reconcilePanel) {
-		this.reconcilePanel = reconcilePanel;
-
+	public AccountInfoReconcileSecurityPanel() {
 		this.holdingsTableModel = new HoldingsTableModel();
 		this.holdingsTable = new JTable(this.holdingsTableModel);
 		this.holdingsTable.setDefaultRenderer(Object.class, new HoldingsTableCellRenderer());
@@ -49,10 +43,7 @@ public class AccountInfoReconcileSecurityPanel //
 
 	public void updateValues() {
 		if ((this.stmt != null) && (this.stmt.holdings != null)) {
-			SecurityPortfolio.HoldingsComparison comparison = //
-					this.stmt.holdings.comparisonTo(reconcilePanel.getPortfolioDelta());
-			this.holdingsTableModel.holdingsComparision = comparison;
-			holdingsMatch = comparison.holdingsMatch();
+			this.holdingsTableModel.setStatement(this.stmt);
 		}
 
 		this.holdingsTableModel.fireTableDataChanged();
@@ -63,12 +54,17 @@ public class AccountInfoReconcileSecurityPanel //
 class HoldingsTableModel extends AbstractTableModel {
 	private static final String headers[] = { "Security", "Desired", "Actual" };
 
-	// TODO just use holdings for the statement
-	public SecurityPortfolio.HoldingsComparison holdingsComparision;
+	private Statement stmt;
+
+	public void setStatement(Statement stmt) {
+		if (this.stmt != stmt) {
+			this.stmt = stmt;
+		}
+	}
 
 	public int getRowCount() {
-		return (this.holdingsComparision != null) //
-				? this.holdingsComparision.actualPositions.size() //
+		return (this.stmt != null) //
+				? this.stmt.holdings.positions.size() //
 				: 0;
 	}
 
@@ -81,7 +77,7 @@ class HoldingsTableModel extends AbstractTableModel {
 	}
 
 	public Object getValueAt(int row, int col) {
-		SecurityPosition pos = this.holdingsComparision.actualPositions.get(row);
+		SecurityPosition pos = this.stmt.holdings.positions.get(row);
 
 		switch (col) {
 		case 0:

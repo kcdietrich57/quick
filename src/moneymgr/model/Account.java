@@ -1,6 +1,5 @@
 package moneymgr.model;
 
-import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -199,9 +198,6 @@ public class Account {
 	public List<Statement> statements;
 	public SecurityPortfolio securities;
 
-	// TODO this serves no purpose
-	public File statementFile;
-
 	public Account(String name, AccountType type, String desc, QDate closeDate, //
 			int statFreq, int statDayOfMonth) {
 		this.acctid = getNextAccountID();
@@ -219,8 +215,6 @@ public class Account {
 		this.transactions = new ArrayList<>();
 		this.statements = new ArrayList<>();
 		this.securities = new SecurityPortfolio(null);
-
-		this.statementFile = null;
 	}
 
 	public Account(String name, AccountType type) {

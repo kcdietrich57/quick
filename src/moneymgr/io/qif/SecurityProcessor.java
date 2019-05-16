@@ -104,7 +104,7 @@ public class SecurityProcessor {
 	}
 
 	/**
-	 * TODO this can basically go away<br>
+	 * TODO processSecurities2 - this can basically go away<br>
 	 * Process transactions for securities in a portfolio.<br>
 	 * Add transactions to positions appropriately.<br>
 	 * Add share balance to positions.<br>
@@ -139,6 +139,7 @@ public class SecurityProcessor {
 				break;
 
 			case STOCKSPLIT:
+				// TODO processSplit() - only keep one split tx, not one per acct
 				StockOption.processSplit(txn);
 
 				pos.addTransaction(txn);

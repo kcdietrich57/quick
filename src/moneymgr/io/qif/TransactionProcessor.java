@@ -59,7 +59,6 @@ public class TransactionProcessor {
 				txn.security.addTransaction(txn);
 			}
 
-			// TODO Does the transaction not already reference the account?
 			Account.currAccountBeingLoaded.addTransaction(txn);
 		}
 	}

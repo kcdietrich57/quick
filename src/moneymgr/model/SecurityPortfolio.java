@@ -33,15 +33,11 @@ public class SecurityPortfolio {
 		this.prevPortfolio = prev;
 
 		if (prev != null) {
-			if (prev.positions == null) {
-				System.out.println("xyzzy null prev stmt positions");
-			} else {
-				for (SecurityPosition ppos : prev.positions) {
-					if (!ppos.isEmpty() //
-							|| !Common.isEffectivelyZeroOrNull(ppos.getExpectedEndingShares())) {
-						SecurityPosition pos = new SecurityPosition(this, ppos.security);
-						this.positions.add(pos);
-					}
+			for (SecurityPosition ppos : prev.positions) {
+				if (!ppos.isEmpty() //
+						|| !Common.isEffectivelyZeroOrNull(ppos.getExpectedEndingShares())) {
+					SecurityPosition pos = new SecurityPosition(this, ppos.security);
+					this.positions.add(pos);
 				}
 			}
 		}
@@ -95,7 +91,7 @@ public class SecurityPortfolio {
 
 	/** Create a position for a statement, starting with the prev stmt pos */
 	public void createPosition(int secid) {
-		SecurityPosition pos = getPosition(secid);
+		getPosition(secid);
 	}
 
 	/** Find a position for a security id. Create it if it does not exist. */

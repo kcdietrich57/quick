@@ -30,7 +30,7 @@ public class AccountInfoReconcilePanel extends JPanel //
 
 		this.reconcileStatusPanel = new AccountInfoReconcileStatusPanel(this);
 		this.reconcileTransactionsPanel = new AccountInfoReconcileTransactionsPanel();
-		this.reconcileTransactionsSecurityPanel = new AccountInfoReconcileSecurityPanel(this);
+		this.reconcileTransactionsSecurityPanel = new AccountInfoReconcileSecurityPanel();
 
 		securitySplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, //
 				this.reconcileTransactionsPanel, //

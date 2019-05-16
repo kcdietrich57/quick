@@ -311,7 +311,7 @@ public abstract class GenericTxn //
 	}
 
 //	/**
-//	 * TODO defunct
+//	 * TODO defunct format tx for save in stmt log
 //   * Construct a string for persisting this transaction to a file<br>
 //	 * Generic fmt: T;DATE;CKNUM;AMT
 //	 */

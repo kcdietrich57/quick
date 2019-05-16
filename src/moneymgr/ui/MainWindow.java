@@ -46,7 +46,7 @@ public class MainWindow extends JPanel {
 			int month = d.getMonth();
 			int day = d.getDay();
 
-			// TODO this is messy
+			// TODO IntervalUnit nextdate - this is messy
 			switch (this) {
 			case Year:
 				if ((month < 12) || (day < 31)) {
