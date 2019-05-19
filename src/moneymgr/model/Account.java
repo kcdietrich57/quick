@@ -302,14 +302,14 @@ public class Account {
 		return getTransactionIndexForDate(t);
 	}
 
+	static final Comparator<GenericTxn> c = new Comparator<GenericTxn>() {
+		public int compare(GenericTxn o1, GenericTxn o2) {
+			return o1.getDate().subtract(o2.getDate());
+		}
+	};
+
 	/** Find the index to insert a new transaction in a list sorted by date */
 	private int getTransactionIndexForDate(GenericTxn tx) {
-		Comparator<GenericTxn> c = new Comparator<GenericTxn>() {
-			public int compare(GenericTxn o1, GenericTxn o2) {
-				return o1.getDate().subtract(o2.getDate());
-			}
-		};
-
 		int idx = Collections.binarySearch(this.transactions, tx, c);
 
 		if (idx < 0) {
@@ -317,6 +317,30 @@ public class Account {
 		}
 
 		return idx;
+	}
+
+	/** Get transactions for a period (inclusive of start/end date) */
+	public List<GenericTxn> getTransactions(QDate start, QDate end) {
+		List<GenericTxn> ret = new ArrayList<GenericTxn>();
+
+		int idx = getTransactionIndexForDate(start);
+		if (idx < 0) {
+			return ret;
+		}
+
+		while ((idx > 0) && (idx < this.transactions.size())//
+				&& (c.compare(this.transactions.get(idx - 1), //
+						this.transactions.get(idx)) >= 0)) {
+			--idx;
+		}
+
+		while ((idx >= 0) && (idx < this.transactions.size()) //
+				&& (this.transactions.get(idx).getDate().compareTo(end) <= 0)) {
+			ret.add(this.transactions.get(idx));
+			++idx;
+		}
+
+		return ret;
 	}
 
 	/** Get the last statement for the account (closed or not) */

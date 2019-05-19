@@ -3,6 +3,7 @@ package moneymgr.report;
 import java.math.BigDecimal;
 
 import moneymgr.model.Account;
+import moneymgr.report.CashFlowModel.AcctInfo;
 import moneymgr.report.StatusForDateModel.AccountSummary;
 import moneymgr.report.StatusForDateModel.Section;
 import moneymgr.report.StatusForDateModel.SecuritySummary;
@@ -37,6 +38,24 @@ public class NetWorthReporter {
 	}
 
 	// TODO the following methods/functions could be relocated into a better spot
+
+	/** Generate itemized list of account information and net worth summary */
+	public static String generateReportStatusForDate(CashFlowModel model) {
+		String sb1 = "";
+		String sb2 = "";
+
+		for (AcctInfo ainfo : model.acctinfo) {
+			if (ainfo.balanceMatches()) {
+				sb1 += ainfo.toString();
+				sb1 += "\n";
+			} else {
+				sb2 += ainfo.toString();
+				sb2 += "\n";
+			}
+		}
+
+		return sb2 + sb1;
+	}
 
 	/** Generate itemized list of account information and net worth summary */
 	public static String generateReportStatusForDate(StatusForDateModel model) {

@@ -57,14 +57,13 @@ public class InvestmentTxn extends GenericTxn {
 		this.lotsDisposed = new ArrayList<>();
 	}
 
-	/** TODO Construct a dummy transaction for a split (see LotProcessor) */
+	/** Construct a dummy transaction for a split (see LotProcessor) */
 	public InvestmentTxn(int acctid, InvestmentTxn txn) {
 		super(acctid);
 
 		setDate(txn.getDate());
 		setAmount(txn.getAmount());
 
-		// this.clearedStatus = txn.clearedStatus;
 		this.runningTotal = BigDecimal.ZERO;
 		this.stmtdate = null;
 
@@ -73,7 +72,6 @@ public class InvestmentTxn extends GenericTxn {
 		this.option = txn.option;
 		this.price = txn.price;
 		this.quantity = txn.quantity;
-		// this.textFirstLine = "";
 		this.commission = txn.commission;
 		this.accountForTransfer = txn.accountForTransfer;
 		this.amountTransferred = txn.amountTransferred;
@@ -309,27 +307,6 @@ public class InvestmentTxn extends GenericTxn {
 		}
 	}
 
-//	/**
-//	 * TODO defunct Construct a string for persisting this transaction to a file<br>
-//	 * Investment Format: I;DATE;ACTION;[SEC];[QTY];AMT
-//	 */
-//	public String formatForSave() {
-//		String secString = ";";
-//		if (this.security != null) {
-//			secString = this.security.getSymbol() + ";";
-//			if (this.quantity != null) {
-//				secString += String.format("%5.2f", this.quantity);
-//			}
-//		}
-//
-//		final String s = String.format("I;%s;%s;%s;%5.2f", //
-//				getDate().toString(), //
-//				getAction().toString(), //
-//				secString, //
-//				getCashAmount());
-//		return s;
-//	}
-
 	/** Correct issues with this loaded transaction */
 	public void repair() {
 		TxAction action = getAction();
@@ -513,8 +490,6 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 		s += " amt=" + getAmount();
-		// s += " clr=" + this.clearedStatus;
-		// s += " txt=" + this.textFirstLine;
 		s += " memo=" + getMemo();
 		s += " comm=" + this.commission;
 		s += " xact=" + this.accountForTransfer;
@@ -527,7 +502,7 @@ public class InvestmentTxn extends GenericTxn {
 		return s;
 	}
 
-	// TODO formatValue - put this information into the UI appropriately
+	/** TODO formatValue - put this information into the UI appropriately */
 	public String formatValue() {
 		String ret = "";
 

@@ -98,20 +98,12 @@ public class NonInvestmentTxn extends GenericTxn {
 		s += " date=" + ((d != null) ? getDate().toString() : "null");
 		Account a = Account.getAccountByID(this.acctid);
 		s += " acct=" + ((a != null) ? a.name : "null");
-		// s += " clr:" + this.clearedStatus;
 		s += " num=" + this.chkNumber;
 		s += " payee=" + getPayee();
 		s += " amt=" + getAmount();
 		s += " memo=" + getMemo();
 		s += " xfer/cat=" + getCategory();
 		s += " bal=" + this.runningTotal;
-
-//		if ((this.address != null) && !this.address.isEmpty()) {
-//			s += "\n  addr= ";
-//			for (final String addr : this.address) {
-//				s += "\n  " + addr;
-//			}
-//		}
 
 		if ((this.splits != null) && !this.splits.isEmpty()) {
 			s += "\n  splits \n";

@@ -42,7 +42,6 @@ public class CategoryProcessor {
 				}
 
 				Category cat = Category.findCategory(name);
-				// TODO To be anal, we could check if cat.xxx matches input
 
 				if (cat == null) {
 					cat = new Category(name, desc, isExpense);

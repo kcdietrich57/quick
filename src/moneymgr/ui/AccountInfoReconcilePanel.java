@@ -6,7 +6,6 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 
 import moneymgr.model.Account;
-import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.Statement;
 
 /**
@@ -47,11 +46,6 @@ public class AccountInfoReconcilePanel extends JPanel //
 
 	public void setSplitPosition() {
 		this.securitySplit.setDividerLocation(.75);
-	}
-
-	/** Get portfolio changes for the current statement */
-	public SecurityPortfolio getPortfolioDelta() {
-		return this.reconcileTransactionsPanel.getPortfolioDelta();
 	}
 
 	public void accountSelected(Account acct, boolean update) {

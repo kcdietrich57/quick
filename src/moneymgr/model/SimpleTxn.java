@@ -122,12 +122,36 @@ public class SimpleTxn {
 	}
 
 	public BigDecimal getXferAmount() {
-		return this.amount;
+		BigDecimal xfer = BigDecimal.ZERO;
+
+		if (this.xtxn != null) {
+			xfer = this.amount;
+		} else if (this.hasSplits()) {
+			for (SimpleTxn split : this.getSplits()) {
+				xfer = xfer.add(split.getXferAmount());
+			}
+		}
+
+		return xfer;
 	}
 
 	/** Return the impact of this transaction on the account's cash position */
 	public BigDecimal getCashAmount() {
-		return this.amount;
+		BigDecimal cash = BigDecimal.ZERO;
+
+		if (this.hasSplits()) {
+			for (SimpleTxn split : this.getSplits()) {
+				cash = cash.add(split.getCashAmount());
+			}
+		} else {
+			cash = this.amount;
+		}
+
+		return cash;
+	}
+
+	public BigDecimal getGain() {
+		return BigDecimal.ZERO;
 	}
 
 	public String getMemo() {

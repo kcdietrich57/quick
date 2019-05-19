@@ -165,12 +165,12 @@ public class SecurityPortfolio {
 		return portValue;
 	}
 
-	/** Compares holdings to a target (e.g. for statement reconciliation) */
+	/** TODO defunct HoldingsComparison Compares holdings to a target */
 	public static class HoldingsComparison {
-		public List<SecurityPosition> actualPositions = new ArrayList<>();
+		private List<SecurityPosition> actualPositions = new ArrayList<>();
 
 		/** Set the positions to compare */
-		public void addPosition(SecurityPosition actual) {
+		private void addPosition(SecurityPosition actual) {
 			this.actualPositions.add(actual);
 		}
 

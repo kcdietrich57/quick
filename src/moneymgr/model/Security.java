@@ -141,7 +141,7 @@ public class Security {
 	}
 
 	public void addTransaction(InvestmentTxn txn) {
-		// TODO should the list be sorted?
+		// TODO should security.transactions be sorted?
 		this.transactions.add(txn);
 
 		if ((txn.price != null) && //

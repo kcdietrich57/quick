@@ -87,6 +87,11 @@ public class QDate implements Comparable<QDate> {
 		return this.datevalue % 100;
 	}
 
+	/** Return the first day of the month for this date */
+	public QDate getFirstDayOfMonth() {
+		return new QDate(getYear(), getMonth(), 1);
+	}
+
 	/** Return the last day of the month for this date */
 	public QDate getLastDayOfMonth() {
 		return new QDate(getYear(), getMonth() + 1, 1).addDays(-1);

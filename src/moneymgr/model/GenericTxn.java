@@ -50,9 +50,7 @@ public abstract class GenericTxn //
 		}
 
 		allTransactionsByID.set(txn.txid, txn);
-		// TODO not necessary allTransactionsByID_readonly = null;
 
-		// TODO make date immutable
 		if (txn.getDate() != null) {
 			addTransactionDate(txn);
 		}
@@ -242,11 +240,11 @@ public abstract class GenericTxn //
 		return idx;
 	}
 
+	// TODO make txn properties immutable
 	private QDate date;
-	// TODO clearedStatus comes from quicken, but I don't really care about that
-	// public String clearedStatus;
-	public QDate stmtdate;
 	private String payee;
+
+	public QDate stmtdate;
 
 	/** Keeps track of account balance - depends on order of transactions */
 	public BigDecimal runningTotal;
@@ -256,7 +254,6 @@ public abstract class GenericTxn //
 
 		this.date = null;
 		this.payee = "";
-		// this.clearedStatus = null;
 		this.stmtdate = null;
 		this.runningTotal = null;
 
@@ -309,19 +306,6 @@ public abstract class GenericTxn //
 	public QDate getDate() {
 		return this.date;
 	}
-
-//	/**
-//	 * TODO defunct format tx for save in stmt log
-//   * Construct a string for persisting this transaction to a file<br>
-//	 * Generic fmt: T;DATE;CKNUM;AMT
-//	 */
-//	public String formatForSave() {
-//		final String s = String.format("T;%s;%d;%5.2f", //
-//				getDate().toString(), //
-//				getCheckNumber(), //
-//				getCashAmount());
-//		return s;
-//	}
 
 	/** Comparison by date and check number */
 	public int compareTo(GenericTxn other) {

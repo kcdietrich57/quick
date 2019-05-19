@@ -14,6 +14,7 @@ import moneymgr.model.Security;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.SecurityPosition;
 import moneymgr.model.StockOption;
+import moneymgr.model.TxAction;
 import moneymgr.util.Common;
 
 /** Load securities and set up security and lot details afterwards. */
@@ -118,49 +119,13 @@ public class SecurityProcessor {
 			}
 
 			InvestmentTxn txn = (InvestmentTxn) gtxn;
-
-			SecurityPosition pos = port.getPosition(txn.security);
-
-			switch (txn.getAction()) {
-			case BUY:
-			case SHRS_IN:
-			case REINV_DIV:
-			case REINV_LG:
-			case REINV_SH:
-			case BUYX:
-			case REINV_INT:
-				pos.addTransaction(txn);
-				break;
-
-			case SHRS_OUT:
-			case SELL:
-			case SELLX:
-				pos.addTransaction(txn);
-				break;
-
-			case STOCKSPLIT:
+			if (txn.getAction() == TxAction.STOCKSPLIT) {
 				// TODO processSplit() - only keep one split tx, not one per acct
 				StockOption.processSplit(txn);
-
-				pos.addTransaction(txn);
-				break;
-
-			case GRANT:
-			case VEST:
-			case EXERCISE:
-			case EXERCISEX:
-			case EXPIRE:
-				break;
-
-			case CASH:
-			case DIV:
-			case INT_INC:
-			case MISC_INCX:
-				break;
-
-			default:
-				break;
 			}
+
+			SecurityPosition pos = port.getPosition(txn.security);
+			pos.addTransaction(txn);
 		}
 	}
 

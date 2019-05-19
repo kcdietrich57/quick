@@ -70,8 +70,6 @@ public class QifDomReader {
 		File d = new File(this.qifDir, "quotes");
 		SecurityProcessor.loadSecurityPriceHistory(d);
 
-		// TODO look at these and the proper order of actions
-
 		// Create option objects
 		OptionsProcessor.loadStockOptions();
 

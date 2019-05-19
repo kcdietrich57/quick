@@ -257,6 +257,7 @@ public class LotProcessor {
 	private static String printOpenLots(List<Lot> thelots, int acctid) {
 		String s = "";
 		BigDecimal bal = BigDecimal.ZERO;
+		// TODO since lot.addshares is always true, this means "not first lot"
 		boolean addshares = false;
 		QDate curdate = null;
 		TxAction curaction = null;

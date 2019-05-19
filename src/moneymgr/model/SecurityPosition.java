@@ -73,7 +73,7 @@ public class SecurityPosition {
 			analyzeTransactions();
 		}
 
-		/** TODO (incomplete) Gather performance data from security transactions */
+		/** TODO SecurityPerformance (incomplete) Gather performance data from security transactions */
 		private void analyzeTransactions() {
 			int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate( //
 					this.pos.transactions, this.start);
@@ -102,7 +102,7 @@ public class SecurityPosition {
 
 				case SHRS_IN:
 				case SHRS_OUT:
-					// TODO should the performance info follow the shares?
+					// TODO SecurityPerformance should the performance info follow the shares?
 					break;
 
 				case BUY:
@@ -114,7 +114,7 @@ public class SecurityPosition {
 					// These don't fit into any performance category (neutral)
 					break;
 
-				// TODO consider these action types
+				// TODO SecurityPerformance consider these action types
 				case BUYX:
 				case SELLX:
 				case CASH:
@@ -287,6 +287,33 @@ public class SecurityPosition {
 			Common.reportError("Transaction added to portfolio twice");
 		}
 
+		switch (txn.getAction()) {
+		case BUY:
+		case SHRS_IN:
+		case REINV_DIV:
+		case REINV_LG:
+		case REINV_SH:
+		case BUYX:
+		case REINV_INT:
+		case SHRS_OUT:
+		case SELL:
+		case SELLX:
+		case STOCKSPLIT:
+			break;
+
+		case GRANT:
+		case VEST:
+		case EXERCISE:
+		case EXERCISEX:
+		case EXPIRE:
+		case CASH:
+		case DIV:
+		case INT_INC:
+		case MISC_INCX:
+		default:
+			return;
+		}
+
 		int idx = 0;
 		while (idx < this.transactions.size() //
 				&& (compareByDate.compare(txn, this.transactions.get(idx)) > 0)) {
@@ -411,25 +438,6 @@ public class SecurityPosition {
 						this.security.getPriceForDate(date).getPrice(), //
 						getValueForDate(date));
 	}
-
-// TODO defunct
-//	/** Encode position transactions for persistence: name;numtx[;txid;shrbal] */
-//	public String formatForSave(Statement stat) {
-//		int numtx = this.transactions.size();
-//		String s = this.security.getName() + ";" + numtx;
-//
-//		for (int ii = 0; ii < numtx; ++ii) {
-//			InvestmentTxn t = this.transactions.get(ii);
-//			int txidx = stat.transactions.indexOf(t);
-//			BigDecimal bal = this.shrBalance.get(ii);
-//
-//			assert txidx >= 0;
-//
-//			s += String.format(";%d;%f", txidx, bal);
-//		}
-//
-//		return s;
-//	}
 
 	public String toString() {
 		String s = String.format( //

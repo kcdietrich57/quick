@@ -38,7 +38,7 @@ public class Lot {
 	public InvestmentTxn disposingTransaction;
 
 	/**
-	 * TODO unused addshares<br>
+	 * TODO unused addshares is always true<br>
 	 * True if this represents adding shares to the associated account
 	 */
 	public boolean addshares = true;

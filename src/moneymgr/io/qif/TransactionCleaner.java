@@ -31,19 +31,11 @@ public class TransactionCleaner {
 	private static int failedXfers = 0;
 
 	public void cleanUpTransactions() {
-		// TODO transactions should already be sorted?
-		// sortAccountTransactionsByDate();
 		cleanUpSplits();
 		calculateRunningTotals();
 		connectTransfers();
 		connectSecurityTransfers();
 		LotProcessor.setupSecurityLots();
-	}
-
-	private void sortAccountTransactionsByDate() {
-		for (Account a : Account.getAccounts()) {
-			Common.sortTransactionsByDate(a.transactions);
-		}
 	}
 
 	/** Correct any issues with split transactions */
@@ -194,10 +186,6 @@ public class TransactionCleaner {
 		matchingTxns.clear();
 
 		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(acct.transactions, date);
-		if (idx < 0) {
-			// TODO we can't do this, as we will look forwards from the date
-			// return;
-		}
 
 		boolean exactDateMatch = false;
 

@@ -94,7 +94,7 @@ public class TransactionProcessor {
 				txn.setAction(TxAction.parseAction(qline.value));
 				break;
 			case InvClearedStatus:
-				//txn.clearedStatus = qline.value;
+				// Ignore
 				break;
 			case InvCommission:
 				txn.commission = Common.getDecimal(qline.value);
@@ -204,7 +204,7 @@ public class TransactionProcessor {
 				txn.setDate(Common.parseQDate(qline.value));
 				break;
 			case TxnClearedStatus:
-				//txn.clearedStatus = qline.value;
+				// Ignore
 				break;
 			case TxnNumber:
 				txn.chkNumber = qline.value;
@@ -212,10 +212,6 @@ public class TransactionProcessor {
 			case TxnPayee:
 				txn.setPayee(qline.value);
 				break;
-//			case TxnAddress:
-//				txn.address.add(qline.value);
-//				break;
-
 			case TxnSplitCategory:
 				if (cursplit == null || cursplit.getCatid() != 0) {
 					cursplit = new SimpleTxn(txn.acctid);
