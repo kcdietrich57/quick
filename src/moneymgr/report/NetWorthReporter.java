@@ -54,7 +54,7 @@ public class NetWorthReporter {
 			}
 		}
 
-		return sb2 + sb1;
+		return model.getSummary() + "\n--------\n" + sb2 + sb1;
 	}
 
 	/** Generate itemized list of account information and net worth summary */
