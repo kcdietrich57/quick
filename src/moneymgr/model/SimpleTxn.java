@@ -124,7 +124,7 @@ public class SimpleTxn {
 	public BigDecimal getXferAmount() {
 		BigDecimal xfer = BigDecimal.ZERO;
 
-		if (this.xtxn != null) {
+		if (this.catid < 0) {
 			xfer = this.amount;
 		} else if (this.hasSplits()) {
 			for (SimpleTxn split : this.getSplits()) {
