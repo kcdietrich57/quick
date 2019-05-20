@@ -13,10 +13,12 @@ import moneymgr.util.QDate;
 public class CashFlowModel {
 
 	public final QDate date;
-	public final List<AcctInfo> acctinfo;
-	public final AcctInfo summary;
+	public final List<AcctInfo> acctinfoMonth;
+	public final AcctInfo summaryMonth;
+	public final List<AcctInfo> acctinfoYear;
+	public final AcctInfo summaryYear;
 
-	class AcctInfo {
+	static class AcctInfo {
 		public Account account;
 		public String acctname;
 		public List<GenericTxn> txns;
@@ -125,7 +127,7 @@ public class CashFlowModel {
 
 			sb += String.format("  GainLoss: %12s\n", Common.formatAmount(this.gains).trim());
 
-			if (!balanceMatches()) {
+			if ((this.txns != null) && !balanceMatches()) {
 				for (GenericTxn txn : this.txns) {
 					BigDecimal cash = txn.getCashAmount();
 					BigDecimal xfer = txn.getXferAmount();
@@ -153,24 +155,83 @@ public class CashFlowModel {
 		}
 	}
 
-	public CashFlowModel(QDate date) {
-		this.date = date.getLastDayOfMonth();
-		this.acctinfo = new ArrayList<>();
-		this.summary = new AcctInfo();
+	public static List<CashFlowModel> goodModels = null;
+	public static List<CashFlowModel> failModels = null;
 
-		QDate start = this.date.getFirstDayOfMonth();
-		build(start, date);
+	public List<CashFlowModel> checkCashFlow() {
+		if (failModels == null) {
+			goodModels = new ArrayList<CashFlowModel>();
+			failModels = new ArrayList<CashFlowModel>();
+
+			QDate dt = GenericTxn.getFirstTransactionDate();
+			while (dt.compareTo(GenericTxn.getLastTransactionDate()) < 0) {
+				CashFlowModel model = new CashFlowModel(dt);
+				if (!model.balanceMatches()) {
+					failModels.add(model);
+					new CashFlowModel(dt);
+				} else {
+					goodModels.add(model);
+				}
+
+				dt = dt.getLastDayOfMonth().addDays(1);
+			}
+		}
+
+		return goodModels;
+	}
+
+	public CashFlowModel(QDate date) {
+		this.acctinfoMonth = new ArrayList<>();
+		this.summaryMonth = new AcctInfo();
+		this.summaryMonth.acctname = "Month Summary";
+		this.acctinfoYear = new ArrayList<>();
+		this.summaryYear = new AcctInfo();
+		this.summaryYear.acctname = "12 Month Summary";
+
+		if (failModels == null) {
+			checkCashFlow();
+
+			List<CashFlowModel> fails = failModels;
+			List<CashFlowModel> succs = goodModels;
+		}
+
+		this.date = date.getLastDayOfMonth();
+
+		QDate startMonth = this.date.getFirstDayOfMonth();
+		build(startMonth, this.date, this.acctinfoMonth, this.summaryMonth);
+
+		QDate startYear = this.date.addDays(-363).getFirstDayOfMonth();
+		build(startYear, this.date, this.acctinfoYear, this.summaryYear);
 	}
 
 	public AcctInfo getSummary() {
-		return this.summary;
+		return this.summaryMonth;
+	}
+
+	public boolean balanceMatches() {
+		for (AcctInfo info : this.acctinfoMonth) {
+			if (!info.balanceMatches()) {
+				return false;
+			}
+		}
+
+		for (AcctInfo info : this.acctinfoYear) {
+			if (!info.balanceMatches()) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/** Construct model */
-	private void build(QDate start, QDate end) {
-		this.summary.startDate = start;
-		this.summary.endDate = end;
-		this.summary.acctname = "Summary";
+	private static void build(QDate start, QDate end, List<AcctInfo> accts, AcctInfo summary) {
+		if (start.compareTo(GenericTxn.getFirstTransactionDate()) < 0) {
+			start = GenericTxn.getFirstTransactionDate();
+		}
+
+		summary.startDate = start;
+		summary.endDate = end;
 
 		for (Account acct : Account.getAccounts()) {
 			if (!acct.isOpenDuring(start, end)) {
@@ -230,8 +291,25 @@ public class CashFlowModel {
 				}
 			}
 
-			this.acctinfo.add(ainfo);
-			this.summary.addInfo(ainfo);
+			summary.addInfo(ainfo);
+
+			for (int idx = 0; idx < accts.size(); ++idx) {
+				AcctInfo info = accts.get(idx);
+				if (info.endBal.compareTo(ainfo.endBal) < 0) {
+					accts.add(idx, ainfo);
+					ainfo = null;
+					break;
+				}
+			}
+
+			if (ainfo != null) {
+				accts.add(ainfo);
+			}
 		}
+	}
+
+	public String toString() {
+		return this.summaryMonth.toString() //
+				+ "\n" + this.summaryYear.toString();
 	}
 }

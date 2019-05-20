@@ -44,7 +44,7 @@ public class NetWorthReporter {
 		String sb1 = "";
 		String sb2 = "";
 
-		for (AcctInfo ainfo : model.acctinfo) {
+		for (AcctInfo ainfo : model.acctinfoMonth) {
 			if (ainfo.balanceMatches()) {
 				sb1 += ainfo.toString();
 				sb1 += "\n";
@@ -54,7 +54,8 @@ public class NetWorthReporter {
 			}
 		}
 
-		return model.getSummary() + "\n--------\n" + sb2 + sb1;
+		return model.toString();
+		//return model.getSummary() + "\n--------\n" + sb2 + sb1;
 	}
 
 	/** Generate itemized list of account information and net worth summary */

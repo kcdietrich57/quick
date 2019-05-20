@@ -193,7 +193,21 @@ public abstract class GenericTxn //
 			return (which == TxIndexType.INSERT) ? 0 : -1;
 		}
 
+		int sz = txns.size();
+
 		int idx = Collections.binarySearch(txns, txn, compareByDate);
+
+		while ((idx >= 0) && (idx < sz)) {
+			QDate dt = txns.get(idx).getDate();
+			int diff = dt.subtract(txn.getDate());
+			if (diff > 0) {
+				--idx;
+			} else if (diff > 0) {
+				++idx;
+			} else {
+				break;
+			}
+		}
 
 		if (idx < 0) {
 			int n = -idx - 1;
@@ -211,8 +225,6 @@ public abstract class GenericTxn //
 
 			idx = n;
 		}
-
-		int sz = txns.size();
 
 		switch (which) {
 		case FIRST:
