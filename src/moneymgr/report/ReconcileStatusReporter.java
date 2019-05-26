@@ -83,7 +83,8 @@ public class ReconcileStatusReporter {
 		public List<AccountInfo> accounts60 = new ArrayList<>();
 		public List<AccountInfo> accounts30 = new ArrayList<>();
 		public List<AccountInfo> accounts0 = new ArrayList<>();
-		public List<AccountInfo> accounts_nostat = new ArrayList<>();
+		public List<AccountInfo> accounts_duesoon = new ArrayList<>();
+		public List<AccountInfo> accounts_notdue = new ArrayList<>();
 
 		public void insertAccountInfo(List<AccountInfo> list, AccountInfo info) {
 			if (list.isEmpty()) {
@@ -112,8 +113,10 @@ public class ReconcileStatusReporter {
 						insertAccountInfo(this.accounts30, ainfo);
 					} else if (diff >= 0) {
 						insertAccountInfo(this.accounts0, ainfo);
+					} else if (diff >= -7) {
+						insertAccountInfo(this.accounts_duesoon, ainfo);
 					} else {
-						insertAccountInfo(this.accounts_nostat, ainfo);
+						insertAccountInfo(this.accounts_notdue, ainfo);
 					}
 				}
 			}
@@ -187,7 +190,8 @@ public class ReconcileStatusReporter {
 		anum = appendAccountSection(sb, anum, "### Overdue 60+ days", model.accounts60);
 		anum = appendAccountSection(sb, anum, "### Overdue 30-60 days", model.accounts30);
 		anum = appendAccountSection(sb, anum, "### Due <30 days", model.accounts0);
-		anum = appendAccountSection(sb, anum, "### Not due", model.accounts_nostat);
+		anum = appendAccountSection(sb, anum, "### Due soon", model.accounts_duesoon);
+		anum = appendAccountSection(sb, anum, "### Not due", model.accounts_notdue);
 
 		sb.append("\n");
 		sb.append(String.format("   %5d / %5d uncleared tx in %4d open accounts\n", //

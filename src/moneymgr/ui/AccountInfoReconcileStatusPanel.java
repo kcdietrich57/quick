@@ -19,6 +19,7 @@ import moneymgr.model.GenericTxn;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.Statement;
 import moneymgr.util.Common;
+import moneymgr.util.QDate;
 
 /**
  * This panel shows info about the reconcile process, and has controls to
@@ -202,13 +203,18 @@ public class AccountInfoReconcileStatusPanel extends JPanel //
 			holdingsMatch = comparison.holdingsMatch();
 		}
 
-		if ((this.stmt != null) && isBalanced && holdingsMatch) {
+		if ((this.stmt != null) //
+				&& (this.stmt.date.compareTo(QDate.today()) <= 0) //
+				&& isBalanced //
+				&& holdingsMatch) {
 			this.finishButton.setText("Finish");
 			this.finishButton.setEnabled(true);
 			this.finishButton.setForeground(Color.BLACK);
 		} else {
 			if (this.stmt == null) {
 				this.finishButton.setText("No Statement");
+			} else if (this.stmt.date.compareTo(QDate.today()) > 0) {
+				this.finishButton.setText("Future statement");
 			} else if (!isBalanced && !holdingsMatch) {
 				this.finishButton.setText("Cash/Holdings not balanced");
 			} else if (!isBalanced) {
