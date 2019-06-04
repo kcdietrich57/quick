@@ -224,7 +224,7 @@ public class SecurityPortfolio {
 	/** Check whether this portfolio has any holdings on a given date */
 	public boolean isEmptyForDate(QDate d) {
 		for (SecurityPosition p : this.positions) {
-			if (p.isEmptyForDate(d)) {
+			if (!p.isEmptyForDate(d)) {
 				return false;
 			}
 		}

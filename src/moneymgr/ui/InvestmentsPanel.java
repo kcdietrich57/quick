@@ -79,6 +79,8 @@ public class InvestmentsPanel extends JPanel {
 		ret.append("\n");
 		ret.append("=====================================\n");
 		ret.append("\n");
+		ret.append(String.format("[NN]: %-40s %10s %10s %13s\n", //
+				"Name", "Shares", "Price", "Value"));
 
 		int num = 1;
 		for (SecurityPosition pos : SecurityPortfolio.portfolio.positions) {

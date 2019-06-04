@@ -73,7 +73,10 @@ public class SecurityPosition {
 			analyzeTransactions();
 		}
 
-		/** TODO SecurityPerformance (incomplete) Gather performance data from security transactions */
+		/**
+		 * TODO SecurityPerformance (incomplete) Gather performance data from security
+		 * transactions
+		 */
 		private void analyzeTransactions() {
 			int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate( //
 					this.pos.transactions, this.start);
@@ -314,10 +317,34 @@ public class SecurityPosition {
 			return;
 		}
 
+		boolean hassplit = false;
+		BigDecimal splitratio = null;
+
 		int idx = 0;
 		while (idx < this.transactions.size() //
 				&& (compareByDate.compare(txn, this.transactions.get(idx)) > 0)) {
 			++idx;
+		}
+
+		while (idx < this.transactions.size() //
+				&& (compareByDate.compare(txn, this.transactions.get(idx)) > 0)) {
+			InvestmentTxn tx = this.transactions.get(idx);
+			if (tx.getAction() == TxAction.STOCKSPLIT) {
+				if (hassplit) {
+					if (tx.getSplitRatio().compareTo(splitratio) != 0) {
+						Common.reportError("Mismatched splits");
+					}
+				} else {
+					hassplit = true;
+					splitratio = tx.getSplitRatio();
+				}
+			}
+
+			++idx;
+		}
+
+		if ((txn.getAction() == TxAction.STOCKSPLIT) && hassplit) {
+			return;
 		}
 
 		this.transactions.add(idx, txn);
