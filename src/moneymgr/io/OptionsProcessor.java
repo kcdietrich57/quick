@@ -150,7 +150,7 @@ public class OptionsProcessor {
 		// TODO seems we are processing transactions twice here.
 		for (Account a : Account.getAccounts()) {
 			if (a.isInvestmentAccount()) {
-				matchOptionsWithTransactions(a.transactions);
+				matchOptionsWithTransactions(a.getTransactions());
 			}
 		}
 	}

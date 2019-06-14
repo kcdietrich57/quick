@@ -130,6 +130,16 @@ public class Lot {
 		}
 	}
 
+	public boolean isDerivedFrom(Lot other) {
+		for (Lot lot = this; lot != null; lot = lot.sourceLot) {
+			if (lot == other) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public boolean isOpen() {
 		return this.disposingTransaction == null;
 	}
@@ -182,7 +192,10 @@ public class Lot {
 	}
 
 	public String toString() {
-		String ret = "[" + this.lotid + "] " + this.acctid + " " + //
+		String ret = "[" + this.lotid + //
+				((this.sourceLot != null) ? (":" + this.sourceLot.lotid) : "") + //
+				"] " + //
+				this.acctid + " " + //
 				getAcquisitionDate().toString() + " " + //
 				Security.getSecurity(this.secid).getSymbol() + " " + //
 				Common.formatAmount3(this.shares) + " " + //

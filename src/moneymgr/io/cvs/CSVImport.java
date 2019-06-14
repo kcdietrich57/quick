@@ -102,7 +102,14 @@ public class CSVImport {
 	}
 
 	private void processCSVRecords() {
+		int ntuples = transactionsMap.size();
+		int tupleidx = 0;
 		for (Map.Entry<String, List<String[]>> entry : transactionsMap.entrySet()) {
+			if ((tupleidx % 1000) == 0) {
+//				System.out.println("xyzzy tuple " + tupleidx + "/" + ntuples);
+			}
+			++tupleidx;
+			
 			if (entry.getKey().equals("FieldNames")) {
 				continue;
 			}
@@ -155,83 +162,94 @@ public class CSVImport {
 	}
 
 	private SimpleTxn createTransaction(QDate txdate, String[] tuple) {
-		String acctname = tuple[ACCOUNT_IDX];
-
-		Account acct = Account.findAccount(acctname);
-		if (acct == null) {
-			acct = new Account(acctname, AccountType.Bank);
-
-			Account.addAccount(acct);
-		}
-
-		String payee = tuple[PAYEE_IDX];
-		BigDecimal amount = Common.getDecimal(tuple[AMOUNT_IDX]);
-
-		String split = tuple[SPLIT_IDX];
-		// String type = tuple[TYPE_IDX];
-		String memo = tuple[MEMO_IDX];
-		String cknum = tuple[CHECKNUM_IDX];
-		// String sec = tuple[SECURITY_IDX];
-		String cat = tuple[CATEGORY_IDX];
-		// String fees = tuple[FEES_IDX];
-		// String shares = tuple[SHARES_IDX];
-
-		Account xferAcct = null;
-		Category c = null;
-		int catid;
-
-		if (cat.startsWith("Transfer:[")) {
-			cat = cat.substring(10, cat.length() - 1);
-			xferAcct = Account.findAccount(cat);
-			catid = (xferAcct != null) ? -xferAcct.acctid : 0;
-		} else {
-			c = (!cat.isEmpty()) ? Category.findCategory(cat) : null;
-			catid = (c != null) ? c.catid : 0;
-		}
-
 		SimpleTxn txn = null;
 
-		if (split.equals("S")) {
-			// TODO assemble splits into transaction
-			txn = new SimpleTxn(acct.acctid);
-		} else if (acct.isNonInvestmentAccount()) {
-			txn = new NonInvestmentTxn(acct.acctid);
-		} else if (acct.isInvestmentAccount()) {
-			txn = new InvestmentTxn(acct.acctid);
-		}
+		try {
+			String acctname = tuple[ACCOUNT_IDX];
 
-		txn.setDate(txdate);
-		txn.setAmount(amount);
-		txn.setMemo(memo);
-		txn.setXtxn(null);
-		txn.setCatid(catid);
+			// TODO account names different in mac file
+			if (acctname.contentEquals("Tesla Model 3")) {
+				acctname = "Tesla";
+			} else if (acctname.contentEquals("Tesla Loan")) {
+				acctname = "TeslaLoan";
+			}
 
-		if (txn instanceof GenericTxn) {
-			GenericTxn gtxn = (GenericTxn) txn;
-			gtxn.setPayee(payee);
-		}
+			Account acct = Account.findAccount(acctname);
+			if (acct == null) {
+				acct = new Account(acctname, AccountType.Bank);
 
-		if (txn instanceof NonInvestmentTxn) {
-			NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
-			nitxn.chkNumber = cknum;
-			nitxn.splits = new ArrayList<SimpleTxn>();
-		}
+				Account.addAccount(acct);
+			}
 
-		if (txn instanceof InvestmentTxn) {
-			InvestmentTxn itxn = (InvestmentTxn) txn;
-			itxn.accountForTransfer = null;
-			itxn.amountTransferred = BigDecimal.ZERO;
-			itxn.setCatid(0);
-			itxn.commission = BigDecimal.ZERO;
-			itxn.price = BigDecimal.ZERO;
-			itxn.security = null;
-			itxn.xferTxns = null;
-			// itxn.textFirstLine = null;
-		}
+			String payee = tuple[PAYEE_IDX];
+			BigDecimal amount = Common.getDecimal(tuple[AMOUNT_IDX]);
+
+			String split = tuple[SPLIT_IDX];
+			// String type = tuple[TYPE_IDX];
+			String memo = tuple[MEMO_IDX];
+			String cknum = tuple[CHECKNUM_IDX];
+			// String sec = tuple[SECURITY_IDX];
+			String cat = tuple[CATEGORY_IDX];
+			// String fees = tuple[FEES_IDX];
+			// String shares = tuple[SHARES_IDX];
+
+			Account xferAcct = null;
+			Category c = null;
+			int catid;
+
+			if (cat.startsWith("Transfer:[")) {
+				cat = cat.substring(10, cat.length() - 1);
+				xferAcct = Account.findAccount(cat);
+				catid = (xferAcct != null) ? -xferAcct.acctid : 0;
+			} else {
+				c = (!cat.isEmpty()) ? Category.findCategory(cat) : null;
+				catid = (c != null) ? c.catid : 0;
+			}
+
+			if (split.equals("S")) {
+				// TODO assemble splits into transaction
+				txn = new SimpleTxn(acct.acctid);
+			} else if (acct.isNonInvestmentAccount()) {
+				txn = new NonInvestmentTxn(acct.acctid);
+			} else if (acct.isInvestmentAccount()) {
+				txn = new InvestmentTxn(acct.acctid);
+			}
+
+			txn.setDate(txdate);
+			txn.setAmount(amount);
+			txn.setMemo(memo);
+			txn.setXtxn(null);
+			txn.setCatid(catid);
+
+			if (txn instanceof GenericTxn) {
+				GenericTxn gtxn = (GenericTxn) txn;
+				gtxn.setPayee(payee);
+			}
+
+			if (txn instanceof NonInvestmentTxn) {
+				NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
+				nitxn.chkNumber = cknum;
+				nitxn.splits = new ArrayList<SimpleTxn>();
+			}
+
+			if (txn instanceof InvestmentTxn) {
+				InvestmentTxn itxn = (InvestmentTxn) txn;
+				itxn.accountForTransfer = null;
+				itxn.amountTransferred = BigDecimal.ZERO;
+				itxn.setCatid(0);
+				itxn.commission = BigDecimal.ZERO;
+				itxn.price = BigDecimal.ZERO;
+				itxn.security = null;
+				itxn.xferTxns = null;
+				// itxn.textFirstLine = null;
+			}
 
 //		public int xacctid;
 //		public int catid; // >0: CategoryID; <0 AccountID
 //		public SimpleTxn xtxn;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		return txn;
 	}
@@ -355,19 +373,19 @@ public class CSVImport {
 			return;
 		}
 
+		// "Split","Date","Payee","Category","Amount","Account"
 		SPLIT_IDX = getFieldIndex("Split", fieldnames);
-		ACCOUNT_IDX = getFieldIndex("Account", fieldnames);
 		DATE_IDX = getFieldIndex("Date", fieldnames);
-		AMOUNT_IDX = getFieldIndex("Amount", fieldnames);
-		// TYPE_IDX = getFieldIndex("Type", fieldnames);
-		CHECKNUM_IDX = getFieldIndex("Check #", fieldnames);
-		// SECURITY_IDX = getFieldIndex("Security", fieldnames);
 		PAYEE_IDX = getFieldIndex("Payee", fieldnames);
 		CATEGORY_IDX = getFieldIndex("Category", fieldnames);
-		// FEES_IDX = getFieldIndex("Comm/Fee", fieldnames);
-		DATE_IDX = getFieldIndex("Date", fieldnames);
-		// SHARES_IDX = getFieldIndex("Shares", fieldnames);
+		AMOUNT_IDX = getFieldIndex("Amount", fieldnames);
+		ACCOUNT_IDX = getFieldIndex("Account", fieldnames);
+		CHECKNUM_IDX = getFieldIndex("Check #", fieldnames);
 		MEMO_IDX = getFieldIndex("Memo/Notes", fieldnames);
+		// TYPE_IDX = getFieldIndex("Type", fieldnames);
+		// SECURITY_IDX = getFieldIndex("Security", fieldnames);
+		// FEES_IDX = getFieldIndex("Comm/Fee", fieldnames);
+		// SHARES_IDX = getFieldIndex("Shares", fieldnames);
 	}
 
 	public void readFieldNames() {

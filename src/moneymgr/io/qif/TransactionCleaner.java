@@ -41,7 +41,7 @@ public class TransactionCleaner {
 	/** Correct any issues with split transactions */
 	private void cleanUpSplits() {
 		for (Account a : Account.getAccounts()) {
-			for (GenericTxn txn : a.transactions) {
+			for (GenericTxn txn : a.getTransactions()) {
 				massageSplits(txn);
 			}
 		}
@@ -95,7 +95,7 @@ public class TransactionCleaner {
 		for (Account a : Account.getAccounts()) {
 			a.clearedBalance = a.balance = BigDecimal.ZERO;
 
-			for (GenericTxn t : a.transactions) {
+			for (GenericTxn t : a.getTransactions()) {
 				BigDecimal amt = t.getCashAmount();
 
 				if (!amt.equals(BigDecimal.ZERO)) {
@@ -114,7 +114,7 @@ public class TransactionCleaner {
 	/** Connect transfer transactions between accounts */
 	private void connectTransfers() {
 		for (Account a : Account.getAccounts()) {
-			for (GenericTxn txn : a.transactions) {
+			for (GenericTxn txn : a.getTransactions()) {
 				connectTransfers(txn);
 			}
 		}
@@ -185,14 +185,17 @@ public class TransactionCleaner {
 	private void findMatchesForTransfer(Account acct, SimpleTxn txn, QDate date, boolean strict) {
 		matchingTxns.clear();
 
-		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(acct.transactions, date);
+		List<GenericTxn> txns = acct.getTransactions();
+		int ntran = acct.getNumTransactions();
+
+		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(txns, date);
 
 		boolean exactDateMatch = false;
 
 		for (int inc = 0; inc < 10; ++inc) {
 			// Check matching/preceding transactions
 			if (idx >= inc) {
-				GenericTxn gtxn = acct.transactions.get(idx - inc);
+				GenericTxn gtxn = txns.get(idx - inc);
 
 				boolean dateeq = date.equals(gtxn.getDate());
 
@@ -209,8 +212,8 @@ public class TransactionCleaner {
 
 			// Check following transaction (date must be later)
 			// Skip if exact match has already been found
-			if (!exactDateMatch && (idx + inc < acct.transactions.size())) {
-				GenericTxn gtxn = acct.transactions.get(idx + inc);
+			if (!exactDateMatch && (idx + inc < ntran)) {
+				GenericTxn gtxn = txns.get(idx + inc);
 
 				SimpleTxn match = checkMatchForTransfer(txn, gtxn, strict);
 				if (match != null) {

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -95,7 +96,7 @@ public class InvestmentTxn extends GenericTxn {
 			return this.security.getName();
 		}
 
-		return "N/A";
+		return "";
 	}
 
 	public void setQuantity(BigDecimal qty) {
@@ -259,6 +260,9 @@ public class InvestmentTxn extends GenericTxn {
 			tot = tot.negate();
 			break;
 
+		case CASH:
+			return tot;
+
 		case SHRS_IN:
 		case SHRS_OUT: // no xfer info?
 		case BUYX:
@@ -278,7 +282,6 @@ public class InvestmentTxn extends GenericTxn {
 
 		case EXERCISE:
 		case SELL:
-		case CASH:
 		case CONTRIBX:
 		case DIV:
 		case INT_INC:
@@ -502,37 +505,50 @@ public class InvestmentTxn extends GenericTxn {
 		return s;
 	}
 
+	public static int calcWeight(Lot lot, List<Lot> lots, List<Lot> disposedLots) {
+		boolean existing = (lot.sourceLot == null) || !lots.contains(lot.sourceLot);
+		boolean disposed = disposedLots.contains(lot);
+
+		// 0 preexisting not disposed (should be none)
+		// 1 Preexisting disposed
+		// 2 new disposed
+		// 3 new not disposed
+
+		if (existing) {
+			return (disposed) ? 1 : 0;
+		} else {
+			return (disposed) ? 2 : 3;
+		}
+	}
+
 	/** TODO formatValue - put this information into the UI appropriately */
 	public String formatValue() {
 		String ret = "";
 
-		String datestr = getDate().toString();
+		String datestr = getDate().toString().trim();
 
-		ret += String.format("Transaction[%d] %10s %d %5s %s", this.txid, //
+		ret += String.format("%-8s %5s %s", //
 				datestr, //
-				this.acctid, //
 				getAction().name(), //
-				Common.formatAmount(getAmount()));
+				// Common.formatAmount(getAmount()).trim());
+				getSecurityName());
+
+		if (this.security != null) {
+			ret += "\n";
+			ret += String.format("  %s   %s @ %s", //
+					this.security.getSymbol(), //
+					Common.formatAmount3(this.quantity.abs()).trim(), //
+					Common.formatAmount(this.price).trim());
+		}
 
 		if (this.amountTransferred != null) {
 			Account xacct = Account.getAccountByID(getXferAcctid());
 			String xacctname = (xacct != null) ? xacct.name : null;
 
-			ret += String.format("  XFER(%s, %s)", //
+			ret += "\n";
+			ret += String.format("  XFER: [%s]   %s", //
 					Common.formatString(xacctname, 20).trim(), //
 					Common.formatAmount(this.amountTransferred).trim());
-		}
-
-		if (this.security != null) {
-			List<Lot> lots = new ArrayList<>(this.lotsCreated);
-			lots.addAll(this.lotsDisposed);
-
-			ret += "\n";
-			ret += String.format("  SEC(%s %s %s, %d lots)", //
-					this.security.getSymbol(), //
-					Common.formatAmount3(this.quantity).trim(), //
-					Common.formatAmount(this.price).trim(), //
-					lots.size());
 		}
 
 		if (isStockOptionTransaction() && (this.option != null)) {
@@ -552,37 +568,92 @@ public class InvestmentTxn extends GenericTxn {
 			}
 		}
 
-		if ((this.lotsCreated != null) && !this.lotsCreated.isEmpty()) {
-			for (Lot lot : this.lotsCreated) {
-				ret += "\n";
-				ret += "   create " + lot.toString();
-			}
-		}
-
-		if ((this.lotsDisposed != null) && !this.lotsDisposed.isEmpty()) {
-			for (Lot lot : this.lotsDisposed) {
-				ret += "\n";
-				ret += "  dispose " + lot.toString();
-			}
-		}
-
-		ret += "\n=========================================";
-
 		if ((getAction() == TxAction.SELL) || (getAction() == TxAction.SELLX)) {
-			ret += "\n\nLots sold:\n---------------\n";
-
-			for (Lot lot : this.lots) {
-				ret += "\n - " + lot.toString();
-			}
-
-			ret += "\n\n";
-			ret += "Basis Info";
 			BasisInfo info = Lot.getBasisInfo(this.lots);
 
-			ret += info.toString();
-			ret += String.format("Proceeds    : %s\nGain/loss   : %s\n", //
+			ret += String.format( //
+					"\n%-10s @ %-8s %12s | %12s : %12s\n", //
+					"Shares", "AvgPrice", "Basis", "Proceeds", "Gain/loss");
+			ret += String.format( //
+					"%10s @ %8s %12s | %12s : %12s\n", //
+					Common.formatAmount3(info.totalShares).trim(), //
+					Common.formatAmount(info.averagePrice).trim(), //
+					Common.formatAmount(info.totalCost), //
 					Common.formatAmount(getAmount()), //
 					Common.formatAmount(getAmount().subtract(info.totalCost)));
+		}
+
+		List<Lot> lots = new ArrayList<>(this.lotsCreated);
+		for (Lot lot : this.lotsDisposed) {
+			if (!lots.contains(lot)) {
+				lots.add(lot);
+			}
+		}
+
+		if (!lots.isEmpty()) {
+			Comparator<Lot> compr = new Comparator<Lot>() {
+				public int compare(Lot l1, Lot l2) {
+					if (l1 == l2) {
+						return 0;
+					}
+
+					int l1n = calcWeight(l1, lots, lotsDisposed);
+					int l2n = calcWeight(l2, lots, lotsDisposed);
+
+					if (l1.isDerivedFrom(l2)) {
+						return 1;
+					} else if (l2.isDerivedFrom(l1)) {
+						return -1;
+					}
+
+					if (l1n != l2n) {
+						return l1n - l2n;
+					}
+
+					return l1.getAcquisitionDate().compareTo(l2.getAcquisitionDate());
+				}
+			};
+
+			Collections.sort(lots, compr);
+
+			ret += String.format("\n%s %-8s: %-5s   %-8s   %-9s   %-8s", //
+					"  ", "idx/src", " ID", " Date", " Shares", " Basis");
+			ret += String.format("\n%s %-8s: %-5s   %-8s   %-9s   %-8s", //
+					"==", "========", "=====", "========", "=========", "========");
+
+			for (Lot lot : lots) {
+				String status;
+				int idx = lots.indexOf(lot);
+				int srcidx = -1;
+
+				if (lot.sourceLot == null) {
+					status = "+";
+				} else {
+					srcidx = lots.indexOf(lot.sourceLot);
+
+					if (srcidx < 0) {
+						status = " ";
+					} else if (srcidx < idx) {
+						status = "+"; // SRC_LOT_" + lot.sourceLot.lotid;
+					} else {
+						status = String.format( //
+								"LOTS_SORTED_IMPROPERLY([%d]%d -> [%d]%d)", //
+								srcidx, lot.sourceLot.lotid, idx, lot.lotid);
+					}
+
+					status += (this.lotsDisposed.contains(lot)) ? "x" : " ";
+				}
+
+				ret += "\n";
+				ret += String.format("%s %-8s: %5d   %8s   %9s   %8s", //
+						status, //
+						("[" + ((srcidx >= 0) ? (srcidx + "->") : "") + idx + "]"), //
+						// lot.toString(), //
+						lot.lotid, //
+						lot.getAcquisitionDate().toString(), //
+						Common.formatAmount3(lot.shares).trim(), //
+						Common.formatAmount(lot.getCostBasis()).trim());
+			}
 		}
 
 		System.out.println("\n=============================\n" + ret + "\n");

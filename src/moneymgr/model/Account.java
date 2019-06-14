@@ -30,6 +30,7 @@ public class Account {
 
 	/** Tracks current context as we are loading */
 	public static Account currAccountBeingLoaded = null;
+	public static boolean accountsLocked = false;
 
 	public static Account makeAccount( //
 			String name, AccountType type, String desc, QDate closeDate, //
@@ -194,7 +195,7 @@ public class Account {
 	public BigDecimal balance;
 	public BigDecimal clearedBalance;
 
-	public List<GenericTxn> transactions;
+	private List<GenericTxn> transactions;
 	public List<Statement> statements;
 	public SecurityPortfolio securities;
 
@@ -252,7 +253,7 @@ public class Account {
 
 	/** Return the date this account opened (i.e. the first transaction date) */
 	public QDate getOpenDate() {
-		return (this.transactions != null) //
+		return (!this.transactions.isEmpty()) //
 				? this.transactions.get(0).getDate() //
 				: QDate.today();
 	}
@@ -317,6 +318,14 @@ public class Account {
 		}
 
 		return idx;
+	}
+
+	public int getNumTransactions() {
+		return this.transactions.size();
+	}
+
+	public List<GenericTxn> getTransactions() {
+		return Collections.unmodifiableList(this.transactions);
 	}
 
 	/** Get transactions for a period (inclusive of start/end date) */

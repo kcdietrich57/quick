@@ -59,20 +59,28 @@ public class NonInvestmentTxn extends GenericTxn {
 	}
 
 	public String formatValue() {
-		String ret = String.format("%10s %-30s %s  %13s  %-15s  %-10s", //
+		String ret = String.format("%10s    %-30s %s", //
 				getDate().toString(), //
 				this.getPayee(), //
-				((isCleared()) ? "C" : " "), //
-				Common.formatAmount(getAmount()), //
-				getCategory(), //
-				getMemo());
+				((isCleared()) ? "C" : " "));
 
 		if (hasSplits()) {
 			for (Iterator<SimpleTxn> iter = getSplits().iterator(); iter.hasNext();) {
 				SimpleTxn split = iter.next();
+
 				ret += "\n";
-				ret += split.formatValue();
+				//ret += split.formatValue();
+				ret += String.format("   %13s    %-25s   %s", //
+						Common.formatAmount(split.getAmount()), //
+						split.getCategory(), //
+						split.getMemo());
 			}
+		} else {
+			ret += "\n";
+			ret += String.format("   %13s    %-25s   %s", //
+					Common.formatAmount(getAmount()), //
+					getCategory(), //
+					getMemo());
 		}
 
 		return ret;

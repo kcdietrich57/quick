@@ -16,7 +16,7 @@ public class AccountReporter {
 			System.out.println("-------------------------------------\n" //
 					+ acct.getDisplayName(36));
 			System.out.println(String.format("%d Statements, %d Transactions", //
-					acct.statements.size(), acct.transactions.size()));
+					acct.statements.size(), acct.getNumTransactions()));
 			System.out.println("-------------------------------------");
 
 			final int nn = Math.max(0, acct.statements.size() - 12);
@@ -39,7 +39,7 @@ public class AccountReporter {
 
 			System.out.println("Uncleared transactions as of last statement:");
 
-			for (final GenericTxn t : acct.statements.get(acct.statements.size() - 1).unclearedTransactions) {
+			for (GenericTxn t : acct.statements.get(acct.statements.size() - 1).unclearedTransactions) {
 				System.out.println(String.format("  %s  %s  %s", //
 						t.getDate().toString(), //
 						Common.formatAmount(t.getAmount()), //
@@ -48,7 +48,7 @@ public class AccountReporter {
 
 			int unclearedCount = 0;
 
-			for (final GenericTxn t : acct.transactions) {
+			for (GenericTxn t : acct.getTransactions()) {
 				if (t.stmtdate == null) {
 					++unclearedCount;
 				}

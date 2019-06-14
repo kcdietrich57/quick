@@ -37,10 +37,21 @@ public class MoneyMgrApp {
 
 		MainFrame.createUI();
 
+		System.out.println("Processing csv export file");
+
 		String importDir = "/Users/greg/Documents/workspace/Quicken/qif/";
 
+//		try {
+//			Thread.sleep(5000);
+//		} catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+
 		// importCSV(importDir + "import20180630.csv");
-		importCSV(importDir + "export-20171231.csv");
-		importCSV(importDir + "export-20180815.csv");
+		//importCSV(importDir + "export-20171231.csv");
+		//importCSV(importDir + "export-20180815.csv");
+		//importCSV(importDir + "DIETRICH_all-2019061.csv");
+		importCSV(importDir + "DIETRICH-export-2019-06-12.csv");
 	}
 }

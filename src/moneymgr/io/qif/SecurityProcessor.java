@@ -99,7 +99,7 @@ public class SecurityProcessor {
 		// Process holdings for each account
 		for (Account a : Account.getAccounts()) {
 			if (a.isInvestmentAccount()) {
-				processSecurities2(a.securities, a.transactions);
+				processSecurities2(a.securities, a.getTransactions());
 			}
 		}
 	}

@@ -45,7 +45,7 @@ public class QifReporter {
 		GenericTxn lasttx = null;
 		boolean first = true;
 
-		for (GenericTxn t : a.transactions) {
+		for (GenericTxn t : a.getTransactions()) {
 			int thisyear = t.getDate().getYear();
 			int thismonth = t.getDate().getMonth();
 			String thisMonthStr = t.getDate().monthYearString;

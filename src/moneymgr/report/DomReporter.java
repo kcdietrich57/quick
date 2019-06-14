@@ -71,12 +71,13 @@ public class DomReporter {
 		// System.out.println(a.name + " " + a.type + " " + a.description);
 		System.out.println(a.toString());
 
-		int ntran = a.transactions.size();
+		List<GenericTxn> txns = a.getTransactions();
+		int ntran = a.getNumTransactions();
 		// System.out.println(" " + ntran + " transactions");
 
 		if (ntran > 0) {
-			final GenericTxn ft = a.transactions.get(0);
-			final GenericTxn lt = a.transactions.get(ntran - 1);
+			GenericTxn ft = txns.get(0);
+			GenericTxn lt = txns.get(ntran - 1);
 
 			System.out.println("    Date range: " //
 					+ ft.getDate().toString() + " - " + lt.getDate().toString());
@@ -89,7 +90,7 @@ public class DomReporter {
 			String curMonth = "";
 			BigDecimal bal = BigDecimal.ZERO;
 
-			for (GenericTxn t : a.transactions) {
+			for (GenericTxn t : txns) {
 				if (includePseudoStatements) {
 					String txmonth = t.getDate().monthYearString;
 
@@ -121,12 +122,13 @@ public class DomReporter {
 		// System.out.println(a.name + " " + a.type + " " + a.description);
 		System.out.println(a.toString());
 
-		final int ntran = a.transactions.size();
+		List<GenericTxn> txns = a.getTransactions();
+		int ntran = a.getNumTransactions();
 		System.out.println("" + ntran + " transactions");
 
 		if (ntran > 0) {
-			GenericTxn ft = a.transactions.get(0);
-			GenericTxn lt = a.transactions.get(ntran - 1);
+			GenericTxn ft = txns.get(0);
+			GenericTxn lt = txns.get(ntran - 1);
 
 			System.out.println("Date range: " //
 					+ ft.getDate().toString() + " - " + lt.getDate().toString());
