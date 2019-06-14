@@ -101,16 +101,19 @@ public class NonInvestmentTxn extends GenericTxn {
 	}
 
 	public String toStringLong() {
-		String s = ((this.stmtdate != null) ? "*" : " ") + "Tx" + this.txid + ":";
+		String s = "";
+		
+		s += ((this.stmtdate != null) ? "*" : " ");
 		QDate d = getDate();
-		s += " date=" + ((d != null) ? getDate().toString() : "null");
+		s += ((d != null) ? d.toString() : "null");
+		s += " Tx" + this.txid + ":   ";
 		Account a = Account.getAccountByID(this.acctid);
-		s += " acct=" + ((a != null) ? a.name : "null");
+		s += ((a != null) ? a.name : "null");
 		s += " num=" + this.chkNumber;
-		s += " payee=" + getPayee();
-		s += " amt=" + getAmount();
-		s += " memo=" + getMemo();
+		s += " " + Common.formatAmount(getAmount()).trim();
+		s += " " + getPayee();
 		s += " xfer/cat=" + getCategory();
+		s += " memo=" + getMemo();
 		s += " bal=" + this.runningTotal;
 
 		if ((this.splits != null) && !this.splits.isEmpty()) {

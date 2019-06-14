@@ -69,7 +69,7 @@ public abstract class GenericTxn //
 	}
 
 	public static QDate getLastTransactionDate() {
-		return (allTransactionsByDate.isEmpty()) //
+		return (allTransactionsByDate == null || allTransactionsByDate.isEmpty()) //
 				? null //
 				: allTransactionsByDate.get(allTransactionsByDate.size() - 1).getDate();
 	}
@@ -109,7 +109,7 @@ public abstract class GenericTxn //
 		// Advance index to the last matching transaction
 		while ((idx2 >= 0) //
 				&& ((idx2 + 1) < allTransactionsByDate.size()) //
-				&& allTransactionsByDate.get(idx2 + 1).date.equals(end)) {
+				&& allTransactionsByDate.get(idx2 + 1).getDate().equals(end)) {
 			++idx2;
 		}
 
@@ -253,7 +253,6 @@ public abstract class GenericTxn //
 	}
 
 	// TODO make txn properties immutable
-	private QDate date;
 	private String payee;
 
 	public QDate stmtdate;
@@ -264,7 +263,6 @@ public abstract class GenericTxn //
 	public GenericTxn(int acctid) {
 		super(acctid);
 
-		this.date = null;
 		this.payee = "";
 		this.stmtdate = null;
 		this.runningTotal = null;
@@ -304,24 +302,20 @@ public abstract class GenericTxn //
 
 	/** Update the date of this transaction */
 	public void setDate(QDate date) {
-		if ((this.acctid != 0) && (this.date != null)) {
+		if ((this.acctid != 0) && (getDate() != null)) {
 			allTransactionsByDate.remove(this);
 		}
 
-		this.date = date;
+		super.setDate(date);
 
-		if ((this.acctid != 0) && (this.date != null)) {
+		if ((this.acctid != 0) && (getDate() != null)) {
 			addTransactionDate(this);
 		}
 	}
 
-	public QDate getDate() {
-		return this.date;
-	}
-
 	/** Comparison by date and check number */
 	public int compareTo(GenericTxn other) {
-		int diff = this.date.compareTo(other.date);
+		int diff = getDate().compareTo(other.getDate());
 		if (diff != 0) {
 			return diff;
 		}

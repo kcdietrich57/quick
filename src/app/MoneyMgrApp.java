@@ -1,9 +1,12 @@
 package app;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Scanner;
 
 import moneymgr.io.cvs.CSVImport;
 import moneymgr.io.qif.QifDomReader;
+import moneymgr.model.SimpleTxn;
 import moneymgr.report.InvestmentPerformanceModel;
 import moneymgr.ui.MainFrame;
 import moneymgr.util.QDate;
@@ -16,11 +19,21 @@ public class MoneyMgrApp {
 		CSVImport csvimp = new CSVImport(filename);
 		csvimp.importFile();
 
+		Collections.sort(csvimp.nomatch, new Comparator<SimpleTxn>() {
+			public int compare(SimpleTxn tx1, SimpleTxn tx2) {
+				return tx1.getDate().compareTo(tx2.getDate());
+			}
+		});
+		for (SimpleTxn txn : csvimp.nomatch) {
+			System.out.println(txn.toString());
+		}
+
 		System.out.println("\nSummary for : " + filename);
 		System.out.println(" Exact matches: " + csvimp.match.size());
-		System.out.println(" Multi matches: " + csvimp.multimatch.size());
+		// System.out.println(" Multi matches: " + csvimp.multimatch.size());
 		System.out.println(" Unmatched:     " + csvimp.nomatch.size());
-		System.out.println(" Unmatched zero:" + csvimp.zero.size());
+		System.out.println(" Unmatched zero:" + csvimp.nomatchZero.size());
+		System.out.println(" All zero:" + csvimp.allzero.size());
 		System.out.println(" Total:         " + csvimp.totaltx);
 	}
 
@@ -49,9 +62,9 @@ public class MoneyMgrApp {
 //		}
 
 		// importCSV(importDir + "import20180630.csv");
-		//importCSV(importDir + "export-20171231.csv");
-		//importCSV(importDir + "export-20180815.csv");
-		//importCSV(importDir + "DIETRICH_all-2019061.csv");
+		// importCSV(importDir + "export-20171231.csv");
+		// importCSV(importDir + "export-20180815.csv");
+		// importCSV(importDir + "DIETRICH_all-2019061.csv");
 		importCSV(importDir + "DIETRICH-export-2019-06-12.csv");
 	}
 }

@@ -28,6 +28,7 @@ public class SimpleTxn {
 
 	public final int acctid;
 	public final int txid;
+	private QDate date;
 
 	/** Dollar amount of the transaction. For simple transactions, this is cash */
 	private BigDecimal amount;
@@ -42,6 +43,7 @@ public class SimpleTxn {
 	public SimpleTxn(int acctid) {
 		this.txid = nextid++;
 
+		this.date = null;
 		this.acctid = acctid;
 		this.amount = null;
 		this.memo = null;
@@ -54,8 +56,13 @@ public class SimpleTxn {
 		return Account.getAccountByID(this.acctid);
 	}
 
+	/** Update the date of this transaction */
 	public void setDate(QDate date) {
-		// simpletxn inherits its date from containing txn
+		this.date = date;
+	}
+
+	public QDate getDate() {
+		return this.date;
 	}
 
 	public boolean removesShares() {
@@ -232,16 +239,16 @@ public class SimpleTxn {
 	 * multiple lines.
 	 */
 	public String toStringLong() {
-		String s = "Tx" + this.txid + ":";
-		s += Account.getAccountByID(this.acctid).name;
-		s += " amt=" + this.amount;
+		String s = " ";
+		QDate d = getDate();
+		s += ((d != null) ? d.toString() : "null");
+		s += " Tx" + this.txid + ": ";
+		s += (this instanceof GenericTxn) ? "  " : "S ";
+		Account a = Account.getAccountByID(this.acctid);
+		s += ((a != null) ? a.name : "null");
+		s += " " + Common.formatAmount(this.amount).trim();
+		s += " " + getCategory();
 		s += " memo=" + getMemo();
-
-		if (this.catid < (short) 0) {
-			s += " xacct=" + Account.getAccountByID(-this.catid).name;
-		} else if (this.catid > (short) 0) {
-			s += " cat=" + Category.getCategory(this.catid).name;
-		}
 
 		return s;
 	}

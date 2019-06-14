@@ -10,6 +10,7 @@ import java.util.List;
 
 import app.QifDom;
 import moneymgr.util.Common;
+import moneymgr.util.QDate;
 
 /** Transaction for investment account (may involve security) */
 public class InvestmentTxn extends GenericTxn {
@@ -475,24 +476,27 @@ public class InvestmentTxn extends GenericTxn {
 	}
 
 	public String toStringLong() {
-		String s = ((this.stmtdate != null) ? "*" : " ") + "InvTx" + this.txid + ":";
-		s += " dt=" + getDate().toString();
-		s += " acct=" + Account.getAccountByID(this.acctid).name;
-		s += " act=" + this.action;
+		String s = ((this.stmtdate != null) ? "*" : " ");
+		QDate d = getDate();
+		s += ((d != null) ? d.toString() : "null");
+		s += " Tx" + this.txid + ": I ";
+		Account a = Account.getAccountByID(this.acctid);
+		s += ((a != null) ? a.name : "null");
+		s += " " + Common.formatAmount(getAmount()).trim();
+		s += " " + this.action;
 		if (this.security != null) {
-			s += " sec=" + this.security.getName();
-		} else {
-			s += " payee=" + getPayee();
-		}
-		s += " price=" + this.price;
-		if (getAction() == TxAction.STOCKSPLIT) {
-			s += " spratio=" + getSplitRatio();
+			s += " " + this.security.getName();
+			s += " price=" + this.price;
+			if (getAction() == TxAction.STOCKSPLIT) {
+				s += " spratio=" + getSplitRatio();
 
+			} else {
+				s += " qty=" + this.quantity;
+			}
 		} else {
-			s += " qty=" + this.quantity;
+			s += " " + getPayee();
 		}
 
-		s += " amt=" + getAmount();
 		s += " memo=" + getMemo();
 		s += " comm=" + this.commission;
 		s += " xact=" + this.accountForTransfer;

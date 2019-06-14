@@ -711,12 +711,13 @@ public class Account {
 	 */
 	public List<GenericTxn> findMatchingTransactions(SimpleTxn tx, QDate date) {
 		List<GenericTxn> txns = new ArrayList<>();
+		int TOLERANCE = 5; // days
 
 		BigDecimal amt = tx.getAmount().abs();
 
 		int idx = getTransactionIndexForDate(date);
 		for (; idx > 0; --idx) {
-			if (date.subtract(this.transactions.get(idx - 1).getDate()) > 5) {
+			if (date.subtract(this.transactions.get(idx - 1).getDate()) > TOLERANCE) {
 				break;
 			}
 		}
@@ -724,10 +725,10 @@ public class Account {
 		for (; idx < this.transactions.size(); ++idx) {
 			GenericTxn t = this.transactions.get(idx);
 			int diff = t.getDate().subtract(date);
-			if (diff > 5) {
+			if (diff > TOLERANCE) {
 				break;
 			}
-			if (-diff > 5) {
+			if (-diff > TOLERANCE) {
 				continue;
 			}
 

@@ -72,7 +72,8 @@ public class CSVImport {
 	public Map<SimpleTxn, GenericTxn> match = new HashMap<SimpleTxn, GenericTxn>();
 	public Map<SimpleTxn, List<GenericTxn>> multimatch = new HashMap<SimpleTxn, List<GenericTxn>>();
 	public List<SimpleTxn> nomatch = new ArrayList<SimpleTxn>();
-	public List<SimpleTxn> zero = new ArrayList<SimpleTxn>();
+	public List<SimpleTxn> allzero = new ArrayList<SimpleTxn>();
+	public List<SimpleTxn> nomatchZero = new ArrayList<SimpleTxn>();
 	public int totaltx = 0;
 
 	public CSVImport(String filename) {
@@ -102,14 +103,7 @@ public class CSVImport {
 	}
 
 	private void processCSVRecords() {
-		int ntuples = transactionsMap.size();
-		int tupleidx = 0;
 		for (Map.Entry<String, List<String[]>> entry : transactionsMap.entrySet()) {
-			if ((tupleidx % 1000) == 0) {
-//				System.out.println("xyzzy tuple " + tupleidx + "/" + ntuples);
-			}
-			++tupleidx;
-			
 			if (entry.getKey().equals("FieldNames")) {
 				continue;
 			}
@@ -117,46 +111,50 @@ public class CSVImport {
 			infoMessage(entry.getKey());
 
 			for (String[] tuple : entry.getValue()) {
-				infoMessage("  [");
-				for (String field : tuple) {
-					infoMessageNoln("'" + field + "', ");
-				}
-				infoMessage("]");
+				processTuple(tuple);
+			}
+		}
+	}
 
-				QDate txdate = dateFromTuple(tuple);
-				SimpleTxn txn = createTransaction(txdate, tuple);
+	private void processTuple(String[] tuple) {
+		infoMessage("  [");
+		for (String field : tuple) {
+			infoMessageNoln("'" + field + "', ");
+		}
+		infoMessage("]");
 
-				if (txn != null) {
-					Account acct = Account.getAccountByID(txn.acctid);
-					List<GenericTxn> txns = acct.findMatchingTransactions(txn, txdate);
+		QDate txdate = dateFromTuple(tuple);
+		SimpleTxn txn = createTransaction(txdate, tuple);
+		if (txn == null) {
+			return;
+		}
 
-					infoMessage(txn.toString());
+		++totaltx;
 
-					++totaltx;
+		infoMessage(txn.toString());
 
-					if (Common.isEffectivelyZero(txn.getAmount())) {
-						zero.add(txn);
-					} else if (txns.size() == 1) {
-						// System.out.println("size=" + txns.size());
-						match.put(txn, txns.get(0));
-					} else if (txns.isEmpty()) {
-						// System.out.println("NO MATCH");
-						nomatch.add(txn);
-					} else {
-						// System.out.println("" + txns.size() + " MATCHES");
-						while (!txns.isEmpty() && match.containsValue(txns.get(0))) {
-							txns.remove(0);
-						}
+		Account acct = Account.getAccountByID(txn.acctid);
+		List<GenericTxn> txns = acct.findMatchingTransactions(txn, txdate);
 
-						if (txns.isEmpty()) {
-							nomatch.add(txn);
-						} else {
-							match.put(txn, txns.get(0));
-						}
+		while (!txns.isEmpty() && match.containsValue(txns.get(0))) {
+			txns.remove(0);
+		}
 
-//						multimatch.put(txn, txns);
-					}
-				}
+		boolean iszero = Common.isEffectivelyZero(txn.getAmount());
+		if (iszero) {
+			allzero.add(txn);
+		}
+
+		if (!txns.isEmpty()) {
+			match.put(txn, txns.get(0));
+
+//			multimatch.put(txn, txns);
+		} else {
+			if (iszero) {
+				nomatchZero.add(txn);
+			} else {
+				acct.findMatchingTransactions(txn, txdate);
+				nomatch.add(txn);
 			}
 		}
 	}
