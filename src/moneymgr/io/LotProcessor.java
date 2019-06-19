@@ -162,7 +162,7 @@ public class LotProcessor {
 
 	/** Create a lot for new shares created by a transaction */
 	private static void addShares(List<Lot> thelots, InvestmentTxn txn) {
-		Lot lot = new Lot(txn.acctid, txn.getDate(), txn.security.secid, //
+		Lot lot = new Lot(txn.getAccountID(), txn.getDate(), txn.security.secid, //
 				txn.getShares(), txn.getShareCost(), txn);
 		addLot(thelots, lot);
 
@@ -184,7 +184,7 @@ public class LotProcessor {
 
 	/** Get open lots to satisfy txns that consume lots (sell/xfer out/split) */
 	private static List<Lot> getSrcLots(List<Lot> thelots, List<InvestmentTxn> txns) {
-		List<Lot> lots = getOpenLots(thelots, txns.get(0).acctid);
+		List<Lot> lots = getOpenLots(thelots, txns.get(0).getAccountID());
 		List<Lot> ret = new ArrayList<Lot>();
 		BigDecimal sharesRequired = BigDecimal.ZERO;
 
@@ -208,7 +208,7 @@ public class LotProcessor {
 		Common.reportError(String.format("Insufficient open lots: required %s, shortfall %s", //
 				Common.formatAmount3(sharesRequired).trim(), //
 				Common.formatAmount3(sharesRemaining).trim()));
-		printOpenLots(thelots, txns.get(0).acctid);
+		printOpenLots(thelots, txns.get(0).getAccountID());
 
 		return null;
 	}
@@ -343,7 +343,7 @@ public class LotProcessor {
 				}
 
 				// Consume the entire source lot
-				Lot newDstLot = new Lot(srcLot, dstTxn.acctid, srcTxn, dstTxn);
+				Lot newDstLot = new Lot(srcLot, dstTxn.getAccountID(), srcTxn, dstTxn);
 				addLot(thelots, newDstLot);
 
 				sharesLeftInSrcTxn = sharesLeftInSrcTxn.subtract(newDstLot.shares);
@@ -405,7 +405,7 @@ public class LotProcessor {
 				break;
 			}
 
-			InvestmentTxn t = (txn.acctid == oldlot.acctid) //
+			InvestmentTxn t = (txn.getAccountID() == oldlot.acctid) //
 					? txn //
 					: new InvestmentTxn(oldlot.acctid, txn);
 

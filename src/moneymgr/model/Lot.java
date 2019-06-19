@@ -116,7 +116,7 @@ public class Lot {
 
 	/** Constructor for the destination lot for a transfer/split transaction */
 	public Lot(Lot srcLot, int acctid, InvestmentTxn srcTxn, InvestmentTxn dstTxn) {
-		this(dstTxn.acctid, srcLot.createDate, srcLot.secid, //
+		this(dstTxn.getAccountID(), srcLot.createDate, srcLot.secid, //
 				srcLot.shares.multiply(dstTxn.getSplitRatio()), //
 				srcLot.basisPrice, dstTxn, srcLot);
 

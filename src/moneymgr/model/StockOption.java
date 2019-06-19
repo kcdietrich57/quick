@@ -206,7 +206,7 @@ public class StockOption {
 			if ((opt.srcOption == null) //
 					&& opt.date.equals(txn.getDate()) //
 					&& (opt.secid == txn.security.secid) //
-					&& (opt.acctid == txn.acctid)) {
+					&& (opt.acctid == txn.getAccountID())) {
 				if (// QifDom.verbose &&
 				!opt.grantShares.equals(txn.getShares())) {
 					// TODO grant transactions in quicken have 0 shares
@@ -236,7 +236,7 @@ public class StockOption {
 			if ((opt.srcOption == null) //
 					&& opt.date.equals(txn.getDate()) //
 					&& (opt.secid == txn.security.secid) //
-					&& (opt.acctid == txn.acctid)) {
+					&& (opt.acctid == txn.getAccountID())) {
 				if (QifDom.verbose && !opt.grantShares.equals(txn.getShares())) {
 					// TODO grant transactions in quicken have 0 shares
 					Common.reportWarning(String.format( //

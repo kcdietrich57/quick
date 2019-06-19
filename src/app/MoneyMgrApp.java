@@ -1,11 +1,15 @@
 package app;
 
+import java.io.PrintStream;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Scanner;
 
 import moneymgr.io.cvs.CSVImport;
+import moneymgr.io.cvs.CSVImport.MatchInfo;
 import moneymgr.io.qif.QifDomReader;
+import moneymgr.model.Account;
+import moneymgr.model.GenericTxn;
 import moneymgr.model.SimpleTxn;
 import moneymgr.report.InvestmentPerformanceModel;
 import moneymgr.ui.MainFrame;
@@ -19,27 +23,132 @@ public class MoneyMgrApp {
 		CSVImport csvimp = new CSVImport(filename);
 		csvimp.importFile();
 
-		Collections.sort(csvimp.nomatch, new Comparator<SimpleTxn>() {
+		Comparator<SimpleTxn> comp = new Comparator<SimpleTxn>() {
 			public int compare(SimpleTxn tx1, SimpleTxn tx2) {
 				return tx1.getDate().compareTo(tx2.getDate());
 			}
-		});
-		for (SimpleTxn txn : csvimp.nomatch) {
-			System.out.println(txn.toString());
-		}
+		};
+		Collections.sort(csvimp.nomatch, comp);
 
-		System.out.println("\nSummary for : " + filename);
-		System.out.println(" Exact matches: " + csvimp.match.size());
-		// System.out.println(" Multi matches: " + csvimp.multimatch.size());
-		System.out.println(" Unmatched:     " + csvimp.nomatch.size());
-		System.out.println(" Unmatched zero:" + csvimp.nomatchZero.size());
-		System.out.println(" All zero:" + csvimp.allzero.size());
-		System.out.println(" Total:         " + csvimp.totaltx);
+		int mac_nomatch = csvimp.nomatch.size() + csvimp.nomatchZero.size();
+		int mac_total = csvimp.totaltx;
+		int win_unmatch = 0;
+		int win_total = 0;
+
+		int nn = 1;
+		PrintStream out = null;
+		try {
+			out = new PrintStream("/Users/greg/qif/output.txt");
+
+			int totalmac = 0;
+			int totalwin = 0;
+			int nomatchmac = 0;
+			int nomatchwin = 0;
+
+			for (MatchInfo mi : csvimp.matches) {
+				++totalmac;
+				if (mi.winTxn.isEmpty()) {
+					SimpleTxn mactxn = mi.macTxn.get(0);
+					out.print("No match for mactxn:\n    " + mactxn);
+
+					if (mi.winTxnPotential != null) {
+						out.println("  Potential matches:");
+						for (SimpleTxn pmtx : mi.winTxnPotential) {
+							out.print("    " + pmtx.toString());
+						}
+					}
+
+					out.println();
+
+					++nomatchmac;
+
+					if (mactxn.getAmount().signum() != 0) {
+						Account acct = mactxn.getAccount();
+						acct.findMatchingTransactions(mactxn);
+					}
+				}
+			}
+
+			for (GenericTxn wintxn : GenericTxn.getAllTransactions()) {
+				++totalwin;
+				if (wintxn != null && !csvimp.matchInfoForWinTxn.containsKey(wintxn)) {
+					out.println("No match for wintxn:\n    " + wintxn);
+					++nomatchwin;
+				}
+			}
+
+			out.println("Total unmatched mac=" + nomatchmac + "/" + totalmac //
+					+ " win=" + nomatchwin + "/" + totalwin);
+
+//			out.println("\nUnmatched zero-value txns on mac");
+//			for (SimpleTxn txn : csvimp.nomatchZero) {
+//				out.println(Integer.toString(nn++) + " " + txn.toString());
+//			}
+//
+//			nn = 1;
+//			out.println("\nUnmatched txns on mac");
+//			for (SimpleTxn txn : csvimp.nomatch) {
+//				out.println(Integer.toString(nn++) + " " + txn.toString());
+//			}
+//
+//			nn = 1;
+//			out.println("\nUnmatched txns on windows");
+//			List<GenericTxn> txns = new ArrayList<>();
+//			for (GenericTxn tx : GenericTxn.getAllTransactions()) {
+//				if (tx != null) {
+//					txns.add(tx);
+//				}
+//			}
+//			Collections.sort(txns, comp);
+//			win_total = txns.size();
+//
+//			for (GenericTxn txn : txns) {
+//				if (txn != null) {
+////					if (((GenericTxn) txn).getCheckNumber() == 2676) {
+////						System.out.println("xyzzy");
+////					}
+//					if (txn.hasSplits()) {
+//						if (!csvimp.matchedTransactions.contains(txn)) {
+//							out.println(Integer.toString(nn++) + " " + txn.toString());
+//							++win_unmatch;
+//						}
+////						for (SplitTxn stxn : txn.getSplits()) {
+////							if (!csvimp.matchedTransactions.contains(stxn)) {
+////								out.println(Integer.toString(nn++) + " " + stxn.toString());
+////							}
+////						}
+//					} else {
+//						if (!csvimp.matchedTransactions.contains(txn)) {
+//							out.println(Integer.toString(nn++) + " " + txn.toString());
+//							++win_unmatch;
+//						}
+//					}
+//				}
+//			}
+
+			out.println("\nSummary for : " + filename);
+			out.println("MAC tot=" + mac_total + " match=" + mac_nomatch);
+			out.println("WIN tot=" + win_total + " match=" + (win_total - win_unmatch));
+			out.println("WIN match tot=" + csvimp.matchedTransactions.size());
+
+			out.println(" Matches: " + csvimp.match.size());
+			out.println(" Unmatched:     " + csvimp.nomatch.size());
+			out.println(" Unmatched zero:" + csvimp.nomatchZero.size());
+			out.println(" All zero:" + csvimp.allzero.size());
+			out.println(" Total:         " + csvimp.totaltx);
+
+			out.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static void main(String[] args) {
 		MoneyMgrApp.scn = new Scanner(System.in);
 		QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
+
+		System.out.println(String.format("There are %d transactions from DIETRICH.QIF", //
+				GenericTxn.getAllTransactions().size()));
 
 		// TODO experimental code
 		InvestmentPerformanceModel model = new InvestmentPerformanceModel( //
@@ -54,17 +163,18 @@ public class MoneyMgrApp {
 
 		String importDir = "/Users/greg/Documents/workspace/Quicken/qif/";
 
-//		try {
-//			Thread.sleep(5000);
-//		} catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		GenericTxn.rememberTransactions = false;
 
 		// importCSV(importDir + "import20180630.csv");
 		// importCSV(importDir + "export-20171231.csv");
 		// importCSV(importDir + "export-20180815.csv");
 		// importCSV(importDir + "DIETRICH_all-2019061.csv");
-		importCSV(importDir + "DIETRICH-export-2019-06-12.csv");
+		//importCSV(importDir + "DIETRICH-export-20190615.csv");
+//		importCSV(importDir + "DIETRICH-export-20190617.csv");
+
+		System.out.println(String.format("There now are %d transactions from DIETRICH.QIF", //
+				GenericTxn.getAllTransactions().size()));
+		System.out.println(String.format("There are %d transactions from MAC export", //
+				GenericTxn.alternateTransactions.size()));
 	}
 }

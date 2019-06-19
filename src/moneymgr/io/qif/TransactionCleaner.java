@@ -16,6 +16,7 @@ import moneymgr.model.MultiSplitTxn;
 import moneymgr.model.NonInvestmentTxn;
 import moneymgr.model.Security;
 import moneymgr.model.SimpleTxn;
+import moneymgr.model.SplitTxn;
 import moneymgr.model.TxAction;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
@@ -56,7 +57,7 @@ public class TransactionCleaner {
 		NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
 
 		for (int ii = 0; ii < nitxn.splits.size(); ++ii) {
-			SimpleTxn stxn = nitxn.splits.get(ii);
+			SplitTxn stxn = nitxn.splits.get(ii);
 			if (stxn.getCatid() >= 0) {
 				continue;
 			}
@@ -65,11 +66,11 @@ public class TransactionCleaner {
 
 			// Gather multiple splits into a MultiSplit if necessary
 			for (int jj = ii + 1; jj < nitxn.splits.size(); ++jj) {
-				SimpleTxn stxn2 = nitxn.splits.get(jj);
+				SplitTxn stxn2 = nitxn.splits.get(jj);
 
 				if (stxn.getCatid() == stxn2.getCatid()) {
 					if (mtxn == null) {
-						mtxn = new MultiSplitTxn(txn.acctid);
+						mtxn = new MultiSplitTxn(txn);
 						nitxn.splits.set(ii, mtxn);
 
 						mtxn.setAmount(stxn.getAmount());
@@ -128,7 +129,7 @@ public class TransactionCleaner {
 			}
 		} else if ((txn.getCatid() < 0) && //
 		// NB opening balance shows up as xfer to same acct
-				(-txn.getCatid() != txn.acctid)) {
+				(-txn.getCatid() != txn.getAccountID())) {
 			connectTransfers(txn, txn.getDate());
 		}
 	}
@@ -225,17 +226,17 @@ public class TransactionCleaner {
 
 	/** Locate a match for txn in gtxn (either gtxn itself, or a split) */
 	private SimpleTxn checkMatchForTransfer(SimpleTxn txn, GenericTxn gtxn, boolean strict) {
-		assert -txn.getCatid() == gtxn.acctid;
+		assert -txn.getCatid() == gtxn.getAccountID();
 
 		if (!gtxn.hasSplits()) {
-			if ((gtxn.getXferAcctid() == txn.acctid) //
+			if ((gtxn.getXferAcctid() == txn.getAccountID()) //
 					&& (gtxn.getXtxn() == null) //
 					&& gtxn.amountIsEqual(txn, strict)) {
 				return gtxn;
 			}
 		} else {
 			for (SimpleTxn splittTxn : gtxn.getSplits()) {
-				if ((splittTxn.getXferAcctid() == txn.acctid) //
+				if ((splittTxn.getXferAcctid() == txn.getAccountID()) //
 						&& (splittTxn.getXtxn() == null) //
 						&& splittTxn.amountIsEqual(txn, strict)) {
 					return splittTxn;

@@ -9,6 +9,13 @@ import app.QifDom;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
+interface Txn {
+	QDate getDate();
+	void setDate(QDate date);
+
+	int getAccountID();
+}
+
 // TODO could be abstract with a SplitTransation subclass
 /**
  * Minimal transaction info (acct, amt, category, memo). This can be<br>
@@ -16,9 +23,9 @@ import moneymgr.util.QDate;
  * used to specify part of a split transaction that inherit other info like date
  * from the containing transaction.
  */
-public class SimpleTxn {
-	private static final List<SimpleTxn> NOSPLITS = //
-			Collections.unmodifiableList(new ArrayList<SimpleTxn>());
+public abstract class SimpleTxn implements Txn {
+	private static final List<SplitTxn> NOSPLITS = //
+			Collections.unmodifiableList(new ArrayList<SplitTxn>());
 
 	/** Keep track of any cash transfers that don't match */
 	private static int cashok = 0;
@@ -26,9 +33,8 @@ public class SimpleTxn {
 
 	private static int nextid = 1;
 
-	public final int acctid;
+	private final int acctid;
 	public final int txid;
-	private QDate date;
 
 	/** Dollar amount of the transaction. For simple transactions, this is cash */
 	private BigDecimal amount;
@@ -43,7 +49,6 @@ public class SimpleTxn {
 	public SimpleTxn(int acctid) {
 		this.txid = nextid++;
 
-		this.date = null;
 		this.acctid = acctid;
 		this.amount = null;
 		this.memo = null;
@@ -52,17 +57,12 @@ public class SimpleTxn {
 		this.xtxn = null;
 	}
 
+	public int getAccountID() {
+		return this.acctid;
+	}
+
 	public Account getAccount() {
 		return Account.getAccountByID(this.acctid);
-	}
-
-	/** Update the date of this transaction */
-	public void setDate(QDate date) {
-		this.date = date;
-	}
-
-	public QDate getDate() {
-		return this.date;
 	}
 
 	public boolean removesShares() {
@@ -77,7 +77,7 @@ public class SimpleTxn {
 		return false;
 	}
 
-	public List<SimpleTxn> getSplits() {
+	public List<SplitTxn> getSplits() {
 		return NOSPLITS;
 	}
 

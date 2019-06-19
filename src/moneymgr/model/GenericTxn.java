@@ -24,8 +24,11 @@ public abstract class GenericTxn //
 		INSERT, FIRST, LAST
 	}
 
+	public static boolean rememberTransactions = true;
+
 	private static final List<GenericTxn> allTransactionsByID = new ArrayList<>();
 	private static final List<GenericTxn> allTransactionsByDate = new ArrayList<>();
+	public static final List<GenericTxn> alternateTransactions = new ArrayList<>();
 
 	/** Dummy transaction for binary search */
 	private static final GenericTxn SEARCH = new NonInvestmentTxn(0);
@@ -45,14 +48,18 @@ public abstract class GenericTxn //
 	}
 
 	public static void addTransaction(GenericTxn txn) {
-		while (allTransactionsByID.size() < (txn.txid + 1)) {
-			allTransactionsByID.add(null);
-		}
+		if (rememberTransactions) {
+			while (allTransactionsByID.size() < (txn.txid + 1)) {
+				allTransactionsByID.add(null);
+			}
 
-		allTransactionsByID.set(txn.txid, txn);
+			allTransactionsByID.set(txn.txid, txn);
 
-		if (txn.getDate() != null) {
-			addTransactionDate(txn);
+			if (txn.getDate() != null) {
+				addTransactionDate(txn);
+			}
+		} else {
+			alternateTransactions.add(txn);
 		}
 	}
 
@@ -253,6 +260,7 @@ public abstract class GenericTxn //
 	}
 
 	// TODO make txn properties immutable
+	private QDate date;
 	private String payee;
 
 	public QDate stmtdate;
@@ -263,6 +271,7 @@ public abstract class GenericTxn //
 	public GenericTxn(int acctid) {
 		super(acctid);
 
+		this.date = null;
 		this.payee = "";
 		this.stmtdate = null;
 		this.runningTotal = null;
@@ -300,15 +309,19 @@ public abstract class GenericTxn //
 		this.stmtdate = s.date;
 	}
 
+	public QDate getDate() {
+		return this.date;
+	}
+
 	/** Update the date of this transaction */
 	public void setDate(QDate date) {
-		if ((this.acctid != 0) && (getDate() != null)) {
+		if ((getAccountID() != 0) && (getDate() != null)) {
 			allTransactionsByDate.remove(this);
 		}
 
-		super.setDate(date);
+		this.date = date;
 
-		if ((this.acctid != 0) && (getDate() != null)) {
+		if ((getAccountID() != 0) && (getDate() != null)) {
 			addTransactionDate(this);
 		}
 	}

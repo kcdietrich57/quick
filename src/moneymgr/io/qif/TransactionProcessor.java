@@ -7,7 +7,7 @@ import moneymgr.model.Category;
 import moneymgr.model.InvestmentTxn;
 import moneymgr.model.NonInvestmentTxn;
 import moneymgr.model.Security;
-import moneymgr.model.SimpleTxn;
+import moneymgr.model.SplitTxn;
 import moneymgr.model.TxAction;
 import moneymgr.util.Common;
 
@@ -115,7 +115,7 @@ public class TransactionProcessor {
 				txn.security = Security.findSecurityByName(qline.value);
 				if (txn.security == null) {
 					txn.security = Security.findSecurityByName(qline.value);
-					Common.reportWarning("Txn for acct " + txn.acctid + ". " //
+					Common.reportWarning("Txn for acct " + txn.getAccountID() + ". " //
 							+ "No security '" + qline.value + "' was found.");
 				}
 				break;
@@ -163,7 +163,7 @@ public class TransactionProcessor {
 
 		// TODO gather info and create transaction at the end
 		NonInvestmentTxn txn = new NonInvestmentTxn(Account.currAccountBeingLoaded.acctid);
-		SimpleTxn cursplit = null;
+		SplitTxn cursplit = null;
 
 		for (;;) {
 			this.qrdr.getFileReader().nextTxnLine(qline);
@@ -214,7 +214,7 @@ public class TransactionProcessor {
 				break;
 			case TxnSplitCategory:
 				if (cursplit == null || cursplit.getCatid() != 0) {
-					cursplit = new SimpleTxn(txn.acctid);
+					cursplit = new SplitTxn(txn);
 					txn.splits.add(cursplit);
 				}
 
@@ -230,7 +230,7 @@ public class TransactionProcessor {
 			case TxnSplitAmount:
 				if (cursplit == null || cursplit.getAmount() != null) {
 					txn.splits.add(cursplit);
-					cursplit = new SimpleTxn(txn.acctid);
+					cursplit = new SplitTxn(txn);
 				}
 
 				cursplit.setAmount(Common.getDecimal(qline.value));

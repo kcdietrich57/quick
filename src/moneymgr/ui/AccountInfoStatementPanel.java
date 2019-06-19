@@ -41,8 +41,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
 import moneymgr.model.Account;
-import moneymgr.model.GenericTxn;
-import moneymgr.model.InvestmentTxn;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.SecurityPosition;
 import moneymgr.model.Statement;
@@ -259,10 +257,9 @@ class StatementTableCellRenderer extends DefaultTableCellRenderer {
 		StatementTableModel model = (StatementTableModel) table.getModel();
 		Statement stmt = model.getStatementAt(row);
 
-		boolean cleared = stmt.isBalanced;
-		boolean future = !cleared && (stmt.cashBalance == null);
+		boolean future = !stmt.isBalanced && (stmt.date.compareTo(QDate.today()) > 0);
 
-		if (cleared) {
+		if (stmt.isBalanced) {
 			c.setFont(regularFont);
 			c.setForeground(regularColor);
 			c.setBackground(regularBackground);

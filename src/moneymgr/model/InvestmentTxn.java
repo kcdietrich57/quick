@@ -317,7 +317,7 @@ public class InvestmentTxn extends GenericTxn {
 
 		if (action == TxAction.OTHER) {
 			Common.reportError("Transaction has unknown type: " + //
-					Account.getAccountByID(this.acctid).name);
+					Account.getAccountByID(getAccountID()).name);
 			return;
 		}
 
@@ -425,7 +425,7 @@ public class InvestmentTxn extends GenericTxn {
 			final BigDecimal newprice = tot.divide(this.quantity).abs();
 
 			String s = "Inconsistent " + this.action + " transaction:" + //
-					" acct=" + Account.getAccountByID(this.acctid).name + //
+					" acct=" + Account.getAccountByID(getAccountID()).name + //
 					" " + getDate().toString() + "\n" + //
 					"  sec=" + this.security.getName() + //
 					" qty=" + this.quantity + //
@@ -480,7 +480,7 @@ public class InvestmentTxn extends GenericTxn {
 		QDate d = getDate();
 		s += ((d != null) ? d.toString() : "null");
 		s += " Tx" + this.txid + ": I ";
-		Account a = Account.getAccountByID(this.acctid);
+		Account a = Account.getAccountByID(getAccountID());
 		s += ((a != null) ? a.name : "null");
 		s += " " + Common.formatAmount(getAmount()).trim();
 		s += " " + this.action;
@@ -565,7 +565,7 @@ public class InvestmentTxn extends GenericTxn {
 		ret += "\n";
 
 		if (hasSplits()) {
-			for (Iterator<SimpleTxn> iter = getSplits().iterator(); iter.hasNext();) {
+			for (Iterator<SplitTxn> iter = getSplits().iterator(); iter.hasNext();) {
 				SimpleTxn split = iter.next();
 				ret += "\n";
 				ret += split.formatValue();

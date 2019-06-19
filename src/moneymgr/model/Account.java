@@ -709,22 +709,25 @@ public class Account {
 	 * Find existing transaction(s) that match a transaction being loaded.<br>
 	 * Date is close, amount matches (or the amount of a split).
 	 */
-	public List<GenericTxn> findMatchingTransactions(SimpleTxn tx, QDate date) {
-		List<GenericTxn> txns = new ArrayList<>();
-		int TOLERANCE = 5; // days
+	public List<SimpleTxn> findMatchingTransactions(SimpleTxn tx) {
+		List<SimpleTxn> ret = findMatchingTransactions(tx, false);
 
-		BigDecimal amt = tx.getAmount().abs();
-
-		int idx = getTransactionIndexForDate(date);
-		for (; idx > 0; --idx) {
-			if (date.subtract(this.transactions.get(idx - 1).getDate()) > TOLERANCE) {
-				break;
-			}
+		if (ret.isEmpty() && !(tx instanceof SplitTxn)) {
+			ret = findMatchingTransactions(tx, true);
 		}
+
+		return ret;
+	}
+
+	public List<SimpleTxn> findPotentialMatchingTransactions(SimpleTxn tx) {
+		List<SimpleTxn> txns = new ArrayList<>();
+		int TOLERANCE = 3; // days
+
+		int idx = getTransactionIndexForDate(tx.getDate().addDays(-TOLERANCE));
 
 		for (; idx < this.transactions.size(); ++idx) {
 			GenericTxn t = this.transactions.get(idx);
-			int diff = t.getDate().subtract(date);
+			int diff = t.getDate().subtract(tx.getDate());
 			if (diff > TOLERANCE) {
 				break;
 			}
@@ -732,33 +735,83 @@ public class Account {
 				continue;
 			}
 
-			boolean match = false;
+			txns.add(t);
+		}
 
-			if (t.getAmount().abs().equals(amt)) {
-				match = true;
+		txns.sort(new Comparator<SimpleTxn>() {
+			public int compare(SimpleTxn o1, SimpleTxn o2) {
+				int diff1 = Math.abs(o1.getDate().subtract(tx.getDate()));
+				int diff2 = Math.abs(o2.getDate().subtract(tx.getDate()));
+
+				return diff1 - diff2;
+			}
+		});
+
+		return txns;
+	}
+
+	/**
+	 * TODO This duplicates TransactionCleaner findMatchesForTransfer()<br>
+	 * Find existing transaction(s) that match a transaction being loaded.<br>
+	 * Date is close, amount matches (or the amount of a split).
+	 */
+	public List<SimpleTxn> findMatchingTransactions(SimpleTxn tx, boolean forceSplit) {
+		List<SimpleTxn> txns = new ArrayList<>();
+		int TOLERANCE = 5; // days
+
+		BigDecimal amt = tx.getAmount().abs();
+
+		int idx = getTransactionIndexForDate(tx.getDate());
+		for (; idx > 0; --idx) {
+			if (tx.getDate().subtract(this.transactions.get(idx - 1).getDate()) > TOLERANCE) {
+				break;
+			}
+		}
+
+		boolean issplit = tx instanceof SplitTxn;
+
+		for (; idx < this.transactions.size(); ++idx) {
+			GenericTxn t = this.transactions.get(idx);
+			int diff = t.getDate().subtract(tx.getDate());
+			if (diff > TOLERANCE) {
+				break;
+			}
+			if (-diff > TOLERANCE) {
+				continue;
+			}
+
+			if (!issplit) {
+				if (!t.hasSplits() && t.getAmount().abs().equals(amt)) {
+					txns.add(t);
+				} else if (forceSplit) {
+					SimpleTxn xt = t.getXtxn();
+					if ((xt != null) && xt.hasSplits()) {
+						for (SplitTxn stx : xt.getSplits()) {
+							if (stx.getAmount().abs().equals(amt)) {
+								txns.add(t);
+							}
+						}
+					}
+				}
 			} else if (t.hasSplits()) {
 				for (SimpleTxn st : t.getSplits()) {
 					if (st instanceof MultiSplitTxn) {
 						for (SimpleTxn mst : ((MultiSplitTxn) st).subsplits) {
 							if (mst.getAmount().abs().equals(amt)) {
-								match = true;
+								txns.add(mst);
 							}
 						}
 					} else if (st.getAmount().abs().equals(amt)) {
-						match = true;
+						txns.add(st);
 					}
 				}
 			}
-
-			if (match) {
-				txns.add(t);
-			}
 		}
 
-		txns.sort(new Comparator<GenericTxn>() {
-			public int compare(GenericTxn o1, GenericTxn o2) {
-				int diff1 = Math.abs(o1.getDate().subtract(date));
-				int diff2 = Math.abs(o2.getDate().subtract(date));
+		txns.sort(new Comparator<SimpleTxn>() {
+			public int compare(SimpleTxn o1, SimpleTxn o2) {
+				int diff1 = Math.abs(o1.getDate().subtract(tx.getDate()));
+				int diff2 = Math.abs(o2.getDate().subtract(tx.getDate()));
 
 				return diff1 - diff2;
 			}

@@ -9,12 +9,20 @@ import java.util.List;
  * account where the other account connects to several splits combined in the
  * other transaction.
  */
-public class MultiSplitTxn extends SimpleTxn {
+public class MultiSplitTxn extends SplitTxn {
 	/** Group of splits in this txn that connect to the other txn */
-	public List<SimpleTxn> subsplits = new ArrayList<>();
+	public List<SplitTxn> subsplits = new ArrayList<>();
 
-	public MultiSplitTxn(int acctid) {
-		super(acctid);
+	public MultiSplitTxn(SimpleTxn parent) {
+		super(parent);
+	}
+
+	public boolean hasSplits() {
+		return true;
+	}
+
+	public List<SplitTxn> getSplits() {
+		return this.subsplits;
 	}
 
 	public BigDecimal getCashAmount() {

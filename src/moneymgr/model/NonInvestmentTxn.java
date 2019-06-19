@@ -13,7 +13,7 @@ public class NonInvestmentTxn extends GenericTxn {
 	public String chkNumber;
 
 //	public List<String> address;
-	public List<SimpleTxn> splits;
+	public List<SplitTxn> splits;
 
 	public NonInvestmentTxn(int acctid) {
 		super(acctid);
@@ -30,14 +30,18 @@ public class NonInvestmentTxn extends GenericTxn {
 			return 0;
 		}
 
-		return Integer.parseInt(this.chkNumber);
+		try {
+			return Integer.parseInt(this.chkNumber);
+		} catch (Exception e) {
+			return 0;
+		}
 	}
 
 	public boolean hasSplits() {
 		return !this.splits.isEmpty();
 	}
 
-	public List<SimpleTxn> getSplits() {
+	public List<SplitTxn> getSplits() {
 		return this.splits;
 	}
 
@@ -65,11 +69,11 @@ public class NonInvestmentTxn extends GenericTxn {
 				((isCleared()) ? "C" : " "));
 
 		if (hasSplits()) {
-			for (Iterator<SimpleTxn> iter = getSplits().iterator(); iter.hasNext();) {
-				SimpleTxn split = iter.next();
+			for (Iterator<SplitTxn> iter = getSplits().iterator(); iter.hasNext();) {
+				SplitTxn split = iter.next();
 
 				ret += "\n";
-				//ret += split.formatValue();
+				// ret += split.formatValue();
 				ret += String.format("   %13s    %-25s   %s", //
 						Common.formatAmount(split.getAmount()), //
 						split.getCategory(), //
@@ -102,14 +106,16 @@ public class NonInvestmentTxn extends GenericTxn {
 
 	public String toStringLong() {
 		String s = "";
-		
+
 		s += ((this.stmtdate != null) ? "*" : " ");
 		QDate d = getDate();
 		s += ((d != null) ? d.toString() : "null");
 		s += " Tx" + this.txid + ":   ";
-		Account a = Account.getAccountByID(this.acctid);
+		Account a = Account.getAccountByID(getAccountID());
 		s += ((a != null) ? a.name : "null");
-		s += " num=" + this.chkNumber;
+		if (this.chkNumber != null && !this.chkNumber.isEmpty()) {
+			s += " num=" + this.chkNumber;
+		}
 		s += " " + Common.formatAmount(getAmount()).trim();
 		s += " " + getPayee();
 		s += " xfer/cat=" + getCategory();
