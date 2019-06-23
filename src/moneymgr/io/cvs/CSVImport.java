@@ -3,13 +3,12 @@ package moneymgr.io.cvs;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import app.QifDom;
 import moneymgr.model.Account;
@@ -18,31 +17,140 @@ import moneymgr.model.Category;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
 import moneymgr.model.NonInvestmentTxn;
+import moneymgr.model.Security;
 import moneymgr.model.SimpleTxn;
 import moneymgr.model.SplitTxn;
+import moneymgr.model.TxAction;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
 /** Import data from CSV file exported from MacOS Quicken */
 public class CSVImport {
-	// "Split",""Account",Date","Check #","Payee","Category","Amount","Memo/Notes",
-	// "Description/Category","Type","Security","Comm/Fee","Shares",
-	// "Modified","Action","Reference","Transfer",
-	// "Shares Out","Shares In","Outflow","Clr","Inflow"
-	private static int SPLIT_IDX = -1;
-	private static int ACCOUNT_IDX = -1;
-	private static int DATE_IDX = -1;
-	private static int CHECKNUM_IDX = -1;
-	private static int PAYEE_IDX = -1;
-	private static int CATEGORY_IDX; // >0: CategoryID; <0 AccountID
-	private static int AMOUNT_IDX;
-	private static int MEMO_IDX;
-	private static int DESCRIPTION_IDX = -1;
-	private static int TYPE_IDX = -1;
-	private static int SECURITY_IDX = -1;
-	private static int FEES_IDX = -1;
-	private static int SHARES_IDX = -1;
-	// private static int XACCOUNT_IDX;
+
+	public static class TupleInfo {
+		// "Split",""Account",Date","Check #","Payee","Category","Amount","Memo/Notes",
+		// "Description/Category","Type","Security","Comm/Fee","Shares",
+		// "Action","Shares In","Shares Out","Inflow","Outflow",
+		//
+		// "Modified","Reference","Transfer","Clr",
+		public static int SPLIT_IDX = -1;
+		public static int ACCOUNT_IDX = -1;
+		public static int DATE_IDX = -1;
+		public static int CHECKNUM_IDX = -1;
+		public static int PAYEE_IDX = -1;
+		public static int CATEGORY_IDX; // >0: CategoryID; <0 AccountID
+		public static int AMOUNT_IDX;
+		public static int MEMO_IDX;
+		public static int DESCRIPTION_IDX = -1;
+		public static int TYPE_IDX = -1;
+		public static int SECURITY_IDX = -1;
+		public static int FEES_IDX = -1;
+		public static int SHARES_IDX = -1;
+
+		public static int ACTION_IDX = -1;
+		public static int SHARESIN_IDX = -1;
+		public static int SHARESOUT_IDX = -1;
+		public static int INFLOW_IDX = -1;
+		public static int OUTFLOW_IDX = -1;
+		// private static int XACCOUNT_IDX;
+
+		/** List of field names for the input CSV file */
+		public static String[] fieldnames = null;
+
+		private static int getFieldIndex(String fieldname) {
+			for (int idx = 0; idx < fieldnames.length; ++idx) {
+				if (fieldnames[idx].equals(fieldname)) {
+					return idx;
+				}
+			}
+
+			return -1;
+		}
+
+		public static void setFieldNames(String[] fieldnames) {
+			TupleInfo.fieldnames = fieldnames;
+
+			// "Split","Date","Payee","Category","Amount","Account"
+			SPLIT_IDX = getFieldIndex("Split");
+			DATE_IDX = getFieldIndex("Date");
+			PAYEE_IDX = getFieldIndex("Payee");
+			CATEGORY_IDX = getFieldIndex("Category");
+			AMOUNT_IDX = getFieldIndex("Amount");
+			ACCOUNT_IDX = getFieldIndex("Account");
+			CHECKNUM_IDX = getFieldIndex("Check #");
+			MEMO_IDX = getFieldIndex("Memo/Notes");
+			DESCRIPTION_IDX = getFieldIndex("Description/Category");
+			TYPE_IDX = getFieldIndex("Type");
+			SECURITY_IDX = getFieldIndex("Security");
+			FEES_IDX = getFieldIndex("Comm/Fee");
+			SHARES_IDX = getFieldIndex("Shares");
+			ACTION_IDX = getFieldIndex("Action");
+			SHARESIN_IDX = getFieldIndex("Shares In");
+			SHARESOUT_IDX = getFieldIndex("Shares Out");
+			INFLOW_IDX = getFieldIndex("Inflow");
+			OUTFLOW_IDX = getFieldIndex("Outflow");
+		}
+
+		public String[] values;
+		public QDate date = null;
+		public SimpleTxn macTxn = null;
+		public SimpleTxn winTxn = null;
+		public final List<SimpleTxn> winTxnMatches = new ArrayList<SimpleTxn>();
+		public String messages = "";
+		public boolean datemismatch = false;
+		public boolean fixaction = false;
+
+		public TupleInfo(List<String> values) {
+			while (values.size() < TupleInfo.fieldnames.length) {
+				values.add("");
+			}
+
+			this.values = values.toArray(new String[0]);
+		}
+
+		public String value(int idx) {
+			return ((idx >= 0) && (idx < this.values.length)) ? this.values[idx] : "";
+		}
+
+		public QDate getDate() {
+			if (this.date == null) {
+				try {
+					this.date = Common.parseQDate(value(DATE_IDX));
+				} catch (Exception e) {
+					this.date = QDate.today();
+				}
+			}
+
+			return this.date;
+		}
+
+		public void addMessage(String msg) {
+			this.messages += msg + "\n";
+		}
+
+		public String toString() {
+			return "" //
+					+ value(DATE_IDX) //
+					+ "\n   acct:" + value(ACCOUNT_IDX) + ":" //
+					+ "\n   ty:" + value(TYPE_IDX) + ":" //
+					+ "\n   actn:" + value(ACTION_IDX) + ":" //
+					+ "\n   pay:" + value(PAYEE_IDX) + ":" //
+					+ "\n   amt:" + value(AMOUNT_IDX) + ":" //
+					+ "\n   spl:" + value(SPLIT_IDX) + ":" //
+					+ "\n   cat:" + value(CATEGORY_IDX) + ":" //
+					+ "\n   fee:" + value(FEES_IDX) + ":" //
+					+ "\n   ck:" + value(CHECKNUM_IDX) + ":" //
+					+ "\n   mem:" + value(MEMO_IDX) + ":" //
+					+ "\n   dsc:" + value(DESCRIPTION_IDX) + ":" //
+					+ "\n   infl:" + value(INFLOW_IDX) + ":" //
+					+ "\n   outfl:" + value(OUTFLOW_IDX) + ":" //
+					+ "\n   sec:" + value(SECURITY_IDX) + ":" //
+					+ "\n   shr:" + value(SHARES_IDX) + ":" //
+					+ "\n   shin:" + value(SHARESIN_IDX) + ":" //
+					+ "\n   shout:" + value(SHARESOUT_IDX) + ":" //
+			;
+		}
+	}
 
 	// private static int xtxn;
 
@@ -58,27 +166,10 @@ public class CSVImport {
 		}
 	}
 
-	private static int getFieldIndex(String fieldname, String[] fieldnames) {
-		for (int idx = 0; idx < fieldnames.length; ++idx) {
-			if (fieldnames[idx].equals(fieldname)) {
-				return idx;
-			}
-		}
-
-		return -1;
-	}
-
-	private static QDate dateFromTuple(String[] tuple) {
-		return Common.parseQDate(tuple[DATE_IDX]);
-	}
-
 	private LineNumberReader rdr;
 
-	/** List of field names for the input CSV file */
-	public String[] fieldnames = null;
-
 	/** Map account name to transaction tuples */
-	public Map<String, List<String[]>> transactionsMap = new HashMap<>();
+	public Map<String, List<TupleInfo>> transactionsMap = new HashMap<>();
 
 	/** When assembling splits, this holds the current main transaction */
 	public GenericTxn lasttxn = null;
@@ -88,28 +179,28 @@ public class CSVImport {
 	 * Simple - no splits on either side Split - tx exists as split in both versions
 	 * PseudoSplit - non-split matches split in other version
 	 */
-	public static class MatchInfo {
-		public boolean isPseudoSplit = false;
-		public boolean ismatched = false;
-		public List<SimpleTxn> macTxn = new ArrayList<>();
-		public List<SimpleTxn> winTxn = new ArrayList<>();
+//	public static class MatchInfo {
+//		public List<SimpleTxn> macTxn = new ArrayList<>();
+//		public List<SimpleTxn> winTxn = new ArrayList<>();
+//	}
 
-		public List<SimpleTxn> winTxnPotential = null;
-		public List<SimpleTxn> winTxnMatches = null;
-	}
+	// create mactx from tuple
+	// tuple<->mactx
+	// tuple->[wintx]
+	// wintx->[tuple]
 
-	public List<MatchInfo> matches = new ArrayList<>();
-	public Map<SimpleTxn, MatchInfo> matchInfoForWinTxn = new HashMap<>();
-	public Map<GenericTxn, MatchInfo> partialMatches = new HashMap<>();
+//	public List<MatchInfo> matches = new ArrayList<>();
+//	public Map<SimpleTxn, MatchInfo> matchInfoForWinTxn = new HashMap<>();
+//	public Map<GenericTxn, MatchInfo> partialMatches = new HashMap<>();
 
-	public Set<SimpleTxn> matchedTransactions = new HashSet<>();
+//	public Set<SimpleTxn> matchedTransactions = new HashSet<>();
 
 	/** Map MAC tx to WIN tx */
-	public Map<SimpleTxn, SimpleTxn> match = new HashMap<>();
-	public Map<SimpleTxn, List<GenericTxn>> multimatch = new HashMap<>();
-	public List<SimpleTxn> nomatch = new ArrayList<>();
-	public List<SimpleTxn> allzero = new ArrayList<>();
-	public List<SimpleTxn> nomatchZero = new ArrayList<>();
+//	public Map<SimpleTxn, SimpleTxn> match = new HashMap<>();
+//	public Map<SimpleTxn, List<GenericTxn>> multimatch = new HashMap<>();
+	public List<TupleInfo> nomatch = new ArrayList<>();
+	public List<TupleInfo> allzero = new ArrayList<>();
+	public List<TupleInfo> nomatchZero = new ArrayList<>();
 	public int totaltx = 0;
 
 	public CSVImport(String filename) {
@@ -121,81 +212,117 @@ public class CSVImport {
 	}
 
 	public void importFile() {
-		ACCOUNT_IDX = -1;
-
-		readFieldNames();
-		if (this.fieldnames == null) {
+		if (!readFieldNames()) {
 			return;
 		}
 
 		importCSVRecords();
-		processCSVRecords();
+		// processCSVRecords();
 
 		try {
 			this.rdr.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
 
-	private void processCSVRecords() {
-		for (Map.Entry<String, List<String[]>> entry : this.transactionsMap.entrySet()) {
-			if (entry.getKey().equals("FieldNames")) {
-				continue;
+		try {
+			PrintStream out = new PrintStream("/Users/greg/qif/tupleinfo.out");
+
+			int cleantuples = 0;
+			int dirtytuples = 0;
+			int datefixed = 0;
+			int actionfixed = 0;
+
+			for (Account acct : Account.getAccounts()) {
+				List<TupleInfo> tuples = this.transactionsMap.get(acct.name);
+
+				if (tuples != null) {
+					for (TupleInfo tuple : tuples) {
+						if (tuple.messages.isEmpty()) {
+							++cleantuples;
+							if (tuple.datemismatch) {
+								++datefixed;
+							}
+							if (tuple.fixaction) {
+								++actionfixed;
+							}
+						} else {
+							++dirtytuples;
+							out.println("\nMessages for tuple " + tuple.macTxn.txid //
+									+ " dateMismatch:" + tuple.datemismatch //
+									+ " fixaction: " + tuple.fixaction);
+							out.print(tuple.messages);
+						}
+					}
+				}
 			}
 
-			infoMessage(entry.getKey());
+			out.println("\nClean tuples: " + cleantuples);
+			out.println("\nClean but fixed date: " + datefixed + " action: " + actionfixed);
+			out.println("\nDirty tuples: " + dirtytuples);
 
-			for (String[] tuple : entry.getValue()) {
+			out.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void importCSVRecords() {
+		for (;;) {
+			TupleInfo tuple = readRecord();
+			if (tuple == null) {
+				break;
+			}
+
+			String f0 = tuple.value(0);
+
+			if (f0.trim().isEmpty()) {
+				String acctname = tuple.value(TupleInfo.ACCOUNT_IDX);
+
+				List<TupleInfo> accttxns = this.transactionsMap.get(acctname);
+
+				if (accttxns == null) {
+					accttxns = new ArrayList<>();
+					this.transactionsMap.put(acctname, accttxns);
+				}
+
+				accttxns.add(tuple);
+
 				processTuple(tuple);
 			}
 		}
-
-		for (MatchInfo mi : this.matches) {
-			for (SimpleTxn mactx : mi.macTxn) {
-				matchTransaction(mi, mactx);
-			}
-		}
 	}
 
-	private void processTuple(String[] tuple) {
-		infoMessage("  [");
-		for (String field : tuple) {
-			infoMessageNoln("'" + field + "', ");
-		}
-		infoMessage("]");
-
-		QDate txdate = dateFromTuple(tuple);
-		SimpleTxn txn = createTransaction(txdate, tuple);
+	private void processTuple(TupleInfo tuple) {
+		SimpleTxn txn = createTransaction(tuple);
 		if (txn != null) {
 			++this.totaltx;
+			tuple.macTxn = txn;
 
-			MatchInfo mi = new MatchInfo();
-			mi.macTxn.add(txn);
-
-			this.matches.add(mi);
+			matchTransaction(tuple);
 		}
 	}
 
 	/**
-	 * @param mi     Matchinfo for the mac txn
-	 * @param mactxn The mac txn to match with windows txn(s)
+	 * @param tuple Tupleinfo for the txn
 	 */
-	public void matchTransaction(MatchInfo mi, SimpleTxn mactxn) {
+	public void matchTransaction(TupleInfo tuple) {
+		SimpleTxn mactxn = tuple.macTxn;
+
 		infoMessage(mactxn.toString());
 
 		Account acct = Account.getAccountByID(mactxn.getAccountID());
 		List<SimpleTxn> txns = acct.findMatchingTransactions(mactxn);
-		List<SimpleTxn> potentialtxns = acct.findPotentialMatchingTransactions(mactxn);
+//		List<SimpleTxn> potentialtxns = acct.findPotentialMatchingTransactions(mactxn);
 
 //		if (txns.isEmpty()) {
-//			acct.findMatchingTransactions(mactxn);
+//			acct.findMatchingTransactions(mi.macTxn);
 //		}
 //
 //		while (!txns.isEmpty() //
 //				&& this.matchedTransactions.contains(txns.get(0))) {
 //			SimpleTxn t = txns.get(0);
-//			if (mactxn.hasSplits() == t.hasSplits()) {
+//			if (mi.macTxn.hasSplits() == t.hasSplits()) {
 //				txns.remove(0);
 //			}
 //		}
@@ -206,22 +333,42 @@ public class CSVImport {
 
 		boolean iszero = Common.isEffectivelyZero(mactxn.getAmount());
 		if (iszero) {
-			this.allzero.add(mactxn);
+			this.allzero.add(tuple);
 		}
 
 		if (!txns.isEmpty()) {
 			if (txns.size() > 1) {
-				mi.winTxnMatches = txns;
-				System.out.println("Multiple wintxn matches for mactxn:\n   " + mactxn.toString());
+				tuple.winTxnMatches.addAll(txns);
+				tuple.addMessage( //
+						"Multiple(" + txns.size() + ") wintxn matches found for:\n   " //
+								+ mactxn.toString());
 			}
 
-			SimpleTxn wintxn = txns.get(0);
-			mi.winTxn.add(wintxn);
-			this.matchInfoForWinTxn.put(wintxn, mi);
+			SimpleTxn wintxn = null;
+			int lastdiff = 0;
+
+			// TODO this matching sucks
+			for (SimpleTxn tx : txns) {
+				int diff = mactxn.compareToXX(tuple, tx);
+
+				if (wintxn == null || lastdiff > diff) {
+					wintxn = tx;
+					lastdiff = diff;
+				}
+			}
+
+			if (lastdiff != 0) {
+				tuple.addMessage("Inexact match:\n" //
+						+ wintxn.toString() + "\n" //
+						+ mactxn.toString());
+			}
+
+			tuple.winTxn = wintxn;
+//			this.matchInfoForWinTxn.put(wintxn, mi);
 
 //			mi = null;
 //
-//			if (mactxn.hasSplits() != wintxn.hasSplits()) {
+//			if (mi.macTxn.hasSplits() != wintxn.hasSplits()) {
 //				mi = this.partialMatches.get(wintxn);
 //				if (mi == null) {
 //					mi = new MatchInfo();
@@ -234,22 +381,20 @@ public class CSVImport {
 //			this.match.put(mactxn, txns.get(0));
 //			this.matchedTransactions.add(txns.get(0));
 		} else {
-			mi.winTxnPotential = potentialtxns;
 			if (iszero) {
-				this.nomatchZero.add(mactxn);
+				this.nomatchZero.add(tuple);
 			} else {
-				this.nomatch.add(mactxn);
+				this.nomatch.add(tuple);
 			}
 		}
 	}
 
-	private SimpleTxn createTransaction(QDate txdate, String[] tuple) {
+	private SimpleTxn createTransaction(TupleInfo tuple) {
 		SimpleTxn txn = null;
 
 		try {
-			String acctname = tuple[ACCOUNT_IDX];
-
 			// TODO account names different in mac file
+			String acctname = tuple.value(TupleInfo.ACCOUNT_IDX);
 			if (acctname.contentEquals("Tesla Model 3")) {
 				acctname = "Tesla";
 			} else if (acctname.contentEquals("Tesla Loan")) {
@@ -263,25 +408,36 @@ public class CSVImport {
 				Account.addAccount(acct);
 			}
 
-			String payee = tuple[PAYEE_IDX];
-			BigDecimal amount = Common.getDecimal(tuple[AMOUNT_IDX]);
+			String payee = tuple.value(TupleInfo.PAYEE_IDX);
+			BigDecimal amount = Common.getDecimal(tuple.value(TupleInfo.AMOUNT_IDX));
 
-			String split = tuple[SPLIT_IDX];
-			String memo = tuple[MEMO_IDX];
-			String cknum = tuple[CHECKNUM_IDX];
-			String cat = tuple[CATEGORY_IDX];
-			String desc = (DESCRIPTION_IDX >= 0) ? tuple[DESCRIPTION_IDX] : "";
-			String type = tuple[TYPE_IDX];
-			String sec = tuple[SECURITY_IDX];
-			String fees = tuple[FEES_IDX];
-			String shares = tuple[SHARES_IDX];
+			String split = tuple.value(TupleInfo.SPLIT_IDX);
+			String memo = tuple.value(TupleInfo.MEMO_IDX);
+			String cknum = tuple.value(TupleInfo.CHECKNUM_IDX);
+			String cat = tuple.value(TupleInfo.CATEGORY_IDX);
+			String desc = tuple.value(TupleInfo.DESCRIPTION_IDX);
+			String type = tuple.value(TupleInfo.TYPE_IDX);
+			String sec = tuple.value(TupleInfo.SECURITY_IDX);
+			String fees = tuple.value(TupleInfo.FEES_IDX);
+			String shares = tuple.value(TupleInfo.SHARES_IDX);
+			String action = tuple.value(TupleInfo.ACTION_IDX);
+			String sharesIn = tuple.value(TupleInfo.SHARESIN_IDX);
+			String sharesOut = tuple.value(TupleInfo.SHARESOUT_IDX);
+			String inflow = tuple.value(TupleInfo.INFLOW_IDX);
+			String outflow = tuple.value(TupleInfo.OUTFLOW_IDX);
 
 			Account xferAcct = null;
 			Category c = null;
 			int catid;
 
 			if (cat.startsWith("Transfer:[")) {
+				// TODO account names different in mac file
 				cat = cat.substring(10, cat.length() - 1);
+				if (cat.contentEquals("Tesla Model 3")) {
+					cat = "Tesla";
+				} else if (cat.contentEquals("Tesla Loan")) {
+					cat = "TeslaLoan";
+				}
 				xferAcct = Account.findAccount(cat);
 				catid = (xferAcct != null) ? -xferAcct.acctid : 0;
 			} else {
@@ -291,7 +447,7 @@ public class CSVImport {
 
 			if (split.equals("S")) {
 				if (this.lasttxn != null) {
-					if (!this.lasttxn.getDate().equals(txdate)) {
+					if (!this.lasttxn.getDate().equals(tuple.getDate())) {
 						// TODO at some point, validate splits
 						this.lasttxn = null;
 					}
@@ -311,9 +467,9 @@ public class CSVImport {
 			}
 
 			if (!split.equals("S")) {
-				txn.setDate(txdate);
+				txn.setDate(tuple.getDate());
 			} else if (this.lasttxn.getDate() == null) {
-				this.lasttxn.setDate(txdate);
+				this.lasttxn.setDate(tuple.getDate());
 			}
 
 			txn.setAmount(amount);
@@ -329,20 +485,32 @@ public class CSVImport {
 			if (txn instanceof NonInvestmentTxn) {
 				NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
 				nitxn.chkNumber = cknum;
-				nitxn.splits = new ArrayList<>();
 			}
 // TODO payee, acctForTransfer, amountTransferred, 
 // TODO lots
 			if (txn instanceof InvestmentTxn) {
 				InvestmentTxn itxn = (InvestmentTxn) txn;
-				itxn.accountForTransfer = null;
-				itxn.amountTransferred = BigDecimal.ZERO;
-				//itxn.setCatid(0);
-				itxn.commission = BigDecimal.ZERO;
+// TODO action for non-transfers (payment, income, buy/sell, buyx/sellx, etc)
+				if (itxn.getCatid() < 0) {
+					itxn.setXferAcctid(-itxn.getCatid());
+				}
+
+				if (itxn.getXferAcctid() > 0) {
+					itxn.accountForTransfer = Account.getAccountByID(itxn.getXferAcctid()).name;
+					itxn.setAction((inflow.isEmpty()) ? TxAction.XOUT : TxAction.XIN);
+					itxn.amountTransferred = amount;
+				} else {
+					itxn.setAction(TxAction.OTHER);
+					itxn.amountTransferred = BigDecimal.ZERO;
+					itxn.accountForTransfer = null;
+				}
+				itxn.commission = (fees.isEmpty()) //
+						? BigDecimal.ZERO //
+						: Common.getDecimal(fees);
 				itxn.price = BigDecimal.ZERO;
-				itxn.security = null;
-				itxn.xferTxns = null;
-				// itxn.textFirstLine = null;
+				if (!sec.isEmpty()) {
+					itxn.security = Security.findSecurity(sec);
+				}
 
 				// 0.42 shares @ 1.00
 				if (!desc.isEmpty()) {
@@ -361,10 +529,10 @@ public class CSVImport {
 					}
 				}
 			}
-				
+
 			List<SimpleTxn> matches = acct.findPotentialMatchingTransactions(txn);
 			matches.add(txn);
-			System.out.println("" + matches.size() + " potential matches found");
+//			System.out.println("" + matches.size() + " potential matches found");
 
 //		public int xacctid;
 //		public int catid; // >0: CategoryID; <0 AccountID
@@ -380,36 +548,7 @@ public class CSVImport {
 		return txn;
 	}
 
-	private void importCSVRecords() {
-		for (;;) {
-			List<String> record = readRecord();
-			if (record == null) {
-				break;
-			}
-
-			String f0 = (!record.isEmpty()) ? record.get(0) : "";
-
-			if (f0.trim().isEmpty()) {
-				String acctname = record.get(ACCOUNT_IDX);
-
-				List<String[]> accttxns = this.transactionsMap.get(acctname);
-
-				if (accttxns == null) {
-					accttxns = new ArrayList<>();
-					this.transactionsMap.put(acctname, accttxns);
-				}
-
-				while (record.size() < this.fieldnames.length) {
-					record.add("");
-				}
-
-				String[] tuple = record.toArray(new String[0]);
-				accttxns.add(tuple);
-			}
-		}
-	}
-
-	public List<String> readRecord() {
+	public List<String> readRawRecord() {
 		List<String> fields = new ArrayList<>();
 
 		try {
@@ -494,44 +633,27 @@ public class CSVImport {
 		return fields;
 	}
 
-	private void setFieldIndexes(String[] fieldnames) {
-		if (ACCOUNT_IDX >= 0) {
-			return;
-		}
-
-		// "Split","Date","Payee","Category","Amount","Account"
-		SPLIT_IDX = getFieldIndex("Split", fieldnames);
-		DATE_IDX = getFieldIndex("Date", fieldnames);
-		PAYEE_IDX = getFieldIndex("Payee", fieldnames);
-		CATEGORY_IDX = getFieldIndex("Category", fieldnames);
-		AMOUNT_IDX = getFieldIndex("Amount", fieldnames);
-		ACCOUNT_IDX = getFieldIndex("Account", fieldnames);
-		CHECKNUM_IDX = getFieldIndex("Check #", fieldnames);
-		MEMO_IDX = getFieldIndex("Memo/Notes", fieldnames);
-		DESCRIPTION_IDX = getFieldIndex("Description/Category", fieldnames);
-		TYPE_IDX = getFieldIndex("Type", fieldnames);
-		SECURITY_IDX = getFieldIndex("Security", fieldnames);
-		FEES_IDX = getFieldIndex("Comm/Fee", fieldnames);
-		SHARES_IDX = getFieldIndex("Shares", fieldnames);
+	public TupleInfo readRecord() {
+		List<String> fields = readRawRecord();
+		return (fields != null) ? new TupleInfo(fields) : null;
 	}
 
-	public void readFieldNames() {
+	public boolean readFieldNames() {
 		for (;;) {
-			List<String> record = readRecord();
+			List<String> record = readRawRecord();
 			if (record == null) {
-				return;
+				break;
 			}
 
 			if (record.contains("Account") && record.contains("Date")) {
-				this.fieldnames = record.toArray(new String[0]);
+				TupleInfo.setFieldNames(record.toArray(new String[0]));
 
-				List<String[]> fnlist = new ArrayList<>();
-				fnlist.add(this.fieldnames);
+//				List<String[]> fnlist = new ArrayList<>();
+//				fnlist.add(TupleInfo.fieldnames);
+//				this.transactionsMap.put("FieldNames", fnlist);
+//				TupleInfo.setFieldIndexes();
 
-				this.transactionsMap.put("FieldNames", fnlist);
-				setFieldIndexes(this.fieldnames);
-
-				break;
+				return true;
 			}
 		}
 
@@ -539,5 +661,47 @@ public class CSVImport {
 //		fnlist.add(this.fieldnames);
 //		this.transactionsMap.put("FieldNames", fnlist);
 //		setFieldIndexes(this.fieldnames);
+
+		return false;
 	}
+
+//	private void processCSVRecords() {
+//		for (Map.Entry<String, List<TupleInfo>> entry : this.transactionsMap.entrySet()) {
+//			String accountName = entry.getKey();
+//			List<TupleInfo> accountTuples = entry.getValue();
+//
+//			if (!accountName.equals("FieldNames")) {
+//				infoMessage(accountName);
+//
+//				for (TupleInfo tuple : accountTuples) {
+//					processTuple(tuple);
+//				}
+//			}
+//		}
+//
+//		for (MatchInfo mi : this.matches) {
+//			for (SimpleTxn mactx : mi.macTxn) {
+//				//matchTransaction(mi, mactx);
+//			}
+//		}
+//	}
+
+//	private void processTuple(TupleInfo tuple) {
+////		infoMessage("  [");
+////		for (String field : tuple.values) {
+////			infoMessageNoln("'" + field + "', ");
+////		}
+////		infoMessage("]");
+//
+//		SimpleTxn txn = createTransaction(tuple);
+//		if (txn != null) {
+//			++this.totaltx;
+//			tuple.macTxn = txn;
+//			matchTransaction(tuple);
+////			MatchInfo mi = new MatchInfo();
+////			tuple.macTxn.add(txn);
+//
+////			this.matches.add(mi);
+//		}
+//	}
 }

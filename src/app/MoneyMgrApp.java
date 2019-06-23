@@ -3,10 +3,11 @@ package app;
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Scanner;
 
 import moneymgr.io.cvs.CSVImport;
-import moneymgr.io.cvs.CSVImport.MatchInfo;
+import moneymgr.io.cvs.CSVImport.TupleInfo;
 import moneymgr.io.qif.QifDomReader;
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
@@ -23,9 +24,9 @@ public class MoneyMgrApp {
 		CSVImport csvimp = new CSVImport(filename);
 		csvimp.importFile();
 
-		Comparator<SimpleTxn> comp = new Comparator<SimpleTxn>() {
-			public int compare(SimpleTxn tx1, SimpleTxn tx2) {
-				return tx1.getDate().compareTo(tx2.getDate());
+		Comparator<TupleInfo> comp = new Comparator<TupleInfo>() {
+			public int compare(TupleInfo tx1, TupleInfo tx2) {
+				return tx1.date.compareTo(tx2.date);
 			}
 		};
 		Collections.sort(csvimp.nomatch, comp);
@@ -35,7 +36,7 @@ public class MoneyMgrApp {
 		int win_unmatch = 0;
 		int win_total = 0;
 
-		int nn = 1;
+		// int nn = 1;
 		PrintStream out = null;
 		try {
 			out = new PrintStream("/Users/greg/qif/output.txt");
@@ -45,36 +46,38 @@ public class MoneyMgrApp {
 			int nomatchmac = 0;
 			int nomatchwin = 0;
 
-			for (MatchInfo mi : csvimp.matches) {
-				++totalmac;
-				if (mi.winTxn.isEmpty()) {
-					SimpleTxn mactxn = mi.macTxn.get(0);
-					out.print("No match for mactxn:\n    " + mactxn);
+			for (List<TupleInfo> tuples : csvimp.transactionsMap.values()) {
+				for (TupleInfo mi : tuples) {
+					++totalmac;
+					if (mi.winTxnMatches.isEmpty()) {
+						SimpleTxn mactxn = mi.macTxn;
+						out.print("No match for mactxn:\n    " + mactxn);
 
-					if (mi.winTxnPotential != null) {
-						out.println("  Potential matches:");
-						for (SimpleTxn pmtx : mi.winTxnPotential) {
-							out.print("    " + pmtx.toString());
+//					if (mi.winTxnPotential != null) {
+//						out.println("  Potential matches:");
+//						for (SimpleTxn pmtx : mi.winTxnPotential) {
+//							out.print("    " + pmtx.toString());
+//						}
+//					}
+
+						out.println();
+
+						++nomatchmac;
+
+						if (mactxn.getAmount().signum() != 0) {
+							Account acct = mactxn.getAccount();
+							acct.findMatchingTransactions(mactxn);
 						}
-					}
-
-					out.println();
-
-					++nomatchmac;
-
-					if (mactxn.getAmount().signum() != 0) {
-						Account acct = mactxn.getAccount();
-						acct.findMatchingTransactions(mactxn);
 					}
 				}
 			}
 
 			for (GenericTxn wintxn : GenericTxn.getAllTransactions()) {
 				++totalwin;
-				if (wintxn != null && !csvimp.matchInfoForWinTxn.containsKey(wintxn)) {
-					out.println("No match for wintxn:\n    " + wintxn);
-					++nomatchwin;
-				}
+//				if (wintxn != null && !csvimp.matchInfoForWinTxn.containsKey(wintxn)) {
+//					out.println("No match for wintxn:\n    " + wintxn);
+//					++nomatchwin;
+//				}
 			}
 
 			out.println("Total unmatched mac=" + nomatchmac + "/" + totalmac //
@@ -129,9 +132,9 @@ public class MoneyMgrApp {
 			out.println("\nSummary for : " + filename);
 			out.println("MAC tot=" + mac_total + " match=" + mac_nomatch);
 			out.println("WIN tot=" + win_total + " match=" + (win_total - win_unmatch));
-			out.println("WIN match tot=" + csvimp.matchedTransactions.size());
+//			out.println("WIN match tot=" + csvimp.matchedTransactions.size());
 
-			out.println(" Matches: " + csvimp.match.size());
+//			out.println(" Matches: " + csvimp.match.size());
 			out.println(" Unmatched:     " + csvimp.nomatch.size());
 			out.println(" Unmatched zero:" + csvimp.nomatchZero.size());
 			out.println(" All zero:" + csvimp.allzero.size());
@@ -147,9 +150,6 @@ public class MoneyMgrApp {
 		MoneyMgrApp.scn = new Scanner(System.in);
 		QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
 
-		System.out.println(String.format("There are %d transactions from DIETRICH.QIF", //
-				GenericTxn.getAllTransactions().size()));
-
 		// TODO experimental code
 		InvestmentPerformanceModel model = new InvestmentPerformanceModel( //
 				new QDate(2018, 8, 1), //
@@ -159,20 +159,22 @@ public class MoneyMgrApp {
 
 		MainFrame.createUI();
 
-		System.out.println("Processing csv export file");
+		testMacImport();
+	}
 
+	private static void testMacImport() {
 		String importDir = "/Users/greg/Documents/workspace/Quicken/qif/";
+
+		System.out.println("Processing csv file");
 
 		GenericTxn.rememberTransactions = false;
 
-		// importCSV(importDir + "import20180630.csv");
-		// importCSV(importDir + "export-20171231.csv");
-		// importCSV(importDir + "export-20180815.csv");
-		// importCSV(importDir + "DIETRICH_all-2019061.csv");
-		//importCSV(importDir + "DIETRICH-export-20190615.csv");
-//		importCSV(importDir + "DIETRICH-export-20190617.csv");
+		System.out.println(String.format("There are %d transactions from DIETRICH.QIF", //
+				GenericTxn.getAllTransactions().size()));
 
-		System.out.println(String.format("There now are %d transactions from DIETRICH.QIF", //
+		importCSV(importDir + "DIETRICH.csv");
+
+		System.out.println(String.format("After import, there are now %d transactions from DIETRICH.QIF", //
 				GenericTxn.getAllTransactions().size()));
 		System.out.println(String.format("There are %d transactions from MAC export", //
 				GenericTxn.alternateTransactions.size()));

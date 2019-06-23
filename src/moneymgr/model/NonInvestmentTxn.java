@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import moneymgr.io.cvs.CSVImport.TupleInfo;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -13,7 +14,8 @@ public class NonInvestmentTxn extends GenericTxn {
 	public String chkNumber;
 
 //	public List<String> address;
-	public List<SplitTxn> splits;
+	// TODO move splits to SimpleTxn?
+	public final List<SplitTxn> splits;
 
 	public NonInvestmentTxn(int acctid) {
 		super(acctid);
@@ -22,6 +24,31 @@ public class NonInvestmentTxn extends GenericTxn {
 
 //		this.address = new ArrayList<String>();
 		this.splits = new ArrayList<>();
+	}
+
+	public int compareToXX(TupleInfo tuple, SimpleTxn othersimp) {
+		int diff;
+		
+		diff = super.compareToXX(tuple, othersimp);
+		if (diff != 0) {
+			return diff;
+		}
+
+		if (!(othersimp instanceof NonInvestmentTxn)) {
+			return -1;
+		}
+
+		NonInvestmentTxn other = (NonInvestmentTxn) othersimp;
+		
+		if (hasSplits()) {
+			if (!other.hasSplits()) {
+				return 1;
+			}
+			
+			// TODO compare splits
+		}
+
+		return 0;
 	}
 
 	public int getCheckNumber() {

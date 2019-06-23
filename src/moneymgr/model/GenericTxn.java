@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import moneymgr.io.cvs.CSVImport.TupleInfo;
 import moneymgr.util.QDate;
 
 /** Common transaction info - subclassed by Investment vs NonInvestment txn */
@@ -279,8 +280,20 @@ public abstract class GenericTxn //
 		GenericTxn.addTransaction(this);
 	}
 
-	// TODO check number is not supported for investment txn? That isn't right
-	public int getCheckNumber() {
+	public int compareToXX(TupleInfo tuple, SimpleTxn othersimp) {
+		int diff;
+		
+		diff = super.compareToXX(tuple, othersimp);
+		if (diff != 0) {
+			return diff;
+		}
+
+//		if (!(othersimp instanceof GenericTxn)) {
+//			return -1;
+//		}
+//
+//		GenericTxn other = (GenericTxn) othersimp;
+
 		return 0;
 	}
 

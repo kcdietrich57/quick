@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import app.QifDom;
+import moneymgr.io.cvs.CSVImport.TupleInfo;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -32,7 +33,7 @@ public class InvestmentTxn extends GenericTxn {
 
 	public String accountForTransfer;
 	public BigDecimal amountTransferred;
-	public List<InvestmentTxn> xferTxns;
+	private List<InvestmentTxn> xferTxns;
 
 	public final List<Lot> lots;
 	public final List<Lot> lotsCreated;
@@ -84,6 +85,38 @@ public class InvestmentTxn extends GenericTxn {
 		this.lotsDisposed = new ArrayList<>();
 	}
 
+	public int compareToXX(TupleInfo tuple, SimpleTxn othersimp) {
+		int diff;
+
+		diff = super.compareToXX(tuple, othersimp);
+		if (diff != 0) {
+			return diff;
+		}
+
+		if (!(othersimp instanceof InvestmentTxn)) {
+			return -1;
+		}
+
+		InvestmentTxn other = (InvestmentTxn) othersimp;
+
+		String xact1 = Common.formatString(this.accountForTransfer, 0);
+		if (xact1.startsWith("[")) {
+			xact1 = xact1.substring(1, xact1.length() - 1);
+		}
+		String xact2 = Common.formatString(other.accountForTransfer, 0);
+		if (xact2.startsWith("[")) {
+			xact2 = xact2.substring(1, xact2.length() - 1);
+		}
+
+		diff = xact1.compareTo(xact2);
+
+		if (diff != 0) {
+			return diff;
+		}
+
+		return 0;
+	}
+
 	public void setAction(TxAction action) {
 		this.action = action;
 	}
@@ -98,6 +131,21 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 		return "";
+	}
+
+	public List<InvestmentTxn> getXferTxns() {
+		return (this.xferTxns == NO_XFER_TXNS) //
+				? this.xferTxns //
+				: Collections.unmodifiableList(this.xferTxns);
+	}
+
+	public void setXferTxns(List<InvestmentTxn> txns) {
+		if (this.xferTxns == NO_XFER_TXNS) {
+			this.xferTxns = new ArrayList<InvestmentTxn>(txns);
+		} else {
+			this.xferTxns.clear();
+			this.xferTxns.addAll(txns);
+		}
 	}
 
 	public void setQuantity(BigDecimal qty) {
@@ -504,7 +552,6 @@ public class InvestmentTxn extends GenericTxn {
 		if (isStockOptionTransaction() && (this.option != null)) {
 			s += "\n  Option info: " + this.option.toString();
 		}
-		s += "\n";
 
 		return s;
 	}

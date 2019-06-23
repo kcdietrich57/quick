@@ -157,11 +157,15 @@ public class Common {
 
 	/**
 	 * Pad/truncate a string, possibly null, to maximum length<br>
+	 * If maxlen is zero, return entire string or "" if null<br>
 	 * If maxlen is negative, left justify the result.
 	 */
 	public static String formatString(String s, int maxlen) {
 		if (s == null) {
-			s = "N/A";
+			s = "";
+		}
+		if (maxlen == 0) {
+			return s;
 		}
 
 		boolean leftJustify = false;

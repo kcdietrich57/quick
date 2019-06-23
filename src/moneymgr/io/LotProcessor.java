@@ -96,7 +96,7 @@ public class LotProcessor {
 		List<InvestmentTxn> dstTxns = new ArrayList<InvestmentTxn>();
 
 		InvestmentTxn txn = txns.get(txIdx);
-		boolean isXfer = (txn.xferTxns != null) && !txn.xferTxns.isEmpty();
+		boolean isXfer = !txn.getXferTxns().isEmpty();
 
 		if (isXfer) {
 			txIdx = gatherXferTransactions(txns, txIdx, srcTxns, dstTxns);
@@ -498,7 +498,7 @@ public class LotProcessor {
 			List<InvestmentTxn> list1, //
 			List<InvestmentTxn> list2) {
 		for (InvestmentTxn txn1 : list1) {
-			for (InvestmentTxn xferTxn : txn1.xferTxns) {
+			for (InvestmentTxn xferTxn : txn1.getXferTxns()) {
 				if (!list2.contains(xferTxn)) {
 					list2.add(xferTxn);
 

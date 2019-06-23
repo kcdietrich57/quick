@@ -324,10 +324,10 @@ public class TransactionCleaner {
 				}
 
 				for (InvestmentTxn inTx : ins) {
-					inTx.xferTxns = new ArrayList<InvestmentTxn>(outs);
+					inTx.setXferTxns(outs);
 				}
 				for (InvestmentTxn outTx : outs) {
-					outTx.xferTxns = new ArrayList<InvestmentTxn>(ins);
+					outTx.setXferTxns(ins);
 				}
 			}
 

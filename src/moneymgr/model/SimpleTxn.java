@@ -6,11 +6,13 @@ import java.util.Collections;
 import java.util.List;
 
 import app.QifDom;
+import moneymgr.io.cvs.CSVImport.TupleInfo;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
 interface Txn {
 	QDate getDate();
+
 	void setDate(QDate date);
 
 	int getAccountID();
@@ -57,6 +59,102 @@ public abstract class SimpleTxn implements Txn {
 		this.xtxn = null;
 	}
 
+	public int compareToXX(TupleInfo tuple, SimpleTxn other) {
+		int diff;
+
+		diff = getAccountID() - other.getAccountID();
+		if (diff != 0) {
+			return diff;
+		}
+
+		diff = getDate().subtract(other.getDate());
+		if (diff != 0) {
+			if (Math.abs(diff) > 5) {
+				return diff;
+			}
+
+			tuple.datemismatch = true;
+//			tuple.addMessage("Date mismatch ignored: " //
+//					+ getDate().toString() + " vs " + other.getDate().toString());
+		}
+
+		diff = getAction().compareTo(other.getAction());
+		if (diff != 0) {
+			if (getAction() != TxAction.OTHER) {
+				tuple.addMessage("Can't replace " + getAction().toString() //
+						+ " action in transaction with " + other.getAction().toString());
+				return diff;
+			}
+
+			tuple.fixaction = true;
+//			tuple.addMessage("Replacing OTHER action in transaction with " //
+//					+ other.getAction().toString());
+			this.setAction(other.getAction());
+		}
+
+		diff = getAmount().compareTo(other.getAmount());
+		if (diff != 0) {
+			return diff;
+		}
+
+		diff = getGain().compareTo(other.getGain());
+		if (diff != 0) {
+			return diff;
+		}
+
+		diff = (isCredit() == other.isCredit()) ? 0 : -1;
+		if (diff != 0) {
+			return diff;
+		}
+
+		diff = getCashAmount().compareTo(other.getCashAmount());
+		if (diff != 0) {
+			return diff;
+		}
+
+		// TODO THIS HAPPENS FREQUENTLY
+		diff = getCatid() - other.getCatid();
+		if (diff != 0) {
+			// return diff;
+		}
+
+		diff = getXferAcctid() - other.getXferAcctid();
+		if (diff != 0) {
+			return diff;
+		}
+
+		diff = getXferAmount().compareTo(other.getXferAmount());
+		if (diff != 0) {
+			return diff;
+		}
+
+		diff = hasSplits() == other.hasSplits() ? 0 : -1;
+		if (diff != 0) {
+			return diff;
+		}
+
+		// TODO compare splits
+
+		// TODO THIS HAPPENS FREQUENTLY
+		diff = getPayee().compareTo(other.getPayee());
+		if (diff != 0) {
+			// return diff;
+		}
+
+		// TODO THIS HAPPENS FREQUENTLY
+		diff = getMemo().compareTo(other.getMemo());
+		if (diff != 0) {
+			// return diff;
+		}
+
+		diff = this.getCheckNumber() - other.getCheckNumber();
+		if (diff != 0) {
+			return diff;
+		}
+
+		return 0;
+	}
+
 	public int getAccountID() {
 		return this.acctid;
 	}
@@ -65,12 +163,26 @@ public abstract class SimpleTxn implements Txn {
 		return Account.getAccountByID(this.acctid);
 	}
 
+	public boolean isCredit() {
+		return (getAmount().signum() > 0) //
+				? true //
+				: addsShares();
+	}
+
+	public boolean addsShares() {
+		return false;
+	}
+
 	public boolean removesShares() {
 		return false;
 	}
 
 	public TxAction getAction() {
 		return TxAction.CASH;
+	}
+
+	public void setAction(TxAction action) {
+		// not implemented
 	}
 
 	public boolean hasSplits() {
@@ -85,6 +197,10 @@ public abstract class SimpleTxn implements Txn {
 		return (this.catid < 0) ? -this.catid : 0;
 	}
 
+	public void setXferAcctid(int acctid) {
+		this.catid = -acctid;
+	}
+
 	public SimpleTxn getXtxn() {
 		return this.xtxn;
 	}
@@ -93,8 +209,12 @@ public abstract class SimpleTxn implements Txn {
 		this.xtxn = txn;
 	}
 
-	private int intSign(int i) {
+	private static int intSign(int i) {
 		return (i == 0) ? 0 : ((i < 0) ? -1 : 1);
+	}
+
+	public String getPayee() {
+		return "";
 	}
 
 	public String getCategory() {
@@ -126,6 +246,10 @@ public abstract class SimpleTxn implements Txn {
 
 	public BigDecimal getAmount() {
 		return this.amount;
+	}
+
+	public int getCheckNumber() {
+		return 0;
 	}
 
 	public BigDecimal getXferAmount() {

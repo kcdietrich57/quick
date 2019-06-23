@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -755,7 +756,7 @@ public class Account {
 	 * Find existing transaction(s) that match a transaction being loaded.<br>
 	 * Date is close, amount matches (or the amount of a split).
 	 */
-	public List<SimpleTxn> findMatchingTransactions(SimpleTxn tx, boolean forceSplit) {
+	private List<SimpleTxn> findMatchingTransactions(SimpleTxn tx, boolean forceSplit) {
 		List<SimpleTxn> txns = new ArrayList<>();
 		int TOLERANCE = 5; // days
 
@@ -805,6 +806,13 @@ public class Account {
 						txns.add(st);
 					}
 				}
+			}
+		}
+
+		for (Iterator<SimpleTxn> iter = txns.iterator(); iter.hasNext(); ) {
+			SimpleTxn txn = iter.next();
+			if (txn.isCredit() != tx.isCredit()) {
+				iter.remove();
 			}
 		}
 
