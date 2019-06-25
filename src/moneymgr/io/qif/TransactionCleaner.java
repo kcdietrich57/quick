@@ -55,9 +55,10 @@ public class TransactionCleaner {
 		}
 
 		NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
+		List<SplitTxn> splits = nitxn.getSplits();
 
-		for (int ii = 0; ii < nitxn.splits.size(); ++ii) {
-			SplitTxn stxn = nitxn.splits.get(ii);
+		for (int ii = 0; ii < splits.size(); ++ii) {
+			SplitTxn stxn = splits.get(ii);
 			if (stxn.getCatid() >= 0) {
 				continue;
 			}
@@ -65,13 +66,13 @@ public class TransactionCleaner {
 			MultiSplitTxn mtxn = null;
 
 			// Gather multiple splits into a MultiSplit if necessary
-			for (int jj = ii + 1; jj < nitxn.splits.size(); ++jj) {
-				SplitTxn stxn2 = nitxn.splits.get(jj);
+			for (int jj = ii + 1; jj < splits.size(); ++jj) {
+				SplitTxn stxn2 = splits.get(jj);
 
 				if (stxn.getCatid() == stxn2.getCatid()) {
 					if (mtxn == null) {
 						mtxn = new MultiSplitTxn(txn);
-						nitxn.splits.set(ii, mtxn);
+						splits.set(ii, mtxn);
 
 						mtxn.setAmount(stxn.getAmount());
 						mtxn.setCatid(stxn.getCatid());
@@ -81,7 +82,7 @@ public class TransactionCleaner {
 					mtxn.setAmount(mtxn.getAmount().add(stxn2.getAmount()));
 					mtxn.subsplits.add(stxn2);
 
-					nitxn.splits.remove(jj);
+					splits.remove(jj);
 					--jj;
 				}
 			}
@@ -124,7 +125,7 @@ public class TransactionCleaner {
 	/** Connect transfers for a transaction */
 	private void connectTransfers(GenericTxn txn) {
 		if (txn.hasSplits()) {
-			for (SimpleTxn stxn : ((NonInvestmentTxn) txn).splits) {
+			for (SimpleTxn stxn : ((NonInvestmentTxn) txn).getSplits()) {
 				connectTransfers(stxn, txn.getDate());
 			}
 		} else if ((txn.getCatid() < 0) && //

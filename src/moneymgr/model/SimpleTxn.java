@@ -64,7 +64,8 @@ public abstract class SimpleTxn implements Txn {
 
 		diff = getAccountID() - other.getAccountID();
 		if (diff != 0) {
-			return diff;
+			// Sometimes we go to transfers
+			//return diff;
 		}
 
 		diff = getDate().subtract(other.getDate());
@@ -81,7 +82,7 @@ public abstract class SimpleTxn implements Txn {
 		diff = getAction().compareTo(other.getAction());
 		if (diff != 0) {
 			if (getAction() != TxAction.OTHER) {
-				tuple.addMessage("Can't replace " + getAction().toString() //
+				tuple.addActionMessage("Can't replace " + getAction().toString() //
 						+ " action in transaction with " + other.getAction().toString());
 				return diff;
 			}
@@ -192,6 +193,10 @@ public abstract class SimpleTxn implements Txn {
 	public List<SplitTxn> getSplits() {
 		return NOSPLITS;
 	}
+	
+	public void addSplit(SplitTxn txn) {
+		// not implemented
+	}
 
 	public int getXferAcctid() {
 		return (this.catid < 0) ? -this.catid : 0;
@@ -279,6 +284,10 @@ public abstract class SimpleTxn implements Txn {
 		}
 
 		return cash;
+	}
+
+	public void setCheckNumber(String cknum) {
+		// not implemented
 	}
 
 	public BigDecimal getGain() {

@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jfree.util.Log.SimpleMessage;
+
 import app.QifDom;
 import moneymgr.model.Account;
 import moneymgr.model.AccountType;
@@ -28,11 +30,6 @@ import moneymgr.util.QDate;
 public class CSVImport {
 
 	public static class TupleInfo {
-		// "Split",""Account",Date","Check #","Payee","Category","Amount","Memo/Notes",
-		// "Description/Category","Type","Security","Comm/Fee","Shares",
-		// "Action","Shares In","Shares Out","Inflow","Outflow",
-		//
-		// "Modified","Reference","Transfer","Clr",
 		public static int SPLIT_IDX = -1;
 		public static int ACCOUNT_IDX = -1;
 		public static int DATE_IDX = -1;
@@ -70,7 +67,6 @@ public class CSVImport {
 		public static void setFieldNames(String[] fieldnames) {
 			TupleInfo.fieldnames = fieldnames;
 
-			// "Split","Date","Payee","Category","Amount","Account"
 			SPLIT_IDX = getFieldIndex("Split");
 			DATE_IDX = getFieldIndex("Date");
 			PAYEE_IDX = getFieldIndex("Payee");
@@ -96,7 +92,9 @@ public class CSVImport {
 		public SimpleTxn macTxn = null;
 		public SimpleTxn winTxn = null;
 		public final List<SimpleTxn> winTxnMatches = new ArrayList<SimpleTxn>();
-		public String messages = "";
+		public String inexactMessages = "";
+		public String multipleMessages = "";
+		public String actionMessages = "";
 		public boolean datemismatch = false;
 		public boolean fixaction = false;
 
@@ -124,8 +122,33 @@ public class CSVImport {
 			return this.date;
 		}
 
-		public void addMessage(String msg) {
-			this.messages += msg + "\n";
+		public void addInexactMessage(String msg) {
+			this.inexactMessages += msg + "\n";
+			if (!this.winTxnMatches.isEmpty()) {
+				System.out.println(msg);
+				{// if (this.getDate().toString().equals("4/2/11")) {
+					this.macTxn.getAccount().findMatchingTransactions(this.macTxn);
+				}
+				SimpleTxn other = this.winTxnMatches.get(0);
+				this.macTxn.compareToXX(this, other);
+			}
+		}
+
+		public void addMultipleMessage(String msg) {
+			this.multipleMessages += msg + "\n";
+
+			System.out.println(msg);
+			SimpleTxn txn = this.macTxn;
+			List<SimpleTxn> txns = this.winTxnMatches;
+			{// if (this.getDate().toString().equals("4/2/11")) {
+				this.macTxn.getAccount().findMatchingTransactions(this.macTxn);
+			}
+			SimpleTxn other = this.winTxnMatches.get(0);
+			this.macTxn.compareToXX(this, other);
+		}
+
+		public void addActionMessage(String msg) {
+			this.actionMessages += msg + "\n";
 		}
 
 		public String toString() {
@@ -152,8 +175,6 @@ public class CSVImport {
 		}
 	}
 
-	// private static int xtxn;
-
 	private static void infoMessage(String msg) {
 		if (QifDom.verbose) {
 			infoMessageNoln(msg + "\n");
@@ -179,25 +200,8 @@ public class CSVImport {
 	 * Simple - no splits on either side Split - tx exists as split in both versions
 	 * PseudoSplit - non-split matches split in other version
 	 */
-//	public static class MatchInfo {
-//		public List<SimpleTxn> macTxn = new ArrayList<>();
-//		public List<SimpleTxn> winTxn = new ArrayList<>();
-//	}
-
-	// create mactx from tuple
-	// tuple<->mactx
-	// tuple->[wintx]
-	// wintx->[tuple]
-
-//	public List<MatchInfo> matches = new ArrayList<>();
-//	public Map<SimpleTxn, MatchInfo> matchInfoForWinTxn = new HashMap<>();
-//	public Map<GenericTxn, MatchInfo> partialMatches = new HashMap<>();
-
-//	public Set<SimpleTxn> matchedTransactions = new HashSet<>();
 
 	/** Map MAC tx to WIN tx */
-//	public Map<SimpleTxn, SimpleTxn> match = new HashMap<>();
-//	public Map<SimpleTxn, List<GenericTxn>> multimatch = new HashMap<>();
 	public List<TupleInfo> nomatch = new ArrayList<>();
 	public List<TupleInfo> allzero = new ArrayList<>();
 	public List<TupleInfo> nomatchZero = new ArrayList<>();
@@ -232,13 +236,48 @@ public class CSVImport {
 			int dirtytuples = 0;
 			int datefixed = 0;
 			int actionfixed = 0;
+			int multi = 0;
+			int inexact = 0;
+			int action = 0;
 
-			for (Account acct : Account.getAccounts()) {
-				List<TupleInfo> tuples = this.transactionsMap.get(acct.name);
+			for (int ii = 0; ii < 3; ++ii) {
+				for (Account acct : Account.getAccounts()) {
+					List<TupleInfo> tuples = this.transactionsMap.get(acct.name);
+					if (tuples == null) {
+						continue;
+					}
 
-				if (tuples != null) {
 					for (TupleInfo tuple : tuples) {
-						if (tuple.messages.isEmpty()) {
+						if (!tuple.multipleMessages.isEmpty()) {
+							if (ii == 0) {
+								++dirtytuples;
+								++multi;
+								out.println("\nMessages for tuple " + tuple.macTxn.txid //
+										+ " dateMismatch:" + tuple.datemismatch //
+										+ " fixaction: " + tuple.fixaction);
+								out.print(tuple.multipleMessages);
+							}
+						} else if (!tuple.inexactMessages.isEmpty()) {
+							if (ii == 1) {
+								SimpleTxn mactxn = tuple.macTxn;
+								mactxn.getAccount().findMatchingTransactions(mactxn);
+								++dirtytuples;
+								++inexact;
+								out.println("\nMessages for tuple " + tuple.macTxn.txid //
+										+ " dateMismatch:" + tuple.datemismatch //
+										+ " fixaction: " + tuple.fixaction);
+								out.print(tuple.inexactMessages);
+							}
+						} else if (!tuple.actionMessages.isEmpty()) {
+							if (ii == 2) {
+								++dirtytuples;
+								++action;
+								out.println("\nMessages for tuple " + tuple.macTxn.txid //
+										+ " dateMismatch:" + tuple.datemismatch //
+										+ " fixaction: " + tuple.fixaction);
+								out.print(tuple.actionMessages);
+							}
+						} else if (ii == 0) {
 							++cleantuples;
 							if (tuple.datemismatch) {
 								++datefixed;
@@ -246,12 +285,6 @@ public class CSVImport {
 							if (tuple.fixaction) {
 								++actionfixed;
 							}
-						} else {
-							++dirtytuples;
-							out.println("\nMessages for tuple " + tuple.macTxn.txid //
-									+ " dateMismatch:" + tuple.datemismatch //
-									+ " fixaction: " + tuple.fixaction);
-							out.print(tuple.messages);
 						}
 					}
 				}
@@ -260,11 +293,16 @@ public class CSVImport {
 			out.println("\nClean tuples: " + cleantuples);
 			out.println("\nClean but fixed date: " + datefixed + " action: " + actionfixed);
 			out.println("\nDirty tuples: " + dirtytuples);
+			out.println("\n  Multi match: " + multi);
+			out.println("\n  Inexact match: " + inexact);
+			out.println("\n  Bad Action: " + action);
 
 			out.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		System.out.println("Done importing CSV file");
 	}
 
 	private void importCSVRecords() {
@@ -313,19 +351,6 @@ public class CSVImport {
 
 		Account acct = Account.getAccountByID(mactxn.getAccountID());
 		List<SimpleTxn> txns = acct.findMatchingTransactions(mactxn);
-//		List<SimpleTxn> potentialtxns = acct.findPotentialMatchingTransactions(mactxn);
-
-//		if (txns.isEmpty()) {
-//			acct.findMatchingTransactions(mi.macTxn);
-//		}
-//
-//		while (!txns.isEmpty() //
-//				&& this.matchedTransactions.contains(txns.get(0))) {
-//			SimpleTxn t = txns.get(0);
-//			if (mi.macTxn.hasSplits() == t.hasSplits()) {
-//				txns.remove(0);
-//			}
-//		}
 
 		if (txns.isEmpty()) {
 			acct.findMatchingTransactions(mactxn);
@@ -337,11 +362,14 @@ public class CSVImport {
 		}
 
 		if (!txns.isEmpty()) {
-			if (txns.size() > 1) {
+			if (!iszero && (txns.size() > 1)) {
 				tuple.winTxnMatches.addAll(txns);
-				tuple.addMessage( //
-						"Multiple(" + txns.size() + ") wintxn matches found for:\n   " //
-								+ mactxn.toString());
+				tuple.addMultipleMessage( //
+						"Multiple(" + txns.size() + ")  matches found for:\n   " //
+								+ "MAC " + mactxn.toString());
+				for (SimpleTxn tx : txns) {
+					tuple.addMultipleMessage("     WIN " + tx.toString());
+				}
 			}
 
 			SimpleTxn wintxn = null;
@@ -349,37 +377,23 @@ public class CSVImport {
 
 			// TODO this matching sucks
 			for (SimpleTxn tx : txns) {
-				int diff = mactxn.compareToXX(tuple, tx);
+				SimpleTxn mtxn = Account.getMatchTx(mactxn, tx);
 
-				if (wintxn == null || lastdiff > diff) {
+				int diff = Math.abs(mactxn.compareToXX(tuple, mtxn));
+
+				if (wintxn == null || diff > lastdiff) {
 					wintxn = tx;
 					lastdiff = diff;
 				}
 			}
 
-			if (lastdiff != 0) {
-				tuple.addMessage("Inexact match:\n" //
-						+ wintxn.toString() + "\n" //
-						+ mactxn.toString());
+			if (!iszero && (lastdiff != 0)) {
+				tuple.addInexactMessage("Inexact match:\n" //
+						+ "MAC " + mactxn.toString() + "\n" //
+						+ "WIN " + wintxn.toString());
 			}
 
 			tuple.winTxn = wintxn;
-//			this.matchInfoForWinTxn.put(wintxn, mi);
-
-//			mi = null;
-//
-//			if (mi.macTxn.hasSplits() != wintxn.hasSplits()) {
-//				mi = this.partialMatches.get(wintxn);
-//				if (mi == null) {
-//					mi = new MatchInfo();
-//					mi.isPseudoSplit = true;
-//					mi.macTxn.add((GenericTxn) mactxn);
-//					mi.winTxn.add(wintxn);
-//				}
-//			}
-//			
-//			this.match.put(mactxn, txns.get(0));
-//			this.matchedTransactions.add(txns.get(0));
 		} else {
 			if (iszero) {
 				this.nomatchZero.add(tuple);
@@ -447,7 +461,9 @@ public class CSVImport {
 
 			if (split.equals("S")) {
 				if (this.lasttxn != null) {
-					if (!this.lasttxn.getDate().equals(tuple.getDate())) {
+					if (!this.lasttxn.getDate().equals(tuple.getDate()) //
+							|| !this.lasttxn.hasSplits() //
+							|| this.lasttxn.chkNumber != tuple.value(TupleInfo.CHECKNUM_IDX)) {
 						// TODO at some point, validate splits
 						this.lasttxn = null;
 					}
@@ -457,9 +473,16 @@ public class CSVImport {
 					this.lasttxn = (acct.isInvestmentAccount()) //
 							? new InvestmentTxn(acct.acctid) //
 							: new NonInvestmentTxn(acct.acctid);
+					if (!cknum.isEmpty()) {
+						this.lasttxn.setCheckNumber(cknum);
+					}
 				}
 
+				if (this.lasttxn instanceof InvestmentTxn) {
+					Common.reportWarning("Can't add split to investment txn");
+				}
 				txn = new SplitTxn(this.lasttxn);
+				this.lasttxn.addSplit((SplitTxn) txn);
 			} else if (acct.isNonInvestmentAccount()) {
 				txn = new NonInvestmentTxn(acct.acctid);
 			} else if (acct.isInvestmentAccount()) {
@@ -530,8 +553,8 @@ public class CSVImport {
 				}
 			}
 
-			List<SimpleTxn> matches = acct.findPotentialMatchingTransactions(txn);
-			matches.add(txn);
+//			List<SimpleTxn> matches = acct.findPotentialMatchingTransactions(txn);
+//			matches.add(txn);
 //			System.out.println("" + matches.size() + " potential matches found");
 
 //		public int xacctid;
@@ -648,60 +671,10 @@ public class CSVImport {
 			if (record.contains("Account") && record.contains("Date")) {
 				TupleInfo.setFieldNames(record.toArray(new String[0]));
 
-//				List<String[]> fnlist = new ArrayList<>();
-//				fnlist.add(TupleInfo.fieldnames);
-//				this.transactionsMap.put("FieldNames", fnlist);
-//				TupleInfo.setFieldIndexes();
-
 				return true;
 			}
 		}
 
-//		List<String[]> fnlist = new ArrayList<>();
-//		fnlist.add(this.fieldnames);
-//		this.transactionsMap.put("FieldNames", fnlist);
-//		setFieldIndexes(this.fieldnames);
-
 		return false;
 	}
-
-//	private void processCSVRecords() {
-//		for (Map.Entry<String, List<TupleInfo>> entry : this.transactionsMap.entrySet()) {
-//			String accountName = entry.getKey();
-//			List<TupleInfo> accountTuples = entry.getValue();
-//
-//			if (!accountName.equals("FieldNames")) {
-//				infoMessage(accountName);
-//
-//				for (TupleInfo tuple : accountTuples) {
-//					processTuple(tuple);
-//				}
-//			}
-//		}
-//
-//		for (MatchInfo mi : this.matches) {
-//			for (SimpleTxn mactx : mi.macTxn) {
-//				//matchTransaction(mi, mactx);
-//			}
-//		}
-//	}
-
-//	private void processTuple(TupleInfo tuple) {
-////		infoMessage("  [");
-////		for (String field : tuple.values) {
-////			infoMessageNoln("'" + field + "', ");
-////		}
-////		infoMessage("]");
-//
-//		SimpleTxn txn = createTransaction(tuple);
-//		if (txn != null) {
-//			++this.totaltx;
-//			tuple.macTxn = txn;
-//			matchTransaction(tuple);
-////			MatchInfo mi = new MatchInfo();
-////			tuple.macTxn.add(txn);
-//
-////			this.matches.add(mi);
-//		}
-//	}
 }

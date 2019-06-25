@@ -547,8 +547,8 @@ public class InvestmentTxn extends GenericTxn {
 
 		s += " memo=" + getMemo();
 		s += " comm=" + this.commission;
-		s += " xact=" + this.accountForTransfer;
-		s += " xamt=" + this.amountTransferred;
+		s += " xactid=" + getXferAcctid();
+		s += " xamt=" + getXferAmount();
 		if (isStockOptionTransaction() && (this.option != null)) {
 			s += "\n  Option info: " + this.option.toString();
 		}

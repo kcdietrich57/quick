@@ -705,6 +705,28 @@ public class Account {
 						pos.getValueForDate(d));
 	}
 
+	public static SimpleTxn getMatchTx(SimpleTxn tx, SimpleTxn matchtxn) {
+		if (Common.isEffectivelyEqual(tx.getAmount().abs(), matchtxn.getAmount().abs())) {
+			return matchtxn;
+		}
+
+		SimpleTxn xtxn = matchtxn.getXtxn();
+		if (xtxn != null) {
+			matchtxn = xtxn;
+		}
+
+		if (matchtxn.hasSplits()) {
+			for (SimpleTxn stx : matchtxn.getSplits()) {
+				if (Common.isEffectivelyEqual(tx.getAmount().abs(), stx.getAmount().abs())) {
+					return stx;
+				}
+			}
+		}
+
+		Common.reportError("Can't find match");
+		return null;
+	}
+
 	/**
 	 * TODO This duplicates TransactionCleaner findMatchesForTransfer()<br>
 	 * Find existing transaction(s) that match a transaction being loaded.<br>
@@ -717,39 +739,94 @@ public class Account {
 			ret = findMatchingTransactions(tx, true);
 		}
 
+		if (ret.size() > 1) {
+			List<SimpleTxn> newret = new ArrayList<>(ret);
+			for (Iterator<SimpleTxn> iter = newret.iterator(); iter.hasNext();) {
+				SimpleTxn st = iter.next();
+				if (!st.getDate().equals(tx.getDate())) {
+					iter.remove();
+				}
+			}
+
+			if (!newret.isEmpty() && newret.size() < ret.size()) {
+//				if (newret.size() > 1 //
+//						&& !Common.isEffectivelyZero(tx.getAmount())) {
+//					System.out.println("xyzzy");
+//				}
+				ret = newret;
+			}
+		}
+
+		if (ret.size() > 1) {
+			int memomatch = 0;
+			int checkmatch = 0;
+			int xfermatch = 0;
+			SimpleTxn memotx = null;
+			SimpleTxn checktx = null;
+			SimpleTxn xfertx = null;
+
+			for (SimpleTxn stx : ret) {
+				SimpleTxn mtxn = getMatchTx(tx, stx);
+
+				if (mtxn.getXferAcctid() == tx.getXferAcctid()) {
+					++xfermatch;
+					xfertx = stx;
+				}
+				if (mtxn.getMemo().equals(tx.getMemo())) {
+					++memomatch;
+					memotx = stx;
+				}
+				if (mtxn.getCheckNumber() == tx.getCheckNumber()) {
+					++checkmatch;
+					checktx = stx;
+				}
+			}
+
+			if (xfermatch == 1) {
+				ret.clear();
+				ret.add(xfertx);
+			} else if (checkmatch == 1) {
+				ret.clear();
+				ret.add(checktx);
+			} else if (memomatch == 1) {
+				ret.clear();
+				ret.add(memotx);
+			}
+		}
+
 		return ret;
 	}
 
-	public List<SimpleTxn> findPotentialMatchingTransactions(SimpleTxn tx) {
-		List<SimpleTxn> txns = new ArrayList<>();
-		int TOLERANCE = 3; // days
-
-		int idx = getTransactionIndexForDate(tx.getDate().addDays(-TOLERANCE));
-
-		for (; idx < this.transactions.size(); ++idx) {
-			GenericTxn t = this.transactions.get(idx);
-			int diff = t.getDate().subtract(tx.getDate());
-			if (diff > TOLERANCE) {
-				break;
-			}
-			if (-diff > TOLERANCE) {
-				continue;
-			}
-
-			txns.add(t);
-		}
-
-		txns.sort(new Comparator<SimpleTxn>() {
-			public int compare(SimpleTxn o1, SimpleTxn o2) {
-				int diff1 = Math.abs(o1.getDate().subtract(tx.getDate()));
-				int diff2 = Math.abs(o2.getDate().subtract(tx.getDate()));
-
-				return diff1 - diff2;
-			}
-		});
-
-		return txns;
-	}
+//	public List<SimpleTxn> findPotentialMatchingTransactions(SimpleTxn tx) {
+//		List<SimpleTxn> txns = new ArrayList<>();
+//		int TOLERANCE = 3; // days
+//
+//		int idx = getTransactionIndexForDate(tx.getDate().addDays(-TOLERANCE));
+//
+//		for (; idx < this.transactions.size(); ++idx) {
+//			GenericTxn t = this.transactions.get(idx);
+//			int diff = t.getDate().subtract(tx.getDate());
+//			if (diff > TOLERANCE) {
+//				break;
+//			}
+//			if (-diff > TOLERANCE) {
+//				continue;
+//			}
+//
+//			txns.add(t);
+//		}
+//
+//		txns.sort(new Comparator<SimpleTxn>() {
+//			public int compare(SimpleTxn o1, SimpleTxn o2) {
+//				int diff1 = Math.abs(o1.getDate().subtract(tx.getDate()));
+//				int diff2 = Math.abs(o2.getDate().subtract(tx.getDate()));
+//
+//				return diff1 - diff2;
+//			}
+//		});
+//
+//		return txns;
+//	}
 
 	/**
 	 * TODO This duplicates TransactionCleaner findMatchesForTransfer()<br>
@@ -770,6 +847,7 @@ public class Account {
 		}
 
 		boolean issplit = tx instanceof SplitTxn;
+		boolean datematch = false;
 
 		for (; idx < this.transactions.size(); ++idx) {
 			GenericTxn t = this.transactions.get(idx);
@@ -781,35 +859,71 @@ public class Account {
 				continue;
 			}
 
-			if (!issplit) {
-				if (!t.hasSplits() && t.getAmount().abs().equals(amt)) {
-					txns.add(t);
-				} else if (forceSplit) {
-					SimpleTxn xt = t.getXtxn();
-					if ((xt != null) && xt.hasSplits()) {
-						for (SplitTxn stx : xt.getSplits()) {
-							if (stx.getAmount().abs().equals(amt)) {
-								txns.add(t);
-							}
-						}
+			boolean dm = t.getDate().equals(tx.getDate());
+
+			if (Common.isEffectivelyEqual(t.getAmount().abs(), amt.abs())) {
+				// Match win txn directly
+				txns.add(t);
+				datematch = datematch || dm;
+			} else if (t.hasSplits()) {
+				// Match split in win txn
+				for (SplitTxn st : t.getSplits()) {
+					if (Common.isEffectivelyEqual(st.getAmount().abs(), amt.abs())) {
+						txns.add(st);
+						datematch = datematch || dm;
 					}
 				}
-			} else if (t.hasSplits()) {
-				for (SimpleTxn st : t.getSplits()) {
-					if (st instanceof MultiSplitTxn) {
-						for (SimpleTxn mst : ((MultiSplitTxn) st).subsplits) {
-							if (mst.getAmount().abs().equals(amt)) {
-								txns.add(mst);
-							}
+			} else {
+				// Match split in win xfer txn
+				SimpleTxn xt = t.getXtxn();
+				if (xt != null) {
+					for (SplitTxn st : xt.getSplits()) {
+						if (Common.isEffectivelyEqual(st.getAmount().abs(), amt.abs())) {
+							txns.add(t);
+							datematch = datematch || dm;
 						}
-					} else if (st.getAmount().abs().equals(amt)) {
-						txns.add(st);
 					}
 				}
 			}
+
+			// TODO allow match between win split and mac non-split if
+			// - date matches exactly
+			// - there is no non-split that matches
+			// If the match is allowed, the mac transaction could be changed to split
+			// If we do that, when we are finished the main mac txn should
+			// contain all the splits in the win txn.
+
+//			if (!issplit) {
+//				if (!t.hasSplits() && t.getAmount().abs().equals(amt)) {
+//					if (t.getXferAcctid() == tx.getXferAcctid()) {
+//						txns.add(t);
+//					}
+//				} else if (forceSplit) {
+//					SimpleTxn xt = t.getXtxn();
+//					if ((xt != null) && xt.hasSplits()) {
+//						for (SplitTxn stx : xt.getSplits()) {
+//							if (stx.getAmount().abs().equals(amt)) {
+//								txns.add(t);
+//							}
+//						}
+//					}
+//				}
+//			} else if (t.hasSplits()) {
+//				for (SimpleTxn st : t.getSplits()) {
+//					if (st instanceof MultiSplitTxn) {
+//						for (SimpleTxn mst : ((MultiSplitTxn) st).subsplits) {
+//							if (mst.getAmount().abs().equals(amt)) {
+//								txns.add(mst);
+//							}
+//						}
+//					} else if (st.getAmount().abs().equals(amt)) {
+//						txns.add(st);
+//					}
+//				}
+//			}
 		}
 
-		for (Iterator<SimpleTxn> iter = txns.iterator(); iter.hasNext(); ) {
+		for (Iterator<SimpleTxn> iter = txns.iterator(); iter.hasNext();) {
 			SimpleTxn txn = iter.next();
 			if (txn.isCredit() != tx.isCredit()) {
 				iter.remove();

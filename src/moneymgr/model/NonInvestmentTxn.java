@@ -11,11 +11,9 @@ import moneymgr.util.QDate;
 
 /** Transaction for non-investment account */
 public class NonInvestmentTxn extends GenericTxn {
-	public String chkNumber;
-
 //	public List<String> address;
 	// TODO move splits to SimpleTxn?
-	public final List<SplitTxn> splits;
+	private List<SplitTxn> splits;
 
 	public NonInvestmentTxn(int acctid) {
 		super(acctid);
@@ -28,7 +26,7 @@ public class NonInvestmentTxn extends GenericTxn {
 
 	public int compareToXX(TupleInfo tuple, SimpleTxn othersimp) {
 		int diff;
-		
+
 		diff = super.compareToXX(tuple, othersimp);
 		if (diff != 0) {
 			return diff;
@@ -39,12 +37,12 @@ public class NonInvestmentTxn extends GenericTxn {
 		}
 
 		NonInvestmentTxn other = (NonInvestmentTxn) othersimp;
-		
+
 		if (hasSplits()) {
 			if (!other.hasSplits()) {
 				return 1;
 			}
-			
+
 			// TODO compare splits
 		}
 
@@ -70,6 +68,14 @@ public class NonInvestmentTxn extends GenericTxn {
 
 	public List<SplitTxn> getSplits() {
 		return this.splits;
+	}
+
+	public void addSplit(SplitTxn txn) {
+		if (this.splits.isEmpty()) {
+			this.splits = new ArrayList<SplitTxn>();
+		}
+		
+		this.splits.add(txn);
 	}
 
 	/** Do sanity check of splits */

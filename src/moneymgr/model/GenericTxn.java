@@ -263,6 +263,7 @@ public abstract class GenericTxn //
 	// TODO make txn properties immutable
 	private QDate date;
 	private String payee;
+	public String chkNumber;
 
 	public QDate stmtdate;
 
@@ -278,6 +279,10 @@ public abstract class GenericTxn //
 		this.runningTotal = null;
 
 		GenericTxn.addTransaction(this);
+	}
+
+	public void setCheckNumber(String cknum) {
+		this.chkNumber = cknum;
 	}
 
 	public int compareToXX(TupleInfo tuple, SimpleTxn othersimp) {

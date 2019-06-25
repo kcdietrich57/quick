@@ -120,14 +120,18 @@ public class TransactionProcessor {
 				}
 				break;
 			case InvFirstLine:
-				//txn.textFirstLine = qline.value;
+				// txn.textFirstLine = qline.value;
 				break;
 			case InvXferAmt:
 				txn.amountTransferred = Common.getDecimal(qline.value);
 				break;
-			case InvXferAcct:
-				txn.accountForTransfer = qline.value;
-				txn.setCatid(findCategoryID(qline.value));
+			case InvXferAcct: {
+				int catid = findCategoryID(qline.value);
+				if (catid < 0) {
+					txn.accountForTransfer = qline.value;
+				}
+				txn.setCatid(catid);
+			}
 				break;
 
 			default:
@@ -215,7 +219,7 @@ public class TransactionProcessor {
 			case TxnSplitCategory:
 				if (cursplit == null || cursplit.getCatid() != 0) {
 					cursplit = new SplitTxn(txn);
-					txn.splits.add(cursplit);
+					txn.addSplit(cursplit);
 				}
 
 				if (qline.value == null || qline.value.trim().isEmpty()) {
@@ -229,7 +233,7 @@ public class TransactionProcessor {
 				break;
 			case TxnSplitAmount:
 				if (cursplit == null || cursplit.getAmount() != null) {
-					txn.splits.add(cursplit);
+					txn.addSplit(cursplit);
 					cursplit = new SplitTxn(txn);
 				}
 
