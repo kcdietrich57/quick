@@ -140,7 +140,8 @@ public class CSVImport {
 			SimpleTxn txn = this.macTxn;
 			List<SimpleTxn> txns = this.winTxnMatches;
 			{// if (this.getDate().toString().equals("4/2/11")) {
-				this.macTxn.getAccount().findMatchingTransactions(this.macTxn);
+				Account acct = this.macTxn.getAccount();
+				acct.findMatchingTransactions(this.macTxn);
 			}
 			SimpleTxn other = this.winTxnMatches.get(0);
 			this.macTxn.compareToXX(this, other);
@@ -259,8 +260,6 @@ public class CSVImport {
 							}
 						} else if (!tuple.inexactMessages.isEmpty()) {
 							if (ii == 1) {
-								SimpleTxn mactxn = tuple.macTxn;
-								mactxn.getAccount().findMatchingTransactions(mactxn);
 								++dirtytuples;
 								++inexact;
 								out.println("\nInexact match for tuple " + tuple.macTxn.txid //
@@ -348,7 +347,7 @@ public class CSVImport {
 
 		if (tuples != null) {
 			for (TupleInfo tuple : tuples) {
-				if ((tuple.winTxn == txn) || tuple.winTxnMatches.contains(txn)) {
+				if (tuple.winTxn == txn)  {
 					return true;
 				}
 			}

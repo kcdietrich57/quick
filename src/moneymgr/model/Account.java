@@ -768,9 +768,10 @@ public class Account {
 			SimpleTxn xfertx = null;
 
 			for (SimpleTxn stx : ret) {
+//				System.out.println("xyzzy " + tx.toString());
 				SimpleTxn mtxn = getMatchTx(tx, stx);
 
-				if (mtxn.getXferAcctid() == tx.getXferAcctid()) {
+				if (mtxn.getCatid() == tx.getCatid()) {
 					++xfermatch;
 					xfertx = stx;
 				}
@@ -779,11 +780,21 @@ public class Account {
 					memotx = stx;
 				}
 				if ((mtxn instanceof SplitTxn) && (tx instanceof SplitTxn)) {
-					GenericTxn gtx1 = ((SplitTxn) mtxn).getContainingTxn();
-					GenericTxn gtx2 = ((SplitTxn) tx).getContainingTxn();
-					if (gtx1.getMemo().equals(gtx2.getMemo())) {
-						++parentmemomatch;
-						parentmemotx = stx;
+					GenericTxn mtxn_parent = ((SplitTxn) mtxn).getContainingTxn();
+					GenericTxn tx_parent = ((SplitTxn) tx).getContainingTxn();
+					if (!tx.getMemo().isEmpty()) {
+						if (tx.getMemo().equals(mtxn.getMemo()) //
+								|| tx.getMemo().equals(mtxn_parent.getMemo())) {
+							++parentmemomatch;
+							parentmemotx = stx;
+						}
+					}
+					if (!tx_parent.getMemo().isEmpty()) {
+						if (tx_parent.getMemo().equals(mtxn.getMemo()) //
+								|| tx_parent.getMemo().equals(mtxn_parent.getMemo())) {
+							++parentmemomatch;
+							parentmemotx = stx;
+						}
 					}
 				}
 				if (mtxn.getCheckNumber() == tx.getCheckNumber()) {
