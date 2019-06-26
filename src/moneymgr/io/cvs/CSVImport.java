@@ -7,10 +7,9 @@ import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import org.jfree.util.Log.SimpleMessage;
 
 import app.QifDom;
 import moneymgr.model.Account;
@@ -252,9 +251,10 @@ public class CSVImport {
 							if (ii == 0) {
 								++dirtytuples;
 								++multi;
-								out.println("\nMessages for tuple " + tuple.macTxn.txid //
-										+ " dateMismatch:" + tuple.datemismatch //
-										+ " fixaction: " + tuple.fixaction);
+								out.println("\nMultiple matches for tuple " + tuple.macTxn.txid //
+										+ ((tuple.datemismatch) ? " dateMismatch" : "") //
+										+ ((tuple.fixaction) ? " fixaction" : ""));
+								out.println("  MAC" + tuple.macTxn.toString());
 								out.print(tuple.multipleMessages);
 							}
 						} else if (!tuple.inexactMessages.isEmpty()) {
@@ -263,18 +263,20 @@ public class CSVImport {
 								mactxn.getAccount().findMatchingTransactions(mactxn);
 								++dirtytuples;
 								++inexact;
-								out.println("\nMessages for tuple " + tuple.macTxn.txid //
-										+ " dateMismatch:" + tuple.datemismatch //
-										+ " fixaction: " + tuple.fixaction);
+								out.println("\nInexact match for tuple " + tuple.macTxn.txid //
+										+ ((tuple.datemismatch) ? " dateMismatch" : "") //
+										+ ((tuple.fixaction) ? " fixaction" : ""));
+								out.println("  MAC" + tuple.macTxn.toString());
 								out.print(tuple.inexactMessages);
 							}
 						} else if (!tuple.actionMessages.isEmpty()) {
 							if (ii == 2) {
 								++dirtytuples;
 								++action;
-								out.println("\nMessages for tuple " + tuple.macTxn.txid //
-										+ " dateMismatch:" + tuple.datemismatch //
-										+ " fixaction: " + tuple.fixaction);
+								out.println("\nAction mismatch for tuple " + tuple.macTxn.txid //
+										+ ((tuple.datemismatch) ? " dateMismatch" : "") //
+										+ ((tuple.fixaction) ? " fixaction" : ""));
+								out.println("  MAC" + tuple.macTxn.toString());
 								out.print(tuple.actionMessages);
 							}
 						} else if (ii == 0) {
@@ -341,6 +343,20 @@ public class CSVImport {
 		}
 	}
 
+	private boolean isMatched(SimpleTxn txn) {
+		List<TupleInfo> tuples = this.transactionsMap.get(txn.getAccount().name);
+
+		if (tuples != null) {
+			for (TupleInfo tuple : tuples) {
+				if ((tuple.winTxn == txn) || tuple.winTxnMatches.contains(txn)) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	/**
 	 * @param tuple Tupleinfo for the txn
 	 */
@@ -355,6 +371,11 @@ public class CSVImport {
 		if (txns.isEmpty()) {
 			acct.findMatchingTransactions(mactxn);
 		}
+		for (Iterator<SimpleTxn> iter = txns.iterator(); iter.hasNext();) {
+			if (isMatched(iter.next())) {
+				iter.remove();
+			}
+		}
 
 		boolean iszero = Common.isEffectivelyZero(mactxn.getAmount());
 		if (iszero) {
@@ -364,9 +385,6 @@ public class CSVImport {
 		if (!txns.isEmpty()) {
 			if (!iszero && (txns.size() > 1)) {
 				tuple.winTxnMatches.addAll(txns);
-				tuple.addMultipleMessage( //
-						"Multiple(" + txns.size() + ")  matches found for:\n   " //
-								+ "MAC " + mactxn.toString());
 				for (SimpleTxn tx : txns) {
 					tuple.addMultipleMessage("     WIN " + tx.toString());
 				}
@@ -388,9 +406,7 @@ public class CSVImport {
 			}
 
 			if (!iszero && (lastdiff != 0)) {
-				tuple.addInexactMessage("Inexact match:\n" //
-						+ "MAC " + mactxn.toString() + "\n" //
-						+ "WIN " + wintxn.toString());
+				tuple.addInexactMessage("\n   WIN " + wintxn.toString());
 			}
 
 			tuple.winTxn = wintxn;

@@ -758,9 +758,11 @@ public class Account {
 		}
 
 		if (ret.size() > 1) {
+			int parentmemomatch = 0;
 			int memomatch = 0;
 			int checkmatch = 0;
 			int xfermatch = 0;
+			SimpleTxn parentmemotx = null;
 			SimpleTxn memotx = null;
 			SimpleTxn checktx = null;
 			SimpleTxn xfertx = null;
@@ -776,6 +778,14 @@ public class Account {
 					++memomatch;
 					memotx = stx;
 				}
+				if ((mtxn instanceof SplitTxn) && (tx instanceof SplitTxn)) {
+					GenericTxn gtx1 = ((SplitTxn) mtxn).getContainingTxn();
+					GenericTxn gtx2 = ((SplitTxn) tx).getContainingTxn();
+					if (gtx1.getMemo().equals(gtx2.getMemo())) {
+						++parentmemomatch;
+						parentmemotx = stx;
+					}
+				}
 				if (mtxn.getCheckNumber() == tx.getCheckNumber()) {
 					++checkmatch;
 					checktx = stx;
@@ -788,6 +798,9 @@ public class Account {
 			} else if (checkmatch == 1) {
 				ret.clear();
 				ret.add(checktx);
+			} else if (parentmemomatch == 1) {
+				ret.clear();
+				ret.add(parentmemotx);
 			} else if (memomatch == 1) {
 				ret.clear();
 				ret.add(memotx);
