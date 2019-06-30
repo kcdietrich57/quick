@@ -364,9 +364,17 @@ public class InvestmentTxn extends GenericTxn {
 		TxAction action = getAction();
 
 		if (action == TxAction.OTHER) {
-			Common.reportError("Transaction has unknown type: " + //
-					Account.getAccountByID(getAccountID()).name);
-			return;
+			if (this.security != null) {
+				Common.reportError("Transaction has unknown type: " + //
+						Account.getAccountByID(getAccountID()).name);
+				return;
+			}
+
+			if (getCatid() < 0) {
+				this.action = (isCredit()) ? TxAction.XIN : TxAction.XOUT;
+			} else {
+				this.action = TxAction.CASH;
+			}
 		}
 
 		if ((action == TxAction.CASH) //

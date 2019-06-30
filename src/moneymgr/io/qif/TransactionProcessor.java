@@ -40,6 +40,11 @@ public class TransactionProcessor {
 	}
 
 	public void loadInvestmentTransactions() {
+		if (!Account.currAccountBeingLoaded.isInvestmentAccount()) {
+			loadNonInvestmentTransactions();
+			return;
+		}
+
 		for (;;) {
 			String s = this.qrdr.getFileReader().peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
@@ -141,6 +146,11 @@ public class TransactionProcessor {
 	}
 
 	public void loadNonInvestmentTransactions() {
+		if (Account.currAccountBeingLoaded.isInvestmentAccount()) {
+			loadInvestmentTransactions();
+			return;
+		}
+
 		for (;;) {
 			final String s = this.qrdr.getFileReader().peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {

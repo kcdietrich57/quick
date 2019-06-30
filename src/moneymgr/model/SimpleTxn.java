@@ -59,13 +59,28 @@ public abstract class SimpleTxn implements Txn {
 		this.xtxn = null;
 	}
 
+	public boolean matchesSplit(SimpleTxn other) {
+		if (other.hasSplits()) {
+			for (SplitTxn stx : other.getSplits()) {
+				int diff = (this.acctid == other.acctid) //
+						? getAmount().compareTo(stx.getAmount()) //
+						: getAmount().compareTo(stx.getAmount().negate());
+				if (diff == 0) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	public int compareToXX(TupleInfo tuple, SimpleTxn other) {
 		int diff;
 
 		diff = getAccountID() - other.getAccountID();
 		if (diff != 0) {
 			// Sometimes we go to transfers
-			//return diff;
+			// return diff;
 		}
 
 		diff = getDate().subtract(other.getDate());
@@ -86,6 +101,15 @@ public abstract class SimpleTxn implements Txn {
 						+ " action in transaction with " + other.getAction().toString());
 				return diff;
 			}
+//			if (getAction() == TxAction.CASH) {
+//				if ((other.getAction() != TxAction.XIN) && (other.getAction() != TxAction.XOUT)) {
+//					return diff;
+//				}
+//			} else if (other.getAction() == TxAction.CASH) {
+//				if ((getAction() != TxAction.XIN) && (getAction() != TxAction.XOUT)) {
+//					return diff;
+//				}
+//			}
 
 			tuple.fixaction = true;
 //			tuple.addMessage("Replacing OTHER action in transaction with " //
@@ -93,10 +117,25 @@ public abstract class SimpleTxn implements Txn {
 			this.setAction(other.getAction());
 		}
 
-		diff = getAmount().compareTo(other.getAmount());
-		if (diff != 0) {
-			return diff;
-		}
+//		diff = (this.acctid == other.acctid) //
+//				? getAmount().compareTo(other.getAmount()) //
+//				: getAmount().compareTo(other.getAmount().negate());
+//		if (diff != 0) {
+//			SimpleTxn xfer = getXtxn();
+//			SimpleTxn oxfer = other.getXtxn();
+//
+//			if (other.getXferAcctid() == this.acctid) {
+//				diff = 0;
+//			} else if ((xfer != null) && (xfer.matchesSplit(other) || other.matchesSplit(xfer))) {
+//				diff = 0;
+//			} else if ((oxfer != null) && (this.matchesSplit(oxfer) || oxfer.matchesSplit(this))) {
+//				diff = 0;
+//			}
+//
+//			if (diff != 0) {
+//				return diff;
+//			}
+//		}
 
 		diff = getGain().compareTo(other.getGain());
 		if (diff != 0) {
@@ -150,7 +189,7 @@ public abstract class SimpleTxn implements Txn {
 
 		diff = this.getCheckNumber() - other.getCheckNumber();
 		if (diff != 0) {
-			return diff;
+			// TODO cknum return diff;
 		}
 
 		return 0;
@@ -193,7 +232,7 @@ public abstract class SimpleTxn implements Txn {
 	public List<SplitTxn> getSplits() {
 		return NOSPLITS;
 	}
-	
+
 	public void addSplit(SplitTxn txn) {
 		// not implemented
 	}

@@ -123,14 +123,9 @@ public class CSVImport {
 
 		public void addInexactMessage(String msg) {
 			this.inexactMessages += msg + "\n";
-			if (!this.winTxnMatches.isEmpty()) {
-				System.out.println(msg);
-				{// if (this.getDate().toString().equals("4/2/11")) {
-					this.macTxn.getAccount().findMatchingTransactions(this.macTxn);
-				}
-				SimpleTxn other = this.winTxnMatches.get(0);
-				this.macTxn.compareToXX(this, other);
-			}
+			System.out.println(msg);
+			SimpleTxn other = this.winTxn;
+			this.macTxn.compareToXX(this, other);
 		}
 
 		public void addMultipleMessage(String msg) {
@@ -263,7 +258,7 @@ public class CSVImport {
 								++dirtytuples;
 								++inexact;
 								out.println("\nInexact match for tuple " + tuple.macTxn.txid //
-										+ ((tuple.datemismatch) ? " dateMismatch" : "") //
+										+ ((tuple.datemismatch) ? " fixdate" : "") //
 										+ ((tuple.fixaction) ? " fixaction" : ""));
 								out.println("  MAC" + tuple.macTxn.toString());
 								out.print(tuple.inexactMessages);
@@ -347,7 +342,7 @@ public class CSVImport {
 
 		if (tuples != null) {
 			for (TupleInfo tuple : tuples) {
-				if (tuple.winTxn == txn)  {
+				if (tuple.winTxn == txn) {
 					return true;
 				}
 			}
@@ -382,39 +377,44 @@ public class CSVImport {
 		}
 
 		if (!txns.isEmpty()) {
-			if (!iszero && (txns.size() > 1)) {
-				tuple.winTxnMatches.addAll(txns);
-				for (SimpleTxn tx : txns) {
-					tuple.addMultipleMessage("     WIN " + tx.toString());
-				}
-			}
-
-			SimpleTxn wintxn = null;
-			int lastdiff = 0;
-
-			// TODO this matching sucks
-			for (SimpleTxn tx : txns) {
-				SimpleTxn mtxn = Account.getMatchTx(mactxn, tx);
-
-				int diff = Math.abs(mactxn.compareToXX(tuple, mtxn));
-
-				if (wintxn == null || diff > lastdiff) {
-					wintxn = tx;
-					lastdiff = diff;
-				}
-			}
-
-			if (!iszero && (lastdiff != 0)) {
-				tuple.addInexactMessage("\n   WIN " + wintxn.toString());
-			}
-
-			tuple.winTxn = wintxn;
+			processMatchesFound(tuple, txns);
+		} else if (iszero) {
+			this.nomatchZero.add(tuple);
 		} else {
-			if (iszero) {
-				this.nomatchZero.add(tuple);
-			} else {
-				this.nomatch.add(tuple);
+			this.nomatch.add(tuple);
+		}
+	}
+
+	private void processMatchesFound(TupleInfo tuple, List<SimpleTxn> txns) {
+		SimpleTxn mactxn = tuple.macTxn;
+		boolean iszero = Common.isEffectivelyZero(mactxn.getAmount());
+
+		if (!iszero && (txns.size() > 1)) {
+			tuple.winTxnMatches.addAll(txns);
+			for (SimpleTxn tx : txns) {
+				tuple.addMultipleMessage("     WIN " + tx.toString());
 			}
+		}
+
+		SimpleTxn wintxn = null;
+		int lastdiff = 0;
+
+		// TODO this matching sucks
+		for (SimpleTxn tx : txns) {
+			SimpleTxn mtxn = Account.getMatchTx(mactxn, tx);
+
+			int diff = Math.abs(mactxn.compareToXX(tuple, mtxn));
+
+			if (wintxn == null || diff > lastdiff) {
+				wintxn = tx;
+				lastdiff = diff;
+			}
+		}
+
+		tuple.winTxn = wintxn;
+
+		if (!iszero && (lastdiff != 0)) {
+			tuple.addInexactMessage("   WIN " + wintxn.toString());
 		}
 	}
 

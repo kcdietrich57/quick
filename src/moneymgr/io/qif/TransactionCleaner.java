@@ -191,6 +191,9 @@ public class TransactionCleaner {
 		int ntran = acct.getNumTransactions();
 
 		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(txns, date);
+		if (idx < 0) {
+			idx = 0;
+		}
 
 		boolean exactDateMatch = false;
 

@@ -735,15 +735,13 @@ public class Account {
 	public List<SimpleTxn> findMatchingTransactions(SimpleTxn tx) {
 		List<SimpleTxn> ret = findMatchingTransactions(tx, false);
 
-		if (ret.isEmpty() && !(tx instanceof SplitTxn)) {
-			ret = findMatchingTransactions(tx, true);
-		}
-
 		if (ret.size() > 1) {
 			List<SimpleTxn> newret = new ArrayList<>(ret);
 			for (Iterator<SimpleTxn> iter = newret.iterator(); iter.hasNext();) {
 				SimpleTxn st = iter.next();
 				if (!st.getDate().equals(tx.getDate())) {
+					iter.remove();
+				} else if (st.getCatid() != tx.getCatid()) {
 					iter.remove();
 				}
 			}
@@ -761,25 +759,23 @@ public class Account {
 			int parentmemomatch = 0;
 			int memomatch = 0;
 			int checkmatch = 0;
-			int xfermatch = 0;
 			SimpleTxn parentmemotx = null;
 			SimpleTxn memotx = null;
 			SimpleTxn checktx = null;
-			SimpleTxn xfertx = null;
 
 			for (SimpleTxn stx : ret) {
 //				System.out.println("xyzzy " + tx.toString());
 				SimpleTxn mtxn = getMatchTx(tx, stx);
 
-				if (mtxn.getCatid() == tx.getCatid()) {
-					++xfermatch;
-					xfertx = stx;
-				}
 				if (mtxn.getMemo().equals(tx.getMemo())) {
 					++memomatch;
 					memotx = stx;
 				}
 				if ((mtxn instanceof SplitTxn) && (tx instanceof SplitTxn)) {
+					//System.out.println("xyzzy " + tx.toString());
+					if (tx.toString().contains("7/11/89")) {
+						// System.out.println("xyzzy");
+					}
 					GenericTxn mtxn_parent = ((SplitTxn) mtxn).getContainingTxn();
 					GenericTxn tx_parent = ((SplitTxn) tx).getContainingTxn();
 					if (!tx.getMemo().isEmpty()) {
@@ -803,10 +799,7 @@ public class Account {
 				}
 			}
 
-			if (xfermatch == 1) {
-				ret.clear();
-				ret.add(xfertx);
-			} else if (checkmatch == 1) {
+			if (checkmatch == 1) {
 				ret.clear();
 				ret.add(checktx);
 			} else if (parentmemomatch == 1) {
@@ -818,6 +811,11 @@ public class Account {
 			}
 		}
 
+		if (ret.size() > 1) {
+//			System.out.println(tx.toString());
+//			System.out.println("xyzzy");
+			
+		}
 		return ret;
 	}
 
@@ -857,7 +855,7 @@ public class Account {
 	 * Find existing transaction(s) that match a transaction being loaded.<br>
 	 * Date is close, amount matches (or the amount of a split).
 	 */
-	private List<SimpleTxn> findMatchingTransactions(SimpleTxn tx, boolean forceSplit) {
+	private List<SimpleTxn> findMatchingTransactions(SimpleTxn tx, boolean dummy) {
 		List<SimpleTxn> txns = new ArrayList<>();
 		int TOLERANCE = 5; // days
 
@@ -870,9 +868,6 @@ public class Account {
 			}
 		}
 
-		boolean issplit = tx instanceof SplitTxn;
-		boolean datematch = false;
-
 		for (; idx < this.transactions.size(); ++idx) {
 			GenericTxn t = this.transactions.get(idx);
 			int diff = t.getDate().subtract(tx.getDate());
@@ -883,18 +878,18 @@ public class Account {
 				continue;
 			}
 
-			boolean dm = t.getDate().equals(tx.getDate());
-
+			// Match scenarios:
+			// Amount matches win txn
+			// Amount matches split in win txn
+			// Amount matches split in xfer with win txn
 			if (Common.isEffectivelyEqual(t.getAmount().abs(), amt.abs())) {
 				// Match win txn directly
 				txns.add(t);
-				datematch = datematch || dm;
 			} else if (t.hasSplits()) {
 				// Match split in win txn
 				for (SplitTxn st : t.getSplits()) {
 					if (Common.isEffectivelyEqual(st.getAmount().abs(), amt.abs())) {
 						txns.add(st);
-						datematch = datematch || dm;
 					}
 				}
 			} else {
@@ -904,53 +899,23 @@ public class Account {
 					for (SplitTxn st : xt.getSplits()) {
 						if (Common.isEffectivelyEqual(st.getAmount().abs(), amt.abs())) {
 							txns.add(t);
-							datematch = datematch || dm;
 						}
 					}
 				}
 			}
-
-			// TODO allow match between win split and mac non-split if
-			// - date matches exactly
-			// - there is no non-split that matches
-			// If the match is allowed, the mac transaction could be changed to split
-			// If we do that, when we are finished the main mac txn should
-			// contain all the splits in the win txn.
-
-//			if (!issplit) {
-//				if (!t.hasSplits() && t.getAmount().abs().equals(amt)) {
-//					if (t.getXferAcctid() == tx.getXferAcctid()) {
-//						txns.add(t);
-//					}
-//				} else if (forceSplit) {
-//					SimpleTxn xt = t.getXtxn();
-//					if ((xt != null) && xt.hasSplits()) {
-//						for (SplitTxn stx : xt.getSplits()) {
-//							if (stx.getAmount().abs().equals(amt)) {
-//								txns.add(t);
-//							}
-//						}
-//					}
-//				}
-//			} else if (t.hasSplits()) {
-//				for (SimpleTxn st : t.getSplits()) {
-//					if (st instanceof MultiSplitTxn) {
-//						for (SimpleTxn mst : ((MultiSplitTxn) st).subsplits) {
-//							if (mst.getAmount().abs().equals(amt)) {
-//								txns.add(mst);
-//							}
-//						}
-//					} else if (st.getAmount().abs().equals(amt)) {
-//						txns.add(st);
-//					}
-//				}
-//			}
 		}
 
 		for (Iterator<SimpleTxn> iter = txns.iterator(); iter.hasNext();) {
 			SimpleTxn txn = iter.next();
 			if (txn.isCredit() != tx.isCredit()) {
 				iter.remove();
+			} else if (txn instanceof InvestmentTxn) {
+				InvestmentTxn itxn = (InvestmentTxn)txn;
+				InvestmentTxn itx = (InvestmentTxn)tx;
+				
+				if (!itxn.getSecurityName().equals(itx.getSecurityName())) {
+					iter.remove();
+				}
 			}
 		}
 
