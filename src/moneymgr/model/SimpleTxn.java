@@ -74,7 +74,7 @@ public abstract class SimpleTxn implements Txn {
 		return false;
 	}
 
-	public int compareToXX(TupleInfo tuple, SimpleTxn other) {
+	public int compareWith(TupleInfo tuple, SimpleTxn other) {
 		int diff;
 
 		diff = getAccountID() - other.getAccountID();
@@ -96,7 +96,7 @@ public abstract class SimpleTxn implements Txn {
 
 		diff = getAction().compareTo(other.getAction());
 		if (diff != 0) {
-			if (getAction() != TxAction.OTHER) {
+			if (!Common.isEffectivelyZero(getAmount()) && (getAction() != TxAction.OTHER)) {
 				tuple.addActionMessage("Can't replace " + getAction().toString() //
 						+ " action in transaction with " + other.getAction().toString());
 				return diff;
@@ -147,9 +147,10 @@ public abstract class SimpleTxn implements Txn {
 			return diff;
 		}
 
+		// TODO mac InvTxn transferring to subsplit fails this test
 		diff = getCashAmount().compareTo(other.getCashAmount());
 		if (diff != 0) {
-			return diff;
+			//return diff;
 		}
 
 		// TODO THIS HAPPENS FREQUENTLY
@@ -163,19 +164,21 @@ public abstract class SimpleTxn implements Txn {
 			return diff;
 		}
 
+		// TODO mac InvTxn transferring to subsplit fails this test
 		diff = getXferAmount().compareTo(other.getXferAmount());
 		if (diff != 0) {
-			return diff;
+			//return diff;
 		}
 
+		// TODO this happens e.g. mac txn matched with win multipsplit
 		diff = hasSplits() == other.hasSplits() ? 0 : -1;
 		if (diff != 0) {
-			return diff;
+			//return diff;
 		}
 
 		// TODO compare splits
 
-		// TODO THIS HAPPENS FREQUENTLY
+		// TODO THIS HAPPENS FREQUENTLY (e.g. Win Payee is Mac Description)
 		diff = getPayee().compareTo(other.getPayee());
 		if (diff != 0) {
 			// return diff;

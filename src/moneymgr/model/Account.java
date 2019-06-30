@@ -814,7 +814,6 @@ public class Account {
 		if (ret.size() > 1) {
 //			System.out.println(tx.toString());
 //			System.out.println("xyzzy");
-			
 		}
 		return ret;
 	}

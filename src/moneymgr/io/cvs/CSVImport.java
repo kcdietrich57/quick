@@ -123,23 +123,25 @@ public class CSVImport {
 
 		public void addInexactMessage(String msg) {
 			this.inexactMessages += msg + "\n";
-			System.out.println(msg);
-			SimpleTxn other = this.winTxn;
-			this.macTxn.compareToXX(this, other);
+
+//			System.out.println(msg);
+//			SimpleTxn mactxn = this.macTxn;
+//			SimpleTxn other = this.winTxn;
+//			if (mactxn.getAccount().name.startsWith("Checking")) {
+//				int ii = 0;
+//				++ii;
+//			}
+//			this.macTxn.compareWith(this, other);
 		}
 
 		public void addMultipleMessage(String msg) {
 			this.multipleMessages += msg + "\n";
 
-			System.out.println(msg);
-			SimpleTxn txn = this.macTxn;
-			List<SimpleTxn> txns = this.winTxnMatches;
-			{// if (this.getDate().toString().equals("4/2/11")) {
-				Account acct = this.macTxn.getAccount();
-				acct.findMatchingTransactions(this.macTxn);
-			}
-			SimpleTxn other = this.winTxnMatches.get(0);
-			this.macTxn.compareToXX(this, other);
+//			System.out.println(msg);
+//			SimpleTxn mactxn = this.macTxn;
+//			List<SimpleTxn> txns = this.winTxnMatches;
+//			SimpleTxn other = this.winTxnMatches.get(0);
+//			this.macTxn.compareWith(this, other);
 		}
 
 		public void addActionMessage(String msg) {
@@ -215,8 +217,9 @@ public class CSVImport {
 			return;
 		}
 
+		String[] msgs = { "Multiple Matches", "Inexact Matches", "Action Mismatches" };
+
 		importCSVRecords();
-		// processCSVRecords();
 
 		try {
 			this.rdr.close();
@@ -236,20 +239,27 @@ public class CSVImport {
 			int action = 0;
 
 			for (int ii = 0; ii < 3; ++ii) {
+
+				String msg = "\n" + msgs[ii] + "\n-------------------------------------";
+				out.println(msg);
+
 				for (Account acct : Account.getAccounts()) {
 					List<TupleInfo> tuples = this.transactionsMap.get(acct.name);
 					if (tuples == null) {
 						continue;
 					}
 
+					String amsg = "\n" + acct.name + "\n-------------------------------------\n";
+
 					for (TupleInfo tuple : tuples) {
+//						out.println(((tuple.datemismatch) ? " fixdate" : "") //
+//								+ ((tuple.fixaction) ? " fixaction" : ""));
 						if (!tuple.multipleMessages.isEmpty()) {
 							if (ii == 0) {
 								++dirtytuples;
 								++multi;
-								out.println("\nMultiple matches for tuple " + tuple.macTxn.txid //
-										+ ((tuple.datemismatch) ? " dateMismatch" : "") //
-										+ ((tuple.fixaction) ? " fixaction" : ""));
+								out.print(amsg);
+								amsg = "";
 								out.println("  MAC" + tuple.macTxn.toString());
 								out.print(tuple.multipleMessages);
 							}
@@ -257,9 +267,8 @@ public class CSVImport {
 							if (ii == 1) {
 								++dirtytuples;
 								++inexact;
-								out.println("\nInexact match for tuple " + tuple.macTxn.txid //
-										+ ((tuple.datemismatch) ? " fixdate" : "") //
-										+ ((tuple.fixaction) ? " fixaction" : ""));
+								out.print(amsg);
+								amsg = "";
 								out.println("  MAC" + tuple.macTxn.toString());
 								out.print(tuple.inexactMessages);
 							}
@@ -267,9 +276,8 @@ public class CSVImport {
 							if (ii == 2) {
 								++dirtytuples;
 								++action;
-								out.println("\nAction mismatch for tuple " + tuple.macTxn.txid //
-										+ ((tuple.datemismatch) ? " dateMismatch" : "") //
-										+ ((tuple.fixaction) ? " fixaction" : ""));
+								out.print(amsg);
+								amsg = "";
 								out.println("  MAC" + tuple.macTxn.toString());
 								out.print(tuple.actionMessages);
 							}
@@ -286,12 +294,25 @@ public class CSVImport {
 				}
 			}
 
+			String gmsg = "\nUnmatched Windows Tranactions\n-------------------------------------";
+			out.println(gmsg);
+
+			int unmatchedWindowsTxns = 0;
+			
+			for (GenericTxn gtx : GenericTxn.getAllTransactions()) {
+				if (!isWinTxnMatched(gtx)) {
+					out.println(gtx.toString());
+					++unmatchedWindowsTxns;
+				}
+			}
+
 			out.println("\nClean tuples: " + cleantuples);
-			out.println("\nClean but fixed date: " + datefixed + " action: " + actionfixed);
-			out.println("\nDirty tuples: " + dirtytuples);
-			out.println("\n  Multi match: " + multi);
-			out.println("\n  Inexact match: " + inexact);
-			out.println("\n  Bad Action: " + action);
+			out.println("Clean but fixed date: " + datefixed + " action: " + actionfixed);
+			out.println("Dirty tuples: " + dirtytuples);
+			out.println("  Multi match: " + multi);
+			out.println("  Inexact match: " + inexact);
+			out.println("  Bad Action: " + action);
+			out.println("  Unmatched Windows Txns: " + unmatchedWindowsTxns);
 
 			out.close();
 		} catch (Exception e) {
@@ -299,6 +320,22 @@ public class CSVImport {
 		}
 
 		System.out.println("Done importing CSV file");
+	}
+
+	private boolean isWinTxnMatched(SimpleTxn wintxn) {
+		if ((wintxn != null) && !isMatched(wintxn)) {
+			if (!wintxn.hasSplits()) {
+				return false;
+			}
+
+			for (SplitTxn stxn : wintxn.getSplits()) {
+				if (!isWinTxnMatched(stxn)) {
+					return false;
+				}
+			}
+		}
+
+		return true;
 	}
 
 	private void importCSVRecords() {
@@ -338,6 +375,9 @@ public class CSVImport {
 	}
 
 	private boolean isMatched(SimpleTxn txn) {
+		if (txn == null || txn.getAccount() == null || txn.getAccount().name == null) {
+			return false;
+		}
 		List<TupleInfo> tuples = this.transactionsMap.get(txn.getAccount().name);
 
 		if (tuples != null) {
@@ -383,6 +423,10 @@ public class CSVImport {
 		} else {
 			this.nomatch.add(tuple);
 		}
+		
+		if (tuple.winTxn == null) {
+			//TODO System.out.println("xyzzy NO WIN TXN");
+		}
 	}
 
 	private void processMatchesFound(TupleInfo tuple, List<SimpleTxn> txns) {
@@ -401,9 +445,9 @@ public class CSVImport {
 
 		// TODO this matching sucks
 		for (SimpleTxn tx : txns) {
-			SimpleTxn mtxn = Account.getMatchTx(mactxn, tx);
+			SimpleTxn mtxn = tx;// TODO Account.getMatchTx(mactxn, tx);
 
-			int diff = Math.abs(mactxn.compareToXX(tuple, mtxn));
+			int diff = Math.abs(mactxn.compareWith(tuple, mtxn));
 
 			if (wintxn == null || diff > lastdiff) {
 				wintxn = tx;

@@ -85,10 +85,10 @@ public class InvestmentTxn extends GenericTxn {
 		this.lotsDisposed = new ArrayList<>();
 	}
 
-	public int compareToXX(TupleInfo tuple, SimpleTxn othersimp) {
+	public int compareWith(TupleInfo tuple, SimpleTxn othersimp) {
 		int diff;
 
-		diff = super.compareToXX(tuple, othersimp);
+		diff = super.compareWith(tuple, othersimp);
 		if (diff != 0) {
 			return diff;
 		}
