@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import moneymgr.io.cvs.CSVImport.TupleInfo;
+import moneymgr.io.TransactionInfo;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -24,7 +24,7 @@ public class NonInvestmentTxn extends GenericTxn {
 		this.splits = new ArrayList<>();
 	}
 
-	public int compareWith(TupleInfo tuple, SimpleTxn othersimp) {
+	public int compareWith(TransactionInfo tuple, SimpleTxn othersimp) {
 		int diff;
 
 		diff = super.compareWith(tuple, othersimp);

@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 import app.QifDom;
-import moneymgr.io.cvs.CSVImport.TupleInfo;
+import moneymgr.io.TransactionInfo;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -74,7 +74,7 @@ public abstract class SimpleTxn implements Txn {
 		return false;
 	}
 
-	public int compareWith(TupleInfo tuple, SimpleTxn other) {
+	public int compareWith(TransactionInfo tuple, SimpleTxn other) {
 		int diff;
 
 		diff = getAccountID() - other.getAccountID();

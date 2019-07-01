@@ -6,12 +6,17 @@ import java.io.LineNumberReader;
 import java.io.PrintStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import app.QifDom;
+import moneymgr.io.TransactionInfo;
 import moneymgr.model.Account;
 import moneymgr.model.AccountType;
 import moneymgr.model.Category;
@@ -23,154 +28,9 @@ import moneymgr.model.SimpleTxn;
 import moneymgr.model.SplitTxn;
 import moneymgr.model.TxAction;
 import moneymgr.util.Common;
-import moneymgr.util.QDate;
 
 /** Import data from CSV file exported from MacOS Quicken */
 public class CSVImport {
-
-	public static class TupleInfo {
-		public static int SPLIT_IDX = -1;
-		public static int ACCOUNT_IDX = -1;
-		public static int DATE_IDX = -1;
-		public static int CHECKNUM_IDX = -1;
-		public static int PAYEE_IDX = -1;
-		public static int CATEGORY_IDX; // >0: CategoryID; <0 AccountID
-		public static int AMOUNT_IDX;
-		public static int MEMO_IDX;
-		public static int DESCRIPTION_IDX = -1;
-		public static int TYPE_IDX = -1;
-		public static int SECURITY_IDX = -1;
-		public static int FEES_IDX = -1;
-		public static int SHARES_IDX = -1;
-
-		public static int ACTION_IDX = -1;
-		public static int SHARESIN_IDX = -1;
-		public static int SHARESOUT_IDX = -1;
-		public static int INFLOW_IDX = -1;
-		public static int OUTFLOW_IDX = -1;
-		// private static int XACCOUNT_IDX;
-
-		/** List of field names for the input CSV file */
-		public static String[] fieldnames = null;
-
-		private static int getFieldIndex(String fieldname) {
-			for (int idx = 0; idx < fieldnames.length; ++idx) {
-				if (fieldnames[idx].equals(fieldname)) {
-					return idx;
-				}
-			}
-
-			return -1;
-		}
-
-		public static void setFieldNames(String[] fieldnames) {
-			TupleInfo.fieldnames = fieldnames;
-
-			SPLIT_IDX = getFieldIndex("Split");
-			DATE_IDX = getFieldIndex("Date");
-			PAYEE_IDX = getFieldIndex("Payee");
-			CATEGORY_IDX = getFieldIndex("Category");
-			AMOUNT_IDX = getFieldIndex("Amount");
-			ACCOUNT_IDX = getFieldIndex("Account");
-			CHECKNUM_IDX = getFieldIndex("Check #");
-			MEMO_IDX = getFieldIndex("Memo/Notes");
-			DESCRIPTION_IDX = getFieldIndex("Description/Category");
-			TYPE_IDX = getFieldIndex("Type");
-			SECURITY_IDX = getFieldIndex("Security");
-			FEES_IDX = getFieldIndex("Comm/Fee");
-			SHARES_IDX = getFieldIndex("Shares");
-			ACTION_IDX = getFieldIndex("Action");
-			SHARESIN_IDX = getFieldIndex("Shares In");
-			SHARESOUT_IDX = getFieldIndex("Shares Out");
-			INFLOW_IDX = getFieldIndex("Inflow");
-			OUTFLOW_IDX = getFieldIndex("Outflow");
-		}
-
-		public String[] values;
-		public QDate date = null;
-		public SimpleTxn macTxn = null;
-		public SimpleTxn winTxn = null;
-		public final List<SimpleTxn> winTxnMatches = new ArrayList<SimpleTxn>();
-		public String inexactMessages = "";
-		public String multipleMessages = "";
-		public String actionMessages = "";
-		public boolean datemismatch = false;
-		public boolean fixaction = false;
-
-		public TupleInfo(List<String> values) {
-			while (values.size() < TupleInfo.fieldnames.length) {
-				values.add("");
-			}
-
-			this.values = values.toArray(new String[0]);
-		}
-
-		public String value(int idx) {
-			return ((idx >= 0) && (idx < this.values.length)) ? this.values[idx] : "";
-		}
-
-		public QDate getDate() {
-			if (this.date == null) {
-				try {
-					this.date = Common.parseQDate(value(DATE_IDX));
-				} catch (Exception e) {
-					this.date = QDate.today();
-				}
-			}
-
-			return this.date;
-		}
-
-		public void addInexactMessage(String msg) {
-			this.inexactMessages += msg + "\n";
-
-//			System.out.println(msg);
-//			SimpleTxn mactxn = this.macTxn;
-//			SimpleTxn other = this.winTxn;
-//			if (mactxn.getAccount().name.startsWith("Checking")) {
-//				int ii = 0;
-//				++ii;
-//			}
-//			this.macTxn.compareWith(this, other);
-		}
-
-		public void addMultipleMessage(String msg) {
-			this.multipleMessages += msg + "\n";
-
-//			System.out.println(msg);
-//			SimpleTxn mactxn = this.macTxn;
-//			List<SimpleTxn> txns = this.winTxnMatches;
-//			SimpleTxn other = this.winTxnMatches.get(0);
-//			this.macTxn.compareWith(this, other);
-		}
-
-		public void addActionMessage(String msg) {
-			this.actionMessages += msg + "\n";
-		}
-
-		public String toString() {
-			return "" //
-					+ value(DATE_IDX) //
-					+ "\n   acct:" + value(ACCOUNT_IDX) + ":" //
-					+ "\n   ty:" + value(TYPE_IDX) + ":" //
-					+ "\n   actn:" + value(ACTION_IDX) + ":" //
-					+ "\n   pay:" + value(PAYEE_IDX) + ":" //
-					+ "\n   amt:" + value(AMOUNT_IDX) + ":" //
-					+ "\n   spl:" + value(SPLIT_IDX) + ":" //
-					+ "\n   cat:" + value(CATEGORY_IDX) + ":" //
-					+ "\n   fee:" + value(FEES_IDX) + ":" //
-					+ "\n   ck:" + value(CHECKNUM_IDX) + ":" //
-					+ "\n   mem:" + value(MEMO_IDX) + ":" //
-					+ "\n   dsc:" + value(DESCRIPTION_IDX) + ":" //
-					+ "\n   infl:" + value(INFLOW_IDX) + ":" //
-					+ "\n   outfl:" + value(OUTFLOW_IDX) + ":" //
-					+ "\n   sec:" + value(SECURITY_IDX) + ":" //
-					+ "\n   shr:" + value(SHARES_IDX) + ":" //
-					+ "\n   shin:" + value(SHARESIN_IDX) + ":" //
-					+ "\n   shout:" + value(SHARESOUT_IDX) + ":" //
-			;
-		}
-	}
 
 	private static void infoMessage(String msg) {
 		if (QifDom.verbose) {
@@ -187,7 +47,7 @@ public class CSVImport {
 	private LineNumberReader rdr;
 
 	/** Map account name to transaction tuples */
-	public Map<String, List<TupleInfo>> transactionsMap = new HashMap<>();
+	public Map<String, List<TransactionInfo>> transactionsMap = new HashMap<>();
 
 	/** When assembling splits, this holds the current main transaction */
 	public GenericTxn lasttxn = null;
@@ -199,9 +59,9 @@ public class CSVImport {
 	 */
 
 	/** Map MAC tx to WIN tx */
-	public List<TupleInfo> nomatch = new ArrayList<>();
-	public List<TupleInfo> allzero = new ArrayList<>();
-	public List<TupleInfo> nomatchZero = new ArrayList<>();
+	public List<TransactionInfo> nomatch = new ArrayList<>();
+	public List<TransactionInfo> allzero = new ArrayList<>();
+	public List<TransactionInfo> nomatchZero = new ArrayList<>();
 	public int totaltx = 0;
 
 	public CSVImport(String filename) {
@@ -230,6 +90,10 @@ public class CSVImport {
 		try {
 			PrintStream out = new PrintStream("/Users/greg/qif/tupleinfo.out");
 
+			processCategories(out);
+			processAccounts(out);
+			processSecurities(out);
+
 			int cleantuples = 0;
 			int dirtytuples = 0;
 			int datefixed = 0;
@@ -244,14 +108,14 @@ public class CSVImport {
 				out.println(msg);
 
 				for (Account acct : Account.getAccounts()) {
-					List<TupleInfo> tuples = this.transactionsMap.get(acct.name);
+					List<TransactionInfo> tuples = this.transactionsMap.get(acct.name);
 					if (tuples == null) {
 						continue;
 					}
 
 					String amsg = "\n" + acct.name + "\n-------------------------------------\n";
 
-					for (TupleInfo tuple : tuples) {
+					for (TransactionInfo tuple : tuples) {
 //						out.println(((tuple.datemismatch) ? " fixdate" : "") //
 //								+ ((tuple.fixaction) ? " fixaction" : ""));
 						if (!tuple.multipleMessages.isEmpty()) {
@@ -294,14 +158,14 @@ public class CSVImport {
 				}
 			}
 
-			String gmsg = "\nUnmatched Windows Tranactions\n-------------------------------------";
+			String gmsg = "\nUnmatched Windows Transactions\n-------------------------------------";
 			out.println(gmsg);
 
 			int unmatchedWindowsTxns = 0;
-			
+
 			for (GenericTxn gtx : GenericTxn.getAllTransactions()) {
-				if (!isWinTxnMatched(gtx)) {
-					out.println(gtx.toString());
+				if (!isWinTxnMatched(gtx, true)) {
+//					out.println(gtx.toString());
 					++unmatchedWindowsTxns;
 				}
 			}
@@ -322,14 +186,111 @@ public class CSVImport {
 		System.out.println("Done importing CSV file");
 	}
 
-	private boolean isWinTxnMatched(SimpleTxn wintxn) {
-		if ((wintxn != null) && !isMatched(wintxn)) {
-			if (!wintxn.hasSplits()) {
+	public void processCategories(PrintStream out) {
+		Set<String> categoryNameSet = new HashSet<>();
+
+		for (List<TransactionInfo> tinfos : this.transactionsMap.values()) {
+			for (TransactionInfo tinfo : tinfos) {
+				String cat = tinfo.value(TransactionInfo.CATEGORY_IDX);
+
+				if (!cat.isEmpty() && !cat.startsWith("Transfer:[")) {
+					categoryNameSet.add(cat);
+				}
+			}
+		}
+
+		List<String> cats = new ArrayList<String>(categoryNameSet);
+		Collections.sort(cats, new Comparator<String>() {
+			public int compare(String s1, String s2) {
+				return s1.compareToIgnoreCase(s2);
+			}
+		});
+
+		out.println("\nUnrecognized Categories\n=====================");
+		for (String catName : cats) {
+			Category cat = Category.findCategory(catName);
+
+			if (cat == null) {
+				out.println(catName);
+			}
+		}
+	}
+
+	public void processAccounts(PrintStream out) {
+		Set<String> accountNameSet = new HashSet<>();
+
+		for (List<TransactionInfo> tinfos : this.transactionsMap.values()) {
+			for (TransactionInfo tinfo : tinfos) {
+				String acct = tinfo.value(TransactionInfo.ACCOUNT_IDX);
+
+				if (!acct.isEmpty()) {
+					accountNameSet.add(acct);
+				}
+			}
+		}
+
+		List<String> accts = new ArrayList<String>(accountNameSet);
+		Collections.sort(accts, new Comparator<String>() {
+			public int compare(String s1, String s2) {
+				return s1.compareToIgnoreCase(s2);
+			}
+		});
+
+		out.println("\nUnrecognized Accounts\n=====================");
+		for (String acctName : accts) {
+			Account acct = Account.findAccount(acctName);
+
+			if (acct == null) {
+				out.println(acctName);
+			}
+		}
+	}
+
+	public void processSecurities(PrintStream out) {
+		Set<String> secNameSet = new HashSet<>();
+
+		for (List<TransactionInfo> tinfos : this.transactionsMap.values()) {
+			for (TransactionInfo tinfo : tinfos) {
+				String secName = tinfo.value(TransactionInfo.SECURITY_IDX);
+
+				if (!secName.isEmpty()) {
+					secNameSet.add(secName);
+				}
+			}
+		}
+
+		List<String> secNames = new ArrayList<String>(secNameSet);
+		Collections.sort(secNames, new Comparator<String>() {
+			public int compare(String s1, String s2) {
+				return s1.compareToIgnoreCase(s2);
+			}
+		});
+
+		out.println("\nUnrecognized Security\n=====================");
+		for (String secName : secNames) {
+			Security sec = Security.findSecurity(secName);
+
+			if (sec == null) {
+				out.println(secName);
+			}
+		}
+	}
+
+	private boolean isWinTxnMatched(SimpleTxn wintxn, boolean processSplits) {
+		if ((wintxn != null) //
+				&& (wintxn.getAmount() != null) //
+				&& !Common.isEffectivelyZero(wintxn.getAmount()) //
+				&& !isMatched(wintxn)) {
+			if (wintxn instanceof SplitTxn) {
+				return isWinTxnMatched(((SplitTxn) wintxn).getContainingTxn(), false);
+			}
+
+			if (!wintxn.hasSplits() || !processSplits) {
 				return false;
 			}
 
 			for (SplitTxn stxn : wintxn.getSplits()) {
-				if (!isWinTxnMatched(stxn)) {
+				if (!isWinTxnMatched(stxn, true)) {
 					return false;
 				}
 			}
@@ -340,7 +301,7 @@ public class CSVImport {
 
 	private void importCSVRecords() {
 		for (;;) {
-			TupleInfo tuple = readRecord();
+			TransactionInfo tuple = readRecord();
 			if (tuple == null) {
 				break;
 			}
@@ -348,9 +309,9 @@ public class CSVImport {
 			String f0 = tuple.value(0);
 
 			if (f0.trim().isEmpty()) {
-				String acctname = tuple.value(TupleInfo.ACCOUNT_IDX);
+				String acctname = tuple.value(TransactionInfo.ACCOUNT_IDX);
 
-				List<TupleInfo> accttxns = this.transactionsMap.get(acctname);
+				List<TransactionInfo> accttxns = this.transactionsMap.get(acctname);
 
 				if (accttxns == null) {
 					accttxns = new ArrayList<>();
@@ -364,7 +325,7 @@ public class CSVImport {
 		}
 	}
 
-	private void processTuple(TupleInfo tuple) {
+	private void processTuple(TransactionInfo tuple) {
 		SimpleTxn txn = createTransaction(tuple);
 		if (txn != null) {
 			++this.totaltx;
@@ -378,10 +339,10 @@ public class CSVImport {
 		if (txn == null || txn.getAccount() == null || txn.getAccount().name == null) {
 			return false;
 		}
-		List<TupleInfo> tuples = this.transactionsMap.get(txn.getAccount().name);
+		List<TransactionInfo> tuples = this.transactionsMap.get(txn.getAccount().name);
 
 		if (tuples != null) {
-			for (TupleInfo tuple : tuples) {
+			for (TransactionInfo tuple : tuples) {
 				if (tuple.winTxn == txn) {
 					return true;
 				}
@@ -394,7 +355,7 @@ public class CSVImport {
 	/**
 	 * @param tuple Tupleinfo for the txn
 	 */
-	public void matchTransaction(TupleInfo tuple) {
+	public void matchTransaction(TransactionInfo tuple) {
 		SimpleTxn mactxn = tuple.macTxn;
 
 		infoMessage(mactxn.toString());
@@ -423,13 +384,13 @@ public class CSVImport {
 		} else {
 			this.nomatch.add(tuple);
 		}
-		
+
 		if (tuple.winTxn == null) {
-			//TODO System.out.println("xyzzy NO WIN TXN");
+			// TODO System.out.println("xyzzy NO WIN TXN");
 		}
 	}
 
-	private void processMatchesFound(TupleInfo tuple, List<SimpleTxn> txns) {
+	private void processMatchesFound(TransactionInfo tuple, List<SimpleTxn> txns) {
 		SimpleTxn mactxn = tuple.macTxn;
 		boolean iszero = Common.isEffectivelyZero(mactxn.getAmount());
 
@@ -462,17 +423,11 @@ public class CSVImport {
 		}
 	}
 
-	private SimpleTxn createTransaction(TupleInfo tuple) {
+	private SimpleTxn createTransaction(TransactionInfo tuple) {
 		SimpleTxn txn = null;
 
 		try {
-			// TODO account names different in mac file
-			String acctname = tuple.value(TupleInfo.ACCOUNT_IDX);
-			if (acctname.contentEquals("Tesla Model 3")) {
-				acctname = "Tesla";
-			} else if (acctname.contentEquals("Tesla Loan")) {
-				acctname = "TeslaLoan";
-			}
+			String acctname = tuple.value(TransactionInfo.ACCOUNT_IDX);
 
 			Account acct = Account.findAccount(acctname);
 			if (acct == null) {
@@ -481,23 +436,23 @@ public class CSVImport {
 				Account.addAccount(acct);
 			}
 
-			String payee = tuple.value(TupleInfo.PAYEE_IDX);
-			BigDecimal amount = Common.getDecimal(tuple.value(TupleInfo.AMOUNT_IDX));
+			String payee = tuple.value(TransactionInfo.PAYEE_IDX);
+			BigDecimal amount = Common.getDecimal(tuple.value(TransactionInfo.AMOUNT_IDX));
 
-			String split = tuple.value(TupleInfo.SPLIT_IDX);
-			String memo = tuple.value(TupleInfo.MEMO_IDX);
-			String cknum = tuple.value(TupleInfo.CHECKNUM_IDX);
-			String cat = tuple.value(TupleInfo.CATEGORY_IDX);
-			String desc = tuple.value(TupleInfo.DESCRIPTION_IDX);
-			String type = tuple.value(TupleInfo.TYPE_IDX);
-			String sec = tuple.value(TupleInfo.SECURITY_IDX);
-			String fees = tuple.value(TupleInfo.FEES_IDX);
-			String shares = tuple.value(TupleInfo.SHARES_IDX);
-			String action = tuple.value(TupleInfo.ACTION_IDX);
-			String sharesIn = tuple.value(TupleInfo.SHARESIN_IDX);
-			String sharesOut = tuple.value(TupleInfo.SHARESOUT_IDX);
-			String inflow = tuple.value(TupleInfo.INFLOW_IDX);
-			String outflow = tuple.value(TupleInfo.OUTFLOW_IDX);
+			String split = tuple.value(TransactionInfo.SPLIT_IDX);
+			String memo = tuple.value(TransactionInfo.MEMO_IDX);
+			String cknum = tuple.value(TransactionInfo.CHECKNUM_IDX);
+			String cat = tuple.value(TransactionInfo.CATEGORY_IDX);
+			String desc = tuple.value(TransactionInfo.DESCRIPTION_IDX);
+			String type = tuple.value(TransactionInfo.TYPE_IDX);
+			String sec = tuple.value(TransactionInfo.SECURITY_IDX);
+			String fees = tuple.value(TransactionInfo.FEES_IDX);
+			String shares = tuple.value(TransactionInfo.SHARES_IDX);
+			String action = tuple.value(TransactionInfo.ACTION_IDX);
+			String sharesIn = tuple.value(TransactionInfo.SHARESIN_IDX);
+			String sharesOut = tuple.value(TransactionInfo.SHARESOUT_IDX);
+			String inflow = tuple.value(TransactionInfo.INFLOW_IDX);
+			String outflow = tuple.value(TransactionInfo.OUTFLOW_IDX);
 
 			Account xferAcct = null;
 			Category c = null;
@@ -522,7 +477,7 @@ public class CSVImport {
 				if (this.lasttxn != null) {
 					if (!this.lasttxn.getDate().equals(tuple.getDate()) //
 							|| !this.lasttxn.hasSplits() //
-							|| this.lasttxn.chkNumber != tuple.value(TupleInfo.CHECKNUM_IDX)) {
+							|| this.lasttxn.chkNumber != tuple.value(TransactionInfo.CHECKNUM_IDX)) {
 						// TODO at some point, validate splits
 						this.lasttxn = null;
 					}
@@ -715,9 +670,9 @@ public class CSVImport {
 		return fields;
 	}
 
-	public TupleInfo readRecord() {
+	public TransactionInfo readRecord() {
 		List<String> fields = readRawRecord();
-		return (fields != null) ? new TupleInfo(fields) : null;
+		return (fields != null) ? new TransactionInfo(fields) : null;
 	}
 
 	public boolean readFieldNames() {
@@ -728,7 +683,7 @@ public class CSVImport {
 			}
 
 			if (record.contains("Account") && record.contains("Date")) {
-				TupleInfo.setFieldNames(record.toArray(new String[0]));
+				TransactionInfo.setFieldNames(record.toArray(new String[0]));
 
 				return true;
 			}

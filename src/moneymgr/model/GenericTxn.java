@@ -6,7 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import moneymgr.io.cvs.CSVImport.TupleInfo;
+import moneymgr.io.TransactionInfo;
 import moneymgr.util.QDate;
 
 /** Common transaction info - subclassed by Investment vs NonInvestment txn */
@@ -285,7 +285,7 @@ public abstract class GenericTxn //
 		this.chkNumber = cknum;
 	}
 
-	public int compareWith(TupleInfo tuple, SimpleTxn othersimp) {
+	public int compareWith(TransactionInfo tuple, SimpleTxn othersimp) {
 		int diff;
 		
 		diff = super.compareWith(tuple, othersimp);

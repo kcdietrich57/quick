@@ -18,7 +18,7 @@ public class QifDomReader {
 
 		QifDomReader rdr = new QifDomReader(QifDom.qifDir);
 
-		// Process all the QIF files we can find
+		// Process all the QIF files
 		for (String fn : qifFiles) {
 			rdr.load(fn, true);
 		}
@@ -46,7 +46,7 @@ public class QifDomReader {
 
 	/** Load a single input file */
 	public void load(String fileName, boolean doCleanup) {
-		/** Check windows and unix paths */
+		// Check windows and unix paths
 		if (!new File(fileName).exists()) {
 			if (new File("c:" + fileName).exists()) {
 				fileName = "c:" + fileName;
@@ -145,9 +145,6 @@ public class QifDomReader {
 				break;
 
 			case QClass:
-				Common.reportError("TODO not implemented");
-				break;
-
 			case MemorizedTransaction:
 				Common.reportError("TODO not implemented");
 				break;

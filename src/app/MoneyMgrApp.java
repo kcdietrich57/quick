@@ -4,8 +4,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Scanner;
 
+import moneymgr.io.TransactionInfo;
 import moneymgr.io.cvs.CSVImport;
-import moneymgr.io.cvs.CSVImport.TupleInfo;
 import moneymgr.io.qif.QifDomReader;
 import moneymgr.model.GenericTxn;
 import moneymgr.report.InvestmentPerformanceModel;
@@ -20,8 +20,8 @@ public class MoneyMgrApp {
 		CSVImport csvimp = new CSVImport(filename);
 		csvimp.importFile();
 
-		Comparator<TupleInfo> comp = new Comparator<TupleInfo>() {
-			public int compare(TupleInfo tx1, TupleInfo tx2) {
+		Comparator<TransactionInfo> comp = new Comparator<TransactionInfo>() {
+			public int compare(TransactionInfo tx1, TransactionInfo tx2) {
 				return tx1.date.compareTo(tx2.date);
 			}
 		};
