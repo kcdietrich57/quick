@@ -93,6 +93,8 @@ public class CSVImport {
 			processCategories(out);
 			processAccounts(out);
 			processSecurities(out);
+			
+			// TODO security price history
 
 			int cleantuples = 0;
 			int dirtytuples = 0;
@@ -428,6 +430,13 @@ public class CSVImport {
 
 		try {
 			String acctname = tuple.value(TransactionInfo.ACCOUNT_IDX);
+// TODO account names different in mac file
+//			if (acctname.contentEquals("Tesla Model 3")) {
+//				acctname = "Tesla";
+//			} else
+//			if (acctname.contentEquals("Tesla Loan")) {
+//				acctname = "TeslaLoan";
+//			}
 
 			Account acct = Account.findAccount(acctname);
 			if (acct == null) {

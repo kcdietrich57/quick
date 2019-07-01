@@ -32,7 +32,12 @@ public abstract class GenericTxn //
 	public static final List<GenericTxn> alternateTransactions = new ArrayList<>();
 
 	/** Dummy transaction for binary search */
-	private static final GenericTxn SEARCH = new NonInvestmentTxn(0);
+	public static final GenericTxn SEARCH;
+	static {
+		SEARCH = new NonInvestmentTxn(0);
+		allTransactionsByID.remove(SEARCH.txid);
+		allTransactionsByDate.remove(SEARCH);
+	}
 
 	private static final Comparator<GenericTxn> compareByDate = new Comparator<GenericTxn>() {
 		public int compare(GenericTxn o1, GenericTxn o2) {

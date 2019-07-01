@@ -298,10 +298,9 @@ public class Account {
 
 	/** Find the index to insert a new transaction in a list sorted by date */
 	private int getTransactionIndexForDate(QDate date) {
-		GenericTxn t = new NonInvestmentTxn(1);
-		t.setDate(date);
+		GenericTxn.SEARCH.setDate(date);
 
-		return getTransactionIndexForDate(t);
+		return getTransactionIndexForDate(GenericTxn.SEARCH);
 	}
 
 	static final Comparator<GenericTxn> c = new Comparator<GenericTxn>() {
