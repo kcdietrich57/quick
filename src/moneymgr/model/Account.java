@@ -329,8 +329,8 @@ public class Account {
 	}
 
 	/** Get transactions for a period (inclusive of start/end date) */
-	public List<GenericTxn> getTransactions(QDate start, QDate end) {
-		List<GenericTxn> ret = new ArrayList<GenericTxn>();
+	public List<SimpleTxn> getTransactions(QDate start, QDate end) {
+		List<SimpleTxn> ret = new ArrayList<>();
 
 		int idx = getTransactionIndexForDate(start);
 		if (idx < 0) {

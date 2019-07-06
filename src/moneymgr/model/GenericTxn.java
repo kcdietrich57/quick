@@ -308,9 +308,10 @@ public abstract class GenericTxn //
 	}
 
 	/** Correct missing/bad information from input data */
-	public void repair() {
+	public void repair(TransactionInfo tinfo) {
 		if (getAmount() == null) {
 			setAmount(BigDecimal.ZERO);
+			tinfo.setValue(TransactionInfo.AMOUNT_IDX, "0.00");
 		}
 	}
 

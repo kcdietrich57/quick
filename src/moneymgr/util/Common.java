@@ -10,6 +10,8 @@ import java.util.Date;
 import java.util.List;
 
 import app.QifDom;
+import moneymgr.model.Account;
+import moneymgr.model.Category;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.QPrice;
 
@@ -57,6 +59,26 @@ public class Common {
 		};
 
 		Collections.sort(txns, cmptor);
+	}
+
+	public static int parseCategory(String s) {
+		if (s.startsWith("[")) {
+			s = s.substring(1, s.length() - 1).trim();
+
+			Account acct = Account.findAccount(s);
+
+			return (short) ((acct != null) ? (-acct.acctid) : 0);
+		}
+
+		int slash = s.indexOf('/');
+		if (slash >= 0) {
+			// Throw away tag
+			s = s.substring(slash + 1);
+		}
+
+		Category cat = Category.findCategory(s);
+
+		return (cat != null) ? (cat.catid) : 0;
 	}
 
 	/** Parse a decimal value string (possibly with separators) */
@@ -270,6 +292,8 @@ public class Common {
 		if (pricestr.length() == 0) {
 			return BigDecimal.ZERO;
 		}
+
+		pricestr = pricestr.replaceAll(",", "");
 
 		// Separate decimal and fraction part
 		String fracstr = null;

@@ -2,8 +2,8 @@ package moneymgr.io.qif;
 
 import java.math.BigDecimal;
 
+import moneymgr.io.TransactionInfo;
 import moneymgr.model.Account;
-import moneymgr.model.Category;
 import moneymgr.model.InvestmentTxn;
 import moneymgr.model.NonInvestmentTxn;
 import moneymgr.model.Security;
@@ -13,26 +13,6 @@ import moneymgr.util.Common;
 
 /** Inputs transactions from input QIF file */
 public class TransactionProcessor {
-	private static int findCategoryID(String s) {
-		if (s.startsWith("[")) {
-			s = s.substring(1, s.length() - 1).trim();
-
-			Account acct = Account.findAccount(s);
-
-			return (short) ((acct != null) ? (-acct.acctid) : 0);
-		}
-
-		int slash = s.indexOf('/');
-		if (slash >= 0) {
-			// Throw away tag
-			s = s.substring(slash + 1);
-		}
-
-		Category cat = Category.findCategory(s);
-
-		return (cat != null) ? (cat.catid) : 0;
-	}
-
 	private final QifDomReader qrdr;
 
 	public TransactionProcessor(QifDomReader qrdr) {
@@ -71,6 +51,8 @@ public class TransactionProcessor {
 	private InvestmentTxn loadInvestmentTransaction() {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
+		TransactionInfo tinfo = new TransactionInfo(Account.currAccountBeingLoaded);
+
 		// TODO gather info and create transaction at the end
 		InvestmentTxn txn = new InvestmentTxn(Account.currAccountBeingLoaded.acctid);
 
@@ -79,7 +61,8 @@ public class TransactionProcessor {
 
 			switch (qline.type) {
 			case EndOfSection:
-				txn.repair();
+				txn.repair(tinfo);
+				TransactionInfo.addWinInfo(tinfo, txn);
 				return txn;
 
 			case InvTransactionAmt: {
@@ -92,29 +75,36 @@ public class TransactionProcessor {
 				} else {
 					txn.setAmount(amt);
 				}
+				tinfo.setValue(TransactionInfo.AMOUNT_IDX, qline.value);
 
 				break;
 			}
 			case InvAction:
 				txn.setAction(TxAction.parseAction(qline.value));
+				tinfo.setValue(TransactionInfo.ACTION_IDX, qline.value);
 				break;
 			case InvClearedStatus:
 				// Ignore
 				break;
 			case InvCommission:
 				txn.commission = Common.getDecimal(qline.value);
+				tinfo.setValue(TransactionInfo.COMMISSION_IDX, qline.value);
 				break;
 			case InvDate:
 				txn.setDate(Common.parseQDate(qline.value));
+				tinfo.setValue(TransactionInfo.DATE_IDX, qline.value);
 				break;
 			case InvMemo:
 				txn.setMemo(qline.value);
+				tinfo.setValue(TransactionInfo.MEMO_IDX, qline.value);
 				break;
 			case InvPrice:
 				txn.price = Common.getDecimal(qline.value);
+				tinfo.setValue(TransactionInfo.PRICE_IDX, qline.value);
 				break;
 			case InvQuantity:
 				txn.setQuantity(Common.getDecimal(qline.value));
+				tinfo.setValue(TransactionInfo.SHARES_IDX, qline.value);
 				break;
 			case InvSecurity:
 				txn.security = Security.findSecurityByName(qline.value);
@@ -123,20 +113,24 @@ public class TransactionProcessor {
 					Common.reportWarning("Txn for acct " + txn.getAccountID() + ". " //
 							+ "No security '" + qline.value + "' was found.");
 				}
+				tinfo.setValue(TransactionInfo.SECURITY_IDX, qline.value);
 				break;
 			case InvFirstLine:
 				// txn.textFirstLine = qline.value;
 				break;
 			case InvXferAmt:
 				txn.amountTransferred = Common.getDecimal(qline.value);
+				tinfo.setValue(TransactionInfo.XAMOUNT_IDX, qline.value);
 				break;
 			case InvXferAcct: {
-				int catid = findCategoryID(qline.value);
+				int catid = Common.parseCategory(qline.value);
 				if (catid < 0) {
 					txn.accountForTransfer = qline.value;
 				}
 				txn.setCatid(catid);
+				tinfo.setValue(TransactionInfo.CATEGORY_IDX, qline.value);
 			}
+			tinfo.setValue(TransactionInfo.XACCOUNT_IDX, qline.value);
 				break;
 
 			default:
@@ -152,12 +146,12 @@ public class TransactionProcessor {
 		}
 
 		for (;;) {
-			final String s = this.qrdr.getFileReader().peekLine();
+			 String s = this.qrdr.getFileReader().peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			final NonInvestmentTxn txn = loadNonInvestmentTransaction();
+			 NonInvestmentTxn txn = loadNonInvestmentTransaction();
 			if (txn == null) {
 				break;
 			}
@@ -175,6 +169,8 @@ public class TransactionProcessor {
 	private NonInvestmentTxn loadNonInvestmentTransaction() {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
+		TransactionInfo tinfo = new TransactionInfo(Account.currAccountBeingLoaded);
+
 		// TODO gather info and create transaction at the end
 		NonInvestmentTxn txn = new NonInvestmentTxn(Account.currAccountBeingLoaded.acctid);
 		SplitTxn cursplit = null;
@@ -184,10 +180,11 @@ public class TransactionProcessor {
 
 			switch (qline.type) {
 			case EndOfSection:
+				TransactionInfo.addWinInfo(tinfo, txn);
 				return txn;
 
 			case TxnCategory: {
-				int catid = findCategoryID(qline.value);
+				int catid = Common.parseCategory(qline.value);
 
 				if (catid == 0) {
 					Common.reportError("Can't find xtxn: " + qline.value);
@@ -195,6 +192,7 @@ public class TransactionProcessor {
 
 				txn.setCatid(catid);
 			}
+				tinfo.setValue(TransactionInfo.CATEGORY_IDX, qline.value);
 				break;
 
 			case TxnAmount: {
@@ -207,24 +205,29 @@ public class TransactionProcessor {
 				} else {
 					txn.setAmount(amt);
 				}
+				tinfo.setValue(TransactionInfo.AMOUNT_IDX, qline.value);
 
 				break;
 			}
 			case TxnMemo:
 				txn.setMemo(qline.value);
+				tinfo.setValue(TransactionInfo.MEMO_IDX, qline.value);
 				break;
 
 			case TxnDate:
 				txn.setDate(Common.parseQDate(qline.value));
+				tinfo.setValue(TransactionInfo.DATE_IDX, qline.value);
 				break;
 			case TxnClearedStatus:
 				// Ignore
 				break;
 			case TxnNumber:
 				txn.chkNumber = qline.value;
+				tinfo.setValue(TransactionInfo.CHECKNUM_IDX, qline.value);
 				break;
 			case TxnPayee:
 				txn.setPayee(qline.value);
+				tinfo.setValue(TransactionInfo.PAYEE_IDX, qline.value);
 				break;
 			case TxnSplitCategory:
 				if (cursplit == null || cursplit.getCatid() != 0) {
@@ -235,11 +238,12 @@ public class TransactionProcessor {
 				if (qline.value == null || qline.value.trim().isEmpty()) {
 					qline.value = "Fix Me";
 				}
-				cursplit.setCatid(findCategoryID(qline.value));
+				cursplit.setCatid(Common.parseCategory(qline.value));
 
 				if (cursplit.getCatid() == 0) {
 					Common.reportError("Can't find xtxn: " + qline.value);
 				}
+				tinfo.addSplitCategory(qline.value);
 				break;
 			case TxnSplitAmount:
 				if (cursplit == null || cursplit.getAmount() != null) {
@@ -248,11 +252,13 @@ public class TransactionProcessor {
 				}
 
 				cursplit.setAmount(Common.getDecimal(qline.value));
+				tinfo.addSplitAmount(qline.value);
 				break;
 			case TxnSplitMemo:
 				if (cursplit != null) {
 					cursplit.setMemo(qline.value);
 				}
+				tinfo.addSplitMemo(qline.value);
 				break;
 
 			default:

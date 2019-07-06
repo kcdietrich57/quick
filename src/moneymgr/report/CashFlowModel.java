@@ -6,6 +6,7 @@ import java.util.List;
 
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
+import moneymgr.model.SimpleTxn;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -21,7 +22,7 @@ public class CashFlowModel {
 	static class AcctInfo {
 		public Account account;
 		public String acctname;
-		public List<GenericTxn> txns;
+		public List<SimpleTxn> txns;
 		public int numtxns;
 
 		public QDate startDate;
@@ -128,7 +129,7 @@ public class CashFlowModel {
 			sb += String.format("  GainLoss: %12s\n", Common.formatAmount(this.gains).trim());
 
 			if ((this.txns != null) && !balanceMatches()) {
-				for (GenericTxn txn : this.txns) {
+				for (SimpleTxn txn : this.txns) {
 					BigDecimal cash = txn.getCashAmount();
 					BigDecimal xfer = txn.getXferAmount();
 					BigDecimal gain = txn.getGain();
@@ -238,7 +239,7 @@ public class CashFlowModel {
 				continue;
 			}
 
-			List<GenericTxn> txns = acct.getTransactions(start, end);
+			List<SimpleTxn> txns = acct.getTransactions(start, end);
 			if (txns.isEmpty()) {
 				continue;
 			}
@@ -266,7 +267,7 @@ public class CashFlowModel {
 			ainfo.xferOut = BigDecimal.ZERO;
 			ainfo.gains = ainfo.endInvBal.subtract(ainfo.startInvBal);
 
-			for (GenericTxn txn : txns) {
+			for (SimpleTxn txn : txns) {
 				BigDecimal cash = txn.getCashAmount();
 				BigDecimal xfer = txn.getXferAmount();
 				BigDecimal gain = txn.getGain();

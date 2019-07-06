@@ -346,21 +346,14 @@ public class InvestmentTxn extends GenericTxn {
 	}
 
 	public BigDecimal getXferAmount() {
-		if (this.amountTransferred == null) {
-			return super.getXferAmount();
-		}
+		return (this.amountTransferred != null) //
+				? this.amountTransferred //
+				: super.getXferAmount();
 
-		switch (getAction()) {
-		case SELLX:
-			return this.amountTransferred.negate();
-
-		default:
-			return this.amountTransferred;
-		}
 	}
 
 	/** Correct issues with this loaded transaction */
-	public void repair() {
+	public void repair(TransactionInfo tinfo) {
 		TxAction action = getAction();
 
 		if (action == TxAction.OTHER) {
@@ -372,19 +365,31 @@ public class InvestmentTxn extends GenericTxn {
 
 			if (getCatid() < 0) {
 				this.action = (isCredit()) ? TxAction.XIN : TxAction.XOUT;
+				tinfo.setValue(TransactionInfo.ACTION_IDX, (isCredit()) //
+						? TxAction.XIN.toString() //
+						: TxAction.XOUT.toString());
 			} else {
 				this.action = TxAction.CASH;
+				tinfo.setValue(TransactionInfo.ACTION_IDX, TxAction.CASH.toString());
 			}
 		}
 
 		if ((action == TxAction.CASH) //
 				&& (getAmount() == null) && (this.amountTransferred == null)) {
 			setAmount(BigDecimal.ZERO);
+			tinfo.setValue(TransactionInfo.AMOUNT_IDX, "0.00");
 		}
 
-		if (action == TxAction.XOUT) {
-			this.amountTransferred = this.amountTransferred.negate();
-			setAmount(this.amountTransferred);
+		if (this.amountTransferred != null) {
+			if (action == TxAction.XOUT) {
+				this.amountTransferred = this.amountTransferred.negate();
+				tinfo.setValue(TransactionInfo.XAMOUNT_IDX, this.amountTransferred.toString());
+
+				setAmount(this.amountTransferred);
+			} else if (action == TxAction.SELLX) {
+				this.amountTransferred = this.amountTransferred.negate();
+				tinfo.setValue(TransactionInfo.XAMOUNT_IDX, this.amountTransferred.toString());
+			}
 		}
 
 		switch (action) {
@@ -394,6 +399,7 @@ public class InvestmentTxn extends GenericTxn {
 		case EXERCISE:
 		case EXERCISEX:
 			this.quantity = this.quantity.negate();
+			tinfo.setValue(TransactionInfo.SHARES_IDX, this.quantity.toString());
 			break;
 
 		case XIN: // amt/xamt
@@ -404,6 +410,7 @@ public class InvestmentTxn extends GenericTxn {
 		case DIV: // amt
 			// This, apparently, is to treat MM balances as cash
 			this.security = null;
+			tinfo.setValue(TransactionInfo.SECURITY_IDX, "");
 			break;
 
 		default:
@@ -419,28 +426,7 @@ public class InvestmentTxn extends GenericTxn {
 		case REINV_SH:
 		case SELL:
 		case SELLX:
-			repairBuySell();
-			break;
-
-		default:
-			break;
-		}
-
-		// We lack lots of information needed to properly track options
-		switch (getAction()) {
-		case GRANT:
-			// Strike price, open/close price, vest/expire date, qty
-			// TODO Add missing option info to memo
-			break;
-		case VEST:
-			// Connect to Grant
-			break;
-		case EXERCISE:
-		case EXERCISEX:
-			// Connect to Grant, qty/price
-			break;
-		case EXPIRE:
-			// Connect to Grant, qty
+			repairBuySell(tinfo);
 			break;
 
 		default:
@@ -449,19 +435,22 @@ public class InvestmentTxn extends GenericTxn {
 
 		if ((getAmount() == null) && (getXferAmount() != null)) {
 			setAmount(getXferAmount());
+			tinfo.setValue(TransactionInfo.AMOUNT_IDX, getXferAmount().toString());
 		}
 
-		super.repair();
+		super.repair(tinfo);
 	}
 
 	/** Fix issues with loaded stock buy/sell transaction */
-	private void repairBuySell() {
-		final BigDecimal amt = getBuySellAmount();
+	private void repairBuySell(TransactionInfo tinfo) {
+		BigDecimal amt = getBuySellAmount();
 
 		BigDecimal tot = this.quantity.multiply(this.price);
 		if (this.commission == null) {
 			this.commission = BigDecimal.ZERO;
+			tinfo.setValue(TransactionInfo.COMMISSION_IDX, "0.00");
 		}
+
 		tot = tot.add(this.commission);
 
 		BigDecimal diff;
@@ -477,8 +466,8 @@ public class InvestmentTxn extends GenericTxn {
 			break;
 		}
 
-		if (diff.compareTo(new BigDecimal("0.005")) > 0) {
-			final BigDecimal newprice = tot.divide(this.quantity).abs();
+		if (!Common.isEffectivelyZero(diff)) {
+			BigDecimal newprice = tot.divide(this.quantity).abs();
 
 			String s = "Inconsistent " + this.action + " transaction:" + //
 					" acct=" + Account.getAccountByID(getAccountID()).name + //
@@ -502,6 +491,7 @@ public class InvestmentTxn extends GenericTxn {
 			}
 
 			this.price = newprice;
+			tinfo.setValue(TransactionInfo.PRICE_IDX, newprice.toString());
 		}
 	}
 

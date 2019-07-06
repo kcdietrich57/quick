@@ -18,7 +18,6 @@ import java.util.Set;
 import app.QifDom;
 import moneymgr.io.TransactionInfo;
 import moneymgr.model.Account;
-import moneymgr.model.AccountType;
 import moneymgr.model.Category;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
@@ -93,7 +92,7 @@ public class CSVImport {
 			processCategories(out);
 			processAccounts(out);
 			processSecurities(out);
-			
+
 			// TODO security price history
 
 			int cleantuples = 0;
@@ -223,10 +222,10 @@ public class CSVImport {
 
 		for (List<TransactionInfo> tinfos : this.transactionsMap.values()) {
 			for (TransactionInfo tinfo : tinfos) {
-				String acct = tinfo.value(TransactionInfo.ACCOUNT_IDX);
+				String acctname = tinfo.value(TransactionInfo.ACCOUNT_IDX);
 
-				if (!acct.isEmpty()) {
-					accountNameSet.add(acct);
+				if (!acctname.isEmpty()) {
+					accountNameSet.add(acctname);
 				}
 			}
 		}
@@ -429,20 +428,12 @@ public class CSVImport {
 		SimpleTxn txn = null;
 
 		try {
-			String acctname = tuple.value(TransactionInfo.ACCOUNT_IDX);
-// TODO account names different in mac file
-//			if (acctname.contentEquals("Tesla Model 3")) {
-//				acctname = "Tesla";
-//			} else
-//			if (acctname.contentEquals("Tesla Loan")) {
-//				acctname = "TeslaLoan";
-//			}
+			tuple.processValues();
 
-			Account acct = Account.findAccount(acctname);
+			Account acct = tuple.account;
 			if (acct == null) {
-				acct = new Account(acctname, AccountType.Bank);
-
-				Account.addAccount(acct);
+				Common.reportError("Account not found");
+				return null;
 			}
 
 			String payee = tuple.value(TransactionInfo.PAYEE_IDX);
