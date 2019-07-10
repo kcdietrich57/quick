@@ -122,83 +122,41 @@ public class MoneyMgrApp {
 //		testMacImport();
 	}
 
-	private static void flatten(List<SimpleTxn> txns) {
-		for (int ii = 0; ii < txns.size(); ++ii) {
-			SimpleTxn stx = txns.get(ii);
+	static class CashFlow {
+		public QDate start;
+		public QDate end;
 
-			if (stx.hasSplits()) {
-				txns.remove(ii);
-				txns.addAll(ii, stx.getSplits());
-			}
-		}
-	}
+		Map<Account, List<CashFlowNode>> terminalInputs = new HashMap<>();
+		Map<Account, List<CashFlowNode>> terminalOutputs = new HashMap<>();
+		Map<Account, List<CashFlowNode>> intermediaries = new HashMap<>();
 
-	private static void reportCashFlow() {
-		QDate d = QDate.today();
-		QDate start = d.getFirstDayOfMonth().addMonths(-12).getFirstDayOfMonth();
+		public CashFlow() {
 
-		Map<Account, List<CashFlowNode>> nodes = new HashMap<>();
-
-		for (Account acct : Account.getAccounts()) {
-			if (acct.isOpenDuring(start, QDate.today())) {
-				List<CashFlowNode> anodes = new ArrayList<>();
-				nodes.put(acct, anodes);
-
-				reportCashFlow(anodes, acct, start);
-			}
 		}
 
-		for (Account acct : Account.getAccounts()) {
-			List<CashFlowNode> anodes = nodes.get(acct);
-			if (anodes == null) {
-				continue;
+		private void addNode(CashFlowNode node, Map<Account, List<CashFlowNode>> nodes) {
+			List<CashFlowNode> list = terminalInputs.get(node.acct);
+			if (list == null) {
+				list = new ArrayList<>();
 			}
 
-			String s = "";
-
-			s += "\nCash flow for " + acct.name + "\n";
-
-			String hdr = "  %-20s  %-14s  %-14s  %-14s  %-14s  %-3s  %-12s\n";
-
-			s += String.format(hdr, //
-					"Date Range", "Inflows", "Outflows", //
-					"Transfer In", "Transfer Out", "NEU", "Net Cash Flow");
-			s += String.format(hdr, //
-					"====================", "=== ==========", "=== =========", //
-					"=== ==========", "=== ==========", "===", "============");
-			s += "\n";
-
-			System.out.println(s);
-
-			for (CashFlowNode node : anodes) {
-				System.out.println(node.summaryString());
-			}
+			list.add(node);
 		}
 
-		System.out.println();
-
-		for (Account acct : Account.getAccounts()) {
-			List<CashFlowNode> anodes = nodes.get(acct);
-			if (anodes == null) {
-				continue;
-			}
-
-			String ss = "";
-
-			for (CashFlowNode node : anodes) {
-				String sss = node.transfersString();
-				if (!sss.isEmpty()) {
-					ss += "     " + node.start.toString() + " to " + node.end.toString() + "\n";
-					ss += sss + "\n";
-				}
-			}
-
-			if (!ss.isEmpty()) {
-				System.out.println();
-				System.out.println("Transfers for " + acct.name);
-
-				System.out.println(ss);
-			}
+		public void addNode(CashFlowNode node) {
+//			if (node.isInput()) {
+//				addNode(node, this.terminalInputs);
+//			}
+//			if (node.isOutput()) {
+//				addNode(node, this.terminalOutputs);
+//			}
+//			if (!(node.isInput() || node.isOutput())) {
+//				addNode(node, this.intermediaries);
+//			}
+		}
+		
+		public void buildGraph() {
+			
 		}
 	}
 
@@ -212,8 +170,8 @@ public class MoneyMgrApp {
 
 		public BigDecimal inxTotal = BigDecimal.ZERO;
 		public BigDecimal outxTotal = BigDecimal.ZERO;
-		public Map<Account, BigDecimal> inxTxns = new HashMap<>();
-		public Map<Account, BigDecimal> outxTxns = new HashMap<>();
+		public Map<Account, BigDecimal> inxTotalForAccount = new HashMap<>();
+		public Map<Account, BigDecimal> outxTotalForAccount = new HashMap<>();
 
 		int incount = 0;
 		int outcount = 0;
@@ -245,23 +203,24 @@ public class MoneyMgrApp {
 			BigDecimal cash = txn.getCashAmount();
 			BigDecimal xfer = txn.getXferAmount();
 			Account xacct = Account.getAccountByID(txn.getXferAcctid());
+			SimpleTxn xtxn = txn.getXtxn();
 
 			if (cash.signum() != 0 && xfer.signum() != 0) {
 				txn = null;
 			}
 
 			// Save transfer info
-			BigDecimal xtot = this.inxTxns.get(xacct);
+			BigDecimal xtot = this.inxTotalForAccount.get(xacct);
 
 			if (xfer.signum() > 0) {
 				this.inxTotal = this.inxTotal.add(xfer);
 				xtot = (xtot == null) ? xfer : xtot.add(xfer);
-				this.inxTxns.put(xacct, xtot);
+				this.inxTotalForAccount.put(xacct, xtot);
 				++this.inxcount;
 			} else if (xfer.signum() < 0) {
 				this.outxTotal = this.outxTotal.add(xfer);
 				xtot = (xtot == null) ? xfer : xtot.add(xfer);
-				this.inxTxns.put(xacct, xtot);
+				this.inxTotalForAccount.put(xacct, xtot);
 				++this.outxcount;
 			}
 
@@ -321,8 +280,8 @@ public class MoneyMgrApp {
 			boolean first = true;
 
 			for (Account xacct : Account.getAccounts()) {
-				BigDecimal inx = this.inxTxns.get(xacct);
-				BigDecimal outx = this.outxTxns.get(xacct);
+				BigDecimal inx = this.inxTotalForAccount.get(xacct);
+				BigDecimal outx = this.outxTotalForAccount.get(xacct);
 
 				if (inx != null || outx != null) {
 					if (!first) {
@@ -356,12 +315,98 @@ public class MoneyMgrApp {
 		}
 	}
 
-	private static void reportCashFlow(List<CashFlowNode> nodes, Account acct, QDate start) {
+	private static void flatten(List<SimpleTxn> txns) {
+		for (int ii = 0; ii < txns.size(); ++ii) {
+			SimpleTxn stx = txns.get(ii);
+
+			if (stx.hasSplits()) {
+				txns.remove(ii);
+				txns.addAll(ii, stx.getSplits());
+			}
+		}
+	}
+
+	private static void reportCashFlow() {
+		QDate d = QDate.today();
+		QDate start = d.getFirstDayOfMonth().addMonths(-12).getFirstDayOfMonth();
+
+		Map<Account, List<CashFlowNode>> nodes = new HashMap<>();
+
+		for (Account acct : Account.getAccounts()) {
+			if (acct.isOpenDuring(start, QDate.today())) {
+				buildCashFlowNode(nodes, acct, start);
+			}
+		}
+
+		for (Account acct : Account.getAccounts()) {
+			List<CashFlowNode> anodes = nodes.get(acct);
+			if (anodes == null) {
+				continue;
+			}
+
+			String s = "";
+
+			s += "\nCash flow for " + acct.name + "\n";
+
+			String hdr = "  %-20s  %-14s  %-14s  %-14s  %-14s  %-3s  %-12s\n";
+
+			s += String.format(hdr, //
+					"Date Range", "Inflows", "Outflows", //
+					"Transfer In", "Transfer Out", "NEU", "Net Cash Flow");
+			s += String.format(hdr, //
+					"====================", "=== ==========", "=== =========", //
+					"=== ==========", "=== ==========", "===", "============");
+			s += "\n";
+
+			System.out.println(s);
+
+			for (CashFlowNode node : anodes) {
+				System.out.println(node.summaryString());
+			}
+		}
+
+		System.out.println();
+
+		for (Account acct : Account.getAccounts()) {
+			List<CashFlowNode> anodes = nodes.get(acct);
+			if (anodes == null) {
+				continue;
+			}
+
+			String ss = "";
+
+			for (CashFlowNode node : anodes) {
+				String sss = node.transfersString();
+				if (!sss.isEmpty()) {
+					ss += "     " + node.start.toString() + " to " + node.end.toString() + "\n";
+					ss += sss + "\n";
+				}
+			}
+
+			if (!ss.isEmpty()) {
+				System.out.println();
+				System.out.println("Transfers for " + acct.name);
+
+				System.out.println(ss);
+			}
+		}
+	}
+
+	private static void buildCashFlowNode( //
+			Map<Account, List<CashFlowNode>> nodes, //
+			Account acct, QDate start) {
+		List<CashFlowNode> anodes = nodes.get(acct);
+		if (anodes == null) {
+			anodes = new ArrayList<>();
+			nodes.put(acct, anodes);
+		}
+
 		QDate totStart = start.getFirstDayOfMonth();
 		QDate totEnd = totStart;
 
 		boolean showresults = false;
 
+		// Get Monthly stats for last year
 		for (int ii = 0; ii < 12; ++ii) {
 			start = start.getFirstDayOfMonth();
 			QDate end = start.getLastDayOfMonth();
@@ -371,15 +416,16 @@ public class MoneyMgrApp {
 
 			String ss = node.toString();
 			if (!ss.isEmpty()) {
-				nodes.add(node);
+				anodes.add(node);
 				showresults = true;
 			}
 
 			start = end.addDays(1);
 		}
 
+		// Get stats for last year
 		if (showresults) {
-			nodes.add(new CashFlowNode(acct, totStart, totEnd));
+			anodes.add(new CashFlowNode(acct, totStart, totEnd));
 		}
 	}
 
