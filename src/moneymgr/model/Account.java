@@ -442,7 +442,7 @@ public class Account {
 			return null;
 		}
 
-		for (final Statement s : this.statements) {
+		for (Statement s : this.statements) {
 			if (s.date.compareTo(date) > 0) {
 				break;
 			}
