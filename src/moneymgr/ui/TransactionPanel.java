@@ -209,7 +209,8 @@ class TransactionTableCellRenderer extends DefaultTableCellRenderer {
 			c.setBackground(presentBackground);
 		}
 
-		if ((col == 3) || (col == 6)) {
+		// TODO link formatting to column type, not position. they can be moved.
+		if ((col == 3) || (col == 6) || (col == 7)) {
 			setHorizontalAlignment(SwingConstants.RIGHT);
 		} else {
 			setHorizontalAlignment(SwingConstants.LEFT);
