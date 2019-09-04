@@ -47,8 +47,8 @@ public class Dashboard extends JPanel {
 
 		JTabbedPane tabs = new JTabbedPane();
 
-		tabs.add("Cash Flow", cashFlowScroller);
 		tabs.add("Reconcile Status", reconcileStatusScroller);
+		tabs.add("Cash Flow", cashFlowScroller);
 		tabs.add("Balances", this.balancePanel);
 
 		add(tabs, BorderLayout.CENTER);
