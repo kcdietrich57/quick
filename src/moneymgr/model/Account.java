@@ -127,11 +127,12 @@ public class Account {
 	}
 
 	/** Get Account list sorted on isOpen|type|name */
-	public static List<Account> getSortedAccounts() {
+	public static List<Account> getSortedAccounts(boolean showToday) {
 		List<Account> accts = new ArrayList<>();
+		QDate thedate = (showToday) ? QDate.today() : MainWindow.instance.asOfDate();
 
 		for (Account acct : accounts) {
-			if (acct.isOpenAsOf(MainWindow.instance.asOfDate())) {
+			if (acct.isOpenAsOf(thedate)) {
 				accts.add(acct);
 			}
 		}
@@ -771,7 +772,7 @@ public class Account {
 					memotx = stx;
 				}
 				if ((mtxn instanceof SplitTxn) && (tx instanceof SplitTxn)) {
-					//System.out.println("xyzzy " + tx.toString());
+					// System.out.println("xyzzy " + tx.toString());
 					if (tx.toString().contains("7/11/89")) {
 						// System.out.println("xyzzy");
 					}
@@ -908,9 +909,9 @@ public class Account {
 			if (txn.isCredit() != tx.isCredit()) {
 				iter.remove();
 			} else if (txn instanceof InvestmentTxn) {
-				InvestmentTxn itxn = (InvestmentTxn)txn;
-				InvestmentTxn itx = (InvestmentTxn)tx;
-				
+				InvestmentTxn itxn = (InvestmentTxn) txn;
+				InvestmentTxn itx = (InvestmentTxn) tx;
+
 				if (!itxn.getSecurityName().equals(itx.getSecurityName())) {
 					iter.remove();
 				}

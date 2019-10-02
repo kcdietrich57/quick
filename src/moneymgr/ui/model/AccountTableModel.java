@@ -21,11 +21,15 @@ public class AccountTableModel //
 
 	private boolean includeClosedAccounts = false;
 	private boolean includeZeroBalanceAccounts = false;
+	private boolean showTodayBalance = false;
 
 	/** Reload data and set to show open vs closed accounts */
-	public void reload(boolean includeClosedAccounts, boolean includeZeroBalanceAccounts) {
+	public void reload(boolean includeClosedAccounts, //
+			boolean includeZeroBalanceAccounts, //
+			boolean showTodayBalance) {
 		this.includeClosedAccounts = includeClosedAccounts;
 		this.includeZeroBalanceAccounts = includeZeroBalanceAccounts;
+		this.showTodayBalance = showTodayBalance;
 
 		reload();
 	}
@@ -34,7 +38,7 @@ public class AccountTableModel //
 	public void reload() {
 		this.accounts.clear();
 
-		List<Account> accts = Account.getSortedAccounts();
+		List<Account> accts = Account.getSortedAccounts(this.showTodayBalance);
 		for (Account acct : accts) {
 			if (accountIsVisible(acct)) {
 				this.accounts.add(acct);
@@ -48,6 +52,13 @@ public class AccountTableModel //
 	private boolean accountIsVisible(Account acct) {
 		QDate start = MainWindow.instance.startAsOfDate;
 		QDate end = MainWindow.instance.asOfDate();
+
+		if (this.showTodayBalance) {
+			QDate today = QDate.today();
+			if (start.compareTo(today) <= 0 && end.compareTo(today) >= 0) {
+				end = QDate.today();
+			}
+		}
 
 		boolean isopen = acct.isOpenDuring(start, end);
 		boolean isnonzero = !Common.isEffectivelyZero(acct.getValueForDate(end));
@@ -98,8 +109,12 @@ public class AccountTableModel //
 			return a.name;
 		case 1:
 			return a.type.toString();
-		case 2:
-			return Common.formatAmount0(a.getValueForDate(MainWindow.instance.asOfDate()));
+		case 2: {
+			QDate thedate = (this.showTodayBalance) //
+					? QDate.today() //
+					: MainWindow.instance.asOfDate();
+			return Common.formatAmount0(a.getValueForDate(thedate));
+		}
 		}
 
 		return null;

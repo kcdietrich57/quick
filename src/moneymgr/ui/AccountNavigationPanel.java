@@ -43,6 +43,10 @@ public class AccountNavigationPanel extends JPanel {
 		this.accountListPanel.setIncludeZeroBalanceAccounts(yesno);
 	}
 
+	public void setShowTodayBalance(boolean yesno) {
+		this.accountListPanel.setShowTodayBalance(yesno);
+	}
+
 	public void addAccountSelectionListener(AccountSelectionListener listener) {
 		this.accountListPanel.addAccountSelectionListener(listener);
 	}

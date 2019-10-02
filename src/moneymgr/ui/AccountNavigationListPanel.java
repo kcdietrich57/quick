@@ -37,6 +37,7 @@ public class AccountNavigationListPanel extends JScrollPane {
 
 	private boolean includeClosedAccounts;
 	private boolean includeZeroBalanceAccounts;
+	private boolean showTodayBalance;
 
 	private JTable accountTable;
 	private AccountTableModel accountTableModel;
@@ -50,6 +51,7 @@ public class AccountNavigationListPanel extends JScrollPane {
 
 		this.includeClosedAccounts = showOpenAccounts;
 		this.includeZeroBalanceAccounts = showZeroBalanceAccounts;
+		this.showTodayBalance = false;
 
 		this.acctSelListeners = new ArrayList<>();
 
@@ -60,7 +62,9 @@ public class AccountNavigationListPanel extends JScrollPane {
 				new AccountTableCellRenderer());
 
 		this.accountTableModel = (AccountTableModel) this.accountTable.getModel();
-		this.accountTableModel.reload(this.includeClosedAccounts, this.includeZeroBalanceAccounts);
+		this.accountTableModel.reload(this.includeClosedAccounts, //
+				this.includeZeroBalanceAccounts, //
+				this.showTodayBalance);
 
 		TableColumnModel acctColumnModel = this.accountTable.getColumnModel();
 
@@ -109,7 +113,9 @@ public class AccountNavigationListPanel extends JScrollPane {
 		this.includeClosedAccounts = yesno;
 
 		this.accountTableModel.reload( //
-				this.includeClosedAccounts, this.includeZeroBalanceAccounts);
+				this.includeClosedAccounts, //
+				this.includeZeroBalanceAccounts, //
+				this.showTodayBalance);
 	}
 
 	public void setIncludeZeroBalanceAccounts(boolean yesno) {
@@ -120,7 +126,22 @@ public class AccountNavigationListPanel extends JScrollPane {
 		this.includeZeroBalanceAccounts = yesno;
 
 		this.accountTableModel.reload( //
-				this.includeClosedAccounts, this.includeZeroBalanceAccounts);
+				this.includeClosedAccounts, //
+				this.includeZeroBalanceAccounts, //
+				this.showTodayBalance);
+	}
+
+	public void setShowTodayBalance(boolean yesno) {
+		if (this.showTodayBalance == yesno) {
+			return;
+		}
+
+		this.showTodayBalance = yesno;
+
+		this.accountTableModel.reload( //
+				this.includeClosedAccounts, //
+				this.includeZeroBalanceAccounts, //
+				this.showTodayBalance);
 	}
 
 	protected void accountSelected() {
