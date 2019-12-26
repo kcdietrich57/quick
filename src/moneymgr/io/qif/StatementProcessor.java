@@ -32,7 +32,7 @@ public class StatementProcessor {
 			try {
 				qrdr.load(f.getAbsolutePath(), false);
 			} catch (final Exception e) {
-				Common.reportError("statement file loading failed");
+				Common.reportError("statement file '" + f.getName() + "' loading failed");
 			}
 		}
 	}
