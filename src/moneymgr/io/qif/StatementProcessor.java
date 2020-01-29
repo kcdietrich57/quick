@@ -49,7 +49,6 @@ public class StatementProcessor {
 
 			for (Statement stmt : stmts) {
 				Account a = Account.currAccountBeingLoaded;
-
 				a.statements.add(stmt);
 			}
 		}

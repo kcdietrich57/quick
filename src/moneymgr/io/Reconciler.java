@@ -106,6 +106,7 @@ public class Reconciler {
 						+ a.name //
 						+ "  " + d.date.toString() //
 						+ "  " + d.closingBalance);
+				continue;
 			}
 
 			getTransactionsFromDetails(a, s, d);
