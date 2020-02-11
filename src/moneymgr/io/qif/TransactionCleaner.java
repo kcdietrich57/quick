@@ -27,9 +27,9 @@ public class TransactionCleaner {
 	 * The imported data does not connect transfers, so we need to do it. These keep
 	 * track of successful and unsuccessful attempts to connect transfers.
 	 */
-	private static final List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
-	private static int totalXfers = 0;
-	private static int failedXfers = 0;
+	private final List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
+	private int totalXfers = 0;
+	private int failedXfers = 0;
 
 	public void cleanUpTransactions() {
 		cleanUpSplits();
@@ -169,13 +169,11 @@ public class TransactionCleaner {
 		if (matchingTxns.size() == 1) {
 			xtxn = matchingTxns.get(0);
 		} else {
-			if ((multWarnCount++ % 100) == 0) {
-				Common.reportWarning("Multiple matching transactions (" //
-						+ matchingTxns.size() //
-						+ ") - using the first one. (" + multWarnCount + " occurrences)");
-			}
+			Common.reportWarning("Multiple matching transactions (" //
+					+ matchingTxns.size() //
+					+ ") - using the first one. (" + multWarnCount + " occurrences)");
 
-			// TODO use the earliest choice
+			// TODO choose best choice
 			xtxn = matchingTxns.get(0);
 		}
 
@@ -189,39 +187,34 @@ public class TransactionCleaner {
 
 		List<GenericTxn> txns = acct.getTransactions();
 		int ntran = acct.getNumTransactions();
+		int tolerance = 2;
 
-		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(txns, date);
-		if (idx < 0) {
-			idx = 0;
+		int idx0 = GenericTxn.getLastTransactionIndexOnOrBeforeDate(txns, date.addDays(-tolerance));
+		if (idx0 < 0) {
+			idx0 = 0;
+		}
+		int idx1 = GenericTxn.getLastTransactionIndexOnOrBeforeDate(txns, date.addDays(tolerance));
+		if (idx1 < 0) {
+			idx1 = 0;
 		}
 
 		boolean exactDateMatch = false;
 
-		for (int inc = 0; inc < 10; ++inc) {
-			// Check matching/preceding transactions
-			if (idx >= inc) {
-				GenericTxn gtxn = txns.get(idx - inc);
+		for (int idx = idx0; idx <= idx1; ++idx) {
+			GenericTxn gtxn = txns.get(idx);
 
-				boolean dateeq = date.equals(gtxn.getDate());
+			boolean dateeq = date.equals(gtxn.getDate());
 
-				// Check earlier date only if we haven't found a match
-				if (dateeq || !exactDateMatch) {
-					SimpleTxn match = checkMatchForTransfer(txn, gtxn, strict);
-
-					if (match != null) {
-						matchingTxns.add(match);
-						exactDateMatch |= dateeq;
-					}
-				}
-			}
-
-			// Check following transaction (date must be later)
-			// Skip if exact match has already been found
-			if (!exactDateMatch && (idx + inc < ntran)) {
-				GenericTxn gtxn = txns.get(idx + inc);
-
+			// Check nearby dates only if we haven't found a match
+			if (dateeq || !exactDateMatch) {
 				SimpleTxn match = checkMatchForTransfer(txn, gtxn, strict);
-				if (match != null) {
+
+				if (match != null && match.getXtxn() != null) {
+					if (dateeq && !exactDateMatch) {
+						matchingTxns.clear();
+					}
+
+					exactDateMatch |= dateeq;
 					matchingTxns.add(match);
 				}
 			}
