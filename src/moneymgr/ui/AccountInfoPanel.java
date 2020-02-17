@@ -62,7 +62,7 @@ public class AccountInfoPanel extends JPanel //
 
 		this.registerTransactionPanel.addTransactionSelectionListener(new TransactionSelectionListener() {
 			public void transactionSelected(GenericTxn transaction) {
-				System.out.println("Selected transaction: " + transaction.toString());
+				//System.out.println("Selected transaction: " + transaction.toString());
 			}
 		});
 		this.statementPanel.addStatementSelectionListener(this.statementDetailsPanel);

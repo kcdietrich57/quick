@@ -64,6 +64,7 @@ public class LotProcessor {
 		logLotInfo();
 	}
 
+	/** Analyze a list of transactions, building lots for the investments */
 	private static void createLotsForTransactions(List<Lot> thelots, List<InvestmentTxn> txns) {
 		for (int txIdx = 0; txIdx < txns.size();) {
 //			String txstr = txns.get(txIdx).toString();
@@ -90,6 +91,7 @@ public class LotProcessor {
 		}
 	}
 
+	/** Analyze a transaction, updating lot information */
 	private static int createLotsForTransaction(List<Lot> thelots, List<InvestmentTxn> txns, int txIdx) {
 		// TODO should these be sets? It would simplify gather func
 		List<InvestmentTxn> srcTxns = new ArrayList<InvestmentTxn>();
@@ -144,6 +146,7 @@ public class LotProcessor {
 		return txIdx;
 	}
 
+	/** Insert a lot into a list sorted by date acquired */
 	private static void addLot(List<Lot> thelots, Lot newLot) {
 		int idx = 0;
 		for (; idx < thelots.size(); ++idx) {
@@ -213,8 +216,13 @@ public class LotProcessor {
 		return null;
 	}
 
+	/**
+	 * Get/remove the best lot to supply shares to remove (prefer size match).<br>
+	 * NOTE: This removes the lot from the source list.
+	 */
 	private static Lot getBestLot(BigDecimal shares, List<Lot> lots) {
 		for (Lot lot : lots) {
+			// TODO why do we prefer this rather than the oldest lot?
 			if (lot.shares.equals(shares)) {
 				lots.remove(lot);
 				return lot;
@@ -254,6 +262,7 @@ public class LotProcessor {
 		}
 	}
 
+	/** Build a formatted string describing the open lots in an account */
 	private static String printOpenLots(List<Lot> thelots, int acctid) {
 		String s = "";
 		BigDecimal bal = BigDecimal.ZERO;
@@ -291,7 +300,7 @@ public class LotProcessor {
 	}
 
 	/**
-	 * Transfer lot(s) between accounts for a transaction.<br>
+	 * Transfer lot(s) between accounts for a set of transactions.<br>
 	 * Split the last lot if partially transferred.
 	 */
 	private static void transferShares( //
@@ -361,6 +370,7 @@ public class LotProcessor {
 		}
 	}
 
+	/** Find the first open lot in a list matching an account/number of shares. */
 	private static Lot getFirstOpenLot(List<Lot> thelots, int acctid, BigDecimal sharesToMatch) {
 		int idx = 0;
 		for (Lot lot : thelots) {
@@ -395,7 +405,7 @@ public class LotProcessor {
 		return thelots.get(idx);
 	}
 
-	/** Apply a split to all open shares in all accounts */
+	/** Apply a split to all open lots in all accounts */
 	private static void processSplit(List<Lot> thelots, InvestmentTxn txn) {
 		List<Lot> newLots = new ArrayList<Lot>();
 
@@ -442,8 +452,9 @@ public class LotProcessor {
 
 	/**
 	 * Starting with one transaction that transfers shares, collect all the txns
-	 * that are involved in the transfer. The associated transaction(s) must
-	 * immediately following the first transaction.
+	 * from both accounts that are involved in the transfer.<br>
+	 * The associated transaction(s) must immediately following the first
+	 * transaction.
 	 * 
 	 * @param txns     List of txns to search through
 	 * @param startIdx Starting index in list for search (the original txn)
@@ -517,7 +528,7 @@ public class LotProcessor {
 		return maxidx;
 	}
 
-	/** Log lot information and balance summary */
+	/** Output lot information and balance summary for all securities to the log. */
 	private static void logLotInfo() {
 		boolean SUMMARY_ONLY = true;
 		boolean FULL_DETAILS = !SUMMARY_ONLY;
@@ -606,7 +617,7 @@ public class LotProcessor {
 		return balance;
 	}
 
-	/** Log details of log ancestry */
+	/** Log details of lot ancestry */
 	private static void logSecurityHistoryDetails( //
 			StringBuilder sb, Security sec, List<Lot> toplots) {
 		sb.append("\n--------------------------------");

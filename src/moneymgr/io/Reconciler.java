@@ -15,6 +15,7 @@ import moneymgr.model.GenericTxn;
 import moneymgr.model.Statement;
 import moneymgr.util.Common;
 
+/** Process statement info in statementLog.dat */
 public class Reconciler {
 
 	/** After loading QIF data, read statement log file, filling in details. */

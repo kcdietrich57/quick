@@ -14,15 +14,14 @@ import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
 /**
- * Load quotes from CSV file<br>
+ * Load quotes from CSV files<br>
  * <br>
- * Start of line specifies content:<br>
- * Format:<br>
- * chlvd/dohlcv: switch format (Close High Low Volume Date Open)<br>
+ * First field specifies content:<br>
+ * chlvd/dohlcv: Close High Low Volume Date Open<br>
  * date price: switch to dp format<br>
  * price date: switch to pd format<br>
  * <br>
- * split adjusted: The quotes account for stock splits<br>
+ * split adjusted: Whether quotes account for stock splits<br>
  * weekly: Quotes are weekly (not daily)<br>
  * <br>
  * split: split ratio<br>

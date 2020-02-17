@@ -21,7 +21,10 @@ import moneymgr.model.QPrice;
 import moneymgr.model.Security;
 import moneymgr.util.Common;
 
-/** Download security history from online service */
+/**
+ * Download security history from online service.<br>
+ * Use information cached in files instead if available.
+ */
 public class QuoteDownloader {
 	private static final String queryPattern = "%s/query?function=%s&symbol=%s%s&apikey=%s";
 

@@ -61,7 +61,7 @@ public class StatementDetails {
 
 	/**
 	 * Construct a string for persisting a generic transaction to a file<br>
-	 * Generic fmt: T;DATE;CKNUM;AMT
+	 * Format: T;DATE;CKNUM;AMT
 	 */
 	public static String formatTransactionForSave(GenericTxn txn) {
 		if (txn instanceof InvestmentTxn) {
@@ -76,11 +76,12 @@ public class StatementDetails {
 	}
 
 	/**
-	 * Construct a string for persisting this transaction to a file<br>
-	 * Investment Format: I;DATE;ACTION;[SEC];[QTY];AMT
+	 * Construct a string for persisting an investment transaction to a file<br>
+	 * Format: I;DATE;ACTION;[SEC];[QTY];AMT
 	 */
 	public static String formatInvestmentTransactionForSave(InvestmentTxn txn) {
 		String secString = ";";
+
 		if (txn.security != null) {
 			secString = txn.security.getSymbol() + ";";
 			if (txn.getShares() != null) {
@@ -96,7 +97,10 @@ public class StatementDetails {
 		return s;
 	}
 
-	/** Encode position transactions for persistence: name;numtx[;txid;shrbal] */
+	/**
+	 * Encode security position transactions for save<br>
+	 * Format: name;numtx[;txid;shrbal]
+	 */
 	public static String formatPositionForSave(Statement stat, SecurityPosition pos) {
 		List<InvestmentTxn> txns = pos.getTransactions();
 		int numtx = txns.size();

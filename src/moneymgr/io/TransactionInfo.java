@@ -18,7 +18,8 @@ import moneymgr.util.QDate;
 
 /**
  * TransactionInfo is a generic tuple-based representation of transactions.<br>
- * It may be created from Quicken Windows QIF export files or Mac CSV files.
+ * It may be created from Quicken Windows QIF export files or Mac CSV files, or
+ * other formats.
  */
 public class TransactionInfo {
 	public static int SPLIT_IDX = -1;

@@ -18,8 +18,9 @@ import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
 /**
- * Process stock option activity from loaded transactions and extra info missing
- * from the QIF input files
+ * Process stock option activity.<br>
+ * This uses QIF data along with an additional 'options.txt' input file that
+ * provides details not captured in Quicken.
  */
 public class OptionsProcessor {
 	private final static String OPTIONS_DATA_FILENAME = "options.txt";
@@ -52,7 +53,7 @@ public class OptionsProcessor {
 					// 09/30/90 ESPP "ISI ESPP Stock" 241 4.04 4.75 973.64 1144.75
 					String secname = toker.nextToken();
 					Security sec = Security.findSecurity(secname);
-					String acctname = toker.nextToken(); //.replaceAll("_", " ");
+					String acctname = toker.nextToken(); // .replaceAll("_", " ");
 					Account acct = Account.findAccount(acctname);
 					BigDecimal shares = new BigDecimal(toker.nextToken());
 					BigDecimal buyPrice = new BigDecimal(toker.nextToken());
@@ -72,7 +73,7 @@ public class OptionsProcessor {
 						// 05/23/91 GRANT 2656 ASCL ISI_Options 500 6.00 Y 4 10y
 						String secname = toker.nextToken();
 						Security sec = Security.findSecurity(secname);
-						String acctname = toker.nextToken(); //.replaceAll("_", " ");
+						String acctname = toker.nextToken(); // .replaceAll("_", " ");
 						Account acct = Account.findAccount(acctname);
 						BigDecimal shares = new BigDecimal(toker.nextToken());
 						BigDecimal price = new BigDecimal(toker.nextToken());
