@@ -22,6 +22,11 @@ import moneymgr.util.QDate;
  * other formats.
  */
 public class TransactionInfo {
+	/**
+	 * The csv file specifies the names of the values at each position. We parse
+	 * that to determine the column index of each field, stored in these variables.
+	 * TODO Using a map would probably be more straightforward.
+	 */
 	public static int SPLIT_IDX = -1;
 	public static int ACCOUNT_IDX = -1;
 	public static int DATE_IDX = -1;
@@ -50,8 +55,18 @@ public class TransactionInfo {
 	/** List of field names for the input CSV file */
 	public static String[] fieldNames = null;
 
+	/** Divvy up transaction data by account */
 	public static Map<Account, List<TransactionInfo>> winTransactionInfoByAccount = new HashMap<>();
 
+	/**
+	 * Add a transaction to the list for its account<br>
+	 * This is used to capture information about transactions created by QIF import,
+	 * which we can compare to MAC CSV import during testing.<br>
+	 * Currently, WIN import creates both transaction object and info and calls this
+	 * to save it.<br>
+	 * TODO ultimately, it would be good to just create the TxInfo in both cases and
+	 * create the transaction object based on that.
+	 */
 	public static void addWinInfo(TransactionInfo info, SimpleTxn txn) {
 		info.processValues();
 
@@ -71,6 +86,7 @@ public class TransactionInfo {
 		}
 	}
 
+	/** Look up the column index of a field by its name */
 	private static int getFieldIndex(String fieldname) {
 		for (int idx = 0; idx < fieldNames.length; ++idx) {
 			if (fieldNames[idx].equals(fieldname)) {
@@ -81,6 +97,7 @@ public class TransactionInfo {
 		return -1;
 	}
 
+	/** Default field names by position (e.g. for QIF import) */
 	private static final String[] dfltFieldNames = { //
 			"Account", "Date", "Action", "Type", //
 			"Payee", "Amount", "Split", "Category", //
@@ -94,6 +111,7 @@ public class TransactionInfo {
 		setFieldNames(dfltFieldNames);
 	}
 
+	/** Assign the indexes of each field based on the field names array */
 	public static void setFieldNames(String[] fieldnames) {
 		fieldNames = (fieldnames != null) ? fieldnames : dfltFieldNames;
 
@@ -150,8 +168,10 @@ public class TransactionInfo {
 	public BigDecimal inflow;
 	public BigDecimal outflow;
 
+	// TODO do we have both of these for comparison purposes when testing import?
 	public SimpleTxn macTxn = null;
 	public SimpleTxn winTxn = null;
+
 	public final List<SimpleTxn> winTxnMatches = new ArrayList<>();
 	public String inexactMessages = "";
 	public String multipleMessages = "";
@@ -159,6 +179,7 @@ public class TransactionInfo {
 	public boolean datemismatch = false;
 	public boolean fixaction = false;
 
+	/** Constructor - empty transaction info */
 	public TransactionInfo(Account acct) {
 		this.isInvestmentTransaction = acct.isInvestmentAccount();
 
@@ -171,6 +192,7 @@ public class TransactionInfo {
 		setValue(ACCOUNT_IDX, acct.name);
 	}
 
+	/** Constructor - with values */
 	public TransactionInfo(List<String> values) {
 		this.isInvestmentTransaction = false;
 
@@ -181,6 +203,7 @@ public class TransactionInfo {
 		this.values = values.toArray(new String[0]);
 	}
 
+	/** Return a value as integer, or zero if not parsable as integer */
 	public int intValue(int idx) {
 		String s = value(idx);
 
@@ -195,6 +218,7 @@ public class TransactionInfo {
 		return 0;
 	}
 
+	/** Return a value as decimal, or null if not parsable as decimal */
 	public BigDecimal decimalValue(int idx) {
 		String s = value(idx);
 
@@ -209,6 +233,7 @@ public class TransactionInfo {
 		return null;
 	}
 
+	/** Extract values from raw info and set member variables accordingly */
 	public void processValues() {
 		try {
 			this.account = Account.findAccount(value(ACCOUNT_IDX));
@@ -249,6 +274,10 @@ public class TransactionInfo {
 		}
 	}
 
+	/**
+	 * TODO UNUSED Create a transaction object in a given account using the
+	 * contained info
+	 */
 	public SimpleTxn createTransaction(Account acct) {
 //		processValues();
 
@@ -284,20 +313,28 @@ public class TransactionInfo {
 		return txn;
 	}
 
+	/** Return the value of a field by index */
 	public String value(int idx) {
 		return ((idx >= 0) && (idx < this.values.length)) ? this.values[idx] : "";
 	}
 
+	/** Set the value of a field by name */
 	public void setValue(String fieldname, String value) {
 		setValue(getFieldIndex(fieldname), value);
 	}
 
+	/** Set the value of a field by index */
 	public void setValue(int idx, String value) {
 		if (idx >= 0 && idx < fieldNames.length) {
 			this.values[idx] = value;
 		}
 	}
 
+	/**
+	 * Create a new split line and set its category value. Note that this is the
+	 * only way to create split lines and must be done before setting other values
+	 * for the split line.
+	 */
 	public void addSplitCategory(String cat) {
 		TransactionInfo splitinfo = new TransactionInfo(Account.findAccount(value(ACCOUNT_IDX)));
 		splitinfo.setValue(TransactionInfo.SPLIT_IDX, "S");
@@ -305,6 +342,7 @@ public class TransactionInfo {
 		this.splits.add(splitinfo);
 	}
 
+	/** Set the amount in the last split line */
 	public void addSplitAmount(String amount) {
 		if (this.splits.isEmpty()) {
 			Common.reportError("Error adding split amount to TransactionInfo");
@@ -314,6 +352,7 @@ public class TransactionInfo {
 		splitinfo.setValue(TransactionInfo.AMOUNT_IDX, amount);
 	}
 
+	/** Set the memo in the last split line */
 	public void addSplitMemo(String memo) {
 		if (this.splits.isEmpty()) {
 			Common.reportError("Error adding split memo to TransactionInfo");
@@ -323,6 +362,7 @@ public class TransactionInfo {
 		splitinfo.setValue(TransactionInfo.MEMO_IDX, memo);
 	}
 
+	/** Get the transaction date */
 	public QDate getDate() {
 		if (this.date == null) {
 			try {
@@ -335,6 +375,7 @@ public class TransactionInfo {
 		return this.date;
 	}
 
+	/** Append an inexact match message */
 	public void addInexactMessage(String msg) {
 		this.inexactMessages += msg + "\n";
 
@@ -348,6 +389,7 @@ public class TransactionInfo {
 //			this.macTxn.compareWith(this, other);
 	}
 
+	/** Append a message to the multi-messages string */
 	public void addMultipleMessage(String msg) {
 		this.multipleMessages += msg + "\n";
 
@@ -358,6 +400,7 @@ public class TransactionInfo {
 //			this.macTxn.compareWith(this, other);
 	}
 
+	/** Append a message to the messages string */
 	public void addActionMessage(String msg) {
 		this.actionMessages += msg + "\n";
 	}
