@@ -54,18 +54,18 @@ public abstract class GenericTxn //
 	}
 
 	public static void addTransaction(GenericTxn txn) {
-		if (rememberTransactions) {
-			while (allTransactionsByID.size() < (txn.txid + 1)) {
-				allTransactionsByID.add(null);
+		if (GenericTxn.rememberTransactions) {
+			while (GenericTxn.allTransactionsByID.size() < (txn.txid + 1)) {
+				GenericTxn.allTransactionsByID.add(null);
 			}
 
-			allTransactionsByID.set(txn.txid, txn);
+			GenericTxn.allTransactionsByID.set(txn.txid, txn);
 
 			if (txn.getDate() != null) {
-				addTransactionDate(txn);
+				GenericTxn.addTransactionDate(txn);
 			}
 		} else {
-			alternateTransactions.add(txn);
+			GenericTxn.alternateTransactions.add(txn);
 		}
 	}
 

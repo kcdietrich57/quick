@@ -10,6 +10,9 @@ import moneymgr.io.TransactionInfo;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
+/**
+ * Minimal transaction interface. Not sure this is necessary, isn't really used
+ */
 interface Txn {
 	QDate getDate();
 
@@ -18,7 +21,6 @@ interface Txn {
 	int getAccountID();
 }
 
-// TODO could be abstract with a SplitTransation subclass
 /**
  * Minimal transaction info (acct, amt, category, memo). This can be<br>
  * specialized for various transaction types, or<br>
@@ -59,7 +61,12 @@ public abstract class SimpleTxn implements Txn {
 		this.xtxn = null;
 	}
 
-	public boolean matchesSplit(SimpleTxn other) {
+	/**
+	 * TODO UNUSED<br>
+	 * Check whether this transaction matches up with a split line in another to
+	 * determine if this could be a transfer
+	 */
+	private boolean matchesSplit(SimpleTxn other) {
 		if (other.hasSplits()) {
 			for (SplitTxn stx : other.getSplits()) {
 				int diff = (this.acctid == other.acctid) //
@@ -150,7 +157,7 @@ public abstract class SimpleTxn implements Txn {
 		// TODO mac InvTxn transferring to subsplit fails this test
 		diff = getCashAmount().compareTo(other.getCashAmount());
 		if (diff != 0) {
-			//return diff;
+			// return diff;
 		}
 
 		// TODO THIS HAPPENS FREQUENTLY
@@ -167,13 +174,13 @@ public abstract class SimpleTxn implements Txn {
 		// TODO mac InvTxn transferring to subsplit fails this test
 		diff = getXferAmount().compareTo(other.getXferAmount());
 		if (diff != 0) {
-			//return diff;
+			// return diff;
 		}
 
 		// TODO this happens e.g. mac txn matched with win multipsplit
 		diff = hasSplits() == other.hasSplits() ? 0 : -1;
 		if (diff != 0) {
-			//return diff;
+			// return diff;
 		}
 
 		// TODO compare splits

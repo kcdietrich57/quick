@@ -20,6 +20,13 @@ import moneymgr.util.QDate;
  * TransactionInfo is a generic tuple-based representation of transactions.<br>
  * It may be created from Quicken Windows QIF export files or Mac CSV files, or
  * other formats.
+ * 
+ * TODO current process differs for mac(CSV) and windows(QIF) import:<br>
+ * QIF - Creates Tx objects and TxInfo at the same time.<br>
+ * CSV - (experimental) Creates TxInfo, then creates Tx object from TxInfo
+ * 
+ * TODO ultimately, it would be good in both cases to first create the TxInfo
+ * and create the transaction object based on that.
  */
 public class TransactionInfo {
 	/**
@@ -64,8 +71,6 @@ public class TransactionInfo {
 	 * which we can compare to MAC CSV import during testing.<br>
 	 * Currently, WIN import creates both transaction object and info and calls this
 	 * to save it.<br>
-	 * TODO ultimately, it would be good to just create the TxInfo in both cases and
-	 * create the transaction object based on that.
 	 */
 	public static void addWinInfo(TransactionInfo info, SimpleTxn txn) {
 		info.processValues();
@@ -192,7 +197,7 @@ public class TransactionInfo {
 		setValue(ACCOUNT_IDX, acct.name);
 	}
 
-	/** Constructor - with values */
+	/** Constructor - with values - e.g. from CSV import */
 	public TransactionInfo(List<String> values) {
 		this.isInvestmentTransaction = false;
 

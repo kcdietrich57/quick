@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/** Defines account type categories for itemizing status output */
+// TODO relocate this to the reports package
+/** Defines account types for itemizing in reports and charts */
 public enum AccountCategory {
 
 	ASSET(true, "Asset", //
@@ -20,7 +21,7 @@ public enum AccountCategory {
 	LOAN(false, "Loan", //
 			new AccountType[] { AccountType.Liability });
 
-	/** Ordering (bottom to top) of categories in the itemized/stacked charts */
+	/** Ordering (bottom to top) of categories in itemized/stacked charts */
 	public static final AccountCategory[] accountCategoryInfoForChart;
 	public static final AccountCategory[] accountCategoryInfoForStatus;
 	public static final List<String> accountCategoryLabelsForChart;

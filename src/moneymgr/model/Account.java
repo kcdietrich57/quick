@@ -15,23 +15,21 @@ import moneymgr.ui.MainWindow;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
-class Foo {
-	public enum InvCategory {
-		Contribution, Match, Grant, Dividend,
-	}
-}
-
-/** Represents an account */
+/**
+ * Represents an account<br>
+ * 
+ * Contains information about transactions, statements, securities<br>
+ * and daily balances
+ */
 public class Account {
-	/** Account list ordered by first/last txn dates (no nulls) */
+	/** Account list ordered by first/last txn dates (no gaps/nulls) */
 	private static final List<Account> accounts = new ArrayList<>();
 
-	/** Account list indexed by acctid (size > numAccounts, nulls) */
+	/** Account list indexed by acctid (size > numAccounts, may have gaps/nulls) */
 	private static final List<Account> accountsByID = new ArrayList<>();
 
 	/** Tracks current context as we are loading */
 	public static Account currAccountBeingLoaded = null;
-	public static boolean accountsLocked = false;
 
 	public static Account makeAccount( //
 			String name, AccountType type, String desc, QDate closeDate, //
@@ -50,7 +48,7 @@ public class Account {
 		return acct;
 	}
 
-	public static int getNextAccountID() {
+	private static int getNextAccountID() {
 		return (accountsByID.isEmpty()) ? 1 : accountsByID.size();
 	}
 
@@ -146,9 +144,9 @@ public class Account {
 		return accts;
 	}
 
+	/** Add an account, maintaining proper ordering in the list(s) */
 	public static void addAccount(Account acct) {
 		if (acct.acctid == 0) {
-			// acct.acctid = getNextAccountID();
 			Common.reportError("Account '" + acct.name + "' has zero acctid");
 		}
 
@@ -166,6 +164,7 @@ public class Account {
 		});
 	}
 
+	/** Look up an account by name */
 	public static Account findAccount(String name) {
 		name = name.toLowerCase();
 
@@ -190,6 +189,7 @@ public class Account {
 	public final AccountType type;
 	public final AccountCategory acctCategory;
 	public final String description;
+
 	public QDate closeDate;
 	public int statementFrequency;
 	public int statementDayOfMonth;
@@ -732,8 +732,8 @@ public class Account {
 	 * Find existing transaction(s) that match a transaction being loaded.<br>
 	 * Date is close, amount matches (or the amount of a split).
 	 */
-	public List<SimpleTxn> findMatchingTransactions(SimpleTxn tx) {
-		List<SimpleTxn> ret = findMatchingTransactions(tx, false);
+	public static List<SimpleTxn> findMatchingTransactions(Account acct, SimpleTxn tx) {
+		List<SimpleTxn> ret = Account.findMatchingTransactions(acct, tx, false);
 
 		if (ret.size() > 1) {
 			List<SimpleTxn> newret = new ArrayList<>(ret);
@@ -854,21 +854,21 @@ public class Account {
 	 * Find existing transaction(s) that match a transaction being loaded.<br>
 	 * Date is close, amount matches (or the amount of a split).
 	 */
-	private List<SimpleTxn> findMatchingTransactions(SimpleTxn tx, boolean dummy) {
+	private static List<SimpleTxn> findMatchingTransactions(Account acct, SimpleTxn tx, boolean dummy) {
 		List<SimpleTxn> txns = new ArrayList<>();
 		int TOLERANCE = 5; // days
 
 		BigDecimal amt = tx.getAmount().abs();
 
-		int idx = getTransactionIndexForDate(tx.getDate());
+		int idx = acct.getTransactionIndexForDate(tx.getDate());
 		for (; idx > 0; --idx) {
-			if (tx.getDate().subtract(this.transactions.get(idx - 1).getDate()) > TOLERANCE) {
+			if (tx.getDate().subtract(acct.transactions.get(idx - 1).getDate()) > TOLERANCE) {
 				break;
 			}
 		}
 
-		for (; idx < this.transactions.size(); ++idx) {
-			GenericTxn t = this.transactions.get(idx);
+		for (; idx < acct.transactions.size(); ++idx) {
+			GenericTxn t = acct.transactions.get(idx);
 			int diff = t.getDate().subtract(tx.getDate());
 			if (diff > TOLERANCE) {
 				break;

@@ -15,6 +15,7 @@ public enum TxAction {
 	STOCKSPLIT, REMINDER;
 
 	private static Map<String, TxAction> actionMap = new HashMap<>();
+
 	static {
 		actionMap.put("StkSplit", TxAction.STOCKSPLIT);
 		actionMap.put("Cash", TxAction.CASH);

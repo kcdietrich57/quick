@@ -28,7 +28,7 @@ import moneymgr.model.SplitTxn;
 import moneymgr.model.TxAction;
 import moneymgr.util.Common;
 
-/** Import data from CSV file exported from MacOS Quicken */
+/** EXPERIMENTAL Import data from CSV file exported from MacOS Quicken */
 public class CSVImport {
 
 	private static void infoMessage(String msg) {
@@ -160,7 +160,7 @@ public class CSVImport {
 	public List<TransactionInfo> nomatchZero = new ArrayList<>();
 	public int totaltx = 0;
 
-	public CSVImport(String filename) {
+	private CSVImport(String filename) {
 		try {
 			this.rdr = new LineNumberReader(new FileReader(filename));
 		} catch (Exception e) {
@@ -168,7 +168,7 @@ public class CSVImport {
 		}
 	}
 
-	public void importFile() {
+	private void importFile() {
 		if (!readFieldNames()) {
 			return;
 		}
@@ -284,7 +284,7 @@ public class CSVImport {
 		System.out.println("Done importing CSV file");
 	}
 
-	public void processCategories(PrintStream out) {
+	private void processCategories(PrintStream out) {
 		Set<String> categoryNameSet = new HashSet<>();
 
 		for (List<TransactionInfo> tinfos : this.transactionsMap.values()) {
@@ -314,7 +314,7 @@ public class CSVImport {
 		}
 	}
 
-	public void processAccounts(PrintStream out) {
+	private void processAccounts(PrintStream out) {
 		Set<String> accountNameSet = new HashSet<>();
 
 		for (List<TransactionInfo> tinfos : this.transactionsMap.values()) {
@@ -344,7 +344,7 @@ public class CSVImport {
 		}
 	}
 
-	public void processSecurities(PrintStream out) {
+	private void processSecurities(PrintStream out) {
 		Set<String> secNameSet = new HashSet<>();
 
 		for (List<TransactionInfo> tinfos : this.transactionsMap.values()) {
@@ -453,16 +453,16 @@ public class CSVImport {
 	/**
 	 * @param tuple Tupleinfo for the txn
 	 */
-	public void matchTransaction(TransactionInfo tuple) {
+	private void matchTransaction(TransactionInfo tuple) {
 		SimpleTxn mactxn = tuple.macTxn;
 
 		infoMessage(mactxn.toString());
 
 		Account acct = Account.getAccountByID(mactxn.getAccountID());
-		List<SimpleTxn> txns = acct.findMatchingTransactions(mactxn);
+		List<SimpleTxn> txns = Account.findMatchingTransactions(acct, mactxn);
 
 		if (txns.isEmpty()) {
-			acct.findMatchingTransactions(mactxn);
+			txns = Account.findMatchingTransactions(acct, mactxn);
 		}
 		for (Iterator<SimpleTxn> iter = txns.iterator(); iter.hasNext();) {
 			if (isMatched(iter.next())) {
@@ -682,7 +682,7 @@ public class CSVImport {
 		return txn;
 	}
 
-	public List<String> readRawRecord() {
+	private List<String> readRawRecord() {
 		List<String> fields = new ArrayList<>();
 
 		try {
@@ -767,12 +767,12 @@ public class CSVImport {
 		return fields;
 	}
 
-	public TransactionInfo readRecord() {
+	private TransactionInfo readRecord() {
 		List<String> fields = readRawRecord();
 		return (fields != null) ? new TransactionInfo(fields) : null;
 	}
 
-	public boolean readFieldNames() {
+	private boolean readFieldNames() {
 		for (;;) {
 			List<String> record = readRawRecord();
 			if (record == null) {
