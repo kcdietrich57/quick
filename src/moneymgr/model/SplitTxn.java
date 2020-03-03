@@ -3,6 +3,11 @@ package moneymgr.model;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
+/**
+ * A split line in a composite transaction. Supplies a subset of properties
+ * (category, memo, amount) while inheriting the rest from the parent
+ * transaction.
+ */
 public class SplitTxn extends SimpleTxn {
 	private SimpleTxn parent;
 

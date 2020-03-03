@@ -221,7 +221,10 @@ public class TransactionCleaner {
 		}
 	}
 
-	/** Locate a match for txn in gtxn (either gtxn itself, or a split) */
+	/**
+	 * Locate a match for txn in gtxn (either gtxn itself, or a split)<br>
+	 * Account/amount must match and not already associated with the xfer.
+	 */
 	private SimpleTxn checkMatchForTransfer(SimpleTxn txn, GenericTxn gtxn, boolean strict) {
 		assert -txn.getCatid() == gtxn.getAccountID();
 
@@ -249,7 +252,7 @@ public class TransactionCleaner {
 		List<InvestmentTxn> xins = new ArrayList<InvestmentTxn>();
 		List<InvestmentTxn> xouts = new ArrayList<InvestmentTxn>();
 
-		// Gather all transfers
+		// Gather all security transfers
 		for (GenericTxn txn : GenericTxn.getAllTransactions()) {
 			if (txn instanceof InvestmentTxn) {
 				if ((txn.getAction() == TxAction.SHRS_IN)) {

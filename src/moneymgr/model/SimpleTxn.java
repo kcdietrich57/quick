@@ -81,6 +81,10 @@ public abstract class SimpleTxn implements Txn {
 		return false;
 	}
 
+	/**
+	 * Compares two transactions for testing CVS import matching up with QIF<br>
+	 * (date/action/type/amount/.......)
+	 */
 	public int compareWith(TransactionInfo tuple, SimpleTxn other) {
 		int diff;
 
@@ -219,10 +223,12 @@ public abstract class SimpleTxn implements Txn {
 				: addsShares();
 	}
 
+	/** Answer if this increases a security position in the account */
 	public boolean addsShares() {
 		return false;
 	}
 
+	/** Answer if this reduces a security position in the account */
 	public boolean removesShares() {
 		return false;
 	}
@@ -306,6 +312,7 @@ public abstract class SimpleTxn implements Txn {
 		return 0;
 	}
 
+	/** Return the net amount of cash transferred in/out by this transaction */
 	public BigDecimal getXferAmount() {
 		BigDecimal xfer = BigDecimal.ZERO;
 
@@ -352,8 +359,8 @@ public abstract class SimpleTxn implements Txn {
 	}
 
 	/**
-	 * Compare two transactions' values. If strict is false, we compare absolute
-	 * values rather than the exact values.
+	 * Compare two transactions' values to see if they can represent a transfer.<br>
+	 * If strict is false, we compare absolute values rather than the exact values.
 	 */
 	public boolean amountIsEqual(SimpleTxn other, boolean strict) {
 		BigDecimal amt1 = getXferAmount();

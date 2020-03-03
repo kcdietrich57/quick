@@ -14,6 +14,7 @@ import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.Statement;
 import moneymgr.util.Common;
+import moneymgr.util.QDate;
 
 /** Process statement info in statementLog.dat */
 public class Reconciler {

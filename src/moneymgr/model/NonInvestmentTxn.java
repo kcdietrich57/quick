@@ -9,11 +9,12 @@ import moneymgr.io.TransactionInfo;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
-/** Transaction for non-investment account */
+/** Transaction for non-investment account - i.e. All cash, no securities */
 public class NonInvestmentTxn extends GenericTxn {
 //	public List<String> address;
-	// TODO move splits to SimpleTxn?
-	private List<SplitTxn> splits;
+	// TODO move splits to SimpleTxn/GenericTxn?//
+	// Why shouldn't an investment txn have splits?
+	private final List<SplitTxn> splits;
 
 	public NonInvestmentTxn(int acctid) {
 		super(acctid);
@@ -50,8 +51,12 @@ public class NonInvestmentTxn extends GenericTxn {
 	}
 
 	public int getCheckNumber() {
-		if ((this.chkNumber == null) || (this.chkNumber.length() == 0) //
-				|| !Character.isDigit(this.chkNumber.charAt(0))) {
+		if ((this.chkNumber == null) || (this.chkNumber.length() == 0)) {
+			return 0;
+		}
+
+		// Quicken puts other info (e.g. 'DEP') in this field as well
+		if (!Character.isDigit(this.chkNumber.charAt(0))) {
 			return 0;
 		}
 
@@ -71,10 +76,6 @@ public class NonInvestmentTxn extends GenericTxn {
 	}
 
 	public void addSplit(SplitTxn txn) {
-		if (this.splits.isEmpty()) {
-			this.splits = new ArrayList<SplitTxn>();
-		}
-		
 		this.splits.add(txn);
 	}
 
@@ -86,7 +87,7 @@ public class NonInvestmentTxn extends GenericTxn {
 
 		BigDecimal dec = BigDecimal.ZERO;
 
-		for (final SimpleTxn txn : this.splits) {
+		for (SimpleTxn txn : this.splits) {
 			dec = dec.add(txn.getAmount());
 		}
 

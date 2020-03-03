@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import moneymgr.io.TransactionInfo;
+import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
 /** Common transaction info - subclassed by Investment vs NonInvestment txn */
@@ -25,10 +26,20 @@ public abstract class GenericTxn //
 		INSERT, FIRST, LAST
 	}
 
-	public static boolean rememberTransactions = true;
+	/**
+	 * For testing alternative import methods, setting this to true will redirect
+	 * the imported data to an location separate from the primary data structures,
+	 * for comparison purposes.
+	 */
+	public static boolean isAlternativeImport = false;
 
+	/** All transactions indexed by ID. May contain gaps/null values */
 	private static final List<GenericTxn> allTransactionsByID = new ArrayList<>();
+	/** All transactions sorted by date. Will not contain null values */
 	private static final List<GenericTxn> allTransactionsByDate = new ArrayList<>();
+	/**
+	 * A list of transactions from alternative import methods, in order of import.
+	 */
 	public static final List<GenericTxn> alternateTransactions = new ArrayList<>();
 
 	/** Dummy transaction for binary search */
@@ -39,22 +50,28 @@ public abstract class GenericTxn //
 		allTransactionsByDate.remove(SEARCH);
 	}
 
+	/** Compare two transactions by date, ascending */
 	private static final Comparator<GenericTxn> compareByDate = new Comparator<GenericTxn>() {
 		public int compare(GenericTxn o1, GenericTxn o2) {
 			return o1.getDate().subtract(o2.getDate());
 		}
 	};
 
+	/** Return transaction list indexed by ID */
 	public static List<GenericTxn> getAllTransactions() {
 		return Collections.unmodifiableList(allTransactionsByID);
 	}
 
+	/** Return transaction list ordered by ascending date */
 	public static List<GenericTxn> getTransactionsByDate() {
-		return allTransactionsByDate;
+		return Collections.unmodifiableList(allTransactionsByDate);
 	}
 
+	/** Add a new transaction to the appropriate collection(s) */
 	public static void addTransaction(GenericTxn txn) {
-		if (GenericTxn.rememberTransactions) {
+		if (GenericTxn.isAlternativeImport) {
+			GenericTxn.alternateTransactions.add(txn);
+		} else {
 			while (GenericTxn.allTransactionsByID.size() < (txn.txid + 1)) {
 				GenericTxn.allTransactionsByID.add(null);
 			}
@@ -64,23 +81,24 @@ public abstract class GenericTxn //
 			if (txn.getDate() != null) {
 				GenericTxn.addTransactionDate(txn);
 			}
-		} else {
-			GenericTxn.alternateTransactions.add(txn);
 		}
 	}
 
+	/** Insert a transaction into the date-sorted list */
 	private static void addTransactionDate(GenericTxn txn) {
 		int idx = getTransactionInsertIndexByDate(allTransactionsByDate, txn);
 
 		allTransactionsByDate.add(idx, txn);
 	}
 
+	/** Return the date of the earliest transaction */
 	public static QDate getFirstTransactionDate() {
 		return (allTransactionsByDate.isEmpty()) //
 				? null //
 				: allTransactionsByDate.get(0).getDate();
 	}
 
+	/** Return the date of the last transaction */
 	public static QDate getLastTransactionDate() {
 		return (allTransactionsByDate == null || allTransactionsByDate.isEmpty()) //
 				? null //
@@ -90,8 +108,8 @@ public abstract class GenericTxn //
 	/**
 	 * Return investment transactions for a date range
 	 *
-	 * @param start Index of earliest matching transaction
-	 * @param end   Index of latest matching transaction
+	 * @param start Earliest date to include
+	 * @param end   Latest date to include
 	 */
 	public static List<GenericTxn> getInvestmentTransactions(QDate start, QDate end) {
 		List<GenericTxn> txns = new ArrayList<>();
@@ -108,37 +126,47 @@ public abstract class GenericTxn //
 	/**
 	 * Return all transactions for a date range
 	 *
-	 * @param start Index of earliest matching transaction
-	 * @param end   Index of latest matching transaction
+	 * @param start Earliest date to include
+	 * @param end   Latest date to include
 	 */
 	private static List<GenericTxn> getTransactions(QDate start, QDate end) {
+		// TODO Why not firstOnOrAfter(start) to lastOnOrBefore(end)?????
 		int idx1 = getFirstTransactionIndexByDate(allTransactionsByDate, start);
 		int idx2 = getLastTransactionIndexByDate(allTransactionsByDate, end);
 
 		if (idx1 < 0) {
+			// Calculate closest index for no match (see Collections.binarySearch)
+			// This will be the first transaction after the start date (or end
+			// of the list)
 			idx1 = -idx1 - 1;
 		}
 
-		// Advance index to the last matching transaction
-		while ((idx2 >= 0) //
-				&& ((idx2 + 1) < allTransactionsByDate.size()) //
-				&& allTransactionsByDate.get(idx2 + 1).getDate().equals(end)) {
-			++idx2;
-		}
-
 		if (idx2 < 0) {
+			// Calculate closest index for no match (see Collections.binarySearch)
+			// This will be the first tx after the target date
 			idx2 = -idx2 - 1;
 
-			// Move idx back to previous matching transaction
+			// Move idx back to previous transaction if possible
+			// (If it is already zero, there are no transactions to return)
 			if (idx2 > 0) {
 				--idx2;
+			}
+		} else {
+			// Advance index to the last matching transaction
+			while ((idx2 >= 0) //
+					&& ((idx2 + 1) < allTransactionsByDate.size()) //
+					&& allTransactionsByDate.get(idx2 + 1).getDate().equals(end)) {
+				++idx2;
 			}
 		}
 
 		return allTransactionsByDate.subList(idx1, idx2);
 	}
 
-	/** Return the index of the last txn on or prior to a given date */
+	/**
+	 * Return the index of the last transaction on or prior to a given date.<br>
+	 * Return -1 if there is no such transaction.
+	 */
 	public static int getLastTransactionIndexOnOrBeforeDate( //
 			List<? extends GenericTxn> txns, QDate d) {
 		if (txns.isEmpty()) {
@@ -155,7 +183,7 @@ public abstract class GenericTxn //
 		return (idx > 0) ? idx - 1 : -1;
 	}
 
-	/** Return the index of the first transaction on a date. (-1 if none) */
+	/** Return the index of the first transaction on a date. (<0 if none) */
 	private static int getFirstTransactionIndexByDate( //
 			List<? extends GenericTxn> txns, QDate date) {
 		SEARCH.setDate(date);
@@ -163,7 +191,7 @@ public abstract class GenericTxn //
 		return getTransactionIndexByDate(txns, SEARCH, TxIndexType.FIRST);
 	}
 
-	/** Return the index of the last transaction on a date. (-1 if none) */
+	/** Return the index of the last transaction on a date. (<0 if none) */
 	private static int getLastTransactionIndexByDate( //
 			List<? extends GenericTxn> txns, QDate date) {
 		SEARCH.setDate(date);
@@ -197,7 +225,7 @@ public abstract class GenericTxn //
 	 *
 	 * @param txn
 	 * @param TxIndexType If FIRST/LAST, the index of the first/last txn on that
-	 *                    date (-1 if no such txn exists);<br>
+	 *                    date (<0 if no such txn exists);<br>
 	 *                    If INSERT the index after all txns on or before the date.
 	 * @return Index; -(insert index + 1) if FIRST/LAST and no match exists
 	 */
@@ -210,37 +238,51 @@ public abstract class GenericTxn //
 
 		int idx = Collections.binarySearch(txns, txn, compareByDate);
 
+		// TODO If idx is >= 0, we found a match. If so, the date should match
+		// exactly so I don't think this will do anything
 		while ((idx >= 0) && (idx < sz)) {
 			QDate dt = txns.get(idx).getDate();
 			int diff = dt.subtract(txn.getDate());
-			if (diff > 0) {
-				--idx;
-			} else if (diff > 0) {
-				++idx;
-			} else {
+			if (diff == 0) {
 				break;
 			}
+
+			Common.reportError("getTransactionIndexByDate: strange date comparison");
+//			if (diff > 0) {
+//				--idx;
+//			} else if (diff > 0) {
+//				++idx;
+//			}
 		}
 
 		if (idx < 0) {
-			int n = -idx - 1;
+			// There is no match - Return an insertion point that maintains order.
+			int insertIdx = -idx - 1;
+
 			if (which == TxIndexType.INSERT) {
-				return n;
+				// Return the insertion point indicated by the search result.
+				return insertIdx;
 			}
 
-			if (n >= txns.size()) {
-				n = txns.size() - 1;
+			if (insertIdx >= txns.size()) {
+				// make sure insertIdx is a valid transaction index
+				insertIdx = txns.size() - 1;
 			}
 
-			if (!txns.get(n).getDate().equals(txn.getDate())) {
+			// TODO It seems this is guaranteed since we did not find a match
+			if (!txns.get(insertIdx).getDate().equals(txn.getDate())) {
 				return idx;
 			}
 
-			idx = n;
+			// TODO Therefore this should be unreachable
+			idx = insertIdx;
 		}
 
+		// We have a match for the date. Traverse to the requested position in
+		// the list.
 		switch (which) {
 		case FIRST:
+			// Go to the index of the first matching transaction
 			while ((idx > 0) //
 					&& txns.get(idx - 1).getDate().equals(txn.getDate())) {
 				--idx;
@@ -248,6 +290,7 @@ public abstract class GenericTxn //
 			break;
 
 		case LAST:
+			// Go to the index of the last matching transaction
 			while (((idx + 1) < sz) //
 					&& txns.get(idx + 1).getDate().equals(txn.getDate())) {
 				++idx;
@@ -255,6 +298,7 @@ public abstract class GenericTxn //
 			break;
 
 		case INSERT:
+			// Go to the index after the last matching transaction
 			while ((idx < sz) //
 					&& txns.get(idx).getDate().equals(txn.getDate())) {
 				++idx;
@@ -292,7 +336,7 @@ public abstract class GenericTxn //
 
 	public int compareWith(TransactionInfo tuple, SimpleTxn othersimp) {
 		int diff;
-		
+
 		diff = super.compareWith(tuple, othersimp);
 		if (diff != 0) {
 			return diff;
@@ -307,7 +351,7 @@ public abstract class GenericTxn //
 		return 0;
 	}
 
-	/** Correct missing/bad information from input data */
+	/** TODO relocate? Correct missing/bad information from input data */
 	public void repair(TransactionInfo tinfo) {
 		if (getAmount() == null) {
 			setAmount(BigDecimal.ZERO);
@@ -337,7 +381,7 @@ public abstract class GenericTxn //
 		return this.date;
 	}
 
-	/** Update the date of this transaction */
+	/** Update the date of this transaction - update date-sorted list */
 	public void setDate(QDate date) {
 		if ((getAccountID() != 0) && (getDate() != null)) {
 			allTransactionsByDate.remove(this);
@@ -350,7 +394,7 @@ public abstract class GenericTxn //
 		}
 	}
 
-	/** Comparison by date and check number */
+	/** TODO poorly named - Comparison by date and check number */
 	public int compareTo(GenericTxn other) {
 		int diff = getDate().compareTo(other.getDate());
 		if (diff != 0) {

@@ -134,7 +134,7 @@ public class CSVImport {
 
 		System.out.println("Processing csv file");
 
-		GenericTxn.rememberTransactions = false;
+		GenericTxn.isAlternativeImport = true;
 
 		System.out.println(String.format("There are %d transactions from DIETRICH.QIF", //
 				GenericTxn.getAllTransactions().size()));

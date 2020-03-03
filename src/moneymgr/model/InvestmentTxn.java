@@ -13,7 +13,7 @@ import moneymgr.io.TransactionInfo;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
-/** Transaction for investment account (may involve security) */
+/** Transaction for investment account (may involve a security) */
 public class InvestmentTxn extends GenericTxn {
 	private static final List<InvestmentTxn> NO_XFER_TXNS = //
 			Collections.unmodifiableList(new ArrayList<InvestmentTxn>());
@@ -32,9 +32,11 @@ public class InvestmentTxn extends GenericTxn {
 	public BigDecimal commission;
 
 	public String accountForTransfer;
+	/** amountTransferred is cash only */
 	public BigDecimal amountTransferred;
 	private List<InvestmentTxn> xferTxns;
 
+	/** These break down security activity by lots */
 	public final List<Lot> lots;
 	public final List<Lot> lotsCreated;
 	public final List<Lot> lotsDisposed;
@@ -155,13 +157,11 @@ public class InvestmentTxn extends GenericTxn {
 	public boolean isStockOptionTransaction() {
 		if (this.option != null) {
 			if ((getAction() == TxAction.STOCKSPLIT) //
+					// TODO this espp isn't mysterious at all
 					|| this.option.name.equals("espp")) {
 				return false;
 			}
 
-			if (this.quantity.signum() != 0) {
-				// System.out.println("xyzzy");
-			}
 			// TODO distinguish ESPP vs OPTION
 			// return true;
 		}
@@ -189,6 +189,7 @@ public class InvestmentTxn extends GenericTxn {
 		return this.quantity;
 	}
 
+	/** Determine what impact, if any, this transaction has on a security */
 	public ShareAction getShareAction() {
 		switch (getAction()) {
 		case BUY:
@@ -247,6 +248,9 @@ public class InvestmentTxn extends GenericTxn {
 		case SELL:
 		case SELLX:
 		case SHRS_OUT:
+			return true;
+
+		// TOOD Do withdrawx and xout really remove shares?
 		case WITHDRAWX:
 		case XOUT:
 			return true;
@@ -256,6 +260,7 @@ public class InvestmentTxn extends GenericTxn {
 		}
 	}
 
+	/** Calculate the per-share price for this transaction */
 	public BigDecimal getShareCost() {
 		BigDecimal shares = getShares();
 
@@ -268,7 +273,10 @@ public class InvestmentTxn extends GenericTxn {
 		}
 	}
 
-	/** For a stock split transaction, calculate the split share multiplier */
+	/**
+	 * For a stock split transaction, calculate the split share multiplier.<br>
+	 * Quicken represents splits in units of 10% (e.g. 2 for 1 is 20)
+	 */
 	public BigDecimal getSplitRatio() {
 		if ((this.quantity == null) || (getAction() != TxAction.STOCKSPLIT)) {
 			return BigDecimal.ONE;
@@ -277,13 +285,13 @@ public class InvestmentTxn extends GenericTxn {
 		return this.quantity.divide(BigDecimal.TEN);
 	}
 
-	/** Get lots for shares affected by this transaction */
+	/** Get lots that contain shares affected by this transaction */
 	public List<Lot> getLots() {
 		return this.lotsDisposed;
 	}
 
 	/**
-	 * Get the total amount of a buy/sell transaction.<br>
+	 * Get the total cash amount of a buy/sell transaction.<br>
 	 * This returns the absolute value.
 	 */
 	public BigDecimal getBuySellAmount() {
@@ -352,7 +360,7 @@ public class InvestmentTxn extends GenericTxn {
 
 	}
 
-	/** Correct issues with this loaded transaction */
+	/** Detect/correct any quicken issues with this loaded transaction */
 	public void repair(TransactionInfo tinfo) {
 		TxAction action = getAction();
 
@@ -381,6 +389,7 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 		if (this.amountTransferred != null) {
+			// Some xfers store amount with the opposite sign than what we expect
 			if (action == TxAction.XOUT) {
 				this.amountTransferred = this.amountTransferred.negate();
 				tinfo.setValue(TransactionInfo.XAMOUNT_IDX, this.amountTransferred.toString());
@@ -398,6 +407,7 @@ public class InvestmentTxn extends GenericTxn {
 		case SELLX:
 		case EXERCISE:
 		case EXERCISEX:
+			// Sign of quantity is opposite of what we want
 			this.quantity = this.quantity.negate();
 			tinfo.setValue(TransactionInfo.SHARES_IDX, this.quantity.toString());
 			break;
@@ -408,7 +418,7 @@ public class InvestmentTxn extends GenericTxn {
 		case CONTRIBX: // amt/xamt
 		case WITHDRAWX: // + amt/xamt
 		case DIV: // amt
-			// This, apparently, is to treat MM balances as cash
+			// TODO This, apparently, is to treat MM balances as cash
 			this.security = null;
 			tinfo.setValue(TransactionInfo.SECURITY_IDX, "");
 			break;
@@ -433,6 +443,7 @@ public class InvestmentTxn extends GenericTxn {
 			break;
 		}
 
+		// Some cash transfers aren't reflected in the tx amount
 		if ((getAmount() == null) && (getXferAmount() != null)) {
 			setAmount(getXferAmount());
 			tinfo.setValue(TransactionInfo.AMOUNT_IDX, getXferAmount().toString());
@@ -441,11 +452,14 @@ public class InvestmentTxn extends GenericTxn {
 		super.repair(tinfo);
 	}
 
-	/** Fix issues with loaded stock buy/sell transaction */
+	/** Fix quicken issues with buy/sell stock */
 	private void repairBuySell(TransactionInfo tinfo) {
 		BigDecimal amt = getBuySellAmount();
 
+		// Calculate total cost including commission
 		BigDecimal tot = this.quantity.multiply(this.price);
+
+		// Make sure we have a valid commission value, even if zero
 		if (this.commission == null) {
 			this.commission = BigDecimal.ZERO;
 			tinfo.setValue(TransactionInfo.COMMISSION_IDX, "0.00");
@@ -466,6 +480,7 @@ public class InvestmentTxn extends GenericTxn {
 			break;
 		}
 
+		// TODO Adjust price if there is a discrepancy (does this ever happen?)
 		if (!Common.isEffectivelyZero(diff)) {
 			BigDecimal newprice = tot.divide(this.quantity).abs();
 
@@ -554,14 +569,17 @@ public class InvestmentTxn extends GenericTxn {
 		return s;
 	}
 
-	public static int calcWeight(Lot lot, List<Lot> lots, List<Lot> disposedLots) {
+	/**
+	 * Return a weight for grouping lots in the display by type.<br>
+	 * 
+	 * 0 preexisting not disposed (should be none)<br>
+	 * 1 Preexisting disposed<br>
+	 * 2 new disposed<br>
+	 * 3 new not disposed
+	 */
+	private static int calcWeight(Lot lot, List<Lot> lots, List<Lot> disposedLots) {
 		boolean existing = (lot.sourceLot == null) || !lots.contains(lot.sourceLot);
 		boolean disposed = disposedLots.contains(lot);
-
-		// 0 preexisting not disposed (should be none)
-		// 1 Preexisting disposed
-		// 2 new disposed
-		// 3 new not disposed
 
 		if (existing) {
 			return (disposed) ? 1 : 0;

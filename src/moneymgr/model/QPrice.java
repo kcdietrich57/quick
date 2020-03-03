@@ -11,8 +11,9 @@ public class QPrice implements Comparable<QPrice> {
 	public final QDate date;
 	public final int secid;
 
-	// TODO meaning of price vs split-adjusted price?
+	/** price is the price on the date of the quote */
 	private final BigDecimal price;
+	/** splitAdjustedPrice is the price adjusted for later splits */
 	private final BigDecimal splitAdjustedPrice;
 
 	public QPrice(QDate date, int secid, BigDecimal price, BigDecimal splitAdjPrice) {

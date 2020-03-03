@@ -43,7 +43,8 @@ public class Common {
 
 	/** Convert ms to whole days */
 	public static int msToDays(long ms) {
-		return (int) (ms / MS_PER_DAY);
+		int sign = (ms < 0) ? -1 : 1;
+		return sign * (int) ((Math.abs(ms) + MS_PER_DAY / 2) / MS_PER_DAY);
 	}
 
 	/** Sort transactions list by date and id */
