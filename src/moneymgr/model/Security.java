@@ -13,6 +13,7 @@ import app.QifDom;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
+/** Class representing a security, its price history, activity, and so on */
 public class Security {
 	/** Map symbol to security */
 	private static final Map<String, Security> securities = new HashMap<>();
@@ -24,6 +25,10 @@ public class Security {
 		return Collections.unmodifiableCollection(securities.values());
 	}
 
+	/**
+	 * Introduce a new security - checks for already existing security first.<br>
+	 * It is an error if the name or symbol is already used.
+	 */
 	public static void addSecurity(Security sec) {
 		Security existingByName = findSecurityByName(sec.getName());
 		if (existingByName != null) {
@@ -52,12 +57,17 @@ public class Security {
 		return securitiesByID.get(secid);
 	}
 
+	/** Look up a security whose name or symbol matches an input string. */
 	public static Security findSecurity(String nameOrSymbol) {
 		final Security s = findSecurityBySymbol(nameOrSymbol);
 
 		return (s != null) ? s : findSecurityByName(nameOrSymbol);
 	}
 
+	/**
+	 * Look up a security whose name matches an input string.<br>
+	 * Quicken windows QIF export uses security name, not symbol.
+	 */
 	public static Security findSecurityByName(String name) {
 		for (Security sec : securities.values()) {
 			if ((sec != null) && sec.names.contains(name)) {
@@ -68,6 +78,7 @@ public class Security {
 		return null;
 	}
 
+	/** Look up a security whose symbol matches an input string. */
 	public static Security findSecurityBySymbol(String sym) {
 		return securities.get(sym);
 	}
@@ -95,18 +106,22 @@ public class Security {
 	/** Security goal (growth, income, etc) */
 	public final String goal;
 
-	/** Lots for all holdings/transactions for this security */
+	/**
+	 * Lots for all holdings/transactions for this security.<br>
+	 * This constitutes our entire history for this security.
+	 */
 	private final List<Lot> lots = new ArrayList<>();
 
-	/** Transactions involving this security */
-	public final List<InvestmentTxn> transactions = new ArrayList<>();
+	/** All of our transactions involving this security */
+	private final List<InvestmentTxn> transactions = new ArrayList<>();
 
-	/** Price history for this security */
+	/** TODO make private - Price history for this security sorted by date */
 	public final List<QPrice> prices = new ArrayList<>();
 
-	/** Information about splits for this security */
-	public List<SplitInfo> splits = new ArrayList<>();
+	/** TODO make private - Information about splits for this security */
+	public final List<SplitInfo> splits = new ArrayList<>();
 
+	/** Constructor - quicken-style info */
 	public Security(String symbol, String name, String type, String goal) {
 		this.secid = securities.size() + 1;
 
@@ -130,6 +145,10 @@ public class Security {
 		return (this.names.isEmpty()) ? "" : this.names.get(0);
 	}
 
+	public List<InvestmentTxn> getTransactions() {
+		return Collections.unmodifiableList(this.transactions);
+	}
+
 	public List<Lot> getLots() {
 		return Collections.unmodifiableList(this.lots);
 	}
@@ -140,6 +159,7 @@ public class Security {
 		this.lots.addAll(lots);
 	}
 
+	/** Add a new transaction involving this security */
 	public void addTransaction(InvestmentTxn txn) {
 		// TODO should security.transactions be sorted?
 		this.transactions.add(txn);
@@ -224,7 +244,7 @@ public class Security {
 	/**
 	 * Find position in the price history nearest/prior to a given date.<br>
 	 * Return exact match if possible.<br>
-	 * Return closest date before if possible.<br>
+	 * Else return closest date before if possible.<br>
 	 * Return first date if argument is before the start of the history.
 	 */
 	private int getPriceIndexForDate(QDate date) {

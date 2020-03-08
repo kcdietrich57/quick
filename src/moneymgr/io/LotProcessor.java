@@ -46,7 +46,7 @@ public class LotProcessor {
 	/** Create lots for all security transactions, all accounts */
 	public static void setupSecurityLots() {
 		for (Security sec : Security.getSecurities()) {
-			List<InvestmentTxn> txns = new ArrayList<InvestmentTxn>(sec.transactions);
+			List<InvestmentTxn> txns = new ArrayList<InvestmentTxn>(sec.getTransactions());
 			Collections.sort(txns, sortTransactionsForLots);
 
 			// We process splits once for all accounts;

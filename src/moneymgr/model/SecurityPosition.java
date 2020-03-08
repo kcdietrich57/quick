@@ -12,6 +12,7 @@ import moneymgr.util.QDate;
 
 /** Holdings/price history for a single security */
 public class SecurityPosition {
+
 	/** Holdings/value for a security on a specified date */
 	public static class PositionInfo {
 		public final QDate date;
@@ -48,7 +49,14 @@ public class SecurityPosition {
 		}
 	}
 
-	/** Helper to analyze performance of a security over a period of time */
+	/**
+	 * Helper to analyze performance of a security over a period of time.<br>
+	 * This accounts for<br>
+	 * Contributions(purchases)<br>
+	 * Matching contributions from employer<br>
+	 * Dividends<br>
+	 * Price changes
+	 */
 	public static class SecurityPerformance {
 		private final SecurityPosition pos;
 

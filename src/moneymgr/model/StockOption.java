@@ -388,7 +388,7 @@ public class StockOption {
 		return retOptions;
 	}
 
-	/** The option this is derived from */
+	/** The option this is derived from (split, partial sale, etc) */
 	public final StockOption srcOption;
 
 	public final String name;
@@ -673,6 +673,7 @@ public class StockOption {
 		return opt.date;
 	}
 
+	/** TODO check work - Calculate vesting */
 	public int getVestNum(QDate date) {
 		if (date == null) {
 			return this.vestCurrent;
