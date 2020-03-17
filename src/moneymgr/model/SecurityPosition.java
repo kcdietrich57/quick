@@ -235,6 +235,7 @@ public class SecurityPosition {
 		this(portfolio, other.security, other.actualEndingShares);
 	}
 
+	/** Return if this position has no data */
 	public boolean isEmpty() {
 		return this.transactions.isEmpty() //
 				&& Common.isEffectivelyZeroOrNull(getStartingShares()) //
@@ -248,6 +249,7 @@ public class SecurityPosition {
 		return (ii >= 0) && Common.isEffectivelyZero(this.shrBalance.get(ii));
 	}
 
+	/** Reset transactions and sharecount */
 	public void initializeTransactions() {
 		this.transactions.clear();
 		SecurityPosition ppos = getPreviousPosition();
@@ -256,6 +258,7 @@ public class SecurityPosition {
 				: BigDecimal.ZERO;
 	}
 
+	/** Get the starting position for this security (in stmts context) */
 	private SecurityPosition getPreviousPosition() {
 		return (this.portfolio.prevPortfolio != null) //
 				? this.portfolio.prevPortfolio.findPosition(this.security)//
@@ -264,6 +267,14 @@ public class SecurityPosition {
 
 	public List<InvestmentTxn> getTransactions() {
 		return Collections.unmodifiableList(this.transactions);
+	}
+
+	public BigDecimal getStartingShares() {
+		SecurityPosition prevpos = getPreviousPosition();
+
+		return (prevpos != null) //
+				? prevpos.getExpectedEndingShares() //
+				: BigDecimal.ZERO;
 	}
 
 	public BigDecimal getEndingShares() {
@@ -290,6 +301,7 @@ public class SecurityPosition {
 		this.expectedEndingShares = shares;
 	}
 
+	/** Add a transaction, adjust share count and adjust for split */
 	public void addTransaction(InvestmentTxn txn) {
 		if (this.transactions.size() != this.shrBalance.size()) {
 			Common.reportError("SecurityPosition tx/bal sizes don't match");
@@ -384,6 +396,7 @@ public class SecurityPosition {
 	private static Comparator<InvestmentTxn> compareByDate = //
 			(t1, t2) -> t1.getDate().compareTo(t2.getDate());
 
+	/** Remove a transaction, reset running totals, etc */
 	public void removeTransaction(InvestmentTxn itx) {
 		int idx = this.transactions.indexOf(itx);
 
@@ -410,7 +423,7 @@ public class SecurityPosition {
 		}
 	}
 
-	/** Update running share totals in a position */
+	/** Update running share totals in this position */
 	public void updateShareBalances() {
 		BigDecimal shrbal = BigDecimal.ZERO;
 		this.shrBalance.clear();
@@ -424,14 +437,6 @@ public class SecurityPosition {
 
 			this.shrBalance.add(shrbal);
 		}
-	}
-
-	public BigDecimal getStartingShares() {
-		SecurityPosition prevpos = getPreviousPosition();
-
-		return (prevpos != null) //
-				? prevpos.getExpectedEndingShares() //
-				: BigDecimal.ZERO;
 	}
 
 	/** Get the value for the Nth transaction */

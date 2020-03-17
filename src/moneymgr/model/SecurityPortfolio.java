@@ -43,12 +43,14 @@ public class SecurityPortfolio {
 		}
 	}
 
+	/** Reset transaction information for positions in this portfolio */
 	public void initializeTransactions() {
 		for (SecurityPosition pos : this.positions) {
 			pos.initializeTransactions();
 		}
 	}
 
+	/** Add a transaction, update the security position it affects, if any */
 	public void addTransaction(GenericTxn txn) {
 		if (!(txn instanceof InvestmentTxn)) {
 			return;
@@ -64,6 +66,7 @@ public class SecurityPortfolio {
 		pos.addTransaction(itx);
 	}
 
+	/** Remove a transaction, update the security position it affects, if any */
 	public void removeTransaction(GenericTxn txn) {
 		if (!(txn instanceof InvestmentTxn)) {
 			return;
@@ -124,7 +127,11 @@ public class SecurityPortfolio {
 		}
 	}
 
-	/** Get all non-empty positions for a given date (map Security to position) */
+	/**
+	 * Get all non-empty positions for a given date.
+	 * 
+	 * @return Map Security to position
+	 */
 	public Map<Security, PositionInfo> getOpenPositionsForDate(QDate d) {
 		Map<Security, PositionInfo> ret = new HashMap<>();
 
@@ -139,7 +146,11 @@ public class SecurityPortfolio {
 		return ret;
 	}
 
-	/** Get non-empty positions for a given date/security (map acct to position) */
+	/**
+	 * Get non-empty positions for a given date/security.
+	 * 
+	 * @return Map acct to position
+	 */
 	public Map<Account, PositionInfo> getOpenPositionsForDateByAccount(Security sec, QDate d) {
 		Map<Account, PositionInfo> ret = new HashMap<>();
 
@@ -154,7 +165,7 @@ public class SecurityPortfolio {
 		return ret;
 	}
 
-	/** Calculate value for a given date */
+	/** Calculate total value for a given date */
 	public BigDecimal getPortfolioValueForDate(QDate d) {
 		BigDecimal portValue = BigDecimal.ZERO;
 
