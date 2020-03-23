@@ -140,10 +140,12 @@ public class Lot {
 		return false;
 	}
 
+	/** Return whether this lot still exists */
 	public boolean isOpen() {
 		return this.disposingTransaction == null;
 	}
 
+	/** Return when this lot's shares were originally acquired */
 	public QDate getAcquisitionDate() {
 		Lot l = this;
 
@@ -154,9 +156,20 @@ public class Lot {
 		return l.createDate;
 	}
 
+	/** Get the original price per share of this lot */
+	public BigDecimal getPriceBasis() {
+		return this.basisPrice;
+	}
+
+	/** Get the original cost of the shares in this lot */
+	public BigDecimal getCostBasis() {
+		return this.basisPrice.multiply(this.shares);
+	}
+
 	/**
 	 * Split this lot to create one lot with a desired number of shares, and another
-	 * lot with the remainder.
+	 * lot with the remainder. Generally for the purposes of transferring or selling
+	 * part of a lot.
 	 *
 	 * @param txn    The transaction requiring the new lot
 	 * @param shares The number of shares required
@@ -171,14 +184,7 @@ public class Lot {
 		return new Lot[] { returnLot, remainderLot };
 	}
 
-	public BigDecimal getPriceBasis() {
-		return this.basisPrice;
-	}
-
-	public BigDecimal getCostBasis() {
-		return this.basisPrice.multiply(this.shares);
-	}
-
+	/** Verify that child lots' shares add up to the correct total amount */
 	void checkChildLots(Lot lot, BigDecimal additionalShares) {
 		BigDecimal sum = BigDecimal.ZERO;
 
@@ -247,15 +253,5 @@ public class Lot {
 //		}
 //
 //		s += " ]";
-	}
-
-	public static BasisInfo getBasisInfo(List<Lot> lots) {
-		BasisInfo info = new BasisInfo();
-
-		for (Lot lot : lots) {
-			info.addLot(lot);
-		}
-
-		return info;
 	}
 }

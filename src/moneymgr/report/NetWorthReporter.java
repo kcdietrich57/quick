@@ -2,6 +2,7 @@ package moneymgr.report;
 
 import java.math.BigDecimal;
 
+import app.QifDom;
 import moneymgr.model.Account;
 import moneymgr.report.CashFlowModel.AcctInfo;
 import moneymgr.report.StatusForDateModel.AccountSummary;
@@ -10,7 +11,10 @@ import moneymgr.report.StatusForDateModel.SecuritySummary;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
-/** Create text based net worth summary report */
+/**
+ * Create text based net worth summary report.<br>
+ * Groups/sums assets by category and account.
+ */
 public class NetWorthReporter {
 
 	public static class Balances {
@@ -54,8 +58,13 @@ public class NetWorthReporter {
 			}
 		}
 
-		return model.toString();
-		//return model.getSummary() + "\n--------\n" + sb2 + sb1;
+		String ret = model.toString();
+		if (QifDom.verbose) {
+			// model.getSummary()
+			ret += "\n--------\n" + sb2 + sb1;
+		}
+
+		return ret;
 	}
 
 	/** Generate itemized list of account information and net worth summary */

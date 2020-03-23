@@ -19,6 +19,7 @@ public class CashFlowModel {
 	public final List<AcctInfo> acctinfoYear;
 	public final AcctInfo summaryYear;
 
+	/** Model account balance for a date and the change since a previous date */
 	static class AcctInfo {
 		public Account account;
 		public String acctname;
@@ -44,6 +45,7 @@ public class CashFlowModel {
 		public BigDecimal xferOut = BigDecimal.ZERO;
 		public BigDecimal gains = BigDecimal.ZERO;
 
+		/** Construct an empty model (all zero) */
 		public AcctInfo() {
 			this.numtxns = 0;
 
@@ -63,6 +65,7 @@ public class CashFlowModel {
 			this.gains = BigDecimal.ZERO;
 		}
 
+		/** Add an account's statistics amounts to this model */
 		public void addInfo(AcctInfo other) {
 			this.numtxns += other.numtxns;
 
@@ -82,6 +85,10 @@ public class CashFlowModel {
 			this.gains = this.gains.add(other.gains);
 		}
 
+		/**
+		 * Sum up the total balance from itemized amounts<br>
+		 * compare to reported totals
+		 */
 		public BigDecimal getCalcBalance() {
 			if (this.calcBal == null) {
 				this.calcBal = this.startCashBal.add(this.income).add(this.expenses) //
@@ -94,6 +101,7 @@ public class CashFlowModel {
 			return this.calcBal;
 		}
 
+		/** Return whether itemized amounts sum up to the actual total balance */
 		public boolean balanceMatches() {
 			if (this.calcBal == null) {
 				getCalcBalance();
@@ -159,6 +167,7 @@ public class CashFlowModel {
 	public static List<CashFlowModel> goodModels = null;
 	public static List<CashFlowModel> failModels = null;
 
+	/** Check models for every possible date */
 	public List<CashFlowModel> checkCashFlow() {
 		if (failModels == null) {
 			goodModels = new ArrayList<CashFlowModel>();
@@ -181,6 +190,7 @@ public class CashFlowModel {
 		return goodModels;
 	}
 
+	/** Construct model for a date - build month and year models */
 	public CashFlowModel(QDate date) {
 		this.acctinfoMonth = new ArrayList<>();
 		this.summaryMonth = new AcctInfo();
@@ -209,6 +219,7 @@ public class CashFlowModel {
 		return this.summaryMonth;
 	}
 
+	/** Check if the month/year models are valid */
 	public boolean balanceMatches() {
 		for (AcctInfo info : this.acctinfoMonth) {
 			if (!info.balanceMatches()) {
@@ -225,7 +236,7 @@ public class CashFlowModel {
 		return true;
 	}
 
-	/** Construct model */
+	/** Construct model for a date range */
 	private static void build(QDate start, QDate end, List<AcctInfo> accts, AcctInfo summary) {
 		if (start.compareTo(GenericTxn.getFirstTransactionDate()) < 0) {
 			start = GenericTxn.getFirstTransactionDate();

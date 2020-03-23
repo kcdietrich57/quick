@@ -39,7 +39,7 @@ public class MoneyMgrApp {
 
 	/** This function will run experimental code for the current data */
 	private static void runExperimentalCode() {
-		CashFlow.reportCashFlow();
+		CashFlow.reportCashFlowForTrailingYear();
 
 		CSVImport.testMacImport();
 	}

@@ -42,7 +42,9 @@ public class ReconcileStatusReporter {
 		System.out.println(s);
 	}
 
+	/** Model the reconcile status for all accounts */
 	public static class ReconcileStatusModel {
+		/** Model the reconcile status for an account */
 		public static class AccountInfo {
 			public boolean isClosed;
 			public QDate nextStatementDate;
@@ -86,6 +88,7 @@ public class ReconcileStatusReporter {
 		public List<AccountInfo> accounts_duesoon = new ArrayList<>();
 		public List<AccountInfo> accounts_notdue = new ArrayList<>();
 
+		/** Add account info to list sorted by next expected statement date */
 		public void insertAccountInfo(List<AccountInfo> list, AccountInfo info) {
 			if (list.isEmpty()) {
 				list.add(info);
@@ -100,6 +103,7 @@ public class ReconcileStatusReporter {
 			}
 		}
 
+		/** Add account into the appropriate list based on next statement date */
 		public void add(AccountInfo ainfo) {
 			if (!ainfo.isClosed) {
 				if (ainfo.lastStatementDate == null) {
@@ -175,7 +179,7 @@ public class ReconcileStatusReporter {
 		return anum;
 	}
 
-	/** Produce a text report with accounts ranked by when last reconciled */
+	/** Produce a text report with accounts organized by next statement date */
 	public static String generateReportStatus(ReconcileStatusModel model) {
 		StringBuilder sb = new StringBuilder();
 

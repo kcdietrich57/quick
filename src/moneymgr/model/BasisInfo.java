@@ -3,6 +3,7 @@ package moneymgr.model;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import moneymgr.util.Common;
@@ -14,6 +15,13 @@ public class BasisInfo {
 	public BigDecimal totalShares = BigDecimal.ZERO;
 	public BigDecimal totalCost = BigDecimal.ZERO;
 	public BigDecimal averagePrice = BigDecimal.ZERO;
+
+	/** Construct the basis for a group of lots */
+	public BasisInfo(Collection<Lot> lots) {
+		for (Lot lot : lots) {
+			addLot(lot);
+		}
+	}
 
 	/** Add info for an additional lot */
 	public void addLot(Lot lot) {

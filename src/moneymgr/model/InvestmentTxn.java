@@ -636,7 +636,7 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 		if ((getAction() == TxAction.SELL) || (getAction() == TxAction.SELLX)) {
-			BasisInfo info = Lot.getBasisInfo(this.lots);
+			BasisInfo info = new BasisInfo(this.lots);
 
 			ret += String.format( //
 					"\n%-10s @ %-8s %12s | %12s : %12s\n", //

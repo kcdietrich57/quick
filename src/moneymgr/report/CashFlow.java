@@ -11,6 +11,11 @@ import moneymgr.model.SimpleTxn;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
+/**
+ * EXPERIMENTAL: Collect cashflow statistics for an account over a period of
+ * time.<br>
+ * Cash in/out (total and itemized by account)
+ */
 class CashFlowNode {
 	public Account acct;
 	public QDate start;
@@ -30,6 +35,7 @@ class CashFlowNode {
 	int outxcount = 0;
 	int neutralcount = 0;
 
+	/** Construct an empty Node */
 	public CashFlowNode(Account acct, QDate start, QDate end) {
 		this.acct = acct;
 		this.start = start;
@@ -38,6 +44,7 @@ class CashFlowNode {
 		gatherInfo();
 	}
 
+	/** Process all transactions for the time period */
 	public void gatherInfo() {
 		QDate startDate = this.start;
 		QDate endDate = this.end;
@@ -50,31 +57,32 @@ class CashFlowNode {
 		}
 	}
 
+	/** Process a transaction's cash effects */
 	public void addTransaction(SimpleTxn txn) {
 		BigDecimal cash = txn.getCashAmount();
 		BigDecimal xfer = txn.getXferAmount();
 		Account xacct = Account.getAccountByID(txn.getXferAcctid());
-		SimpleTxn xtxn = txn.getXtxn();
 
 		if (cash.signum() != 0 && xfer.signum() != 0) {
 			txn = null;
 		}
 
 		// Save transfer info
-		BigDecimal xtot = this.inxTotalForAccount.get(xacct);
-
 		if (xfer.signum() > 0) {
 			this.inxTotal = this.inxTotal.add(xfer);
-			xtot = (xtot == null) ? xfer : xtot.add(xfer);
-			this.inxTotalForAccount.put(xacct, xtot);
+			BigDecimal inxtot = this.inxTotalForAccount.get(xacct);
+			inxtot = (inxtot == null) ? xfer : inxtot.add(xfer);
+			this.inxTotalForAccount.put(xacct, inxtot);
 			++this.inxcount;
 		} else if (xfer.signum() < 0) {
 			this.outxTotal = this.outxTotal.add(xfer);
-			xtot = (xtot == null) ? xfer : xtot.add(xfer);
-			this.inxTotalForAccount.put(xacct, xtot);
+			BigDecimal outxtot = this.outxTotalForAccount.get(xacct);
+			outxtot = (outxtot == null) ? xfer : outxtot.add(xfer);
+			this.outxTotalForAccount.put(xacct, outxtot);
 			++this.outxcount;
 		}
 
+		// Remove transfer amount from total cash leaving in/outflow
 		if (xfer.signum() != 0) {
 			cash = cash.subtract(xfer);
 		}
@@ -82,7 +90,7 @@ class CashFlowNode {
 		// Save inflow/outflow info
 		if (cash.signum() > 0) {
 			this.inflowTotal = this.inflowTotal.add(cash);
-			++incount;
+			++this.incount;
 		} else if (cash.signum() < 0) {
 			this.outflowTotal = this.outflowTotal.add(cash);
 			++this.outcount;
@@ -94,16 +102,19 @@ class CashFlowNode {
 		}
 	}
 
+	/** Return the net cash change over the time period */
 	public BigDecimal getNetAmount() {
 		return this.inflowTotal.add(this.outflowTotal).add(this.inxTotal).add(this.outxTotal);
 	}
 
-	String formatAmount(int count, BigDecimal value) {
+	/** Format string containing transaction count and value */
+	private String formatAmount(int count, BigDecimal value) {
 		String countstr = (count > 0) ? Integer.toString(count) : "";
 		String valuestr = (value.signum() != 0) ? Common.formatAmount(value).trim() : "";
 		return String.format("%3s %10s", countstr, valuestr);
 	}
 
+	/** Format string with summary of cashflow statistics */
 	public String summaryString() {
 		if (this.inflowTotal.signum() == 0 //
 				&& this.outflowTotal.signum() == 0 //
@@ -126,6 +137,7 @@ class CashFlowNode {
 		return ret;
 	}
 
+	/** Construct a string listing total transfers in/out by account */
 	public String transfersString() {
 		String ret = "";
 		boolean first = true;
@@ -165,6 +177,7 @@ class CashFlowNode {
 				: "";
 	}
 
+	/** For a list of transactions, replace any split txns with their splits */
 	private static void flatten(List<SimpleTxn> txns) {
 		for (int ii = 0; ii < txns.size(); ++ii) {
 			SimpleTxn stx = txns.get(ii);
@@ -177,18 +190,21 @@ class CashFlowNode {
 	}
 }
 
-/** EXPERIMENTAL - Analyze cash flow for a period of time */
+/**
+ * EXPERIMENTAL - Analyze cash flow for a period of time.<br>
+ * This builds a graph following cash as it enters/exits the system and flows
+ * between accounts.
+ */
 public class CashFlow {
 	public QDate start;
 	public QDate end;
 
+	/** Lists places where cash enters the system (e.g. income) */
 	Map<Account, List<CashFlowNode>> terminalInputs = new HashMap<>();
+	/** Lists places where cash leaves the system (e.g. purchases) */
 	Map<Account, List<CashFlowNode>> terminalOutputs = new HashMap<>();
+	/** Lists places where cash is transferred between accounts */
 	Map<Account, List<CashFlowNode>> intermediaries = new HashMap<>();
-
-	public CashFlow() {
-
-	}
 
 	private void addNode(CashFlowNode node, Map<Account, List<CashFlowNode>> nodes) {
 		List<CashFlowNode> list = terminalInputs.get(node.acct);
@@ -252,7 +268,8 @@ public class CashFlow {
 		}
 	}
 
-	public static void reportCashFlow() {
+	/** Report cash flow for last 12 months */
+	public static void reportCashFlowForTrailingYear() {
 		QDate d = QDate.today();
 		QDate start = d.getFirstDayOfMonth().addMonths(-12).getFirstDayOfMonth();
 

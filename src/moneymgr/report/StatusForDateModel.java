@@ -12,7 +12,10 @@ import moneymgr.model.StockOption;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
-/** This captures a point in time snapshot of account values */
+/**
+ * This captures a point in time snapshot of account values<br>
+ * Used by various reports (e.g. NetWorth, StatusForDate, InvestmentPerformance)
+ */
 public class StatusForDateModel {
 	/** Describes the holdings/value of a security at a point in time */
 	public static class SecuritySummary {
@@ -30,7 +33,7 @@ public class StatusForDateModel {
 		}
 	};
 
-	/** Describes the cash/total balance of an account at a point in time */
+	/** Describes the cash/security balance of an account at a point in time */
 	public static class AccountSummary {
 		public String name;
 		public BigDecimal balance = BigDecimal.ZERO;
@@ -70,6 +73,7 @@ public class StatusForDateModel {
 	public BigDecimal netWorth = BigDecimal.ZERO;
 	public final StatusForDateModel.Section[] sections;
 
+	/** Construct status for a particular date */
 	public StatusForDateModel(QDate date) {
 		this.date = date;
 		this.sections = Section.getSections(true);

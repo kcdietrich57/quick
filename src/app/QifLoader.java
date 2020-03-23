@@ -7,11 +7,11 @@ import java.util.StringTokenizer;
 import moneymgr.io.Reconciler;
 import moneymgr.io.qif.QifDomReader;
 import moneymgr.model.Account;
-import moneymgr.report.AccountReporter;
-import moneymgr.report.CashFlowReporter;
 import moneymgr.report.NetWorthReporter;
-import moneymgr.report.QifReporter;
 import moneymgr.report.ReconcileStatusReporter;
+import moneymgr.report.obsolete.AccountReporter;
+import moneymgr.report.obsolete.CashFlowReporter;
+import moneymgr.report.obsolete.QifReporter;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
