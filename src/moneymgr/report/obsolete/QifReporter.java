@@ -1,4 +1,4 @@
-package moneymgr.report;
+package moneymgr.report.obsolete;
 
 import java.util.Date;
 
