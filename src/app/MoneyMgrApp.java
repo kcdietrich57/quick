@@ -1,9 +1,14 @@
 package app;
 
+import java.util.Map.Entry;
 import java.util.Scanner;
 
 import moneymgr.io.cvs.CSVImport;
+import moneymgr.io.mm.Persistence;
 import moneymgr.io.qif.QifDomReader;
+import moneymgr.model.GenericTxn;
+import moneymgr.model.Security;
+import moneymgr.model.TxAction;
 import moneymgr.report.CashFlow;
 import moneymgr.report.InvestmentPerformanceModel;
 import moneymgr.ui.MainFrame;
@@ -21,6 +26,13 @@ public class MoneyMgrApp {
 	public static void main(String[] args) {
 		MoneyMgrApp.scn = new Scanner(System.in);
 		QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
+
+//		System.out.println("Mismatched quotes:");
+//		for (Entry<String, Integer> entry : Security.dupQuotes.entrySet()) {
+//			System.out.println("  " + entry.getKey() + ": " + entry.getValue());
+//		}
+		Persistence persistence = new Persistence("/tmp/dietrich.mm");
+		persistence.save();
 
 		if (ENABLE_EXPERIMENTAL_CODE) {
 			InvestmentPerformanceModel model = new InvestmentPerformanceModel( //

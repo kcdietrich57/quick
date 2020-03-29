@@ -1,171 +1,88 @@
 package moneymgr.model;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import moneymgr.util.Common;
 
 /** Account type (e.g. banking vs hard asset vs investment) */
 public enum AccountType { //
-	Bank, CCard, Cash, Asset, Liability, Invest, InvPort, Inv401k, InvMutual;
+	Bank(1, "BNK", "Bank", true, true, false), //
+	CCard(2, "CCD", "CCard", false, false, false), //
+	Cash(3, "CSH", "Cash", true, true, false), //
+	Asset(4, "AST", "Oth A", false, true, false), //
+	Liability(5, "LIA", "Oth L", false, false, false), //
+	Invest(6, "INV", "Invst", false, true, true), //
+	InvPort(7, "INV", "Port", false, true, true), //
+	Inv401k(8, "RET", "401(k)/403(b)", false, true, true), //
+	InvMutual(9, "INV", "Mutual", false, true, true);
 
-	/** Parse type name from input file */
-	public static AccountType parseAccountType(String s) {
-		switch (s.charAt(0)) {
-		case 'B':
-			if (s.equals("Bank")) {
-				return AccountType.Bank;
+	public final int id;
+	private final String qname;
+	public final String name;
+	public final boolean isAsset;
+	public final boolean isInvestment;
+	public final boolean isCash;
+
+	private static final Map<String, AccountType> quickenAccountType = new HashMap<String, AccountType>();
+	private static final List<AccountType> accountTypes = new ArrayList<AccountType>(9);
+
+	static {
+		for (AccountType at : AccountType.values()) {
+			AccountType.quickenAccountType.put(at.qname, at);
+
+			while (AccountType.accountTypes.size() < at.id) {
+				AccountType.accountTypes.add(null);
 			}
-			break;
-		case 'C':
-			if (s.equals("CCard")) {
-				return AccountType.CCard;
-			}
-			if (s.equals("Cash")) {
-				return AccountType.Cash;
-			}
-			break;
-		case 'I':
-			if (s.equals("Invst")) {
-				return AccountType.Invest;
-			}
-			break;
-		case 'M':
-			if (s.equals("Mutual")) {
-				return AccountType.InvMutual;
-			}
-			break;
-		case 'O':
-			if (s.equals("Oth A")) {
-				return AccountType.Asset;
-			}
-			if (s.equals("Oth L")) {
-				return AccountType.Liability;
-			}
-			break;
-		case 'P':
-			if (s.equals("Port")) {
-				return AccountType.InvPort;
-			}
-			break;
-		case '4':
-			if (s.equals("401(k)/403(b)")) {
-				return AccountType.Inv401k;
-			}
-			break;
+			AccountType.accountTypes.add(at.id, at);
+		}
+	}
+
+	private AccountType(int id, String name, String qname, //
+			boolean isCash, boolean isAsset, boolean isInvestment) {
+		this.id = id;
+		this.name = name;
+		this.qname = qname;
+		this.isCash = isCash;
+		this.isAsset = isAsset;
+		this.isInvestment = isInvestment;
+	}
+
+	/** Return account type for name from QIF input file */
+	public static AccountType parseAccountType(String qname) {
+		AccountType at = quickenAccountType.get(qname);
+
+		if (at != null) {
+			return at;
 		}
 
-		Common.reportError("Unknown account type: " + s);
+		Common.reportError(String.format("Unknown account type: '%s'", qname));
 		return AccountType.Bank;
 	}
 
 	public boolean isLiability() {
-		return !isAsset();
+		return !this.isAsset;
 	}
 
 	public boolean isAsset() {
-		switch (this) {
-		case Bank:
-		case Cash:
-		case Asset:
-		case InvMutual:
-		case InvPort:
-		case Invest:
-		case Inv401k:
-			return true;
-
-		case CCard:
-		case Liability:
-			return false;
-
-		default:
-			Common.reportError("unknown acct type: " + this);
-			return false;
-		}
-	}
-
-	public boolean isInvestment() {
-		switch (this) {
-		case Bank:
-		case Cash:
-		case CCard:
-		case Asset:
-		case Liability:
-			return false;
-
-		case Inv401k:
-		case InvMutual:
-		case InvPort:
-		case Invest:
-			return true;
-
-		default:
-			Common.reportError("unknown acct type: " + this);
-			return false;
-		}
+		return this.isAsset;
 	}
 
 	public boolean isCash() {
-		switch (this) {
-		case Bank:
-		case Cash:
-			return true;
+		return this.isCash;
+	}
 
-		case CCard:
-		case Asset:
-		case Liability:
-		case Inv401k:
-		case InvMutual:
-		case InvPort:
-		case Invest:
-			return false;
-
-		default:
-			Common.reportError("unknown acct type: " + this);
-			return false;
-		}
+	public boolean isInvestment() {
+		return this.isInvestment;
 	}
 
 	public boolean isNonInvestment() {
-		switch (this) {
-		case Bank:
-		case CCard:
-		case Cash:
-		case Asset:
-		case Liability:
-			return true;
-
-		case Inv401k:
-		case InvMutual:
-		case InvPort:
-		case Invest:
-			return false;
-
-		default:
-			Common.reportError("unknown acct type: " + this);
-			return false;
-		}
+		return !this.isInvestment;
 	}
 
 	public String toString() {
-		switch (this) {
-		case Cash:
-			return "CSH";
-		case Bank:
-			return "BNK";
-		case Asset:
-			return "AST";
-		case Invest:
-		case InvPort:
-		case InvMutual:
-			return "INV";
-		case Inv401k:
-			return "RET";
-		case CCard:
-			return "CCD";
-		case Liability:
-			return "LIA";
-
-		default:
-			Common.reportError("unknown acct type: " + this);
-			return "---";
-		}
+		return this.name;
 	}
 }

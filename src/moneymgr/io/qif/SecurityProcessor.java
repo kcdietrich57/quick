@@ -153,7 +153,7 @@ public class SecurityProcessor {
 
 			if (symbol != null) {
 				int warningCount = 0;
-				Common.reportInfo("Comparing price history for " + symbol);
+				Common.reportInfo("Loading/comparing price history for " + symbol);
 
 				List<QPrice> prices = QuoteDownloader.loadPriceHistory(symbol);
 

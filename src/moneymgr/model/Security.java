@@ -50,7 +50,7 @@ public class Security {
 		}
 
 		securitiesByID.set(sec.secid, sec);
-		securities.put(sec.symbol, sec);
+		securities.put(sec.symbol.toUpperCase(), sec);
 	}
 
 	public static Security getSecurity(int secid) {
@@ -80,7 +80,7 @@ public class Security {
 
 	/** Look up a security whose symbol matches an input string. */
 	public static Security findSecurityBySymbol(String sym) {
-		return securities.get(sym);
+		return securities.get(sym.toUpperCase());
 	}
 
 	/** Information about a split involving this security */
@@ -90,6 +90,24 @@ public class Security {
 
 		/** Multiplier applied to shares for the split (newsh = oldsh * ratio) */
 		public BigDecimal splitRatio;
+
+		public SplitInfo(QDate date, BigDecimal ratio) {
+			this.splitDate = date;
+			this.splitRatio = ratio;
+		}
+
+		public SplitInfo(InvestmentTxn tx) {
+			this(tx.getDate(), tx.getSplitRatio());
+		}
+		
+		public boolean equals(Object other) {
+			if (!(other instanceof SplitInfo)) {
+				return false;
+			}
+			
+			return this.splitDate.equals(((SplitInfo)other).splitDate) && //
+					Common.isEffectivelyEqual(this.splitRatio, ((SplitInfo)other).splitRatio);
+		}
 	}
 
 	public final int secid;
@@ -159,10 +177,32 @@ public class Security {
 		this.lots.addAll(lots);
 	}
 
+	public static void fixSplits() {
+		for (Security sec : getSecurities()) {
+			sec.splits.clear();
+			SplitInfo last = null;
+
+			for (InvestmentTxn tx : sec.getTransactions()) {
+				if (tx.getAction() == TxAction.STOCKSPLIT) {
+					SplitInfo info = new SplitInfo(tx);
+					if (!info.equals(last)) {
+						sec.splits.add(info);
+						last = info;
+					}
+				}
+			}
+		}
+	}
+
 	/** Add a new transaction involving this security */
 	public void addTransaction(InvestmentTxn txn) {
-		// TODO should security.transactions be sorted?
-		this.transactions.add(txn);
+		InvestmentTxn search_tx = new InvestmentTxn(0);
+		search_tx.setDate(txn.getDate());
+		int idx = Collections.binarySearch(this.transactions, search_tx);
+		if (idx < 0) {
+			idx = -idx - 1;
+		}
+		this.transactions.add(idx, txn);
 
 		if ((txn.price != null) && //
 				(txn.price.compareTo(BigDecimal.ZERO) != 0)) {
@@ -180,6 +220,8 @@ public class Security {
 	 * If the quote is new or we already have a matching quote, we return true.<br>
 	 * If a different quote for that day exists, we replace it and return false.
 	 */
+	public static Map<String, Integer> dupQuotes = new HashMap<String, Integer>();
+
 	public boolean addPrice(QPrice newPrice) {
 		if ((newPrice == null) //
 				// Price in options txns is zero
@@ -205,7 +247,15 @@ public class Security {
 			BigDecimal oldp = p.getSplitAdjustedPrice();
 			BigDecimal newp = newPrice.getSplitAdjustedPrice();
 
-			if (!oldp.equals(newp)) {
+			this.prices.set(idx, newPrice);
+
+			if (!Common.isEffectivelyEqual(oldp, newp)) {
+				Integer n = dupQuotes.get(this.symbol.toUpperCase());
+				if (n == null) {
+					n = new Integer(0);
+				}
+				dupQuotes.put(this.symbol.toUpperCase(), new Integer(n + 1));
+
 				if (QifDom.verbose) {
 					Common.reportWarning(String.format( //
 							"Security price (%s) was replaced (%s)", //
@@ -213,7 +263,6 @@ public class Security {
 							Common.formatAmount3(newp).trim()));
 				}
 
-				this.prices.set(idx, newPrice);
 				return false;
 			}
 		} else if (diff > 0) {

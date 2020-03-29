@@ -14,7 +14,7 @@ public enum AccountCategory {
 			new AccountType[] { AccountType.InvMutual, AccountType.Inv401k }), //
 	INVESTMENT(true, "Investment", //
 			new AccountType[] { AccountType.Invest, AccountType.InvPort }), //
-	BANK(true, "Bank/Cash", //
+	BANK(true, "Cash", //
 			new AccountType[] { AccountType.Bank, AccountType.Cash }), //
 	CREDITCARD(false, "Credit Card", //
 			new AccountType[] { AccountType.CCard }), //
@@ -91,28 +91,15 @@ public enum AccountCategory {
 
 	public final boolean isAsset;
 	public final String label;
+	public final AccountType[] accountTypes;
 
 	private AccountCategory(boolean isAsset, String label, AccountType[] atypes) {
 		this.isAsset = isAsset;
 		this.label = label;
+		this.accountTypes = atypes;
 	}
 
 	public String toString() {
-		switch (this) {
-		case ASSET:
-			return "Asset";
-		case BANK:
-			return "Bank";
-		case CREDITCARD:
-			return "Credit";
-		case INVESTMENT:
-			return "Investment";
-		case LOAN:
-			return "Loan";
-		case RETIREMENT:
-			return "Retirement";
-		}
-
-		return "UNKNOWN";
+		return this.label;
 	}
 }

@@ -39,9 +39,6 @@ public class QQuoteLoader {
 
 		assert prices.isEmpty() && splits.isEmpty();
 
-		prices.clear();
-		splits.clear();
-
 		FileReader fr;
 		String line;
 		LineNumberReader rdr;
@@ -95,9 +92,7 @@ public class QQuoteLoader {
 					BigDecimal splitAdjust = new BigDecimal(newshrStr).divide(new BigDecimal(oldshrStr));
 					splitDate = Common.parseQDate(dateStr);
 
-					SplitInfo si = new SplitInfo();
-					si.splitDate = splitDate;
-					si.splitRatio = splitAdjust;
+					SplitInfo si = new SplitInfo(splitDate, splitAdjust);
 
 					splits.add(si);
 					Collections.sort(splits, (o1, o2) -> o1.splitDate.compareTo(o2.splitDate));
@@ -168,7 +163,7 @@ public class QQuoteLoader {
 
 				QPrice qprice = new QPrice(date, sec.secid, price, saprice);
 
-				prices.add(qprice);
+				sec.addPrice(qprice);
 
 				line = rdr.readLine();
 			}

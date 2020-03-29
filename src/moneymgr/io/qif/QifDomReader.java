@@ -8,6 +8,7 @@ import moneymgr.io.PortfolioProcessor;
 import moneymgr.io.Reconciler;
 import moneymgr.io.StatementDetails;
 import moneymgr.io.qif.QFileReader.SectionType;
+import moneymgr.model.Security;
 import moneymgr.util.Common;
 
 /** Class which loads quicken exported data (plus some additional info) */
@@ -69,6 +70,7 @@ public class QifDomReader {
 	private void postLoad() {
 		File d = new File(this.qifDir, "quotes");
 		SecurityProcessor.loadSecurityPriceHistory(d);
+		Security.fixSplits();
 
 		// Create option objects
 		OptionsProcessor.loadStockOptions();
