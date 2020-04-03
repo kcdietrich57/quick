@@ -8,13 +8,103 @@ import moneymgr.model.Account;
 import moneymgr.model.AccountCategory;
 import moneymgr.model.AccountType;
 import moneymgr.model.Category;
+import moneymgr.model.GenericTxn;
+import moneymgr.model.InvestmentTxn;
+import moneymgr.model.MultiSplitTxn;
 import moneymgr.model.QPrice;
 import moneymgr.model.Security;
 import moneymgr.model.Security.SplitInfo;
+import moneymgr.model.SplitTxn;
 import moneymgr.util.Common;
 
-/** Read/write data in native format */
+/** TODO JSON format; Read/write data in native format */
 public class Persistence {
+	private static String encodeString(String s) {
+		if (s == null) {
+			return "";
+		}
+
+		StringBuilder sb = new StringBuilder(s);
+
+		int idx = 0;
+		String sub = null;
+
+		while (idx < sb.length()) {
+			char ch = sb.charAt(idx);
+
+			switch (ch) {
+			case '&':
+				sub = "&&";
+				break;
+			case ',':
+				sub = "&c";
+				break;
+			case ';':
+				sub = "&s";
+				break;
+			case '[':
+				sub = "&(";
+				break;
+			case ']':
+				sub = "&)";
+				break;
+			}
+
+			if (sub != null) {
+				sb.replace(idx, idx + 1, sub);
+				idx += sub.length();
+				sub = null;
+			} else {
+				++idx;
+			}
+		}
+
+		return sb.toString();
+	}
+
+	private static String decodeString(String s) {
+		StringBuilder sb = new StringBuilder(s);
+
+		int idx = 0;
+		String sub = null;
+
+		while (idx < sb.length()) {
+			char ch = sb.charAt(idx);
+
+			if (ch == '&') {
+				sb.delete(idx, idx + 1);
+
+				switch (sb.charAt(idx)) {
+				case '&':
+					sub = "&";
+					break;
+				case 'c':
+					sub = ",";
+					break;
+				case 's':
+					sub = ";";
+					break;
+				case '(':
+					sub = "[";
+					break;
+				case ')':
+					sub = "]";
+					break;
+				}
+			}
+
+			if (sub != null) {
+				sb.replace(idx, idx + 1, sub);
+				idx += sub.length();
+				sub = null;
+			} else {
+				++idx;
+			}
+		}
+
+		return sb.toString();
+	}
+
 	private String filename;
 	private LineNumberReader rdr;
 	private PrintStream wtr;
@@ -49,9 +139,9 @@ public class Persistence {
 			if (cat != null) {
 				String line = String.format("%d,%s,%s,%s;", //
 						cat.catid, //
-						cat.name, //
-						cat.description, //
-						Boolean.toString(cat.isExpense));
+						encodeString(cat.name), //
+						encodeString(cat.description), //
+						cat.isExpense);
 				wtr.println(line);
 			}
 		}
@@ -64,7 +154,7 @@ public class Persistence {
 		for (AccountType at : AccountType.values()) {
 			String line = String.format("%d,%s,%s,%s,%s;", //
 					at.id, //
-					at.name, //
+					encodeString(at.name), //
 					at.isAsset, //
 					at.isInvestment, //
 					at.isCash);
@@ -75,7 +165,7 @@ public class Persistence {
 		wtr.println("AccountCategories:[");
 		for (AccountCategory ac : AccountCategory.values()) {
 			String line = String.format("%s,%s,[", //
-					ac.label, //
+					encodeString(ac.label), //
 					ac.isAsset);
 
 			String sep = "";
@@ -91,12 +181,14 @@ public class Persistence {
 
 		wtr.println("Accounts:[");
 		for (Account ac : Account.getAccounts()) {
-			String line = String.format("%s,%d,%s,%s,%d,%d,%s,%s;", //
+			int close = (ac.closeDate != null) ? ac.closeDate.getRawValue() : 0;
+
+			String line = String.format("%s,%d,%s,%d,%d,%d,%s,%s;", //
 					ac.name, //
 					ac.type.id, //
 					// ac.acctCategory.label, //
-					ac.description, //
-					ac.closeDate, //
+					encodeString(ac.description), //
+					close, //
 					ac.statementFrequency, //
 					ac.statementDayOfMonth, //
 					Common.formatAmount(ac.balance).trim(), //
@@ -117,14 +209,14 @@ public class Persistence {
 			String secNames = "[";
 			String sep = "";
 			for (String name : sec.names) {
-				secNames += sep + name;
+				secNames += String.format("%s%s", sep, encodeString(name));
 				sep = ",";
 			}
 			secNames += "]";
 
-			String line = String.format("%d,%s,%s,%s,", //
+			String line = String.format("%d,%s,%s,%s;", //
 					sec.secid, //
-					sec.symbol, //
+					encodeString(sec.symbol), //
 					secNames, //
 					sec.type);
 			wtr.println();
@@ -132,18 +224,19 @@ public class Persistence {
 
 			wtr.print("[");
 			for (SplitInfo split : sec.splits) {
-				line = String.format("%s,%f;", //
-						split.splitDate, //
+				// TODO probably wrong format for ration
+				line = String.format("%d,%f;", //
+						split.splitDate.getRawValue(), //
 						split.splitRatio);
 				wtr.print(line);
 			}
-			
+
 			wtr.println("],[");
 
 			int count = 0;
 			for (QPrice price : sec.prices) {
-				line = String.format("%s,%s;", //
-						price.date, //
+				line = String.format("%d,%s;", //
+						price.date.getRawValue(), //
 						Common.formatAmount3(price).trim());
 
 				wtr.print(line);
@@ -163,10 +256,72 @@ public class Persistence {
 	}
 
 	void saveTransactions() {
+		wtr.println("Transactions:[");
+		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
+			if (tx == null) {
+				continue;
+			}
 
+			String splits = "[";
+			for (SplitTxn split : tx.getSplits()) {
+				if (split instanceof MultiSplitTxn) {
+					splits += "[";
+					for (SplitTxn ssplit : ((MultiSplitTxn) split).subsplits) {
+						splits += String.format("%d,%s,%s;", //
+								ssplit.getCatid(), //
+								encodeString(ssplit.getMemo()), //
+								Common.formatAmount(ssplit.getAmount()).trim() //
+						);
+					}
+					splits += "]";
+				} else {
+					splits += String.format("%d,%s,%s;", //
+							split.getCatid(), //
+							encodeString(split.getMemo()), //
+							Common.formatAmount(split.getAmount()).trim() //
+					);
+				}
+			}
+			splits += "]";
+
+			// SimpleTxn
+			// DERIVED tx.getCashAmount()
+			// DERIVED, not implemented tx.getGain()
+			// DERIVED tx.isCredit()
+			//
+			// GenericTxn
+
+			// NonInvestmentTxn
+			// InvestmentTxn
+
+			int sdate = (tx.stmtdate != null) ? tx.stmtdate.getRawValue() : 0;
+
+			if (tx instanceof InvestmentTxn) {
+				InvestmentTxn itx = (InvestmentTxn)tx;
+				if (itx.getXferTxns().size() > 0) {
+//					System.out.println();
+				}
+			}
+			String line = String.format("%d,%d,%d,%d,%d,%s,%s,%d,%s,%s,%d,%s;", //
+					tx.txid, //
+					tx.getDate().getRawValue(), //
+					sdate, //
+					tx.getAccountID(), //
+					((tx.getXtxn() != null) ? tx.getXtxn().txid : -1), //
+					tx.getAction().name(), //
+					encodeString(tx.getPayee()), //
+					tx.getCheckNumber(), //
+					encodeString(tx.getMemo()), //
+					Common.formatAmount(tx.getAmount()).trim(), //
+					tx.getCatid(), // TODO catid or splits, not both
+					splits);
+			wtr.println(line);
+		}
+		wtr.println("],");
 	}
 
 	void saveStatements() {
-
+		wtr.println("Statements:[");
+		wtr.println("],");
 	}
 }

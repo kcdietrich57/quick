@@ -4,11 +4,13 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import moneymgr.util.Common;
+
 /**
  * This multi-part split handles a special case for transfers from another
- * account where the other account connects to several splits combined in the
- * other transaction.<br>
- * E.g. Acct1 [split1: 1.00, split2: 2.00] <--> Acct2 [split: 3.00]
+ * account where the single value in the other account connects to several
+ * splits combined in this transaction.<br>
+ * E.g. ThisTx [split1: 1.00, split2: 2.00] <--> OtherTx [split: 3.00]
  */
 public class MultiSplitTxn extends SplitTxn {
 	/** Group of splits in this txn that connect to the other txn */
@@ -24,16 +26,6 @@ public class MultiSplitTxn extends SplitTxn {
 
 	public List<SplitTxn> getSplits() {
 		return this.subsplits;
-	}
-
-	public BigDecimal getCashAmount() {
-		BigDecimal total = BigDecimal.ZERO;
-
-		for (SimpleTxn t : this.subsplits) {
-			total = total.add(t.getAmount());
-		}
-
-		return total;
 	}
 
 	public String formatValue() {

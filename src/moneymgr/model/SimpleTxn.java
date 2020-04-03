@@ -40,7 +40,7 @@ public abstract class SimpleTxn implements Txn {
 	private final int acctid;
 	public final int txid;
 
-	/** Dollar amount of the transaction. For simple transactions, this is cash */
+	/** Dollar (cash) amount of the transaction */
 	private BigDecimal amount;
 	private String memo;
 
@@ -217,8 +217,9 @@ public abstract class SimpleTxn implements Txn {
 		return Account.getAccountByID(this.acctid);
 	}
 
-	public boolean isCredit() {
-		return (getAmount().signum() > 0) //
+	public final boolean isCredit() {
+		// TODO is increasing security holdings a credit w/o cash impact?
+		return (getCashAmount().signum() > 0) //
 				? true //
 				: addsShares();
 	}
@@ -304,7 +305,7 @@ public abstract class SimpleTxn implements Txn {
 		this.amount = amount;
 	}
 
-	public BigDecimal getAmount() {
+	public final BigDecimal getAmount() {
 		return this.amount;
 	}
 

@@ -9,7 +9,9 @@ public class QDate implements Comparable<QDate> {
 		return new QDate(new Date());
 	}
 
+	/** Raw integer date value (YYYYMMDD) */
 	private final int datevalue;
+
 	private final String datestring;
 	public final String shortString;
 	public final String longString;
@@ -73,6 +75,11 @@ public class QDate implements Comparable<QDate> {
 		this.longString = String.format("%02d/%02d/%04d", m, d, y);
 		this.shortString = String.format("%02d/%02d", m, d);
 		this.monthYearString = String.format("%02d/%04d", m, y);
+	}
+
+	/** Return integer value (YYYYMMDD) */
+	public int getRawValue() {
+		return this.datevalue;
 	}
 
 	public int getYear() {

@@ -260,6 +260,10 @@ public class Account {
 				: QDate.today();
 	}
 
+	public QDate getCloseDate() {
+		return this.closeDate;
+	}
+
 	/** Was the account open on a given date */
 	public boolean isOpenOn(QDate d) {
 		if (d == null) {
