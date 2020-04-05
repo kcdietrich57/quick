@@ -145,7 +145,7 @@ public abstract class GenericTransactionTableModel //
 			if (tx instanceof InvestmentTxn) {
 				InvestmentTxn itx = (InvestmentTxn) tx;
 
-				if (itx.isStockOptionTransaction()) {
+				if (itx.isStockOptionTxn()) {
 					if (itx.option == null) {
 						return "";
 					}

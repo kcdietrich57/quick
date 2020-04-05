@@ -60,8 +60,8 @@ class CashFlowNode {
 	/** Process a transaction's cash effects */
 	public void addTransaction(SimpleTxn txn) {
 		BigDecimal cash = txn.getCashAmount();
-		BigDecimal xfer = txn.getXferAmount();
-		Account xacct = Account.getAccountByID(txn.getXferAcctid());
+		BigDecimal xfer = txn.getCashTransferAmount();
+		Account xacct = Account.getAccountByID(txn.getCashTransferAcctid());
 
 		if (cash.signum() != 0 && xfer.signum() != 0) {
 			txn = null;

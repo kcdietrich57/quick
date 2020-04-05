@@ -98,7 +98,7 @@ public class LotProcessor {
 		List<InvestmentTxn> dstTxns = new ArrayList<InvestmentTxn>();
 
 		InvestmentTxn txn = txns.get(txIdx);
-		boolean isXfer = !txn.getXferTxns().isEmpty();
+		boolean isXfer = !txn.getSecurityTransferTxns().isEmpty();
 
 		if (isXfer) {
 			txIdx = gatherXferTransactions(txns, txIdx, srcTxns, dstTxns);
@@ -498,20 +498,21 @@ public class LotProcessor {
 	}
 
 	/**
-	 * Collect txns in list2 connected via transfer to txns in list1<br>
-	 * The group of transactions starts at startIdx in the list of txns.
+	 * Add txns connected via transfer to txns in txnList1 into txnList2<br>
+	 * The group of transactions starts at startIdx in the txns.
 	 * 
 	 * @return The index of the last txn in the main list involved in the transfer
 	 */
 	private static int collectTransfers( //
 			List<InvestmentTxn> txns, //
-			int startIdx, int maxidx, //
-			List<InvestmentTxn> list1, //
-			List<InvestmentTxn> list2) {
-		for (InvestmentTxn txn1 : list1) {
-			for (InvestmentTxn xferTxn : txn1.getXferTxns()) {
-				if (!list2.contains(xferTxn)) {
-					list2.add(xferTxn);
+			int startIdx, //
+			int maxidx, //
+			List<InvestmentTxn> txnList1, //
+			List<InvestmentTxn> txnList2) {
+		for (InvestmentTxn txn1 : txnList1) {
+			for (InvestmentTxn xferTxn : txn1.getSecurityTransferTxns()) {
+				if (!txnList2.contains(xferTxn)) {
+					txnList2.add(xferTxn);
 
 					int idx = txns.indexOf(xferTxn);
 					if (idx <= startIdx) {

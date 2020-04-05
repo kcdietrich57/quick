@@ -47,8 +47,8 @@ public abstract class SimpleTxn implements Txn {
 	/** Category id or transfer Account id (>0: CategoryID; <0 -AccountID) */
 	private int catid;
 
-	/** In the case of a transfer, the other transaction involved */
-	private SimpleTxn xtxn;
+	/** In the case of a cash transfer, the other transaction involved */
+	private SimpleTxn xtxn_cash;
 
 	public SimpleTxn(int acctid) {
 		this.txid = nextid++;
@@ -58,7 +58,7 @@ public abstract class SimpleTxn implements Txn {
 		this.memo = null;
 
 		this.catid = 0;
-		this.xtxn = null;
+		this.xtxn_cash = null;
 	}
 
 	/**
@@ -170,13 +170,13 @@ public abstract class SimpleTxn implements Txn {
 			// return diff;
 		}
 
-		diff = getXferAcctid() - other.getXferAcctid();
+		diff = getCashTransferAcctid() - other.getCashTransferAcctid();
 		if (diff != 0) {
 			return diff;
 		}
 
 		// TODO mac InvTxn transferring to subsplit fails this test
-		diff = getXferAmount().compareTo(other.getXferAmount());
+		diff = getCashTransferAmount().compareTo(other.getCashTransferAmount());
 		if (diff != 0) {
 			// return diff;
 		}
@@ -254,20 +254,24 @@ public abstract class SimpleTxn implements Txn {
 		// not implemented
 	}
 
-	public int getXferAcctid() {
+	public int getCashTransferAcctid() {
 		return (this.catid < 0) ? -this.catid : 0;
 	}
 
-	public void setXferAcctid(int acctid) {
+	public void setCashTransferAcctid(int acctid) {
 		this.catid = -acctid;
 	}
 
-	public SimpleTxn getXtxn() {
-		return this.xtxn;
+	public List<InvestmentTxn> getSecurityTransferTxns() {
+		return null;
+	}
+
+	public SimpleTxn getCashTransferTxn() {
+		return this.xtxn_cash;
 	}
 
 	public void setXtxn(SimpleTxn txn) {
-		this.xtxn = txn;
+		this.xtxn_cash = txn;
 	}
 
 	private static int intSign(int i) {
@@ -314,14 +318,14 @@ public abstract class SimpleTxn implements Txn {
 	}
 
 	/** Return the net amount of cash transferred in/out by this transaction */
-	public BigDecimal getXferAmount() {
+	public BigDecimal getCashTransferAmount() {
 		BigDecimal xfer = BigDecimal.ZERO;
 
 		if (this.catid < 0) {
 			xfer = this.amount;
 		} else if (this.hasSplits()) {
 			for (SimpleTxn split : this.getSplits()) {
-				xfer = xfer.add(split.getXferAmount());
+				xfer = xfer.add(split.getCashTransferAmount());
 			}
 		}
 
@@ -364,8 +368,8 @@ public abstract class SimpleTxn implements Txn {
 	 * If strict is false, we compare absolute values rather than the exact values.
 	 */
 	public boolean amountIsEqual(SimpleTxn other, boolean strict) {
-		BigDecimal amt1 = getXferAmount();
-		BigDecimal amt2 = other.getXferAmount();
+		BigDecimal amt1 = getCashTransferAmount();
+		BigDecimal amt2 = other.getCashTransferAmount();
 
 		if (amt1.abs().compareTo(amt2.abs()) != 0) {
 			return false;
@@ -381,9 +385,11 @@ public abstract class SimpleTxn implements Txn {
 		// Check whether they are equal or negative of each other
 		boolean eq = amt1.equals(amt2);
 
+		// If strict, the amounts should be negative of each other
 		boolean ret = !eq || !strict;
 
 		// TODO why is it 'bad' for the transactions to both be CASH?
+		// NB action is only meaningful for investment transactions?
 		if ((getAction() == TxAction.CASH) //
 				|| (other.getAction() == TxAction.CASH)) {
 			if (eq) {
@@ -438,6 +444,11 @@ public abstract class SimpleTxn implements Txn {
 		s += ((a != null) ? a.name : "null");
 		s += " " + Common.formatAmount(this.amount).trim();
 		s += " " + getCategory();
+		if (getCashTransferAcctid() > 0) {
+			s += "(";
+			s += "" + ((this.xtxn_cash != null) ? this.xtxn_cash.txid : "-");
+			s += ")";
+		}
 		s += " memo=" + getMemo();
 
 		return s;

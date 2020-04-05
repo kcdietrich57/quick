@@ -5,11 +5,11 @@ import java.util.Map;
 
 /** A transaction's type (what it did) */
 public enum TxAction {
-	OTHER, CASH, XIN, XOUT, WITHDRAWX, //
-	CONTRIBX, INT_INC, MISC_INCX, //
-	BUY, BUYX, SELL, SELLX, //
-	GRANT, VEST, EXERCISE, EXERCISEX, EXPIRE, //
-	SHRS_IN, SHRS_OUT, //
+	OTHER, CASH, XIN(true), XOUT(true), WITHDRAWX(true), //
+	CONTRIBX, INT_INC, MISC_INCX(true), //
+	BUY, BUYX(true), SELL, SELLX(true), //
+	GRANT, VEST, EXERCISE, EXERCISEX(true), EXPIRE, //
+	SHRS_IN(true), SHRS_OUT(true), //
 	DIV, REINV_DIV, REINV_LG, REINV_SH, //
 	REINV_INT, //
 	STOCKSPLIT, REMINDER;
@@ -44,8 +44,19 @@ public enum TxAction {
 		actionMap.put("Reminder", TxAction.REMINDER);
 	}
 
+	/** This is set for both cash and security transfers */
+	public final boolean isTransfer;
+
 	public static TxAction parseAction(String s) {
 		TxAction act = actionMap.get(s);
 		return (act != null) ? act : TxAction.OTHER;
+	}
+
+	private TxAction() {
+		this.isTransfer = false;
+	}
+
+	private TxAction(boolean isxfer) {
+		this.isTransfer = isxfer;
 	}
 }

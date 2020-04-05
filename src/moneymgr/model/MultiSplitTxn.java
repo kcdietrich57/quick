@@ -1,10 +1,7 @@
 package moneymgr.model;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-
-import moneymgr.util.Common;
 
 /**
  * This multi-part split handles a special case for transfers from another

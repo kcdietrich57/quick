@@ -714,7 +714,7 @@ public class Account {
 			return matchtxn;
 		}
 
-		SimpleTxn xtxn = matchtxn.getXtxn();
+		SimpleTxn xtxn = matchtxn.getCashTransferTxn();
 		if (xtxn != null) {
 			matchtxn = xtxn;
 		}
@@ -897,7 +897,7 @@ public class Account {
 				}
 			} else {
 				// Match split in win xfer txn
-				SimpleTxn xt = t.getXtxn();
+				SimpleTxn xt = t.getCashTransferTxn();
 				if (xt != null) {
 					for (SplitTxn st : xt.getSplits()) {
 						if (Common.isEffectivelyEqual(st.getAmount().abs(), amt.abs())) {

@@ -3,6 +3,7 @@ package moneymgr.io.mm;
 import java.io.FileNotFoundException;
 import java.io.LineNumberReader;
 import java.io.PrintStream;
+import java.util.List;
 
 import moneymgr.model.Account;
 import moneymgr.model.AccountCategory;
@@ -14,7 +15,9 @@ import moneymgr.model.MultiSplitTxn;
 import moneymgr.model.QPrice;
 import moneymgr.model.Security;
 import moneymgr.model.Security.SplitInfo;
+import moneymgr.model.SimpleTxn;
 import moneymgr.model.SplitTxn;
+import moneymgr.model.TxAction;
 import moneymgr.util.Common;
 
 /** TODO JSON format; Read/write data in native format */
@@ -255,7 +258,62 @@ public class Persistence {
 		wtr.println("],");
 	}
 
+	public static void validateTransfers(GenericTxn tx, int[] counts) {
+		boolean isTransfer = tx.getAction().isTransfer //
+				|| (tx.getCashTransferAcctid() > 0);
+
+		int xacctid = tx.getCashTransferAcctid();
+		if (xacctid == tx.getAccountID()) {
+			// TODO Should just get rid of self-transfers!
+			xacctid = 0;
+			isTransfer = false;
+		}
+
+		SimpleTxn xtxn = tx.getCashTransferTxn();
+		List<InvestmentTxn> xtxns = tx.getSecurityTransferTxns();
+		String err = null;
+
+		if (xacctid > 0 && tx.hasSplits()) {
+			// TODO this happens but doesn't make sense, deal with it later
+			return;
+		}
+
+		if ((xacctid > 0) //
+				&& (xtxn == null) && ((xtxns == null) || xtxns.isEmpty())) {
+			err = "xacctid set but no xtxn exists";
+		} else if ((xtxn != null) && (xtxns != null) && !xtxns.isEmpty()) {
+			// TODO this may be fine, if we can transfer shares and cash together
+			err = "xtxn and xtxns both set!";
+		} else if (isTransfer) {
+			if ((tx.getAction() == TxAction.SHRS_IN) //
+					|| (tx.getAction() == TxAction.SHRS_OUT)) {
+				if ((xtxn != null) || ((xtxns != null) && !xtxns.isEmpty())) {
+					err = "shares in/out sometimes involves transfer";
+					// TODO Not necessarily a problem; we see both with/without
+					err = null;
+				}
+			} else if ((xtxn == null) && ((xtxns == null) || xtxns.isEmpty())) {
+				err = "xtxn/xtxns missing from xfer txn!";
+			}
+		} else if ((tx instanceof InvestmentTxn) //
+				&& ((xtxn != null) || ((xtxns != null) && !xtxns.isEmpty()))) {
+			err = "xtxn/xtxns set in non-xfer txn!";
+		}
+
+		if (err != null) {
+			System.out.println(tx.toString());
+			System.out.println("" + ++counts[1] + "/" + counts[0] + ": " + err);
+		} else if ((xacctid > 0) //
+				|| (xtxn != null) //
+				|| ((xtxns != null) && !xtxns.isEmpty()) //
+				|| tx.getAction().isTransfer) {
+			++counts[0];
+		}
+	}
+
 	void saveTransactions() {
+		int errcount[] = { 0, 0 };
+
 		wtr.println("Transactions:[");
 		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
 			if (tx == null) {
@@ -296,18 +354,14 @@ public class Persistence {
 
 			int sdate = (tx.stmtdate != null) ? tx.stmtdate.getRawValue() : 0;
 
-			if (tx instanceof InvestmentTxn) {
-				InvestmentTxn itx = (InvestmentTxn)tx;
-				if (itx.getXferTxns().size() > 0) {
-//					System.out.println();
-				}
-			}
+			validateTransfers(tx, errcount);
+
 			String line = String.format("%d,%d,%d,%d,%d,%s,%s,%d,%s,%s,%d,%s;", //
 					tx.txid, //
 					tx.getDate().getRawValue(), //
 					sdate, //
 					tx.getAccountID(), //
-					((tx.getXtxn() != null) ? tx.getXtxn().txid : -1), //
+					((tx.getCashTransferTxn() != null) ? tx.getCashTransferTxn().txid : -1), //
 					tx.getAction().name(), //
 					encodeString(tx.getPayee()), //
 					tx.getCheckNumber(), //
@@ -318,6 +372,7 @@ public class Persistence {
 			wtr.println(line);
 		}
 		wtr.println("],");
+
 	}
 
 	void saveStatements() {

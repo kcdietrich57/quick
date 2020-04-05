@@ -1,14 +1,10 @@
 package app;
 
-import java.util.Map.Entry;
 import java.util.Scanner;
 
 import moneymgr.io.cvs.CSVImport;
 import moneymgr.io.mm.Persistence;
 import moneymgr.io.qif.QifDomReader;
-import moneymgr.model.GenericTxn;
-import moneymgr.model.Security;
-import moneymgr.model.TxAction;
 import moneymgr.report.CashFlow;
 import moneymgr.report.InvestmentPerformanceModel;
 import moneymgr.ui.MainFrame;

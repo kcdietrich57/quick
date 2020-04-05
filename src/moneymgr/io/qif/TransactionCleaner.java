@@ -9,6 +9,7 @@ import java.util.List;
 
 import app.QifDom;
 import moneymgr.io.LotProcessor;
+import moneymgr.io.mm.Persistence;
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
@@ -122,6 +123,8 @@ public class TransactionCleaner {
 		}
 	}
 
+	static int[] counts = { 0, 0 };
+
 	/** Connect transfers for a transaction */
 	private void connectTransfers(GenericTxn txn) {
 		if (txn.hasSplits()) {
@@ -133,6 +136,8 @@ public class TransactionCleaner {
 				(-txn.getCatid() != txn.getAccountID())) {
 			connectTransfers(txn, txn.getDate());
 		}
+
+		Persistence.validateTransfers(txn, counts);
 	}
 
 	private static int multWarnCount = 0;
@@ -143,6 +148,10 @@ public class TransactionCleaner {
 	 */
 	private void connectTransfers(SimpleTxn txn, QDate date) {
 		if ((txn.getCatid() >= 0)) {
+			return;
+		}
+
+		if ((txn.getCashTransferTxn() != null) && (txn.getCashTransferTxn().getCashTransferTxn() == txn)) {
 			return;
 		}
 
@@ -169,11 +178,14 @@ public class TransactionCleaner {
 		if (matchingTxns.size() == 1) {
 			xtxn = matchingTxns.get(0);
 		} else {
-			Common.reportWarning("Multiple matching transactions (" //
-					+ matchingTxns.size() //
-					+ ") - using the first one. (" + multWarnCount + " occurrences)");
+			if (QifDom.verbose) {
+				++multWarnCount;
+				Common.reportWarning("Multiple matching transactions (" //
+						+ matchingTxns.size() //
+						+ ") - using the first one. (" + multWarnCount + " occurrences)\n" //
+						+ matchingTxns);
+			}
 
-			// TODO choose best choice
 			xtxn = matchingTxns.get(0);
 		}
 
@@ -207,9 +219,17 @@ public class TransactionCleaner {
 
 			// Check nearby dates only if we haven't found a match
 			if (dateeq || !exactDateMatch) {
-				SimpleTxn match = checkMatchForTransfer(txn, gtxn, strict);
+				int xid = txn.getCashTransferAcctid();
+				if ((xid <= 0) || (txn.getCashTransferAcctid() != gtxn.getAccountID())) {
+					continue;
+				}
 
-				if (match != null && match.getXtxn() != null) {
+				SimpleTxn match = checkMatchForTransfer(txn, gtxn, strict);
+				if (match == null) {
+//					System.out.println(txn.toString());
+//					System.out.println(gtxn.toString());
+//					System.out.println("no match");				
+				} else if (match.getCashTransferTxn() == null) {
 					if (dateeq && !exactDateMatch) {
 						matchingTxns.clear();
 					}
@@ -229,15 +249,15 @@ public class TransactionCleaner {
 		assert -txn.getCatid() == gtxn.getAccountID();
 
 		if (!gtxn.hasSplits()) {
-			if ((gtxn.getXferAcctid() == txn.getAccountID()) //
-					&& (gtxn.getXtxn() == null) //
+			if ((gtxn.getCashTransferAcctid() == txn.getAccountID()) //
+					&& (gtxn.getCashTransferTxn() == null) //
 					&& gtxn.amountIsEqual(txn, strict)) {
 				return gtxn;
 			}
 		} else {
 			for (SimpleTxn splittTxn : gtxn.getSplits()) {
-				if ((splittTxn.getXferAcctid() == txn.getAccountID()) //
-						&& (splittTxn.getXtxn() == null) //
+				if ((splittTxn.getCashTransferAcctid() == txn.getAccountID()) //
+						&& (splittTxn.getCashTransferTxn() == null) //
 						&& splittTxn.amountIsEqual(txn, strict)) {
 					return splittTxn;
 				}
@@ -324,10 +344,10 @@ public class TransactionCleaner {
 				}
 
 				for (InvestmentTxn inTx : ins) {
-					inTx.setXferTxns(outs);
+					inTx.setSecurityTransferTxns(outs);
 				}
 				for (InvestmentTxn outTx : outs) {
-					outTx.setXferTxns(ins);
+					outTx.setSecurityTransferTxns(ins);
 				}
 			}
 

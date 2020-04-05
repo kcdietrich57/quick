@@ -135,26 +135,26 @@ public class InvestmentTxn extends GenericTxn {
 		return "";
 	}
 
-	public List<InvestmentTxn> getXferTxns() {
+	public List<InvestmentTxn> getSecurityTransferTxns() {
 		return (this.xferTxns == NO_XFER_TXNS) //
 				? this.xferTxns //
 				: Collections.unmodifiableList(this.xferTxns);
 	}
 
-	public void setXferTxns(List<InvestmentTxn> txns) {
+	public void setSecurityTransferTxns(List<InvestmentTxn> txns) {
 		if (this.xferTxns == NO_XFER_TXNS) {
-			this.xferTxns = new ArrayList<InvestmentTxn>(txns);
-		} else {
-			this.xferTxns.clear();
-			this.xferTxns.addAll(txns);
+			this.xferTxns = new ArrayList<InvestmentTxn>();
 		}
+
+		this.xferTxns.clear();
+		this.xferTxns.addAll(txns);
 	}
 
 	public void setQuantity(BigDecimal qty) {
 		this.quantity = qty;
 	}
 
-	public boolean isStockOptionTransaction() {
+	public boolean isStockOptionTxn() {
 		if (this.option != null) {
 			if ((getAction() == TxAction.STOCKSPLIT) //
 					// TODO this espp isn't mysterious at all
@@ -181,7 +181,7 @@ public class InvestmentTxn extends GenericTxn {
 
 	public BigDecimal getShares() {
 		if ((this.quantity == null) //
-				|| isStockOptionTransaction() //
+				|| isStockOptionTxn() //
 				|| (getAction() == TxAction.STOCKSPLIT)) {
 			return BigDecimal.ZERO;
 		}
@@ -298,7 +298,7 @@ public class InvestmentTxn extends GenericTxn {
 		BigDecimal tot = super.getCashAmount();
 
 		if (tot == null) {
-			tot = getXferAmount();
+			tot = getCashTransferAmount();
 		}
 
 		return (tot != null) ? tot.abs() : BigDecimal.ZERO;
@@ -308,7 +308,7 @@ public class InvestmentTxn extends GenericTxn {
 		BigDecimal tot = super.getCashAmount();
 
 		if (tot == null) {
-			tot = getXferAmount();
+			tot = getCashTransferAmount();
 		}
 
 		switch (getAction()) {
@@ -334,8 +334,7 @@ public class InvestmentTxn extends GenericTxn {
 		case EXPIRE:
 		case STOCKSPLIT:
 			// No net cash change
-			tot = BigDecimal.ZERO;
-			break;
+			return BigDecimal.ZERO;
 
 		case EXERCISE:
 		case SELL:
@@ -353,10 +352,10 @@ public class InvestmentTxn extends GenericTxn {
 		return tot;
 	}
 
-	public BigDecimal getXferAmount() {
+	public BigDecimal getCashTransferAmount() {
 		return (this.amountTransferred != null) //
 				? this.amountTransferred //
-				: super.getXferAmount();
+				: super.getCashTransferAmount();
 
 	}
 
@@ -444,9 +443,9 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 		// Some cash transfers aren't reflected in the tx amount
-		if ((getAmount() == null) && (getXferAmount() != null)) {
-			setAmount(getXferAmount());
-			tinfo.setValue(TransactionInfo.AMOUNT_IDX, getXferAmount().toString());
+		if ((getAmount() == null) && (getCashTransferAmount() != null)) {
+			setAmount(getCashTransferAmount());
+			tinfo.setValue(TransactionInfo.AMOUNT_IDX, getCashTransferAmount().toString());
 		}
 
 		super.repair(tinfo);
@@ -529,7 +528,7 @@ public class InvestmentTxn extends GenericTxn {
 
 		s += " " + ((this.security != null) ? this.security.getSymbol() : getPayee());
 
-		if (isStockOptionTransaction() && (this.option != null)) {
+		if (isStockOptionTxn() && (this.option != null)) {
 			s += "  Option info: " + this.option.toString();
 		}
 
@@ -560,9 +559,9 @@ public class InvestmentTxn extends GenericTxn {
 
 		s += " memo=" + getMemo();
 		s += " comm=" + this.commission;
-		s += " xactid=" + getXferAcctid();
-		s += " xamt=" + getXferAmount();
-		if (isStockOptionTransaction() && (this.option != null)) {
+		s += " xactid=" + getCashTransferAcctid();
+		s += " xamt=" + getCashTransferAmount();
+		if (isStockOptionTxn() && (this.option != null)) {
 			s += "\n  Option info: " + this.option.toString();
 		}
 
@@ -609,7 +608,7 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 		if (this.amountTransferred != null) {
-			Account xacct = Account.getAccountByID(getXferAcctid());
+			Account xacct = Account.getAccountByID(getCashTransferAcctid());
 			String xacctname = (xacct != null) ? xacct.name : null;
 
 			ret += "\n";
@@ -618,7 +617,7 @@ public class InvestmentTxn extends GenericTxn {
 					Common.formatAmount(this.amountTransferred).trim());
 		}
 
-		if (isStockOptionTransaction() && (this.option != null)) {
+		if (isStockOptionTxn() && (this.option != null)) {
 			ret += "\n";
 			ret += "  Option info : " + this.option.toString();
 			ret += "\n";

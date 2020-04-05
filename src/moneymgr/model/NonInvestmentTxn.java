@@ -153,6 +153,11 @@ public class NonInvestmentTxn extends GenericTxn {
 		s += " " + Common.formatAmount(getAmount()).trim();
 		s += " " + getPayee();
 		s += " xfer/cat=" + getCategory();
+		if (getCashTransferAcctid() > 0) {
+			s += "(";
+			s += "" + ((getCashTransferTxn() != null) ? getCashTransferTxn().txid : "-");
+			s += ")";
+		}
 		s += " memo=" + getMemo();
 		s += " bal=" + this.runningTotal;
 

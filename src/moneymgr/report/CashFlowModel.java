@@ -139,7 +139,7 @@ public class CashFlowModel {
 			if ((this.txns != null) && !balanceMatches()) {
 				for (SimpleTxn txn : this.txns) {
 					BigDecimal cash = txn.getCashAmount();
-					BigDecimal xfer = txn.getXferAmount();
+					BigDecimal xfer = txn.getCashTransferAmount();
 					BigDecimal gain = txn.getGain();
 					if (xfer.signum() != 0) {
 						cash = cash.subtract(xfer);
@@ -280,7 +280,7 @@ public class CashFlowModel {
 
 			for (SimpleTxn txn : txns) {
 				BigDecimal cash = txn.getCashAmount();
-				BigDecimal xfer = txn.getXferAmount();
+				BigDecimal xfer = txn.getCashTransferAmount();
 				BigDecimal gain = txn.getGain();
 				if (xfer.signum() != 0) {
 					cash = cash.subtract(xfer);

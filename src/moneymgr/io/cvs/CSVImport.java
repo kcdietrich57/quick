@@ -626,11 +626,11 @@ public class CSVImport {
 				InvestmentTxn itxn = (InvestmentTxn) txn;
 // TODO action for non-transfers (payment, income, buy/sell, buyx/sellx, etc)
 				if (itxn.getCatid() < 0) {
-					itxn.setXferAcctid(-itxn.getCatid());
+					itxn.setCashTransferAcctid(-itxn.getCatid());
 				}
 
-				if (itxn.getXferAcctid() > 0) {
-					itxn.accountForTransfer = Account.getAccountByID(itxn.getXferAcctid()).name;
+				if (itxn.getCashTransferAcctid() > 0) {
+					itxn.accountForTransfer = Account.getAccountByID(itxn.getCashTransferAcctid()).name;
 					itxn.setAction((inflow.isEmpty()) ? TxAction.XOUT : TxAction.XIN);
 					itxn.amountTransferred = amount;
 				} else {

@@ -310,7 +310,7 @@ public class TransactionInfo {
 		txn.setMemo(this.memo);
 		if (this.xaccount != null) {
 			txn.setCatid(-this.xaccount.acctid);
-			txn.setXferAcctid(this.xaccount.acctid);
+			txn.setCashTransferAcctid(this.xaccount.acctid);
 		} else {
 			txn.setCatid(this.category.catid);
 		}
