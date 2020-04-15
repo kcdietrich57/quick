@@ -25,6 +25,10 @@ public class Security {
 		return Collections.unmodifiableCollection(securities.values());
 	}
 
+	public static List<Security> getSecuritiesById() {
+		return Collections.unmodifiableList(securitiesByID);
+	}
+
 	/**
 	 * Introduce a new security - checks for already existing security first.<br>
 	 * It is an error if the name or symbol is already used.

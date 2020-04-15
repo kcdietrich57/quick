@@ -1,9 +1,15 @@
 package moneymgr.io.mm;
 
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.PrintStream;
 import java.util.List;
+
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import moneymgr.model.Account;
 import moneymgr.model.AccountCategory;
@@ -15,8 +21,11 @@ import moneymgr.model.MultiSplitTxn;
 import moneymgr.model.QPrice;
 import moneymgr.model.Security;
 import moneymgr.model.Security.SplitInfo;
+import moneymgr.model.SecurityPortfolio;
+import moneymgr.model.SecurityPosition;
 import moneymgr.model.SimpleTxn;
 import moneymgr.model.SplitTxn;
+import moneymgr.model.Statement;
 import moneymgr.model.TxAction;
 import moneymgr.util.Common;
 
@@ -24,7 +33,7 @@ import moneymgr.util.Common;
 public class Persistence {
 	private static String encodeString(String s) {
 		if (s == null) {
-			return "";
+			return "\"\"";
 		}
 
 		StringBuilder sb = new StringBuilder(s);
@@ -36,6 +45,9 @@ public class Persistence {
 			char ch = sb.charAt(idx);
 
 			switch (ch) {
+			case '"':
+				sub = "&q";
+				break;
 			case '&':
 				sub = "&&";
 				break;
@@ -62,11 +74,12 @@ public class Persistence {
 			}
 		}
 
-		return sb.toString();
+		return String.format("\"%s\"", sb.toString());
 	}
 
 	private static String decodeString(String s) {
-		StringBuilder sb = new StringBuilder(s);
+		// Strip quotes
+		StringBuilder sb = new StringBuilder(s.substring(1, s.length() - 1));
 
 		int idx = 0;
 		String sub = null;
@@ -78,6 +91,9 @@ public class Persistence {
 				sb.delete(idx, idx + 1);
 
 				switch (sb.charAt(idx)) {
+				case 'q':
+					sub = "\"";
+					break;
 				case '&':
 					sub = "&";
 					break;
@@ -106,156 +122,6 @@ public class Persistence {
 		}
 
 		return sb.toString();
-	}
-
-	private String filename;
-	private LineNumberReader rdr;
-	private PrintStream wtr;
-
-	public Persistence(String filename) {
-		this.filename = filename;
-	}
-
-	public void save() {
-		try {
-			this.wtr = new PrintStream(this.filename);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			return;
-		}
-
-		wtr.println("{");
-		saveCategories();
-		saveAccounts();
-		saveSecurities();
-		saveTransactions();
-		saveStatements();
-		wtr.println("}");
-	}
-
-	private void saveCategories() {
-		wtr.println("Categories:[");
-
-		for (int catid = 1; catid < Category.getNextCategoryID(); ++catid) {
-			Category cat = Category.getCategory(catid);
-
-			if (cat != null) {
-				String line = String.format("%d,%s,%s,%s;", //
-						cat.catid, //
-						encodeString(cat.name), //
-						encodeString(cat.description), //
-						cat.isExpense);
-				wtr.println(line);
-			}
-		}
-
-		wtr.println("],");
-	}
-
-	private void saveAccounts() {
-		wtr.println("AccountTypes:[");
-		for (AccountType at : AccountType.values()) {
-			String line = String.format("%d,%s,%s,%s,%s;", //
-					at.id, //
-					encodeString(at.name), //
-					at.isAsset, //
-					at.isInvestment, //
-					at.isCash);
-			wtr.println(line);
-		}
-		wtr.println("],");
-
-		wtr.println("AccountCategories:[");
-		for (AccountCategory ac : AccountCategory.values()) {
-			String line = String.format("%s,%s,[", //
-					encodeString(ac.label), //
-					ac.isAsset);
-
-			String sep = "";
-			for (AccountType at : ac.accountTypes) {
-				line += String.format("%s%s", sep, at.id);
-				sep = ",";
-			}
-			line += "]";
-
-			wtr.println(line);
-		}
-		wtr.println("],");
-
-		wtr.println("Accounts:[");
-		for (Account ac : Account.getAccounts()) {
-			int close = (ac.closeDate != null) ? ac.closeDate.getRawValue() : 0;
-
-			String line = String.format("%s,%d,%s,%d,%d,%d,%s,%s;", //
-					ac.name, //
-					ac.type.id, //
-					// ac.acctCategory.label, //
-					encodeString(ac.description), //
-					close, //
-					ac.statementFrequency, //
-					ac.statementDayOfMonth, //
-					Common.formatAmount(ac.balance).trim(), //
-					Common.formatAmount(ac.clearedBalance).trim());
-
-			// ac.transactions, //
-			// ac.statements, //
-			// ac.securities //
-
-			wtr.println(line);
-		}
-		wtr.println("],");
-	}
-
-	void saveSecurities() {
-		wtr.println("Securities:[");
-		for (Security sec : Security.getSecurities()) {
-			String secNames = "[";
-			String sep = "";
-			for (String name : sec.names) {
-				secNames += String.format("%s%s", sep, encodeString(name));
-				sep = ",";
-			}
-			secNames += "]";
-
-			String line = String.format("%d,%s,%s,%s;", //
-					sec.secid, //
-					encodeString(sec.symbol), //
-					secNames, //
-					sec.type);
-			wtr.println();
-			wtr.println(line);
-
-			wtr.print("[");
-			for (SplitInfo split : sec.splits) {
-				// TODO probably wrong format for ration
-				line = String.format("%d,%f;", //
-						split.splitDate.getRawValue(), //
-						split.splitRatio);
-				wtr.print(line);
-			}
-
-			wtr.println("],[");
-
-			int count = 0;
-			for (QPrice price : sec.prices) {
-				line = String.format("%d,%s;", //
-						price.date.getRawValue(), //
-						Common.formatAmount3(price).trim());
-
-				wtr.print(line);
-				if (++count == 8) {
-					count = 0;
-					wtr.println();
-				}
-			}
-
-			if (count > 0) {
-				wtr.println();
-			}
-
-			wtr.println("],");
-		}
-		wtr.println("],");
 	}
 
 	public static void validateTransfers(GenericTxn tx, int[] counts) {
@@ -311,34 +177,269 @@ public class Persistence {
 		}
 	}
 
+	private String filename;
+	private LineNumberReader rdr;
+	private PrintStream wtr;
+
+	public Persistence(String filename) {
+		this.filename = filename;
+	}
+
+	private void saveCategories() {
+		wtr.println("");
+		wtr.print("\"Categories\": [");
+
+		String sep = "";
+		for (int catid = 0; catid < Category.getNextCategoryID(); ++catid) {
+			Category cat = Category.getCategory(catid);
+
+			String line;
+			if (cat == null) {
+				line = "[0,\"\",\"\",\"\"]";
+			} else {
+				line = String.format("  [%d,%s,%s,%s]", //
+						cat.catid, //
+						encodeString(cat.name), //
+						encodeString(cat.description), //
+						cat.isExpense);
+			}
+
+			wtr.println(sep);
+			wtr.print(line);
+			sep = ",";
+		}
+
+		wtr.println();
+		wtr.println("],");
+	}
+
+	private void saveAccounts() {
+		String sep = "";
+
+		wtr.println("");
+		wtr.print("\"AccountTypes\": [");
+
+		String MISSING = "  [0]";
+		int id = 1;
+		sep = "";
+		for (AccountType at : AccountType.values()) {
+			while (id++ < at.id) {
+				wtr.println(sep);
+				wtr.print(MISSING);
+				sep = ",";
+			}
+
+			String line = String.format("  [%d,%s,%s,%s,%s]", //
+					at.id, //
+					encodeString(at.name), //
+					at.isAsset, //
+					at.isInvestment, //
+					at.isCash);
+
+			wtr.println(sep);
+			wtr.print(line);
+			sep = ",";
+		}
+
+		wtr.println();
+		wtr.println("],");
+
+		wtr.println("");
+		wtr.print("\"AccountCategories\": [");
+
+		sep = "";
+		for (AccountCategory ac : AccountCategory.values()) {
+			String line = String.format("  [%s,%s,[", //
+					encodeString(ac.label), //
+					ac.isAsset);
+
+			String sep2 = "";
+			for (AccountType at : ac.accountTypes) {
+				line += String.format("%s%s", sep2, at.id);
+				sep2 = ",";
+			}
+			line += "]]";
+
+			wtr.println(sep);
+			wtr.print(line);
+			sep = ",";
+		}
+
+		wtr.println();
+		wtr.println("],");
+
+		wtr.println("");
+		wtr.print("\"Accounts\": [");
+
+		sep = "";
+		List<Account> accts = Account.getAccountsById();
+		for (int acctid = 0; acctid < accts.size(); ++acctid) {
+			Account ac = accts.get(acctid);
+
+			if (ac == null) {
+				wtr.println(sep);
+				wtr.print("[0]");
+				sep = ",";
+
+				continue;
+			}
+
+			int close = (ac.closeDate != null) ? ac.closeDate.getRawValue() : 0;
+
+			while (id++ < ac.acctid) {
+				wtr.print(sep);
+				wtr.println(MISSING);
+				sep = ",";
+			}
+
+			String line = String.format("  [%d,%s,%d,%s,%d,%d,%d,%s,%s]", //
+					ac.acctid, //
+					encodeString(ac.name), //
+					ac.type.id, //
+					// ac.acctCategory.label, //
+					encodeString(ac.description), //
+					close, //
+					ac.statementFrequency, //
+					ac.statementDayOfMonth, //
+					Common.formatAmount(ac.balance).trim(), //
+					Common.formatAmount(ac.clearedBalance).trim());
+
+			// TODO ac.securities
+
+			wtr.println(sep);
+			wtr.print(line);
+			sep = ",";
+		}
+
+		wtr.println();
+		wtr.println("],");
+	}
+
+	void saveSecurities() {
+		wtr.println("");
+		wtr.print("\"Securities\": [");
+
+		String sep = "";
+		List<Security> securities = Security.getSecuritiesById();
+		for (int secid = 0; secid < securities.size(); ++secid) {
+			Security sec = securities.get(secid);
+
+			if (sec == null) {
+				wtr.println(sep);
+				wtr.print("[0]");
+				sep = ",";
+
+				continue;
+			}
+
+			String secNames = "[";
+			String sep2 = "";
+			for (String name : sec.names) {
+				secNames += sep2;
+				secNames += String.format("%s", encodeString(name));
+				sep2 = ",";
+			}
+			secNames += "]";
+
+			String line = String.format("  [%d,%s,%s,%s,", //
+					sec.secid, //
+					encodeString(sec.symbol), //
+					secNames, //
+					encodeString(sec.type));
+			wtr.println(sep);
+			wtr.println(line);
+
+			wtr.print("    [");
+			sep2 = "";
+			for (SplitInfo split : sec.splits) {
+				// TODO probably wrong format for ratio
+				line = String.format("[%d,%f]", //
+						split.splitDate.getRawValue(), //
+						split.splitRatio);
+
+				wtr.print(sep2);
+				wtr.print(line);
+				sep2 = ",";
+			}
+			wtr.println("],");
+
+			wtr.println("    [");
+			int count = 0;
+			sep2 = "";
+			line = "      ";
+			for (QPrice price : sec.prices) {
+				line += sep2;
+
+				if (count++ == 4) {
+					count = 1;
+					wtr.println(line);
+					line = "      ";
+				}
+
+				line += String.format("[%d,%s]", //
+						price.date.getRawValue(), //
+						Common.formatAmount3(price).trim());
+
+				sep2 = ",";
+			}
+
+			if (count > 0) {
+				wtr.println(line);
+			}
+			wtr.println("    ]");
+
+			wtr.print("  ]");
+		}
+
+		wtr.println();
+		wtr.println("],");
+	}
+
 	void saveTransactions() {
 		int errcount[] = { 0, 0 };
 
-		wtr.println("Transactions:[");
+		wtr.println("");
+		wtr.print("\"Transactions\": [");
+
+		String sep = "";
 		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
 			if (tx == null) {
+				wtr.println(sep);
+				wtr.print("[0]");
+				sep = ",";
+
 				continue;
 			}
 
 			String splits = "[";
+
+			String sep1 = "";
 			for (SplitTxn split : tx.getSplits()) {
+				splits += sep1;
+
 				if (split instanceof MultiSplitTxn) {
 					splits += "[";
+
+					String sep2 = "";
 					for (SplitTxn ssplit : ((MultiSplitTxn) split).subsplits) {
-						splits += String.format("%d,%s,%s;", //
+						splits += sep2;
+						splits += String.format("[%d,%s,%s]", //
 								ssplit.getCatid(), //
 								encodeString(ssplit.getMemo()), //
-								Common.formatAmount(ssplit.getAmount()).trim() //
-						);
+								Common.formatAmount(ssplit.getAmount()).trim());
+						sep2 = ",";
 					}
+
 					splits += "]";
 				} else {
-					splits += String.format("%d,%s,%s;", //
+					splits += String.format("[%d,%s,%s]", //
 							split.getCatid(), //
 							encodeString(split.getMemo()), //
 							Common.formatAmount(split.getAmount()).trim() //
 					);
 				}
+
+				sep1 = ",";
 			}
 			splits += "]";
 
@@ -356,27 +457,128 @@ public class Persistence {
 
 			validateTransfers(tx, errcount);
 
-			String line = String.format("%d,%d,%d,%d,%d,%s,%s,%d,%s,%s,%d,%s;", //
+			// TODO investment transactions/stocksplit
+
+			String line = String.format("  [%d,%d,%d,%d,%d,%s,%s,%d,%s,%s,%d,", //
 					tx.txid, //
 					tx.getDate().getRawValue(), //
 					sdate, //
 					tx.getAccountID(), //
-					((tx.getCashTransferTxn() != null) ? tx.getCashTransferTxn().txid : -1), //
-					tx.getAction().name(), //
+					((tx.getCashTransferTxn() != null) ? tx.getCashTransferTxn().txid : 0), //
+					encodeString(tx.getAction().name()), //
 					encodeString(tx.getPayee()), //
 					tx.getCheckNumber(), //
 					encodeString(tx.getMemo()), //
 					Common.formatAmount(tx.getAmount()).trim(), //
-					tx.getCatid(), // TODO catid or splits, not both
-					splits);
-			wtr.println(line);
-		}
-		wtr.println("],");
+					tx.getCatid()); // TODO catid or splits, not both
 
+			if (splits.length() > 2) {
+				line += "\n    ";
+			}
+
+			line += splits + "]";
+
+			wtr.println(sep);
+			wtr.print(line);
+			sep = ",";
+		}
+
+		wtr.println();
+		wtr.println("],");
 	}
 
 	void saveStatements() {
-		wtr.println("Statements:[");
-		wtr.println("],");
+		wtr.println("");
+		wtr.print("\"Statements\": [");
+
+		String sep = "";
+		for (Account acct : Account.getAccounts()) {
+			for (Statement stmt : acct.statements) {
+				String txns = "[";
+				String sep2 = "";
+				for (GenericTxn tx : stmt.transactions) {
+					txns += sep2 + tx.txid;
+					sep2 = ",";
+				}
+				txns += "]";
+
+				String prevdate = (stmt.prevStatement != null) //
+						? Integer.toString(stmt.prevStatement.date.getRawValue()) //
+						: "0";
+
+				SecurityPortfolio h = stmt.holdings;
+
+				String holdings = "[";
+				sep2 = "";
+				for (SecurityPosition p : h.positions) {
+					holdings += sep2 + String.format("[%d,%s,%s]", //
+							p.security.secid, //
+							Common.formatAmount3(p.getEndingShares()).trim(), //
+							Common.formatAmount(p.endingValue).trim());
+					sep2 = ",";
+				}
+				holdings += "]";
+
+				String line = String.format("  [%d,%d,%s,%s,%s,%s,\n    %s,\n    %s]", //
+						stmt.acctid, //
+						stmt.date.getRawValue(), //
+						stmt.isBalanced, //
+						prevdate, //
+						Common.formatAmount(stmt.closingBalance).trim(), //
+						Common.formatAmount(stmt.getCashBalance()).trim(), //
+						txns, //
+						holdings);
+
+				wtr.println(sep);
+				wtr.print(line);
+				sep = ",";
+			}
+		}
+
+		wtr.println();
+		wtr.println("]");
+	}
+
+	public void save() {
+		try {
+			this.wtr = new PrintStream(this.filename);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return;
+		}
+
+		wtr.println("{");
+		saveCategories();
+		saveAccounts();
+		saveSecurities();
+		saveTransactions();
+		saveStatements();
+		wtr.println("}");
+
+		wtr.close();
+
+		// TODO testing
+		load();
+	}
+
+	public Object load() {
+		Object obj;
+
+		try {
+			obj = new JSONParser().parse(new FileReader(this.filename));
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		JSONObject jo = (JSONObject) obj;
+
+		Object accts = jo.get("Accounts");
+		Object cats = jo.get("Categories");
+		Object secs = jo.get("Securities");
+		Object trans = jo.get("Transactions");
+		Object stats = jo.get("Statements");
+
+		return jo;
 	}
 }

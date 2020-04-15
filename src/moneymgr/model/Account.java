@@ -60,6 +60,10 @@ public class Account {
 		return Collections.unmodifiableList(accounts);
 	}
 
+	public static List<Account> getAccountsById() {
+		return Collections.unmodifiableList(accountsByID);
+	}
+
 	public static Account getAccountByID(int acctid) {
 		return accountsByID.get(acctid);
 	}
