@@ -21,6 +21,7 @@ import moneymgr.model.Account;
 import moneymgr.model.Category;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.NonInvestmentTxn;
 import moneymgr.model.Security;
 import moneymgr.model.SimpleTxn;
@@ -129,6 +130,7 @@ public class CSVImport {
 //		}
 	}
 
+	/** TESTING: Import CSV file and compare to QIF version */
 	public static void testMacImport() {
 		String importDir = "/Users/greg/Documents/workspace/Quicken/qif/";
 
@@ -306,7 +308,7 @@ public class CSVImport {
 
 		out.println("\nUnrecognized Categories\n=====================");
 		for (String catName : cats) {
-			Category cat = Category.findCategory(catName);
+			Category cat = MoneyMgrModel.findCategory(catName);
 
 			if (cat == null) {
 				out.println(catName);
@@ -566,7 +568,7 @@ public class CSVImport {
 				xferAcct = Account.findAccount(cat);
 				catid = (xferAcct != null) ? -xferAcct.acctid : 0;
 			} else {
-				c = (!cat.isEmpty()) ? Category.findCategory(cat) : null;
+				c = (!cat.isEmpty()) ? MoneyMgrModel.findCategory(cat) : null;
 				catid = (c != null) ? c.catid : 0;
 			}
 
@@ -632,10 +634,10 @@ public class CSVImport {
 				if (itxn.getCashTransferAcctid() > 0) {
 					itxn.accountForTransfer = Account.getAccountByID(itxn.getCashTransferAcctid()).name;
 					itxn.setAction((inflow.isEmpty()) ? TxAction.XOUT : TxAction.XIN);
-					itxn.amountTransferred = amount;
+					itxn.cashTransferred = amount;
 				} else {
 					itxn.setAction(TxAction.OTHER);
-					itxn.amountTransferred = BigDecimal.ZERO;
+					itxn.cashTransferred = BigDecimal.ZERO;
 					itxn.accountForTransfer = null;
 				}
 				itxn.commission = (fees.isEmpty()) //

@@ -1,6 +1,7 @@
 package moneymgr.io.qif;
 
 import moneymgr.model.Category;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.util.Common;
 
 /** Process input file details for a category */
@@ -41,11 +42,11 @@ public class CategoryProcessor {
 					return false;
 				}
 
-				Category cat = Category.findCategory(name);
+				Category cat = MoneyMgrModel.findCategory(name);
 
 				if (cat == null) {
 					cat = new Category(name, desc, isExpense);
-					Category.addCategory(cat);
+					MoneyMgrModel.addCategory(cat);
 				}
 
 				return true;

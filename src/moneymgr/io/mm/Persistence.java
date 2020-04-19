@@ -5,6 +5,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.PrintStream;
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.json.simple.JSONObject;
@@ -17,6 +18,8 @@ import moneymgr.model.AccountType;
 import moneymgr.model.Category;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
+import moneymgr.model.Lot;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.MultiSplitTxn;
 import moneymgr.model.QPrice;
 import moneymgr.model.Security;
@@ -26,10 +29,11 @@ import moneymgr.model.SecurityPosition;
 import moneymgr.model.SimpleTxn;
 import moneymgr.model.SplitTxn;
 import moneymgr.model.Statement;
+import moneymgr.model.StockOption;
 import moneymgr.model.TxAction;
 import moneymgr.util.Common;
 
-/** TODO JSON format; Read/write data in native format */
+/** Read/write data in native (JSON) format */
 public class Persistence {
 	private static String encodeString(String s) {
 		if (s == null) {
@@ -75,6 +79,14 @@ public class Persistence {
 		}
 
 		return String.format("\"%s\"", sb.toString());
+	}
+
+	private static String encodeAmount3(BigDecimal amt) {
+		return encodeString(Common.formatAmount3(amt).trim());
+	}
+
+	private static String encodeAmount(BigDecimal amt) {
+		return encodeString(Common.formatAmount3(amt).trim());
 	}
 
 	private static String decodeString(String s) {
@@ -186,16 +198,25 @@ public class Persistence {
 	}
 
 	private void saveCategories() {
+		// ------------------------------------------------
 		wtr.println("");
-		wtr.print("\"Categories\": [");
+		wtr.println("\"Categories\": [");
+		// ------------------------------------------------
 
-		String sep = "";
-		for (int catid = 0; catid < Category.getNextCategoryID(); ++catid) {
-			Category cat = Category.getCategory(catid);
+		wtr.print("  [\"id\",\"name\",\"desc\",\"isExpense\"]");
+		String sep = ",";
+		int id = 1;
+		for (int catid = 1; catid < MoneyMgrModel.getNextCategoryID(); ++catid) {
+			while (id++ < catid) {
+				wtr.println(sep);
+				wtr.print("  [0]");
+			}
+
+			Category cat = MoneyMgrModel.getCategory(catid);
 
 			String line;
 			if (cat == null) {
-				line = "[0,\"\",\"\",\"\"]";
+				line = "  [0]";
 			} else {
 				line = String.format("  [%d,%s,%s,%s]", //
 						cat.catid, //
@@ -206,7 +227,6 @@ public class Persistence {
 
 			wtr.println(sep);
 			wtr.print(line);
-			sep = ",";
 		}
 
 		wtr.println();
@@ -216,17 +236,18 @@ public class Persistence {
 	private void saveAccounts() {
 		String sep = "";
 
+		// ------------------------------------------------
 		wtr.println("");
-		wtr.print("\"AccountTypes\": [");
+		wtr.println("\"AccountTypes\": [");
+		// ------------------------------------------------
 
-		String MISSING = "  [0]";
+		wtr.print("  [\"id\",\"name\",\"isAsset\",\"isInvestment\",\"isCash\"]");
 		int id = 1;
-		sep = "";
+		sep = ",";
 		for (AccountType at : AccountType.values()) {
 			while (id++ < at.id) {
 				wtr.println(sep);
-				wtr.print(MISSING);
-				sep = ",";
+				wtr.print("  [0]");
 			}
 
 			String line = String.format("  [%d,%s,%s,%s,%s]", //
@@ -238,16 +259,18 @@ public class Persistence {
 
 			wtr.println(sep);
 			wtr.print(line);
-			sep = ",";
 		}
 
 		wtr.println();
 		wtr.println("],");
 
+		// ------------------------------------------------
 		wtr.println("");
-		wtr.print("\"AccountCategories\": [");
+		wtr.println("\"AccountCategories\": [");
+		// ------------------------------------------------
 
-		sep = "";
+		wtr.print("  [\"label\",\"isAsset\",\"[accountType]\"]");
+		sep = ",";
 		for (AccountCategory ac : AccountCategory.values()) {
 			String line = String.format("  [%s,%s,[", //
 					encodeString(ac.label), //
@@ -262,53 +285,46 @@ public class Persistence {
 
 			wtr.println(sep);
 			wtr.print(line);
-			sep = ",";
 		}
 
 		wtr.println();
 		wtr.println("],");
 
+		// ------------------------------------------------
 		wtr.println("");
-		wtr.print("\"Accounts\": [");
+		wtr.println("\"Accounts\": [");
+		// ------------------------------------------------
 
-		sep = "";
+		wtr.print(
+				"  [\"acctid\",\"name\",\"acctypeid\",\"desc\",\"closedate\",\"statfreq\",\"statday\",\"bal\",\"clearbal\"]");
+		sep = ",";
 		List<Account> accts = Account.getAccountsById();
-		for (int acctid = 0; acctid < accts.size(); ++acctid) {
+		for (int acctid = 1; acctid < accts.size(); ++acctid) {
 			Account ac = accts.get(acctid);
+			String line;
 
 			if (ac == null) {
-				wtr.println(sep);
-				wtr.print("[0]");
-				sep = ",";
+				line = "  [0]";
+			} else {
+				int close = (ac.closeDate != null) ? ac.closeDate.getRawValue() : 0;
 
-				continue;
+				line = String.format("  [%d,%s,%d,%s,%d,%d,%d,\"%s\",\"%s\"]", //
+						ac.acctid, //
+						encodeString(ac.name), //
+						ac.type.id, //
+						// ac.acctCategory.label, //
+						encodeString(ac.description), //
+						close, //
+						ac.statementFrequency, //
+						ac.statementDayOfMonth, //
+						Common.formatAmount(ac.balance).trim(), //
+						Common.formatAmount(ac.clearedBalance).trim());
+
+				// TODO ac.securities
 			}
-
-			int close = (ac.closeDate != null) ? ac.closeDate.getRawValue() : 0;
-
-			while (id++ < ac.acctid) {
-				wtr.print(sep);
-				wtr.println(MISSING);
-				sep = ",";
-			}
-
-			String line = String.format("  [%d,%s,%d,%s,%d,%d,%d,%s,%s]", //
-					ac.acctid, //
-					encodeString(ac.name), //
-					ac.type.id, //
-					// ac.acctCategory.label, //
-					encodeString(ac.description), //
-					close, //
-					ac.statementFrequency, //
-					ac.statementDayOfMonth, //
-					Common.formatAmount(ac.balance).trim(), //
-					Common.formatAmount(ac.clearedBalance).trim());
-
-			// TODO ac.securities
 
 			wtr.println(sep);
 			wtr.print(line);
-			sep = ",";
 		}
 
 		wtr.println();
@@ -316,171 +332,334 @@ public class Persistence {
 	}
 
 	void saveSecurities() {
+		// ------------------------------------------------
 		wtr.println("");
-		wtr.print("\"Securities\": [");
+		wtr.println("\"Securities\": [");
+		// ------------------------------------------------
 
-		String sep = "";
+		wtr.print("  [\"secid\",\"symbol\",\"[name]\",\"type\",\"[split]\",\"[[date,price]]\"]");
+
+		final String sep = ",";
 		List<Security> securities = Security.getSecuritiesById();
-		for (int secid = 0; secid < securities.size(); ++secid) {
+		for (int secid = 1; secid < securities.size(); ++secid) {
 			Security sec = securities.get(secid);
+			String line;
 
 			if (sec == null) {
-				wtr.println(sep);
-				wtr.print("[0]");
-				sep = ",";
+				line = "  [0]";
+			} else {
+				String secNames = "[";
+				String sep2 = "";
+				for (String name : sec.names) {
+					secNames += sep2;
+					secNames += String.format("%s", encodeString(name));
+					sep2 = ",";
+				}
+				secNames += "]";
 
-				continue;
-			}
+				String splits = "[";
+				sep2 = "";
+				for (SplitInfo split : sec.splits) {
+					splits += sep2;
+					// TODO probably wrong format for ratio
+					splits += String.format("[%d,\"%f\"]", //
+							split.splitDate.getRawValue(), //
+							split.splitRatio);
+					sep2 = ",";
+				}
+				splits += "]";
 
-			String secNames = "[";
-			String sep2 = "";
-			for (String name : sec.names) {
-				secNames += sep2;
-				secNames += String.format("%s", encodeString(name));
-				sep2 = ",";
-			}
-			secNames += "]";
+				String prices = "[\n";
+				int count = 0;
+				sep2 = "";
+				prices += "      ";
+				for (QPrice price : sec.prices) {
+					prices += sep2;
 
-			String line = String.format("  [%d,%s,%s,%s,", //
-					sec.secid, //
-					encodeString(sec.symbol), //
-					secNames, //
-					encodeString(sec.type));
-			wtr.println(sep);
-			wtr.println(line);
+					if (count++ == 4) {
+						count = 1;
+						prices += "\n";
+						prices += "      ";
+					}
 
-			wtr.print("    [");
-			sep2 = "";
-			for (SplitInfo split : sec.splits) {
-				// TODO probably wrong format for ratio
-				line = String.format("[%d,%f]", //
-						split.splitDate.getRawValue(), //
-						split.splitRatio);
-
-				wtr.print(sep2);
-				wtr.print(line);
-				sep2 = ",";
-			}
-			wtr.println("],");
-
-			wtr.println("    [");
-			int count = 0;
-			sep2 = "";
-			line = "      ";
-			for (QPrice price : sec.prices) {
-				line += sep2;
-
-				if (count++ == 4) {
-					count = 1;
-					wtr.println(line);
-					line = "      ";
+					prices += String.format("[%d,\"%s\"]", //
+							price.date.getRawValue(), //
+							Common.formatAmount3(price).trim());
+					sep2 = ",";
 				}
 
-				line += String.format("[%d,%s]", //
-						price.date.getRawValue(), //
-						Common.formatAmount3(price).trim());
+				if (count > 0) {
+					prices += "\n";
+				}
+				prices += "    ]";
 
-				sep2 = ",";
+				line = String.format("  [%d,%s,%s,%s,\n    %s,\n    %s\n  ]", //
+						sec.secid, //
+						encodeString(sec.symbol), //
+						secNames, //
+						encodeString(sec.type), //
+						splits, //
+						prices);
 			}
 
-			if (count > 0) {
-				wtr.println(line);
-			}
-			wtr.println("    ]");
-
-			wtr.print("  ]");
+			wtr.println(sep);
+			wtr.print(line);
 		}
 
 		wtr.println();
 		wtr.println("],");
 	}
 
-	void saveTransactions() {
-		int errcount[] = { 0, 0 };
-
+	void saveLots() {
+		// ------------------------------------------------
 		wtr.println("");
-		wtr.print("\"Transactions\": [");
+		wtr.println("\"Lots\": [");
+		// ------------------------------------------------
 
-		String sep = "";
-		for (GenericTxn tx : GenericTxn.getAllTransactions()) {
-			if (tx == null) {
-				wtr.println(sep);
-				wtr.print("[0]");
-				sep = ",";
+		wtr.print("  [\"lotid\",\"date\",\"acctid\",\"secid\",\"shares\",\"basisprice\",\"createTxid\",\"disposeTxid\"," //
+				+ "\"srcLotid\",\"[childLotid]\"]");
 
-				continue;
-			}
+		final String sep = ",";
+		List<Lot> lots = Lot.getLots();
+		for (int lotid = 1; lotid < lots.size(); ++lotid) {
+			Lot lot = lots.get(lotid);
 
-			String splits = "[";
-
-			String sep1 = "";
-			for (SplitTxn split : tx.getSplits()) {
-				splits += sep1;
-
-				if (split instanceof MultiSplitTxn) {
-					splits += "[";
-
+			String line;
+			if (lot == null) {
+				line = "  [0]";
+			} else {
+				String childlots = "[";
+				if (lot.childLots != null) {
 					String sep2 = "";
-					for (SplitTxn ssplit : ((MultiSplitTxn) split).subsplits) {
-						splits += sep2;
-						splits += String.format("[%d,%s,%s]", //
-								ssplit.getCatid(), //
-								encodeString(ssplit.getMemo()), //
-								Common.formatAmount(ssplit.getAmount()).trim());
+					for (Lot child : lot.childLots) {
+						childlots += sep2 + child.lotid;
 						sep2 = ",";
 					}
-
-					splits += "]";
-				} else {
-					splits += String.format("[%d,%s,%s]", //
-							split.getCatid(), //
-							encodeString(split.getMemo()), //
-							Common.formatAmount(split.getAmount()).trim() //
-					);
 				}
+				childlots += "]";
 
-				sep1 = ",";
+				line = String.format("  [%d,%s,%d,%d,%s,%s,%d,%d,%d,%s]", //
+						lot.lotid, //
+						lot.createDate.getRawValue(), //
+						lot.acctid, //
+						lot.secid, //
+						encodeString(Common.formatAmount3(lot.shares).trim()), //
+						encodeString(Common.formatAmount3(lot.basisPrice).trim()), //
+						lot.createTransaction.txid, //
+						((lot.disposingTransaction != null) ? lot.disposingTransaction.txid : 0), //
+						((lot.sourceLot != null) ? lot.sourceLot.lotid : 0), //
+						childlots);
 			}
-			splits += "]";
-
-			// SimpleTxn
-			// DERIVED tx.getCashAmount()
-			// DERIVED, not implemented tx.getGain()
-			// DERIVED tx.isCredit()
-			//
-			// GenericTxn
-
-			// NonInvestmentTxn
-			// InvestmentTxn
-
-			int sdate = (tx.stmtdate != null) ? tx.stmtdate.getRawValue() : 0;
-
-			validateTransfers(tx, errcount);
-
-			// TODO investment transactions/stocksplit
-
-			String line = String.format("  [%d,%d,%d,%d,%d,%s,%s,%d,%s,%s,%d,", //
-					tx.txid, //
-					tx.getDate().getRawValue(), //
-					sdate, //
-					tx.getAccountID(), //
-					((tx.getCashTransferTxn() != null) ? tx.getCashTransferTxn().txid : 0), //
-					encodeString(tx.getAction().name()), //
-					encodeString(tx.getPayee()), //
-					tx.getCheckNumber(), //
-					encodeString(tx.getMemo()), //
-					Common.formatAmount(tx.getAmount()).trim(), //
-					tx.getCatid()); // TODO catid or splits, not both
-
-			if (splits.length() > 2) {
-				line += "\n    ";
-			}
-
-			line += splits + "]";
 
 			wtr.println(sep);
 			wtr.print(line);
-			sep = ",";
+		}
+
+		wtr.println();
+		wtr.println("]");
+	}
+
+	void saveOptions() {
+		// ------------------------------------------------
+		wtr.println("");
+		wtr.println("\"Options\": [");
+		// ------------------------------------------------
+
+		wtr.print("  [\"optid\",\"name\",\"date\",\"acctid\",\"secid\",\"shares\",\"strikeprice\",\"marketprice\"," //
+				+ "  \"cost\",\"origmarketvalue\",\"lifetimemonths\",\"vestcount\",\"txid\",\"canceldate\",\"srcoptid\"" //
+				+ "]");
+
+		final String sep = ",";
+		List<StockOption> opts = StockOption.options;
+		for (int optid = 1; optid < opts.size(); ++optid) {
+			StockOption opt = opts.get(optid);
+
+			String line;
+			if (opt == null) {
+				line = "  [0]";
+			} else {
+				line = String.format("  [%d,%s,%d,%d,%d,%s,%s,%s,%s,%s,%s,%d,%d,%d,%d,%d]", //
+						opt.optid, //
+						encodeString(opt.name), //
+						opt.date.getRawValue(), //
+						opt.acctid, //
+						opt.secid, //
+						encodeAmount3(opt.grantShares), //
+						encodeAmount3(opt.strikePrice), //
+						encodeAmount3(opt.marketPrice), //
+						encodeAmount(opt.cost), //
+						encodeAmount(opt.marketValueAtPurchase), //
+						opt.lifetimeMonths, //
+						opt.vestFrequencyMonths, //
+						opt.vestCount, //
+						// opt.vestCurrent, //
+						// opt.sharesRemaining, //
+						((opt.transaction != null) ? opt.transaction.txid : 0), //
+						((opt.cancelDate != null) ? opt.cancelDate.getRawValue() : 0), //
+						((opt.srcOption != null) ? opt.srcOption.optid : 0));
+			}
+
+			wtr.println(sep);
+			wtr.print(line);
+		}
+
+		wtr.println();
+		wtr.println("]");
+	}
+
+	void saveTransactions() {
+		int errcount[] = { 0, 0 };
+		String line;
+
+		// ------------------------------------------------
+		wtr.println("");
+		wtr.println("\"Transactions\": [");
+		// ------------------------------------------------
+
+		wtr.print(
+				"  [\"id\",\"date\",\"statdate\",\"acctid\",\"xtxid\",\"action\",\"payee\",\"cknum\",\"memo\",\"amt\",\"cat\"," //
+						+ "\"secid\",\"secaction\",\"shares\",\"shareprice\",\"splitratio\",\"optid\",\"[split]\",\"[secxfer]\",\"[lot]\"]");
+
+		final String sep = ",";
+		List<GenericTxn> txns = GenericTxn.getAllTransactions();
+		for (int txid = 1; txid < txns.size(); ++txid) {
+			GenericTxn tx = txns.get(txid);
+
+			if (tx == null) {
+				line = "  [0]";
+			} else {
+				String splits = "[";
+
+				String sep1 = "";
+				for (SplitTxn split : tx.getSplits()) {
+					splits += sep1;
+
+					if (split instanceof MultiSplitTxn) {
+						splits += "[";
+
+						String sep2 = "";
+						for (SplitTxn ssplit : ((MultiSplitTxn) split).subsplits) {
+							splits += sep2;
+							splits += String.format("[%d,%s,\"%s\"]", //
+									ssplit.getCatid(), //
+									encodeString(ssplit.getMemo()), //
+									Common.formatAmount(ssplit.getAmount()).trim());
+							sep2 = ",";
+						}
+
+						splits += "]";
+					} else {
+						splits += String.format("[%d,%s,\"%s\"]", //
+								split.getCatid(), //
+								encodeString(split.getMemo()), //
+								Common.formatAmount(split.getAmount()).trim() //
+						);
+					}
+
+					sep1 = ",";
+				}
+				splits += "]";
+
+				// SimpleTxn
+				// DERIVED tx.getCashAmount()
+				// DERIVED, not implemented tx.getGain()
+				// DERIVED tx.isCredit()
+				//
+				// GenericTxn
+				// NonInvestmentTxn
+				// InvestmentTxn
+
+				int sdate = (tx.stmtdate != null) ? tx.stmtdate.getRawValue() : 0;
+
+				validateTransfers(tx, errcount);
+
+				int secid = tx.getSecurityId();
+				String shareaction = "";
+				BigDecimal shares = BigDecimal.ZERO;
+				BigDecimal shareprice = BigDecimal.ZERO;
+				BigDecimal splitratio = BigDecimal.ONE;
+
+				String securityTransferTxns = "[]";
+				String lots = "[]";
+				int optid = 0;
+
+				// TODO investment transactions/stocksplit
+				if (tx instanceof InvestmentTxn) {
+					InvestmentTxn itx = (InvestmentTxn) tx;
+
+					// TODO encode share action
+					shareaction = itx.getShareAction().toString();
+					shares = itx.getShares();
+					shareprice = itx.getShareCost();
+					splitratio = itx.getSplitRatio();
+
+					securityTransferTxns = "[";
+					String sep2 = "";
+					for (InvestmentTxn xtx : itx.getSecurityTransferTxns()) {
+						securityTransferTxns += sep2 + xtx.txid;
+						sep2 = ",";
+					}
+					securityTransferTxns += "]";
+
+					itx.getLots();
+					lots = "[";
+					sep2 = "";
+					for (Lot lot : itx.getLots()) {
+						lots += sep2 + lot.lotid;
+						sep2 = ",";
+					}
+					lots += "]";
+
+					if (itx.isStockOptionTxn() && (itx.option != null)) {
+						// TODO why would option be null
+						optid = itx.option.optid;
+					}
+				}
+
+				line = String.format("  [%d,%d,%d,%d,%d,%s,%s,%d,%s,\"%s\",%d,%d,%s,%s,%s,%s,%d", //
+						tx.txid, //
+						tx.getDate().getRawValue(), //
+						sdate, //
+						tx.getAccountID(), //
+						((tx.getCashTransferTxn() != null) ? tx.getCashTransferTxn().txid : 0), //
+						encodeString(tx.getAction().name()), //
+						encodeString(tx.getPayee()), //
+						tx.getCheckNumber(), //
+						encodeString(tx.getMemo()), //
+						Common.formatAmount(tx.getAmount()).trim(), //
+						tx.getCatid(), // TODO catid or splits, not both
+
+						secid, //
+						encodeString(shareaction), //
+						encodeString(Common.formatAmount3(shares).trim()), //
+						encodeString(Common.formatAmount(shareprice).trim()), //
+						encodeString(Common.formatAmount(splitratio).trim()), //
+						optid);
+
+				line += sep;
+				if (splits.length() > 2) {
+					line += "\n    ";
+				}
+				line += splits;
+
+				line += sep;
+				if (securityTransferTxns.length() > 2) {
+					line += "\n    ";
+				}
+				line += securityTransferTxns;
+
+				line += sep;
+				if (lots.length() > 2) {
+					line += "\n    ";
+				}
+				line += lots;
+
+				line += "]";
+
+			}
+
+			wtr.println(sep);
+			wtr.print(line);
 		}
 
 		wtr.println();
@@ -488,11 +667,23 @@ public class Persistence {
 	}
 
 	void saveStatements() {
-		wtr.println("");
-		wtr.print("\"Statements\": [");
+		String line;
 
-		String sep = "";
-		for (Account acct : Account.getAccounts()) {
+		// ------------------------------------------------
+		wtr.println("");
+		wtr.println("\"Statements\": [");
+		// ------------------------------------------------
+
+		wtr.print("  [\"acctid\",\"date\",\"isbal\",\"prevdate\",\"totbal\",\"cashbal\",\"txns\"," //
+				+ "\"holdings\"]");
+
+		final String sep = ",";
+		for (Account acct : Account.getAccountsById()) {
+			// TODO Assign statement id and reference/store accordingly
+			if (acct == null) {
+				continue;
+			}
+
 			for (Statement stmt : acct.statements) {
 				String txns = "[";
 				String sep2 = "";
@@ -511,7 +702,7 @@ public class Persistence {
 				String holdings = "[";
 				sep2 = "";
 				for (SecurityPosition p : h.positions) {
-					holdings += sep2 + String.format("[%d,%s,%s]", //
+					holdings += sep2 + String.format("[%d,\"%s\",\"%s\"]", //
 							p.security.secid, //
 							Common.formatAmount3(p.getEndingShares()).trim(), //
 							Common.formatAmount(p.endingValue).trim());
@@ -519,7 +710,7 @@ public class Persistence {
 				}
 				holdings += "]";
 
-				String line = String.format("  [%d,%d,%s,%s,%s,%s,\n    %s,\n    %s]", //
+				line = String.format("  [%d,%d,%s,%s,\"%s\",\"%s\",\n    %s,\n    %s]", //
 						stmt.acctid, //
 						stmt.date.getRawValue(), //
 						stmt.isBalanced, //
@@ -531,7 +722,6 @@ public class Persistence {
 
 				wtr.println(sep);
 				wtr.print(line);
-				sep = ",";
 			}
 		}
 
@@ -551,13 +741,17 @@ public class Persistence {
 		saveCategories();
 		saveAccounts();
 		saveSecurities();
+		saveLots();
+		saveOptions();
 		saveTransactions();
 		saveStatements();
 		wtr.println("}");
 
 		wtr.close();
+	}
 
-		// TODO testing
+	// TODO testing
+	public void validate() {
 		load();
 	}
 
@@ -579,6 +773,18 @@ public class Persistence {
 		Object trans = jo.get("Transactions");
 		Object stats = jo.get("Statements");
 
+		/**
+		 * To reconstruct the data completely, do the following:<br>
+		 * 1. Create categories <br>
+		 * 2. Create securities <br>
+		 * 3. Create account types<br>
+		 * 4. Create account categories<br>
+		 * 5. Create accounts<br>
+		 * 6. Create transactions<br>
+		 * 7. Create lots<br>
+		 * 8. Create options<br>
+		 * 9. Create statements<br>
+		 */
 		return jo;
 	}
 }

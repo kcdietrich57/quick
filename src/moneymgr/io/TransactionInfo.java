@@ -9,6 +9,7 @@ import java.util.Map;
 import moneymgr.model.Account;
 import moneymgr.model.Category;
 import moneymgr.model.InvestmentTxn;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.NonInvestmentTxn;
 import moneymgr.model.Security;
 import moneymgr.model.SimpleTxn;
@@ -21,12 +22,10 @@ import moneymgr.util.QDate;
  * It may be created from Quicken Windows QIF export files or Mac CSV files, or
  * other formats.
  * 
- * TODO current process differs for mac(CSV) and windows(QIF) import:<br>
- * QIF - Creates Tx objects and TxInfo at the same time.<br>
- * CSV - (experimental) Creates TxInfo, then creates Tx object from TxInfo
- * 
- * TODO ultimately, it would be good in both cases to first create the TxInfo
- * and create the transaction object based on that.
+ * TODO Modify QIF to use TxInfo as intermediate representation<br>
+ * QIF - QIF->(TxInfo,Tx,JSON)<br>
+ * CSV - (experimental) CSV->TxInfo->Tx<br>
+ * JSON - (experimental) JSON->TxInfo->Tx
  */
 public class TransactionInfo {
 	/**
@@ -250,7 +249,7 @@ public class TransactionInfo {
 			this.payee = value(PAYEE_IDX);
 			int catid = Common.parseCategory(value(CATEGORY_IDX));
 			if (catid > 0) {
-				this.category = Category.getCategory(catid);
+				this.category = MoneyMgrModel.getCategory(catid);
 				this.xaccount = null;
 			} else {
 				this.category = null;
@@ -280,8 +279,8 @@ public class TransactionInfo {
 	}
 
 	/**
-	 * TODO UNUSED Create a transaction object in a given account using the
-	 * contained info
+	 * TODO UNUSED see CVSImport.createTransaction(TransactionInfo)<br>
+	 * Create a transaction object in a given account using the contained info
 	 */
 	public SimpleTxn createTransaction(Account acct) {
 //		processValues();
@@ -298,7 +297,7 @@ public class TransactionInfo {
 			itxn.setQuantity(this.shares);
 			itxn.price = this.price;
 			itxn.accountForTransfer = this.xaccount.name;
-			itxn.amountTransferred = this.xamount;
+			itxn.cashTransferred = this.xamount;
 			itxn.commission = this.commission;
 			itxn.security = this.security;
 		}

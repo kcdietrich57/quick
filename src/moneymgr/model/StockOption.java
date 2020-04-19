@@ -54,10 +54,7 @@ public class StockOption {
 		StockOption opt = new StockOption(date, acctid, secid, //
 				shares, buyPrice, cost, mktPrice, value);
 
-		options.add(opt);
-
 		return opt;
-
 	}
 
 	/**
@@ -88,8 +85,6 @@ public class StockOption {
 		StockOption opt = new StockOption(name, date, acctid, secid, //
 				shares, price, vestPeriod, vestCount, lifetimeMonths);
 
-		options.add(opt);
-
 		return opt;
 	}
 
@@ -107,8 +102,6 @@ public class StockOption {
 		StockOption dst = new StockOption(src, date, vestNumber);
 
 		assert getOpenOption(name) == null;
-
-		options.add(dst);
 
 		return dst;
 	}
@@ -128,8 +121,6 @@ public class StockOption {
 		StockOption dst = new StockOption(src, date, newshr, oldshr);
 
 		assert getOpenOption(name) == null;
-
-		options.add(dst);
 
 		return dst;
 	}
@@ -152,8 +143,6 @@ public class StockOption {
 		}
 
 		StockOption dst = new StockOption(src, date);
-
-		options.add(dst);
 
 		assert getOpenOption(name) == null;
 
@@ -194,8 +183,6 @@ public class StockOption {
 		// if ((shares.compareTo(opt.getAvailableShares(false)) < 0) //
 		// || (opt.vestCurrent < opt.vestCount)) {
 		// }
-
-		StockOption.options.add(dst);
 
 		return dst;
 	}
@@ -388,6 +375,8 @@ public class StockOption {
 		return retOptions;
 	}
 
+	public final int optid;
+	
 	/** The option this is derived from (split, partial sale, etc) */
 	public final StockOption srcOption;
 
@@ -437,6 +426,9 @@ public class StockOption {
 			BigDecimal cost, //
 			BigDecimal mktPrice, //
 			BigDecimal mktValue) {
+		this.optid = StockOption.options.size();
+		StockOption.options.add(this);		
+
 		this.srcOption = null;
 		this.cancelDate = null;
 
@@ -470,6 +462,9 @@ public class StockOption {
 			int vestPeriod, //
 			int vestCount, //
 			int lifetimeMonths) {
+		this.optid = StockOption.options.size();
+		StockOption.options.add(this);		
+
 		this.srcOption = null;
 		this.cancelDate = null;
 
@@ -497,6 +492,9 @@ public class StockOption {
 			StockOption src, //
 			QDate date, //
 			int vestNumber) {
+		this.optid = StockOption.options.size();
+		StockOption.options.add(this);		
+
 		this.srcOption = src;
 		src.cancelDate = date;
 
@@ -525,6 +523,9 @@ public class StockOption {
 			QDate date, //
 			int newshr, //
 			int oldshr) {
+		this.optid = StockOption.options.size();
+		StockOption.options.add(this);		
+
 		this.srcOption = src;
 		src.cancelDate = date;
 
@@ -555,6 +556,9 @@ public class StockOption {
 			StockOption src, //
 			QDate date, //
 			BigDecimal shares) {
+		this.optid = StockOption.options.size();
+		StockOption.options.add(this);		
+
 		this.srcOption = src;
 		src.cancelDate = date;
 

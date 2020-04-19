@@ -119,7 +119,7 @@ public class TransactionProcessor {
 				// txn.textFirstLine = qline.value;
 				break;
 			case InvXferAmt:
-				txn.amountTransferred = Common.getDecimal(qline.value);
+				txn.cashTransferred = Common.getDecimal(qline.value);
 				tinfo.setValue(TransactionInfo.XAMOUNT_IDX, qline.value);
 				break;
 			case InvXferAcct: {

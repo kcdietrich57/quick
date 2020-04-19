@@ -33,7 +33,7 @@ public class InvestmentTxn extends GenericTxn {
 
 	public String accountForTransfer;
 	/** amountTransferred is cash only */
-	public BigDecimal amountTransferred;
+	public BigDecimal cashTransferred;
 	private List<InvestmentTxn> xferTxns;
 
 	/** These break down security activity by lots */
@@ -54,7 +54,7 @@ public class InvestmentTxn extends GenericTxn {
 		// this.textFirstLine = "";
 		this.commission = null;
 		this.accountForTransfer = "";
-		this.amountTransferred = null;
+		this.cashTransferred = null;
 		this.xferTxns = NO_XFER_TXNS;
 
 		this.lots = new ArrayList<>();
@@ -79,7 +79,7 @@ public class InvestmentTxn extends GenericTxn {
 		this.quantity = txn.quantity;
 		this.commission = txn.commission;
 		this.accountForTransfer = txn.accountForTransfer;
-		this.amountTransferred = txn.amountTransferred;
+		this.cashTransferred = txn.cashTransferred;
 		this.xferTxns = NO_XFER_TXNS;
 
 		this.lots = new ArrayList<>();
@@ -127,12 +127,8 @@ public class InvestmentTxn extends GenericTxn {
 		return this.action;
 	}
 
-	public String getSecurityName() {
-		if (this.security != null) {
-			return this.security.getName();
-		}
-
-		return "";
+	public Security getSecurity() {
+		return this.security;
 	}
 
 	public List<InvestmentTxn> getSecurityTransferTxns() {
@@ -287,7 +283,7 @@ public class InvestmentTxn extends GenericTxn {
 
 	/** Get lots that contain shares affected by this transaction */
 	public List<Lot> getLots() {
-		return this.lotsDisposed;
+		return this.lots;
 	}
 
 	/**
@@ -353,8 +349,8 @@ public class InvestmentTxn extends GenericTxn {
 	}
 
 	public BigDecimal getCashTransferAmount() {
-		return (this.amountTransferred != null) //
-				? this.amountTransferred //
+		return (this.cashTransferred != null) //
+				? this.cashTransferred //
 				: super.getCashTransferAmount();
 
 	}
@@ -382,21 +378,21 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 		if ((action == TxAction.CASH) //
-				&& (getAmount() == null) && (this.amountTransferred == null)) {
+				&& (getAmount() == null) && (this.cashTransferred == null)) {
 			setAmount(BigDecimal.ZERO);
 			tinfo.setValue(TransactionInfo.AMOUNT_IDX, "0.00");
 		}
 
-		if (this.amountTransferred != null) {
+		if (this.cashTransferred != null) {
 			// Some xfers store amount with the opposite sign than what we expect
 			if (action == TxAction.XOUT) {
-				this.amountTransferred = this.amountTransferred.negate();
-				tinfo.setValue(TransactionInfo.XAMOUNT_IDX, this.amountTransferred.toString());
+				this.cashTransferred = this.cashTransferred.negate();
+				tinfo.setValue(TransactionInfo.XAMOUNT_IDX, this.cashTransferred.toString());
 
-				setAmount(this.amountTransferred);
+				setAmount(this.cashTransferred);
 			} else if (action == TxAction.SELLX) {
-				this.amountTransferred = this.amountTransferred.negate();
-				tinfo.setValue(TransactionInfo.XAMOUNT_IDX, this.amountTransferred.toString());
+				this.cashTransferred = this.cashTransferred.negate();
+				tinfo.setValue(TransactionInfo.XAMOUNT_IDX, this.cashTransferred.toString());
 			}
 		}
 
@@ -607,14 +603,14 @@ public class InvestmentTxn extends GenericTxn {
 					Common.formatAmount(this.price).trim());
 		}
 
-		if (this.amountTransferred != null) {
+		if (this.cashTransferred != null) {
 			Account xacct = Account.getAccountByID(getCashTransferAcctid());
 			String xacctname = (xacct != null) ? xacct.name : null;
 
 			ret += "\n";
 			ret += String.format("  XFER: [%s]   %s", //
 					Common.formatString(xacctname, 20).trim(), //
-					Common.formatAmount(this.amountTransferred).trim());
+					Common.formatAmount(this.cashTransferred).trim());
 		}
 
 		if (isStockOptionTxn() && (this.option != null)) {

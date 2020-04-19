@@ -289,7 +289,7 @@ public abstract class SimpleTxn implements Txn {
 
 		switch (intSign(this.catid)) {
 		case 1:
-			return Category.getCategory(this.catid).name;
+			return MoneyMgrModel.getCategory(this.catid).name;
 		case -1:
 			return "[" + Account.getAccountByID(-this.catid).name + "]";
 		default:
@@ -361,6 +361,22 @@ public abstract class SimpleTxn implements Txn {
 
 	public void setMemo(String memo) {
 		this.memo = memo;
+	}
+
+	public Security getSecurity() {
+		return null;
+	}
+
+	public final int getSecurityId() {
+		Security sec = getSecurity();
+
+		return (sec != null) ? sec.secid : 0;
+	}
+
+	public final String getSecurityName() {
+		Security sec = getSecurity();
+
+		return (sec != null) ? sec.getName() : "";
 	}
 
 	/**

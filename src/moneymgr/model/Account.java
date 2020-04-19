@@ -56,10 +56,12 @@ public class Account {
 		return accounts.size();
 	}
 
+	/** Return list of accounts ordered by date - no nulls */
 	public static List<Account> getAccounts() {
 		return Collections.unmodifiableList(accounts);
 	}
 
+	/** Return list of accounts indexed by id - contains nulls */
 	public static List<Account> getAccountsById() {
 		return Collections.unmodifiableList(accountsByID);
 	}

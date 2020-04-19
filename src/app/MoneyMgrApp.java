@@ -29,6 +29,7 @@ public class MoneyMgrApp {
 //		}
 		Persistence persistence = new Persistence("/tmp/dietrich.mm");
 		persistence.save();
+		persistence.validate();
 
 		if (ENABLE_EXPERIMENTAL_CODE) {
 			InvestmentPerformanceModel model = new InvestmentPerformanceModel( //

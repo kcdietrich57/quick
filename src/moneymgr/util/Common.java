@@ -13,6 +13,7 @@ import app.QifDom;
 import moneymgr.model.Account;
 import moneymgr.model.Category;
 import moneymgr.model.GenericTxn;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.QPrice;
 
 /** Useful utility functions */
@@ -77,7 +78,7 @@ public class Common {
 			s = s.substring(slash + 1);
 		}
 
-		Category cat = Category.findCategory(s);
+		Category cat = MoneyMgrModel.findCategory(s);
 
 		return (cat != null) ? (cat.catid) : 0;
 	}
