@@ -49,7 +49,7 @@ class ISIOptionsChartData {
 	}
 
 	private void getData(List<StatusForOptionsModel> optionsData) {
-		Account optionsAccount = MoneyMgrModel.findAccount("ISI Options");
+		Account optionsAccount = MoneyMgrModel.currModel.findAccount("ISI Options");
 
 		this.dates = new QDate[optionsData.size()];
 		this.optionsValues = new double[1][optionsData.size()];

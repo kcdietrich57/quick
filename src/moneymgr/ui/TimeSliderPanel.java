@@ -136,7 +136,7 @@ public class TimeSliderPanel extends JPanel {
 		this.asOfDateSliderLabel.setFont(new Font("Helvetica", Font.BOLD, 18));
 		this.asOfDateSliderLabel.setForeground(Color.BLUE);
 		this.asOfDateSliderLabel.setPreferredSize(new Dimension(100, 20));
-		
+
 		JPanel pan = new JPanel(new BorderLayout());
 		pan.setBorder(new AbstractBorder() {
 			public Insets getBorderInsets(Component c) {
@@ -175,8 +175,8 @@ public class TimeSliderPanel extends JPanel {
 	}
 
 	private void createDateSlider() {
-		QDate start = MoneyMgrModel.getFirstTransactionDate();
-		QDate end = MoneyMgrModel.getLastTransactionDate();
+		QDate start = MoneyMgrModel.currModel.getFirstTransactionDate();
+		QDate end = MoneyMgrModel.currModel.getLastTransactionDate();
 		int years = (end.getYear() - start.getYear()) + 1;
 		int months = years * 12;
 
@@ -231,7 +231,7 @@ public class TimeSliderPanel extends JPanel {
 
 	/** Convert months since start of history to the date */
 	private QDate convertMonthsToDate(int months) {
-		int startyear = MoneyMgrModel.getFirstTransactionDate().getYear();
+		int startyear = MoneyMgrModel.currModel.getFirstTransactionDate().getYear();
 		QDate date = new QDate(startyear, 1, 1);
 		QDate sdate = date.addMonths(months);
 
@@ -242,7 +242,7 @@ public class TimeSliderPanel extends JPanel {
 	public static int convertDateToMonths(QDate date) {
 		int months = 0;
 
-		int year = MoneyMgrModel.getFirstTransactionDate().getYear();
+		int year = MoneyMgrModel.currModel.getFirstTransactionDate().getYear();
 		int y = date.getYear();
 
 		while (year < y) {

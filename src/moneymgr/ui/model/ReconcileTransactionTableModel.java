@@ -39,10 +39,10 @@ public class ReconcileTransactionTableModel //
 			this.curAccount = null;
 		} else if (obj instanceof Account) {
 			this.curStatement = null;
-			this.curAccount = (Account)obj;
+			this.curAccount = (Account) obj;
 		} else if (obj instanceof Statement) {
 			this.curStatement = (Statement) obj;
-			this.curAccount = MoneyMgrModel.getAccountByID(curStatement.acctid);
+			this.curAccount = MoneyMgrModel.currModel.getAccountByID(curStatement.acctid);
 		} else {
 			return;
 		}

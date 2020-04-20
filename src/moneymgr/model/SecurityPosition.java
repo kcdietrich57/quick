@@ -86,7 +86,7 @@ public class SecurityPosition {
 		 * transactions
 		 */
 		private void analyzeTransactions() {
-			int idx = MoneyMgrModel.getLastTransactionIndexOnOrBeforeDate( //
+			int idx = MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate( //
 					this.pos.transactions, this.start);
 			if (idx < 0) {
 				return;
@@ -244,7 +244,7 @@ public class SecurityPosition {
 
 	/** Check whether this position has any holdings on a given date */
 	public boolean isEmptyForDate(QDate d) {
-		int ii = MoneyMgrModel.getLastTransactionIndexOnOrBeforeDate(getTransactions(), d);
+		int ii = MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate(getTransactions(), d);
 
 		return (ii >= 0) && Common.isEffectivelyZero(this.shrBalance.get(ii));
 	}
@@ -457,12 +457,12 @@ public class SecurityPosition {
 	public BigDecimal getValueForDate(QDate d) {
 		return getValueForIndex( //
 				d, //
-				MoneyMgrModel.getLastTransactionIndexOnOrBeforeDate(this.transactions, d));
+				MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate(this.transactions, d));
 	}
 
 	/** Get shares held on a given date */
 	public BigDecimal getSharesForDate(QDate date) {
-		int idx = MoneyMgrModel.getLastTransactionIndexOnOrBeforeDate(this.transactions, date);
+		int idx = MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate(this.transactions, date);
 		return (idx >= 0) ? this.shrBalance.get(idx) : getStartingShares();
 	}
 

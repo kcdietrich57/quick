@@ -34,15 +34,15 @@ public class SecurityProcessor {
 			}
 
 			Security existing = (sec.symbol != null) //
-					? MoneyMgrModel.findSecurityBySymbol(sec.symbol) //
-					: MoneyMgrModel.findSecurityByName(sec.getName());
+					? MoneyMgrModel.currModel.findSecurityBySymbol(sec.symbol) //
+					: MoneyMgrModel.currModel.findSecurityByName(sec.getName());
 
 			if (existing != null) {
 				if (!existing.names.contains(sec.getName())) {
 					existing.names.add(sec.getName());
 				}
 			} else {
-				MoneyMgrModel.addSecurity(sec);
+				MoneyMgrModel.currModel.addSecurity(sec);
 			}
 		}
 	}
@@ -95,10 +95,10 @@ public class SecurityProcessor {
 	/** Process security txns (global, accounts) after loading from QIF */
 	public static void processSecurities() {
 		// Process global porfolio info
-		processSecurities2(SecurityPortfolio.portfolio, MoneyMgrModel.getAllTransactions());
+		processSecurities2(SecurityPortfolio.portfolio, MoneyMgrModel.currModel.getAllTransactions());
 
 		// Process holdings for each account
-		for (Account a : MoneyMgrModel.getAccounts()) {
+		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			if (a.isInvestmentAccount()) {
 				processSecurities2(a.securities, a.getTransactions());
 			}
@@ -141,7 +141,7 @@ public class SecurityProcessor {
 		// Load saved quote data
 		for (File f : quoteFiles) {
 			String symbol = f.getName().replaceFirst(".csv", "");
-			Security sec = MoneyMgrModel.findSecurityBySymbol(symbol);
+			Security sec = MoneyMgrModel.currModel.findSecurityBySymbol(symbol);
 
 			if (sec != null) {
 				QQuoteLoader.loadQuoteFile(sec, f);
@@ -149,7 +149,7 @@ public class SecurityProcessor {
 		}
 
 		// Download quotes from service
-		for (Security sec : MoneyMgrModel.getSecurities()) {
+		for (Security sec : MoneyMgrModel.currModel.getSecurities()) {
 			String symbol = sec.getSymbol();
 
 			if (symbol != null) {
@@ -188,7 +188,7 @@ public class SecurityProcessor {
 				break;
 			}
 
-			Security sec = MoneyMgrModel.getSecurity(price.secid);
+			Security sec = MoneyMgrModel.currModel.getSecurity(price.secid);
 			if (sec != null) {
 				sec.addPrice(price);
 			}

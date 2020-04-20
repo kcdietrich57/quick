@@ -26,7 +26,7 @@ public class AccountProcessor {
 				break;
 			}
 
-			MoneyMgrModel.currAccountBeingLoaded = acct;
+			MoneyMgrModel.currModel.currAccountBeingLoaded = acct;
 		}
 	}
 
@@ -45,7 +45,7 @@ public class AccountProcessor {
 
 			switch (qline.type) {
 			case EndOfSection:
-				return MoneyMgrModel.makeAccount(name, type, desc, closedate, statfreq, statdom);
+				return MoneyMgrModel.currModel.makeAccount(name, type, desc, closedate, statfreq, statdom);
 
 			case AcctType:
 				if (type == null) {

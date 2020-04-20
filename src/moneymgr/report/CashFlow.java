@@ -62,7 +62,7 @@ class CashFlowNode {
 	public void addTransaction(SimpleTxn txn) {
 		BigDecimal cash = txn.getCashAmount();
 		BigDecimal xfer = txn.getCashTransferAmount();
-		Account xacct = MoneyMgrModel.getAccountByID(txn.getCashTransferAcctid());
+		Account xacct = MoneyMgrModel.currModel.getAccountByID(txn.getCashTransferAcctid());
 
 		if (cash.signum() != 0 && xfer.signum() != 0) {
 			txn = null;
@@ -143,7 +143,7 @@ class CashFlowNode {
 		String ret = "";
 		boolean first = true;
 
-		for (Account xacct : MoneyMgrModel.getAccounts()) {
+		for (Account xacct : MoneyMgrModel.currModel.getAccounts()) {
 			BigDecimal inx = this.inxTotalForAccount.get(xacct);
 			BigDecimal outx = this.outxTotalForAccount.get(xacct);
 
@@ -276,13 +276,13 @@ public class CashFlow {
 
 		Map<Account, List<CashFlowNode>> nodes = new HashMap<>();
 
-		for (Account acct : MoneyMgrModel.getAccounts()) {
+		for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
 			if (acct.isOpenDuring(start, QDate.today())) {
 				buildCashFlowNode(nodes, acct, start);
 			}
 		}
 
-		for (Account acct : MoneyMgrModel.getAccounts()) {
+		for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
 			List<CashFlowNode> anodes = nodes.get(acct);
 			if (anodes == null) {
 				continue;
@@ -311,7 +311,7 @@ public class CashFlow {
 
 		System.out.println();
 
-		for (Account acct : MoneyMgrModel.getAccounts()) {
+		for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
 			List<CashFlowNode> anodes = nodes.get(acct);
 			if (anodes == null) {
 				continue;

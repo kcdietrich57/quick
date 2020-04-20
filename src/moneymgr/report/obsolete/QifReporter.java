@@ -17,7 +17,7 @@ public class QifReporter {
 		int reconciled = 0;
 		int unreconciled = 0;
 
-		for (GenericTxn t : MoneyMgrModel.getAllTransactions()) {
+		for (GenericTxn t : MoneyMgrModel.currModel.getAllTransactions()) {
 			if (t == null) {
 				++nullt;
 			} else if (t.stmtdate != null) {

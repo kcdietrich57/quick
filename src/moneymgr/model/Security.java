@@ -72,7 +72,7 @@ public class Security {
 
 	/** Constructor - quicken-style info */
 	public Security(String symbol, String name, String type, String goal) {
-		this.secid = MoneyMgrModel.nextSecurityId();
+		this.secid = MoneyMgrModel.currModel.nextSecurityId();
 
 		this.symbol = (symbol != null) ? symbol : name;
 
@@ -109,7 +109,7 @@ public class Security {
 	}
 
 	public static void fixSplits() {
-		for (Security sec : MoneyMgrModel.getSecurities()) {
+		for (Security sec : MoneyMgrModel.currModel.getSecurities()) {
 			sec.splits.clear();
 			StockSplitInfo last = null;
 

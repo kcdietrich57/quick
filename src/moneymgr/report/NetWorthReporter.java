@@ -134,7 +134,7 @@ public class NetWorthReporter {
 
 		b.date = d;
 
-		for (Account a : MoneyMgrModel.getAccounts()) {
+		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			final BigDecimal amt = a.getValueForDate(d);
 
 			b.netWorth = b.netWorth.add(amt);

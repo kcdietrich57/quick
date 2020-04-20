@@ -74,7 +74,7 @@ public class QifLoader {
 				} else {
 					final String aname = s.substring(1).trim();
 
-					final Account a = MoneyMgrModel.findAccount(aname);
+					final Account a = MoneyMgrModel.currModel.findAccount(aname);
 					if (a != null) {
 						AccountReporter.reportStatus(a, "m");
 					}
@@ -101,7 +101,7 @@ public class QifLoader {
 			} else if (s.startsWith("g")) {
 				final String aname = s.substring(1).trim();
 
-				Account a = MoneyMgrModel.findAccount(aname);
+				Account a = MoneyMgrModel.currModel.findAccount(aname);
 				if (a != null) {
 					QifReporter.generateMonthlyStatements(a);
 				}

@@ -42,11 +42,11 @@ public class CategoryProcessor {
 					return false;
 				}
 
-				Category cat = MoneyMgrModel.findCategory(name);
+				Category cat = MoneyMgrModel.currModel.findCategory(name);
 
 				if (cat == null) {
 					cat = new Category(name, desc, isExpense);
-					MoneyMgrModel.addCategory(cat);
+					MoneyMgrModel.currModel.addCategory(cat);
 				}
 
 				return true;

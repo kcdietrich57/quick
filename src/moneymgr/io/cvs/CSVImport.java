@@ -136,24 +136,24 @@ public class CSVImport {
 
 		System.out.println("Processing csv file");
 
-		MoneyMgrModel.isAlternativeImport = true;
+		MoneyMgrModel.currModel.isAlternativeImport = true;
 
 		System.out.println(String.format("There are %d transactions from DIETRICH.QIF", //
-				MoneyMgrModel.getAllTransactions().size()));
+				MoneyMgrModel.currModel.getAllTransactions().size()));
 
 		CSVImport.importCSV(importDir + "DIETRICH.csv");
 
 		System.out.println(String.format("After import, there are now %d transactions from DIETRICH.QIF", //
-				MoneyMgrModel.getAllTransactions().size()));
-		Collections.sort(MoneyMgrModel.alternateTransactions, new Comparator<GenericTxn>() {
+				MoneyMgrModel.currModel.getAllTransactions().size()));
+		Collections.sort(MoneyMgrModel.currModel.alternateTransactions, new Comparator<GenericTxn>() {
 			public int compare(GenericTxn o1, GenericTxn o2) {
 				return o1.getDate().compareTo(o2.getDate());
 			}
 		});
 
-		List<GenericTxn> txns = MoneyMgrModel.alternateTransactions;
+		List<GenericTxn> txns = MoneyMgrModel.currModel.alternateTransactions;
 		System.out.println(String.format("There are %d transactions from MAC export", //
-				MoneyMgrModel.alternateTransactions.size()));
+				MoneyMgrModel.currModel.alternateTransactions.size()));
 	}
 
 	/** Map MAC tx to WIN tx */
@@ -207,7 +207,7 @@ public class CSVImport {
 				String msg = "\n" + msgs[ii] + "\n-------------------------------------";
 				out.println(msg);
 
-				for (Account acct : MoneyMgrModel.getAccounts()) {
+				for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
 					List<TransactionInfo> tuples = this.transactionsMap.get(acct.name);
 					if (tuples == null) {
 						continue;
@@ -263,7 +263,7 @@ public class CSVImport {
 
 			int unmatchedWindowsTxns = 0;
 
-			for (GenericTxn gtx : MoneyMgrModel.getAllTransactions()) {
+			for (GenericTxn gtx : MoneyMgrModel.currModel.getAllTransactions()) {
 				if (!isWinTxnMatched(gtx, true)) {
 //					out.println(gtx.toString());
 					++unmatchedWindowsTxns;
@@ -308,7 +308,7 @@ public class CSVImport {
 
 		out.println("\nUnrecognized Categories\n=====================");
 		for (String catName : cats) {
-			Category cat = MoneyMgrModel.findCategory(catName);
+			Category cat = MoneyMgrModel.currModel.findCategory(catName);
 
 			if (cat == null) {
 				out.println(catName);
@@ -338,7 +338,7 @@ public class CSVImport {
 
 		out.println("\nUnrecognized Accounts\n=====================");
 		for (String acctName : accts) {
-			Account acct = MoneyMgrModel.findAccount(acctName);
+			Account acct = MoneyMgrModel.currModel.findAccount(acctName);
 
 			if (acct == null) {
 				out.println(acctName);
@@ -368,7 +368,7 @@ public class CSVImport {
 
 		out.println("\nUnrecognized Security\n=====================");
 		for (String secName : secNames) {
-			Security sec = MoneyMgrModel.findSecurity(secName);
+			Security sec = MoneyMgrModel.currModel.findSecurity(secName);
 
 			if (sec == null) {
 				out.println(secName);
@@ -460,11 +460,11 @@ public class CSVImport {
 
 		infoMessage(mactxn.toString());
 
-		Account acct = MoneyMgrModel.getAccountByID(mactxn.getAccountID());
-		List<SimpleTxn> txns = MoneyMgrModel.findMatchingTransactions(acct, mactxn);
+		Account acct = MoneyMgrModel.currModel.getAccountByID(mactxn.getAccountID());
+		List<SimpleTxn> txns = MoneyMgrModel.currModel.findMatchingTransactions(acct, mactxn);
 
 		if (txns.isEmpty()) {
-			txns = MoneyMgrModel.findMatchingTransactions(acct, mactxn);
+			txns = MoneyMgrModel.currModel.findMatchingTransactions(acct, mactxn);
 		}
 		for (Iterator<SimpleTxn> iter = txns.iterator(); iter.hasNext();) {
 			if (isMatched(iter.next())) {
@@ -565,10 +565,10 @@ public class CSVImport {
 				} else if (cat.contentEquals("Tesla Loan")) {
 					cat = "TeslaLoan";
 				}
-				xferAcct = MoneyMgrModel.findAccount(cat);
+				xferAcct = MoneyMgrModel.currModel.findAccount(cat);
 				catid = (xferAcct != null) ? -xferAcct.acctid : 0;
 			} else {
-				c = (!cat.isEmpty()) ? MoneyMgrModel.findCategory(cat) : null;
+				c = (!cat.isEmpty()) ? MoneyMgrModel.currModel.findCategory(cat) : null;
 				catid = (c != null) ? c.catid : 0;
 			}
 
@@ -632,7 +632,7 @@ public class CSVImport {
 				}
 
 				if (itxn.getCashTransferAcctid() > 0) {
-					itxn.accountForTransfer = MoneyMgrModel.getAccountByID(itxn.getCashTransferAcctid()).name;
+					itxn.accountForTransfer = MoneyMgrModel.currModel.getAccountByID(itxn.getCashTransferAcctid()).name;
 					itxn.setAction((inflow.isEmpty()) ? TxAction.XOUT : TxAction.XIN);
 					itxn.cashTransferred = amount;
 				} else {
@@ -645,7 +645,7 @@ public class CSVImport {
 						: Common.getDecimal(fees);
 				itxn.price = BigDecimal.ZERO;
 				if (!sec.isEmpty()) {
-					itxn.security = MoneyMgrModel.findSecurity(sec);
+					itxn.security = MoneyMgrModel.currModel.findSecurity(sec);
 				}
 
 				// 0.42 shares @ 1.00

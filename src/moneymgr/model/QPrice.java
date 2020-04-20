@@ -68,7 +68,7 @@ public class QPrice implements Comparable<QPrice> {
 			Common.reportError("syntax error for price");
 		}
 
-		Security sec = MoneyMgrModel.findSecurity(sym);
+		Security sec = MoneyMgrModel.currModel.findSecurity(sym);
 		final String pricestr = s.substring(1, idx);
 		final BigDecimal price = Common.parsePrice(pricestr);
 

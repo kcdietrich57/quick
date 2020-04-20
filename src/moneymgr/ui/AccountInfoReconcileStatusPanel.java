@@ -128,7 +128,7 @@ public class AccountInfoReconcileStatusPanel extends JPanel //
 		MainWindow.instance.reconcileTransactionsPanel.finishStatement();
 
 		Statement stmt = MainWindow.instance.reconcileTransactionsPanel.createNextStatementToReconcile();
-		Account acct = MoneyMgrModel.getAccountByID(stmt.acctid);
+		Account acct = MoneyMgrModel.currModel.getAccountByID(stmt.acctid);
 
 		// Update list of statements to include the new statement
 		MainWindow.instance.statementPanel.accountSelected(acct, true);

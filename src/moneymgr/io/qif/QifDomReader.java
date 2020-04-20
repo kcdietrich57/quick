@@ -135,7 +135,7 @@ public class QifDomReader {
 				break;
 
 			case Statements:
-				 StatementProcessor.loadStatements(this, this.curFile);
+				StatementProcessor.loadStatements(this, this.curFile);
 				break;
 
 			case Security:

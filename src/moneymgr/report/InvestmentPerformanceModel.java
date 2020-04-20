@@ -251,7 +251,7 @@ public class InvestmentPerformanceModel {
 		this.startStatusModel = new StatusForDateModel(startDate);
 		this.endStatusModel = new StatusForDateModel(endDate);
 
-		this.txns = MoneyMgrModel.getInvestmentTransactions(startDate, endDate);
+		this.txns = MoneyMgrModel.currModel.getInvestmentTransactions(startDate, endDate);
 
 		build();
 	}
@@ -341,7 +341,7 @@ public class InvestmentPerformanceModel {
 
 		List<AccountSummary> asums = new ArrayList<AccountSummary>();
 
-		for (Account a : MoneyMgrModel.getAccounts()) {
+		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			if (!a.isInvestmentAccount() //
 					|| (a.getOpenDate().compareTo(endDate()) >= 0) //
 					|| (a.closeDate != null && a.closeDate.compareTo(startDate()) <= 0)) {

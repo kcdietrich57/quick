@@ -19,7 +19,7 @@ public class TransactionProcessor {
 	}
 
 	public void loadInvestmentTransactions() {
-		if (!MoneyMgrModel.currAccountBeingLoaded.isInvestmentAccount()) {
+		if (!MoneyMgrModel.currModel.currAccountBeingLoaded.isInvestmentAccount()) {
 			loadNonInvestmentTransactions();
 			return;
 		}
@@ -43,17 +43,17 @@ public class TransactionProcessor {
 				txn.security.addTransaction(txn);
 			}
 
-			MoneyMgrModel.currAccountBeingLoaded.addTransaction(txn);
+			MoneyMgrModel.currModel.currAccountBeingLoaded.addTransaction(txn);
 		}
 	}
 
 	private InvestmentTxn loadInvestmentTransaction() {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
-		TransactionInfo tinfo = new TransactionInfo(MoneyMgrModel.currAccountBeingLoaded);
+		TransactionInfo tinfo = new TransactionInfo(MoneyMgrModel.currModel.currAccountBeingLoaded);
 
 		// TODO gather info and create transaction at the end
-		InvestmentTxn txn = new InvestmentTxn(MoneyMgrModel.currAccountBeingLoaded.acctid);
+		InvestmentTxn txn = new InvestmentTxn(MoneyMgrModel.currModel.currAccountBeingLoaded.acctid);
 
 		for (;;) {
 			this.qrdr.getFileReader().nextInvLine(qline);
@@ -106,9 +106,9 @@ public class TransactionProcessor {
 				tinfo.setValue(TransactionInfo.SHARES_IDX, qline.value);
 				break;
 			case InvSecurity:
-				txn.security = MoneyMgrModel.findSecurityByName(qline.value);
+				txn.security = MoneyMgrModel.currModel.findSecurityByName(qline.value);
 				if (txn.security == null) {
-					txn.security = MoneyMgrModel.findSecurityByName(qline.value);
+					txn.security = MoneyMgrModel.currModel.findSecurityByName(qline.value);
 					Common.reportWarning("Txn for acct " + txn.getAccountID() + ". " //
 							+ "No security '" + qline.value + "' was found.");
 				}
@@ -129,7 +129,7 @@ public class TransactionProcessor {
 				txn.setCatid(catid);
 				tinfo.setValue(TransactionInfo.CATEGORY_IDX, qline.value);
 			}
-			tinfo.setValue(TransactionInfo.XACCOUNT_IDX, qline.value);
+				tinfo.setValue(TransactionInfo.XACCOUNT_IDX, qline.value);
 				break;
 
 			default:
@@ -139,18 +139,18 @@ public class TransactionProcessor {
 	}
 
 	public void loadNonInvestmentTransactions() {
-		if (MoneyMgrModel.currAccountBeingLoaded.isInvestmentAccount()) {
+		if (MoneyMgrModel.currModel.currAccountBeingLoaded.isInvestmentAccount()) {
 			loadInvestmentTransactions();
 			return;
 		}
 
 		for (;;) {
-			 String s = this.qrdr.getFileReader().peekLine();
+			String s = this.qrdr.getFileReader().peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			 NonInvestmentTxn txn = loadNonInvestmentTransaction();
+			NonInvestmentTxn txn = loadNonInvestmentTransaction();
 			if (txn == null) {
 				break;
 			}
@@ -161,17 +161,17 @@ public class TransactionProcessor {
 
 			txn.verifySplit();
 
-			MoneyMgrModel.currAccountBeingLoaded.addTransaction(txn);
+			MoneyMgrModel.currModel.currAccountBeingLoaded.addTransaction(txn);
 		}
 	}
 
 	private NonInvestmentTxn loadNonInvestmentTransaction() {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
-		TransactionInfo tinfo = new TransactionInfo(MoneyMgrModel.currAccountBeingLoaded);
+		TransactionInfo tinfo = new TransactionInfo(MoneyMgrModel.currModel.currAccountBeingLoaded);
 
 		// TODO gather info and create transaction at the end
-		NonInvestmentTxn txn = new NonInvestmentTxn(MoneyMgrModel.currAccountBeingLoaded.acctid);
+		NonInvestmentTxn txn = new NonInvestmentTxn(MoneyMgrModel.currModel.currAccountBeingLoaded.acctid);
 		SplitTxn cursplit = null;
 
 		for (;;) {

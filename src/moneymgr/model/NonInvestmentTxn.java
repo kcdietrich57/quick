@@ -145,7 +145,7 @@ public class NonInvestmentTxn extends GenericTxn {
 		QDate d = getDate();
 		s += ((d != null) ? d.toString() : "null");
 		s += " Tx" + this.txid + ":   ";
-		Account a = MoneyMgrModel.getAccountByID(getAccountID());
+		Account a = MoneyMgrModel.currModel.getAccountByID(getAccountID());
 		s += ((a != null) ? a.name : "null");
 		if (this.chkNumber != null && !this.chkNumber.isEmpty()) {
 			s += " num=" + this.chkNumber;

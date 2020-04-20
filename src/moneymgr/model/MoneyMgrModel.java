@@ -17,13 +17,15 @@ import moneymgr.util.QDate;
 
 /** Class comprising the complete MoneyManager data model */
 public class MoneyMgrModel {
-	private static final List<Category> categories = new ArrayList<>();
+	public static MoneyMgrModel currModel = new MoneyMgrModel();
 
-	public static int getNextCategoryID() {
+	private final List<Category> categories = new ArrayList<>();
+
+	public int getNextCategoryID() {
 		return (categories.isEmpty()) ? 1 : categories.size();
 	}
 
-	public static void addCategory(Category cat) {
+	public void addCategory(Category cat) {
 		assert (findCategory(cat.name) == null);
 
 		while (categories.size() <= cat.catid) {
@@ -33,13 +35,13 @@ public class MoneyMgrModel {
 		categories.set(cat.catid, cat);
 	}
 
-	public static Category getCategory(int catid) {
+	public Category getCategory(int catid) {
 		return ((catid > 0) && (catid < categories.size())) //
 				? categories.get(catid) //
 				: null;
 	}
 
-	public static Category findCategory(String name) {
+	public Category findCategory(String name) {
 		if (!name.isEmpty()) {
 			for (Category cat : categories) {
 				if ((cat != null) && cat.name.equals(name)) {
@@ -54,20 +56,20 @@ public class MoneyMgrModel {
 	// -------------------------------------
 
 	/** Map symbol to security */
-	private static final Map<String, Security> securities = new HashMap<>();
+	private final Map<String, Security> securities = new HashMap<>();
 
-	public static int nextSecurityId() {
+	public int nextSecurityId() {
 		return securities.size() + 1;
 	}
 
 	/** Securities indexed by ID */
-	private static final List<Security> securitiesByID = new ArrayList<>();
+	private final List<Security> securitiesByID = new ArrayList<>();
 
-	public static Collection<Security> getSecurities() {
+	public Collection<Security> getSecurities() {
 		return Collections.unmodifiableCollection(securities.values());
 	}
 
-	public static List<Security> getSecuritiesById() {
+	public List<Security> getSecuritiesById() {
 		return Collections.unmodifiableList(securitiesByID);
 	}
 
@@ -75,7 +77,7 @@ public class MoneyMgrModel {
 	 * Introduce a new security - checks for already existing security first.<br>
 	 * It is an error if the name or symbol is already used.
 	 */
-	public static void addSecurity(Security sec) {
+	public void addSecurity(Security sec) {
 		Security existingByName = findSecurityByName(sec.getName());
 		if (existingByName != null) {
 			Common.reportError("Adding duplicate security name '" + sec.getName() + "'");
@@ -99,12 +101,12 @@ public class MoneyMgrModel {
 		securities.put(sec.symbol.toUpperCase(), sec);
 	}
 
-	public static Security getSecurity(int secid) {
+	public Security getSecurity(int secid) {
 		return securitiesByID.get(secid);
 	}
 
 	/** Look up a security whose name or symbol matches an input string. */
-	public static Security findSecurity(String nameOrSymbol) {
+	public Security findSecurity(String nameOrSymbol) {
 		final Security s = findSecurityBySymbol(nameOrSymbol);
 
 		return (s != null) ? s : findSecurityByName(nameOrSymbol);
@@ -114,7 +116,7 @@ public class MoneyMgrModel {
 	 * Look up a security whose name matches an input string.<br>
 	 * Quicken windows QIF export uses security name, not symbol.
 	 */
-	public static Security findSecurityByName(String name) {
+	public Security findSecurityByName(String name) {
 		for (Security sec : securities.values()) {
 			if ((sec != null) && sec.names.contains(name)) {
 				return sec;
@@ -125,22 +127,22 @@ public class MoneyMgrModel {
 	}
 
 	/** Look up a security whose symbol matches an input string. */
-	public static Security findSecurityBySymbol(String sym) {
+	public Security findSecurityBySymbol(String sym) {
 		return securities.get(sym.toUpperCase());
 	}
 
 	// -------------------------------------
 
 	/** Account list ordered by first/last txn dates (no gaps/nulls) */
-	private static final List<Account> accounts = new ArrayList<>();
+	private final List<Account> accounts = new ArrayList<>();
 
 	/** Account list indexed by acctid (size > numAccounts, may have gaps/nulls) */
-	private static final List<Account> accountsByID = new ArrayList<>();
+	private final List<Account> accountsByID = new ArrayList<>();
 
 	/** Tracks current context as we are loading */
-	public static Account currAccountBeingLoaded = null;
+	public Account currAccountBeingLoaded = null;
 
-	public static Account makeAccount( //
+	public Account makeAccount( //
 			String name, AccountType type, String desc, QDate closeDate, //
 			int statFreq, int statDayOfMonth) {
 		Account acct = findAccount(name);
@@ -157,34 +159,34 @@ public class MoneyMgrModel {
 		return acct;
 	}
 
-	public static int nextAccountID() {
+	public int nextAccountID() {
 		return (accountsByID.isEmpty()) ? 1 : accountsByID.size();
 	}
 
-	public static int getNumAccounts() {
+	public int getNumAccounts() {
 		return accounts.size();
 	}
 
 	/** Return list of accounts ordered by date - no nulls */
-	public static List<Account> getAccounts() {
+	public List<Account> getAccounts() {
 		return Collections.unmodifiableList(accounts);
 	}
 
 	/** Return list of accounts indexed by id - contains nulls */
-	public static List<Account> getAccountsById() {
+	public List<Account> getAccountsById() {
 		return Collections.unmodifiableList(accountsByID);
 	}
 
-	public static Account getAccountByID(int acctid) {
+	public Account getAccountByID(int acctid) {
 		return accountsByID.get(acctid);
 	}
 
 	/** Get Account list sorted on isOpen|type|name */
-	public static List<Account> getSortedAccounts(boolean showToday) {
+	public List<Account> getSortedAccounts(boolean showToday) {
 		List<Account> accts = new ArrayList<>();
 		QDate thedate = (showToday) ? QDate.today() : MainWindow.instance.asOfDate();
 
-		for (Account acct : MoneyMgrModel.getAccounts()) {
+		for (Account acct : getAccounts()) {
 			if (acct.isOpenAsOf(thedate)) {
 				accts.add(acct);
 			}
@@ -200,7 +202,7 @@ public class MoneyMgrModel {
 	}
 
 	/** Look up an account by name */
-	public static Account findAccount(String name) {
+	public Account findAccount(String name) {
 		name = name.toLowerCase();
 
 		for (Account acct : getAccounts()) {
@@ -219,27 +221,27 @@ public class MoneyMgrModel {
 	}
 
 	/** Add an account, maintaining proper ordering in the list(s) */
-	public static void addAccount(Account acct) {
+	public void addAccount(Account acct) {
 		if (acct.acctid == 0) {
 			Common.reportError("Account '" + acct.name + "' has zero acctid");
 		}
 
-		while (accountsByID.size() <= acct.acctid) {
-			accountsByID.add(null);
+		while (this.accountsByID.size() <= acct.acctid) {
+			this.accountsByID.add(null);
 		}
 
-		accountsByID.set(acct.acctid, acct);
-		accounts.add(acct);
+		this.accountsByID.set(acct.acctid, acct);
+		this.accounts.add(acct);
 
-		MoneyMgrModel.currAccountBeingLoaded = acct;
+		this.currAccountBeingLoaded = acct;
 
-		Collections.sort(accounts, (a1, a2) -> {
+		Collections.sort(this.accounts, (a1, a2) -> {
 			return compareAccountsByTxnDateAndName(a1, a2);
 		});
 	}
 
 	/** Compare two accounts by date of first and last transaction, then name */
-	private static int compareAccountsByTxnDateAndName(Account a1, Account a2) {
+	private int compareAccountsByTxnDateAndName(Account a1, Account a2) {
 		if (a1 == null) {
 			return (a2 == null) ? 0 : 1;
 		} else if (a2 == null) {
@@ -277,7 +279,7 @@ public class MoneyMgrModel {
 	}
 
 	/** Compare two accounts by date of first and last transaction, then name */
-	private static int compareAccountsByTypeAndName(Account a1, Account a2) {
+	private int compareAccountsByTypeAndName(Account a1, Account a2) {
 		int diff;
 
 		if (a1.type != a2.type) {
@@ -306,7 +308,7 @@ public class MoneyMgrModel {
 	 * Find existing transaction(s) that match a transaction being loaded.<br>
 	 * Date is close, amount matches (or the amount of a split).
 	 */
-	public static List<SimpleTxn> findMatchingTransactions(Account acct, SimpleTxn tx) {
+	public List<SimpleTxn> findMatchingTransactions(Account acct, SimpleTxn tx) {
 		List<SimpleTxn> ret = Account.findMatchingTransactions(acct, tx, false);
 
 		if (ret.size() > 1) {
@@ -338,7 +340,6 @@ public class MoneyMgrModel {
 			SimpleTxn checktx = null;
 
 			for (SimpleTxn stx : ret) {
-//				System.out.println("xyzzy " + tx.toString());
 				SimpleTxn mtxn = getMatchTx(tx, stx);
 
 				if (mtxn.getMemo().equals(tx.getMemo())) {
@@ -392,7 +393,7 @@ public class MoneyMgrModel {
 		return ret;
 	}
 
-	public static SimpleTxn getMatchTx(SimpleTxn tx, SimpleTxn matchtxn) {
+	public SimpleTxn getMatchTx(SimpleTxn tx, SimpleTxn matchtxn) {
 		if (Common.isEffectivelyEqual(tx.getAmount().abs(), matchtxn.getAmount().abs())) {
 			return matchtxn;
 		}
@@ -428,81 +429,90 @@ public class MoneyMgrModel {
 	}
 
 	/** All transactions indexed by ID. May contain gaps/null values */
-	private static final List<GenericTxn> allTransactionsByID = new ArrayList<>();
+	private final List<GenericTxn> allTransactionsByID = new ArrayList<>();
 
 	/** All transactions sorted by date. Will not contain null values */
-	public static final List<GenericTxn> allTransactionsByDate = new ArrayList<>();
+	public final List<GenericTxn> allTransactionsByDate = new ArrayList<>();
 
 	/**
 	 * For testing alternative import methods, setting this to true will redirect
 	 * the imported data to an location separate from the primary data structures,
 	 * for comparison purposes.
 	 */
-	public static boolean isAlternativeImport = false;
+	public boolean isAlternativeImport = false;
 
 	/**
 	 * A list of transactions from alternative import methods, in order of import.
 	 */
-	public static final List<GenericTxn> alternateTransactions = new ArrayList<>();
+	public final List<GenericTxn> alternateTransactions = new ArrayList<>();
 
 	/** Compare two transactions by date, ascending */
-	private static final Comparator<GenericTxn> compareByDate = new Comparator<GenericTxn>() {
+	private final Comparator<GenericTxn> compareByDate = new Comparator<GenericTxn>() {
 		public int compare(GenericTxn o1, GenericTxn o2) {
 			return o1.getDate().subtract(o2.getDate());
 		}
 	};
 
 	/** Dummy transaction for binary search */
-	public static final GenericTxn SEARCH;
-	static {
-		SEARCH = new NonInvestmentTxn(0);
-		allTransactionsByID.remove(SEARCH.txid);
-		allTransactionsByDate.remove(SEARCH);
+	private static GenericTxn SEARCH_TX;
+
+	public static GenericTxn SEARCH() {
+		if (SEARCH_TX == null) {
+			SEARCH_TX = new NonInvestmentTxn(0);
+//			this.allTransactionsByID.remove(SEARCH.txid);
+//			this.allTransactionsByDate.remove(SEARCH);
+		}
+
+		return SEARCH_TX;
 	}
 
 	/** Return transaction list indexed by ID */
-	public static List<GenericTxn> getAllTransactions() {
+	public List<GenericTxn> getAllTransactions() {
 		return Collections.unmodifiableList(allTransactionsByID);
 	}
 
 	/** Return transaction list ordered by ascending date */
-	public static List<GenericTxn> getTransactionsByDate() {
+	public List<GenericTxn> getTransactionsByDate() {
 		return Collections.unmodifiableList(allTransactionsByDate);
 	}
 
 	/** Add a new transaction to the appropriate collection(s) */
-	public static void addTransaction(GenericTxn txn) {
-		if (MoneyMgrModel.isAlternativeImport) {
-			MoneyMgrModel.alternateTransactions.add(txn);
+	public void addTransaction(GenericTxn txn) {
+		if (txn.txid <= 0) {
+			return;
+		}
+
+		if (this.isAlternativeImport) {
+			this.alternateTransactions.add(txn);
 		} else {
-			while (MoneyMgrModel.allTransactionsByID.size() < (txn.txid + 1)) {
-				MoneyMgrModel.allTransactionsByID.add(null);
+			while (this.allTransactionsByID.size() < (txn.txid + 1)) {
+				this.allTransactionsByID.add(null);
 			}
 
-			MoneyMgrModel.allTransactionsByID.set(txn.txid, txn);
+			this.allTransactionsByID.set(txn.txid, txn);
 
 			if (txn.getDate() != null) {
-				MoneyMgrModel.addTransactionDate(txn);
+				addTransactionDate(txn);
 			}
 		}
 	}
 
 	/** Insert a transaction into the date-sorted list */
-	public static void addTransactionDate(GenericTxn txn) {
+	public void addTransactionDate(GenericTxn txn) {
 		int idx = getTransactionInsertIndexByDate(allTransactionsByDate, txn);
 
 		allTransactionsByDate.add(idx, txn);
 	}
 
 	/** Return the date of the earliest transaction */
-	public static QDate getFirstTransactionDate() {
+	public QDate getFirstTransactionDate() {
 		return (allTransactionsByDate.isEmpty()) //
 				? null //
 				: allTransactionsByDate.get(0).getDate();
 	}
 
 	/** Return the date of the last transaction */
-	public static QDate getLastTransactionDate() {
+	public QDate getLastTransactionDate() {
 		return (allTransactionsByDate == null || allTransactionsByDate.isEmpty()) //
 				? null //
 				: allTransactionsByDate.get(allTransactionsByDate.size() - 1).getDate();
@@ -514,7 +524,7 @@ public class MoneyMgrModel {
 	 * @param start Earliest date to include
 	 * @param end   Latest date to include
 	 */
-	public static List<GenericTxn> getInvestmentTransactions(QDate start, QDate end) {
+	public List<GenericTxn> getInvestmentTransactions(QDate start, QDate end) {
 		List<GenericTxn> txns = new ArrayList<>();
 
 		for (GenericTxn txn : getTransactions(start, end)) {
@@ -532,7 +542,7 @@ public class MoneyMgrModel {
 	 * @param start Earliest date to include
 	 * @param end   Latest date to include
 	 */
-	private static List<GenericTxn> getTransactions(QDate start, QDate end) {
+	private List<GenericTxn> getTransactions(QDate start, QDate end) {
 		// TODO Why not firstOnOrAfter(start) to lastOnOrBefore(end)?????
 		int idx1 = getFirstTransactionIndexByDate(allTransactionsByDate, start);
 		int idx2 = getLastTransactionIndexByDate(allTransactionsByDate, end);
@@ -570,7 +580,7 @@ public class MoneyMgrModel {
 	 * Return the index of the last transaction on or prior to a given date.<br>
 	 * Return -1 if there is no such transaction.
 	 */
-	public static int getLastTransactionIndexOnOrBeforeDate( //
+	public int getLastTransactionIndexOnOrBeforeDate( //
 			List<? extends GenericTxn> txns, QDate d) {
 		if (txns.isEmpty()) {
 			return -1;
@@ -581,29 +591,29 @@ public class MoneyMgrModel {
 			return idx;
 		}
 
-		idx = getTransactionInsertIndexByDate(txns, SEARCH);
+		idx = getTransactionInsertIndexByDate(txns, SEARCH());
 
 		return (idx > 0) ? idx - 1 : -1;
 	}
 
 	/** Return the index of the first transaction on a date. (<0 if none) */
-	private static int getFirstTransactionIndexByDate( //
+	private int getFirstTransactionIndexByDate( //
 			List<? extends GenericTxn> txns, QDate date) {
-		SEARCH.setDate(date);
+		SEARCH().setDate(date);
 
-		return getTransactionIndexByDate(txns, SEARCH, TxIndexType.FIRST);
+		return getTransactionIndexByDate(txns, SEARCH(), TxIndexType.FIRST);
 	}
 
 	/** Return the index of the last transaction on a date. (<0 if none) */
-	private static int getLastTransactionIndexByDate( //
+	private int getLastTransactionIndexByDate( //
 			List<? extends GenericTxn> txns, QDate date) {
-		SEARCH.setDate(date);
+		SEARCH().setDate(date);
 
-		return getTransactionIndexByDate(txns, SEARCH, TxIndexType.LAST);
+		return getTransactionIndexByDate(txns, SEARCH(), TxIndexType.LAST);
 	}
 
 	/** Return the index for inserting a transaction into a list sorted by date */
-	public static int getTransactionInsertIndexByDate( //
+	public int getTransactionInsertIndexByDate( //
 			List<? extends GenericTxn> txns, GenericTxn txn) {
 		return getTransactionIndexByDate(txns, txn, TxIndexType.INSERT);
 	}
@@ -616,11 +626,11 @@ public class MoneyMgrModel {
 	 *               otherwise, the point after all txns on the date.
 	 * @return Index for insert (cannot be negative)
 	 */
-	private static int getTransactionInsertIndexByDate( //
+	private int getTransactionInsertIndexByDate( //
 			List<? extends GenericTxn> txns, QDate date) {
-		SEARCH.setDate(date);
+		SEARCH().setDate(date);
 
-		return getTransactionIndexByDate(txns, SEARCH, TxIndexType.INSERT);
+		return getTransactionIndexByDate(txns, SEARCH(), TxIndexType.INSERT);
 	}
 
 	/**
@@ -632,7 +642,7 @@ public class MoneyMgrModel {
 	 *                    If INSERT the index after all txns on or before the date.
 	 * @return Index; -(insert index + 1) if FIRST/LAST and no match exists
 	 */
-	private static int getTransactionIndexByDate(List<? extends GenericTxn> txns, GenericTxn txn, TxIndexType which) {
+	private int getTransactionIndexByDate(List<? extends GenericTxn> txns, GenericTxn txn, TxIndexType which) {
 		if (txns.isEmpty()) {
 			return (which == TxIndexType.INSERT) ? 0 : -1;
 		}
@@ -714,15 +724,15 @@ public class MoneyMgrModel {
 
 	// -------------------------------------
 
-	public static int nextlotid = 1;
+	public int nextlotid = 1;
 
-	public final static List<Lot> lots = new ArrayList<Lot>();
+	public List<Lot> lots = new ArrayList<Lot>();
 
-	public static final List<Lot> getLots() {
-		return Collections.unmodifiableList(MoneyMgrModel.lots);
+	public final List<Lot> getLots() {
+		return Collections.unmodifiableList(this.lots);
 	}
 
 	// -------------------------------------
 
-	public static final List<StockOption> options = new ArrayList<>();
+	public final List<StockOption> options = new ArrayList<>();
 }

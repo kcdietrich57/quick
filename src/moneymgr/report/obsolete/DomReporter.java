@@ -34,7 +34,7 @@ public class DomReporter {
 		System.out.println("Accounts");
 		System.out.println("============================");
 
-		for (Account a : MoneyMgrModel.getAccounts()) {
+		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			if (!a.isInvestmentAccount() || //
 					Common.isEffectivelyZero(a.balance)) {
 				continue;
@@ -188,7 +188,7 @@ public class DomReporter {
 					System.out.println(String.format( //
 							"  %-12s  %-20s  %-10s  %s  %s", //
 							t.getDate().toString(), //
-							MoneyMgrModel.getAccountByID(t.getAccountID()).name, //
+							MoneyMgrModel.currModel.getAccountByID(t.getAccountID()).name, //
 							t.getAction().toString(), //
 							Common.formatAmount3(t.getShares()), //
 							Common.formatAmount3(shrbal)));

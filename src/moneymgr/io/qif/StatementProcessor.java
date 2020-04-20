@@ -50,7 +50,7 @@ public class StatementProcessor {
 			List<Statement> stmts = loadStatementsSection(qrdr.getFileReader());
 
 			for (Statement stmt : stmts) {
-				Account a = MoneyMgrModel.currAccountBeingLoaded;
+				Account a = MoneyMgrModel.currModel.currAccountBeingLoaded;
 				a.statements.add(stmt);
 			}
 		}
@@ -71,12 +71,12 @@ public class StatementProcessor {
 
 			case StmtsAccount: {
 				String aname = qline.value;
-				Account a = MoneyMgrModel.findAccount(aname);
+				Account a = MoneyMgrModel.currModel.findAccount(aname);
 				if (a == null) {
 					Common.reportError("Can't find account: " + aname);
 				}
 
-				MoneyMgrModel.currAccountBeingLoaded = a;
+				MoneyMgrModel.currModel.currAccountBeingLoaded = a;
 				currstmt = null;
 				break;
 			}
@@ -121,7 +121,7 @@ public class StatementProcessor {
 							? QDate.getDateForEndOfMonth(year, month) //
 							: new QDate(year, month, day);
 
-					Account acct = MoneyMgrModel.currAccountBeingLoaded;
+					Account acct = MoneyMgrModel.currModel.currAccountBeingLoaded;
 					Statement prevstmt = null;
 
 					if (!acct.statements.isEmpty()) {
@@ -172,7 +172,7 @@ public class StatementProcessor {
 				String valStr = ((vidx >= 0) && (vidx + ssx < ss.length)) ? ss[vidx + ssx] : "x";
 				String priceStr = ((pidx >= 0) && (pidx + ssx < ss.length)) ? ss[pidx + ssx] : "x";
 
-				Security sec = MoneyMgrModel.findSecurity(secStr);
+				Security sec = MoneyMgrModel.currModel.findSecurity(secStr);
 				if (sec == null) {
 					Common.reportError("Unknown security: " + secStr);
 				}

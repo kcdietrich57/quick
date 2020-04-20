@@ -8,7 +8,7 @@ public class Category {
 	public final boolean isExpense;
 
 	public Category(String name, String desc, boolean isExpense) {
-		this.catid = MoneyMgrModel.getNextCategoryID();
+		this.catid = MoneyMgrModel.currModel.getNextCategoryID();
 		this.name = name;
 		this.description = desc;
 		this.isExpense = isExpense;

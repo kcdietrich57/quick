@@ -214,7 +214,7 @@ public abstract class SimpleTxn implements Txn {
 	}
 
 	public Account getAccount() {
-		return MoneyMgrModel.getAccountByID(this.acctid);
+		return MoneyMgrModel.currModel.getAccountByID(this.acctid);
 	}
 
 	public final boolean isCredit() {
@@ -289,9 +289,9 @@ public abstract class SimpleTxn implements Txn {
 
 		switch (intSign(this.catid)) {
 		case 1:
-			return MoneyMgrModel.getCategory(this.catid).name;
+			return MoneyMgrModel.currModel.getCategory(this.catid).name;
 		case -1:
-			return "[" + MoneyMgrModel.getAccountByID(-this.catid).name + "]";
+			return "[" + MoneyMgrModel.currModel.getAccountByID(-this.catid).name + "]";
 		default:
 			return "N/A";
 		}
@@ -456,7 +456,7 @@ public abstract class SimpleTxn implements Txn {
 		s += ((d != null) ? d.toString() : "null");
 		s += " Tx" + this.txid + ": ";
 		s += (this instanceof GenericTxn) ? "  " : "S ";
-		Account a = MoneyMgrModel.getAccountByID(this.acctid);
+		Account a = MoneyMgrModel.currModel.getAccountByID(this.acctid);
 		s += ((a != null) ? a.name : "null");
 		s += " " + Common.formatAmount(this.amount).trim();
 		s += " " + getCategory();

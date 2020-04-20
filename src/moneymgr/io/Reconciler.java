@@ -97,7 +97,7 @@ public class Reconciler {
 	/** Update statements with their reconciliation information */
 	public static void processStatementDetails(List<StatementDetails> details) {
 		for (StatementDetails d : details) {
-			Account a = MoneyMgrModel.getAccountByID(d.acctid);
+			Account a = MoneyMgrModel.currModel.getAccountByID(d.acctid);
 
 			// We've loaded basic statement info (date, closing balance)
 			// We must connect the statements with the associated transactions
@@ -221,7 +221,7 @@ public class Reconciler {
 		}
 
 		pw.println("" + StatementDetails.CURRENT_VERSION);
-		for (Account a : MoneyMgrModel.getAccounts()) {
+		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			for (Statement s : a.statements) {
 				pw.println(StatementDetails.formatStatementForSave(s));
 			}

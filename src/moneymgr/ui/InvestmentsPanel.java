@@ -129,7 +129,7 @@ public class InvestmentsPanel extends JPanel {
 		int num = 1;
 		BigDecimal totalValue = BigDecimal.ZERO;
 
-		for (Account acct : MoneyMgrModel.getAccounts()) {
+		for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
 			BigDecimal value = acct.getValueForDate(curdate);
 			// acct.securities.getPortfolioValueForDate(MainWindow.instance.asOfDate);
 

@@ -43,7 +43,7 @@ public class TransactionCleaner {
 
 	/** Correct any issues with split transactions */
 	private void cleanUpSplits() {
-		for (Account a : MoneyMgrModel.getAccounts()) {
+		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			for (GenericTxn txn : a.getTransactions()) {
 				massageSplits(txn);
 			}
@@ -96,7 +96,7 @@ public class TransactionCleaner {
 	 * Also update account current and cleared balance values.
 	 */
 	private void calculateRunningTotals() {
-		for (Account a : MoneyMgrModel.getAccounts()) {
+		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			a.clearedBalance = a.balance = BigDecimal.ZERO;
 
 			for (GenericTxn t : a.getTransactions()) {
@@ -117,7 +117,7 @@ public class TransactionCleaner {
 
 	/** Connect transfer transactions between accounts */
 	private void connectTransfers() {
-		for (Account a : MoneyMgrModel.getAccounts()) {
+		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			for (GenericTxn txn : a.getTransactions()) {
 				connectTransfers(txn);
 			}
@@ -156,7 +156,7 @@ public class TransactionCleaner {
 			return;
 		}
 
-		Account a = MoneyMgrModel.getAccountByID(-txn.getCatid());
+		Account a = MoneyMgrModel.currModel.getAccountByID(-txn.getCatid());
 
 		findMatchesForTransfer(a, txn, date, true);
 
@@ -202,11 +202,11 @@ public class TransactionCleaner {
 		int ntran = acct.getNumTransactions();
 		int tolerance = 2;
 
-		int idx0 = MoneyMgrModel.getLastTransactionIndexOnOrBeforeDate(txns, date.addDays(-tolerance));
+		int idx0 = MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate(txns, date.addDays(-tolerance));
 		if (idx0 < 0) {
 			idx0 = 0;
 		}
-		int idx1 = MoneyMgrModel.getLastTransactionIndexOnOrBeforeDate(txns, date.addDays(tolerance));
+		int idx1 = MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate(txns, date.addDays(tolerance));
 		if (idx1 < 0) {
 			idx1 = 0;
 		}
@@ -274,7 +274,7 @@ public class TransactionCleaner {
 		List<InvestmentTxn> xouts = new ArrayList<InvestmentTxn>();
 
 		// Gather all security transfers
-		for (GenericTxn txn : MoneyMgrModel.getAllTransactions()) {
+		for (GenericTxn txn : MoneyMgrModel.currModel.getAllTransactions()) {
 			if (txn instanceof InvestmentTxn) {
 				if ((txn.getAction() == TxAction.SHRS_IN)) {
 					xins.add((InvestmentTxn) txn);

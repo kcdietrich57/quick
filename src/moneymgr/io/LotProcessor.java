@@ -46,7 +46,7 @@ public class LotProcessor {
 
 	/** Create lots for all security transactions, all accounts */
 	public static void setupSecurityLots() {
-		for (Security sec : MoneyMgrModel.getSecurities()) {
+		for (Security sec : MoneyMgrModel.currModel.getSecurities()) {
 			List<InvestmentTxn> txns = new ArrayList<InvestmentTxn>(sec.getTransactions());
 			Collections.sort(txns, sortTransactionsForLots);
 
@@ -537,7 +537,7 @@ public class LotProcessor {
 
 		Common.reportInfo("\nSummary of open lots:");
 
-		for (Security sec : MoneyMgrModel.getSecurities()) {
+		for (Security sec : MoneyMgrModel.currModel.getSecurities()) {
 			logLotsHistory(sec, sec.getLots(), SUMMARY_ONLY);
 		}
 	}

@@ -206,13 +206,13 @@ public class Persistence {
 		wtr.print("  [\"id\",\"name\",\"desc\",\"isExpense\"]");
 		String sep = ",";
 		int id = 1;
-		for (int catid = 1; catid < MoneyMgrModel.getNextCategoryID(); ++catid) {
+		for (int catid = 1; catid < MoneyMgrModel.currModel.getNextCategoryID(); ++catid) {
 			while (id++ < catid) {
 				wtr.println(sep);
 				wtr.print("  [0]");
 			}
 
-			Category cat = MoneyMgrModel.getCategory(catid);
+			Category cat = MoneyMgrModel.currModel.getCategory(catid);
 
 			String line;
 			if (cat == null) {
@@ -298,7 +298,7 @@ public class Persistence {
 		wtr.print(
 				"  [\"acctid\",\"name\",\"acctypeid\",\"desc\",\"closedate\",\"statfreq\",\"statday\",\"bal\",\"clearbal\"]");
 		sep = ",";
-		List<Account> accts = MoneyMgrModel.getAccountsById();
+		List<Account> accts = MoneyMgrModel.currModel.getAccountsById();
 		for (int acctid = 1; acctid < accts.size(); ++acctid) {
 			Account ac = accts.get(acctid);
 			String line;
@@ -340,7 +340,7 @@ public class Persistence {
 		wtr.print("  [\"secid\",\"symbol\",\"[name]\",\"type\",\"[split]\",\"[[date,price]]\"]");
 
 		final String sep = ",";
-		List<Security> securities = MoneyMgrModel.getSecuritiesById();
+		List<Security> securities = MoneyMgrModel.currModel.getSecuritiesById();
 		for (int secid = 1; secid < securities.size(); ++secid) {
 			Security sec = securities.get(secid);
 			String line;
@@ -420,7 +420,7 @@ public class Persistence {
 				+ "\"srcLotid\",\"[childLotid]\"]");
 
 		final String sep = ",";
-		List<Lot> lots = MoneyMgrModel.getLots();
+		List<Lot> lots = MoneyMgrModel.currModel.getLots();
 		for (int lotid = 1; lotid < lots.size(); ++lotid) {
 			Lot lot = lots.get(lotid);
 
@@ -470,7 +470,7 @@ public class Persistence {
 				+ "]");
 
 		final String sep = ",";
-		List<StockOption> opts = MoneyMgrModel.options;
+		List<StockOption> opts = MoneyMgrModel.currModel.options;
 		for (int optid = 1; optid < opts.size(); ++optid) {
 			StockOption opt = opts.get(optid);
 
@@ -521,7 +521,7 @@ public class Persistence {
 						+ "\"secid\",\"secaction\",\"shares\",\"shareprice\",\"splitratio\",\"optid\",\"[split]\",\"[secxfer]\",\"[lot]\"]");
 
 		final String sep = ",";
-		List<GenericTxn> txns = MoneyMgrModel.getAllTransactions();
+		List<GenericTxn> txns = MoneyMgrModel.currModel.getAllTransactions();
 		for (int txid = 1; txid < txns.size(); ++txid) {
 			GenericTxn tx = txns.get(txid);
 
@@ -678,7 +678,7 @@ public class Persistence {
 				+ "\"holdings\"]");
 
 		final String sep = ",";
-		for (Account acct : MoneyMgrModel.getAccountsById()) {
+		for (Account acct : MoneyMgrModel.currModel.getAccountsById()) {
 			// TODO Assign statement id and reference/store accordingly
 			if (acct == null) {
 				continue;

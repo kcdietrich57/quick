@@ -141,7 +141,7 @@ public class ReconcileStatusReporter {
 	public static ReconcileStatusModel buildReportStatusModel() {
 		ReconcileStatusModel model = new ReconcileStatusModel();
 
-		List<Account> accountsByLastStatement = new ArrayList<>(MoneyMgrModel.getAccounts());
+		List<Account> accountsByLastStatement = new ArrayList<>(MoneyMgrModel.currModel.getAccounts());
 
 		Collections.sort(accountsByLastStatement, compareLastBalancedStatementDate);
 

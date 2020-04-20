@@ -239,11 +239,11 @@ public class MainWindow extends JPanel {
 			break;
 
 		case All:
-			return MoneyMgrModel.getFirstTransactionDate();
+			return MoneyMgrModel.currModel.getFirstTransactionDate();
 		}
 
-		if (first.compareTo(MoneyMgrModel.getFirstTransactionDate()) < 0) {
-			first = MoneyMgrModel.getFirstTransactionDate();
+		if (first.compareTo(MoneyMgrModel.currModel.getFirstTransactionDate()) < 0) {
+			first = MoneyMgrModel.currModel.getFirstTransactionDate();
 		}
 
 		return first;
@@ -277,11 +277,11 @@ public class MainWindow extends JPanel {
 			break;
 
 		case All:
-			return MoneyMgrModel.getLastTransactionDate();
+			return MoneyMgrModel.currModel.getLastTransactionDate();
 		}
 
-		if (last.compareTo(MoneyMgrModel.getLastTransactionDate()) > 0) {
-			last = MoneyMgrModel.getLastTransactionDate();
+		if (last.compareTo(MoneyMgrModel.currModel.getLastTransactionDate()) > 0) {
+			last = MoneyMgrModel.currModel.getLastTransactionDate();
 		}
 
 		return last;
@@ -354,11 +354,11 @@ public class MainWindow extends JPanel {
 
 	/** Set current display date */
 	public void setAsOfDate(QDate date) {
-		if (date.compareTo(MoneyMgrModel.getFirstTransactionDate()) < 0) {
-			date = MoneyMgrModel.getFirstTransactionDate();
+		if (date.compareTo(MoneyMgrModel.currModel.getFirstTransactionDate()) < 0) {
+			date = MoneyMgrModel.currModel.getFirstTransactionDate();
 		}
-		if (date.compareTo(MoneyMgrModel.getLastTransactionDate()) > 0) {
-			date = MoneyMgrModel.getLastTransactionDate();
+		if (date.compareTo(MoneyMgrModel.currModel.getLastTransactionDate()) > 0) {
+			date = MoneyMgrModel.currModel.getLastTransactionDate();
 		}
 
 		// TODO distinguish between effective date (for calculating balances, etc)

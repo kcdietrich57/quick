@@ -82,7 +82,7 @@ public class Statement {
 
 	public BigDecimal getCashBalance() {
 		if (this.cashBalance == null) {
-			//Common.reportWarning("Statement cash balance is not set");
+			// Common.reportWarning("Statement cash balance is not set");
 			this.cashBalance = this.closingBalance;
 		}
 
@@ -122,7 +122,7 @@ public class Statement {
 	public QDate getOpeningDate() {
 		return (this.prevStatement != null) //
 				? this.prevStatement.date //
-				: MoneyMgrModel.getAccountByID(this.acctid).getFirstTransactionDate();
+				: MoneyMgrModel.currModel.getAccountByID(this.acctid).getFirstTransactionDate();
 	}
 
 	public BigDecimal getOpeningBalance() {
@@ -374,10 +374,10 @@ public class Statement {
 		} while (!empty);
 
 		String s = ((this.isBalanced) ? "*" : " ") //
-						+ this.date.toString() //
-						+ "  " + MoneyMgrModel.getAccountByID(this.acctid).name //
-						+ "  " + this.closingBalance //
-						+ " tran=" + ((this.transactions != null) ? this.transactions.size() : null);
+				+ this.date.toString() //
+				+ "  " + MoneyMgrModel.currModel.getAccountByID(this.acctid).name //
+				+ "  " + this.closingBalance //
+				+ " tran=" + ((this.transactions != null) ? this.transactions.size() : null);
 
 		return s;
 	}

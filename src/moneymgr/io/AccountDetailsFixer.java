@@ -37,7 +37,7 @@ public class AccountDetailsFixer {
 		}
 
 		if (type == null) {
-			Account existing = MoneyMgrModel.findAccount(name);
+			Account existing = MoneyMgrModel.currModel.findAccount(name);
 			type = (existing == null) ? AccountType.Bank : existing.type;
 		}
 

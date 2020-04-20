@@ -122,7 +122,7 @@ public class Account {
 
 	public Account(String name, AccountType type, String desc, QDate closeDate, //
 			int statFreq, int statDayOfMonth) {
-		this.acctid = MoneyMgrModel.nextAccountID();
+		this.acctid = MoneyMgrModel.currModel.nextAccountID();
 
 		this.name = name;
 		this.type = type;
@@ -215,16 +215,16 @@ public class Account {
 
 	public void addTransaction(GenericTxn txn) {
 		int idx = // getTransactionIndexForDate(txn);
-				MoneyMgrModel.getTransactionInsertIndexByDate(this.transactions, txn);
+				MoneyMgrModel.currModel.getTransactionInsertIndexByDate(this.transactions, txn);
 
 		this.transactions.add(idx, txn);
 	}
 
 	/** Find the index to insert a new transaction in a list sorted by date */
 	private int getTransactionIndexForDate(QDate date) {
-		MoneyMgrModel.SEARCH.setDate(date);
+		MoneyMgrModel.SEARCH().setDate(date);
 
-		return getTransactionIndexForDate(MoneyMgrModel.SEARCH);
+		return getTransactionIndexForDate(MoneyMgrModel.SEARCH());
 	}
 
 	static final Comparator<GenericTxn> c = new Comparator<GenericTxn>() {
@@ -592,7 +592,7 @@ public class Account {
 	private BigDecimal getCashValueForDate(QDate d) {
 		BigDecimal cashBal = null; // BigDecimal.ZERO;
 
-		int idx = MoneyMgrModel.getLastTransactionIndexOnOrBeforeDate(this.transactions, d);
+		int idx = MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate(this.transactions, d);
 
 		while ((idx >= 0) && (cashBal == null)) {
 			GenericTxn tx = this.transactions.get(idx--);

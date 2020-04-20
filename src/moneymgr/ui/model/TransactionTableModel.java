@@ -37,7 +37,7 @@ public class TransactionTableModel //
 			txns = this.curAccount.getTransactions();
 		} else if (obj instanceof Statement) {
 			curStatement = (Statement) obj;
-			curAccount = MoneyMgrModel.getAccountByID(curStatement.acctid);
+			curAccount = MoneyMgrModel.currModel.getAccountByID(curStatement.acctid);
 			txns = curStatement.transactions;
 		} else {
 			return;

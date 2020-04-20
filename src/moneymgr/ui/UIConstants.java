@@ -7,7 +7,6 @@ import java.util.Map;
 import moneymgr.model.AccountCategory;
 
 public class UIConstants {
-	
 	/** Colors for account categories in graphs */
 	public static Map<AccountCategory, Color> acctCategoryColor = new HashMap<>();
 
@@ -24,5 +23,4 @@ public class UIConstants {
 	public static final Color LIGHT_YELLOW = new Color(250, 250, 220);
 	public static final Color LIGHT_GRAY = new Color(240, 240, 240);
 	public static final Color DARK_GRAY = new Color(16, 16, 16);
-	
 }

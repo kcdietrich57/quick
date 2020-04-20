@@ -12,10 +12,10 @@ public class PortfolioProcessor {
 	public static void fixPortfolios() {
 		fixPortfolio(SecurityPortfolio.portfolio);
 
-		for (Account a : MoneyMgrModel.getAccounts()) {
+		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			if (a.isInvestmentAccount()) {
 				fixPortfolio(a.securities);
-				
+
 				for (Statement stat : a.statements) {
 					fixPortfolio(stat.holdings);
 				}

@@ -19,7 +19,7 @@ public class ISIOptionsChart_old {
 		private double[] yData;
 
 		public ISIOptionsChartData(QDate start, QDate end) {
-			Account acct = MoneyMgrModel.findAccount("ISI Options");
+			Account acct = MoneyMgrModel.currModel.findAccount("ISI Options");
 
 			List<QDate> dates = new ArrayList<QDate>();
 			List<BigDecimal> high = new ArrayList<BigDecimal>();
@@ -110,7 +110,7 @@ public class ISIOptionsChart_old {
 			end = new QDate(2003, 12, 31);
 		}
 
-		Account acct = MoneyMgrModel.findAccount("ISI Options");
+		Account acct = MoneyMgrModel.currModel.findAccount("ISI Options");
 
 		List<QDate> dates = new ArrayList<QDate>();
 		List<BigDecimal> high = new ArrayList<BigDecimal>();

@@ -160,11 +160,11 @@ public abstract class GenericTransactionTableModel //
 						return itx.security.symbol + " " + shrs.toString();
 					case VEST: {
 						try {
-						BigDecimal gshrs = itx.option.grantShares;
-						BigDecimal cnt = new BigDecimal(itx.option.vestCount);
-						BigDecimal vshrs = gshrs.divide(cnt, RoundingMode.DOWN);
-						return itx.security.symbol + " " + vshrs.toString() //
-								+ "/" + gshrs.toString();
+							BigDecimal gshrs = itx.option.grantShares;
+							BigDecimal cnt = new BigDecimal(itx.option.vestCount);
+							BigDecimal vshrs = gshrs.divide(cnt, RoundingMode.DOWN);
+							return itx.security.symbol + " " + vshrs.toString() //
+									+ "/" + gshrs.toString();
 						} catch (Exception e) {
 							e.printStackTrace();
 							return "???";

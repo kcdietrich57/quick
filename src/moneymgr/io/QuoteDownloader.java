@@ -93,7 +93,7 @@ public class QuoteDownloader {
 			BigDecimal splitPrice = quote.getBigDecimal(splitPriceKey);
 
 			prices.add(new QPrice(Common.parseQDate(date), //
-					MoneyMgrModel.findSecurity(symbol).secid, //
+					MoneyMgrModel.currModel.findSecurity(symbol).secid, //
 					closingPrice, splitPrice));
 		}
 

@@ -95,7 +95,7 @@ public class StatusForDateModel {
 
 	/** Construct model from account info */
 	private void build() {
-		for (Account acct : MoneyMgrModel.getAccounts()) {
+		for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
 			if (!acct.isOpenOn(this.date)) {
 				continue;
 			}
@@ -122,7 +122,7 @@ public class StatusForDateModel {
 				StatusForDateModel.SecuritySummary ssummary = new StatusForDateModel.SecuritySummary();
 
 				StockOption opt = opts.get(0);
-				Security sec = MoneyMgrModel.getSecurity(opt.secid);
+				Security sec = MoneyMgrModel.currModel.getSecurity(opt.secid);
 
 				ssummary.name = "Options:" + sec.getName();
 				ssummary.shares = opt.getAvailableShares(true);

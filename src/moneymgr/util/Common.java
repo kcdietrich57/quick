@@ -67,7 +67,7 @@ public class Common {
 		if (s.startsWith("[")) {
 			s = s.substring(1, s.length() - 1).trim();
 
-			Account acct = MoneyMgrModel.findAccount(s);
+			Account acct = MoneyMgrModel.currModel.findAccount(s);
 
 			return (short) ((acct != null) ? (-acct.acctid) : 0);
 		}
@@ -78,7 +78,7 @@ public class Common {
 			s = s.substring(slash + 1);
 		}
 
-		Category cat = MoneyMgrModel.findCategory(s);
+		Category cat = MoneyMgrModel.currModel.findCategory(s);
 
 		return (cat != null) ? (cat.catid) : 0;
 	}

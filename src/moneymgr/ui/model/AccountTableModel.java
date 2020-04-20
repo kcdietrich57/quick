@@ -39,7 +39,7 @@ public class AccountTableModel //
 	public void reload() {
 		this.accounts.clear();
 
-		List<Account> accts = MoneyMgrModel.getSortedAccounts(this.showTodayBalance);
+		List<Account> accts = MoneyMgrModel.currModel.getSortedAccounts(this.showTodayBalance);
 		for (Account acct : accts) {
 			if (accountIsVisible(acct)) {
 				this.accounts.add(acct);

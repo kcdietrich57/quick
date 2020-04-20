@@ -28,7 +28,9 @@ public abstract class GenericTxn //
 		this.stmtdate = null;
 		this.runningTotal = null;
 
-		MoneyMgrModel.addTransaction(this);
+		if (this.txid > 0) {
+			MoneyMgrModel.currModel.addTransaction(this);
+		}
 	}
 
 	public void setCheckNumber(String cknum) {
@@ -85,13 +87,13 @@ public abstract class GenericTxn //
 	/** Update the date of this transaction - update date-sorted list */
 	public void setDate(QDate date) {
 		if ((getAccountID() != 0) && (getDate() != null)) {
-			MoneyMgrModel.allTransactionsByDate.remove(this);
+			MoneyMgrModel.currModel.allTransactionsByDate.remove(this);
 		}
 
 		this.date = date;
 
 		if ((getAccountID() != 0) && (getDate() != null)) {
-			MoneyMgrModel.addTransactionDate(this);
+			MoneyMgrModel.currModel.addTransactionDate(this);
 		}
 	}
 

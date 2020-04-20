@@ -19,7 +19,7 @@ public class BalanceChartData {
 
 	/** Label for each category */
 	public List<String> accountCategoryLabels;
-	
+
 	/** Values for each category/date */
 	public double[][] accountCategoryValues;
 
@@ -102,7 +102,7 @@ public class BalanceChartData {
 	private static QDate getFirstTransactionDate() {
 		QDate retdate = null;
 
-		for (final Account a : MoneyMgrModel.getAccounts()) {
+		for (final Account a : MoneyMgrModel.currModel.getAccounts()) {
 			final QDate d = a.getFirstTransactionDate();
 
 			if ((d != null) && ((retdate == null) || d.compareTo(retdate) < 0)) {
