@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import moneymgr.model.Account;
-import moneymgr.model.GenericTxn;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.SimpleTxn;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
@@ -173,8 +173,8 @@ public class CashFlowModel {
 			goodModels = new ArrayList<CashFlowModel>();
 			failModels = new ArrayList<CashFlowModel>();
 
-			QDate dt = GenericTxn.getFirstTransactionDate();
-			while (dt.compareTo(GenericTxn.getLastTransactionDate()) < 0) {
+			QDate dt = MoneyMgrModel.getFirstTransactionDate();
+			while (dt.compareTo(MoneyMgrModel.getLastTransactionDate()) < 0) {
 				CashFlowModel model = new CashFlowModel(dt);
 				if (!model.balanceMatches()) {
 					failModels.add(model);
@@ -238,14 +238,14 @@ public class CashFlowModel {
 
 	/** Construct model for a date range */
 	private static void build(QDate start, QDate end, List<AcctInfo> accts, AcctInfo summary) {
-		if (start.compareTo(GenericTxn.getFirstTransactionDate()) < 0) {
-			start = GenericTxn.getFirstTransactionDate();
+		if (start.compareTo(MoneyMgrModel.getFirstTransactionDate()) < 0) {
+			start = MoneyMgrModel.getFirstTransactionDate();
 		}
 
 		summary.startDate = start;
 		summary.endDate = end;
 
-		for (Account acct : Account.getAccounts()) {
+		for (Account acct : MoneyMgrModel.getAccounts()) {
 			if (!acct.isOpenDuring(start, end)) {
 				continue;
 			}

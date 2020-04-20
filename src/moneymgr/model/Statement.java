@@ -122,7 +122,7 @@ public class Statement {
 	public QDate getOpeningDate() {
 		return (this.prevStatement != null) //
 				? this.prevStatement.date //
-				: Account.getAccountByID(this.acctid).getFirstTransactionDate();
+				: MoneyMgrModel.getAccountByID(this.acctid).getFirstTransactionDate();
 	}
 
 	public BigDecimal getOpeningBalance() {
@@ -375,7 +375,7 @@ public class Statement {
 
 		String s = ((this.isBalanced) ? "*" : " ") //
 						+ this.date.toString() //
-						+ "  " + Account.getAccountByID(this.acctid).name //
+						+ "  " + MoneyMgrModel.getAccountByID(this.acctid).name //
 						+ "  " + this.closingBalance //
 						+ " tran=" + ((this.transactions != null) ? this.transactions.size() : null);
 

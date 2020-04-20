@@ -362,7 +362,7 @@ public class InvestmentTxn extends GenericTxn {
 		if (action == TxAction.OTHER) {
 			if (this.security != null) {
 				Common.reportError("Transaction has unknown type: " + //
-						Account.getAccountByID(getAccountID()).name);
+						MoneyMgrModel.getAccountByID(getAccountID()).name);
 				return;
 			}
 
@@ -480,7 +480,7 @@ public class InvestmentTxn extends GenericTxn {
 			BigDecimal newprice = tot.divide(this.quantity).abs();
 
 			String s = "Inconsistent " + this.action + " transaction:" + //
-					" acct=" + Account.getAccountByID(getAccountID()).name + //
+					" acct=" + MoneyMgrModel.getAccountByID(getAccountID()).name + //
 					" " + getDate().toString() + "\n" + //
 					"  sec=" + this.security.getName() + //
 					" qty=" + this.quantity + //
@@ -536,7 +536,7 @@ public class InvestmentTxn extends GenericTxn {
 		QDate d = getDate();
 		s += ((d != null) ? d.toString() : "null");
 		s += " Tx" + this.txid + ": I ";
-		Account a = Account.getAccountByID(getAccountID());
+		Account a = MoneyMgrModel.getAccountByID(getAccountID());
 		s += ((a != null) ? a.name : "null");
 		s += " " + Common.formatAmount(getAmount()).trim();
 		s += " " + this.action;
@@ -604,7 +604,7 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 		if (this.cashTransferred != null) {
-			Account xacct = Account.getAccountByID(getCashTransferAcctid());
+			Account xacct = MoneyMgrModel.getAccountByID(getCashTransferAcctid());
 			String xacctname = (xacct != null) ? xacct.name : null;
 
 			ret += "\n";

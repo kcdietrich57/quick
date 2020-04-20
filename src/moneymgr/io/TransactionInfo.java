@@ -240,7 +240,7 @@ public class TransactionInfo {
 	/** Extract values from raw info and set member variables accordingly */
 	public void processValues() {
 		try {
-			this.account = Account.findAccount(value(ACCOUNT_IDX));
+			this.account = MoneyMgrModel.findAccount(value(ACCOUNT_IDX));
 			if (this.account == null) {
 				Common.reportWarning("Can't find account '" + value(ACCOUNT_IDX) + "'");
 			}
@@ -253,13 +253,13 @@ public class TransactionInfo {
 				this.xaccount = null;
 			} else {
 				this.category = null;
-				this.xaccount = Account.getAccountByID(-catid);
+				this.xaccount = MoneyMgrModel.getAccountByID(-catid);
 			}
 			this.amount = decimalValue(AMOUNT_IDX);
 			this.memo = value(MEMO_IDX);
 			this.description = value(DESCRIPTION_IDX);
 			this.type = value(TYPE_IDX);
-			this.security = Security.findSecurity(value(SECURITY_IDX));
+			this.security = MoneyMgrModel.findSecurity(value(SECURITY_IDX));
 			this.fees = decimalValue(FEES_IDX);
 			this.shares = decimalValue(SHARES_IDX);
 			this.action = TxAction.parseAction(value(ACTION_IDX));
@@ -268,7 +268,7 @@ public class TransactionInfo {
 			this.inflow = decimalValue(INFLOW_IDX);
 			this.outflow = decimalValue(OUTFLOW_IDX);
 			if (this.xaccount == null) {
-				this.xaccount = Account.findAccount(value(XACCOUNT_IDX));
+				this.xaccount = MoneyMgrModel.findAccount(value(XACCOUNT_IDX));
 			}
 			this.xamount = decimalValue(XAMOUNT_IDX);
 			this.price = Common.parsePrice(value(PRICE_IDX));
@@ -340,7 +340,7 @@ public class TransactionInfo {
 	 * for the split line.
 	 */
 	public void addSplitCategory(String cat) {
-		TransactionInfo splitinfo = new TransactionInfo(Account.findAccount(value(ACCOUNT_IDX)));
+		TransactionInfo splitinfo = new TransactionInfo(MoneyMgrModel.findAccount(value(ACCOUNT_IDX)));
 		splitinfo.setValue(TransactionInfo.SPLIT_IDX, "S");
 		splitinfo.setValue(TransactionInfo.CATEGORY_IDX, cat);
 		this.splits.add(splitinfo);

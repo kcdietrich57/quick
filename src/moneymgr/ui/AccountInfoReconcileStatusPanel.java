@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.Statement;
 import moneymgr.util.Common;
@@ -127,7 +128,7 @@ public class AccountInfoReconcileStatusPanel extends JPanel //
 		MainWindow.instance.reconcileTransactionsPanel.finishStatement();
 
 		Statement stmt = MainWindow.instance.reconcileTransactionsPanel.createNextStatementToReconcile();
-		Account acct = Account.getAccountByID(stmt.acctid);
+		Account acct = MoneyMgrModel.getAccountByID(stmt.acctid);
 
 		// Update list of statements to include the new statement
 		MainWindow.instance.statementPanel.accountSelected(acct, true);

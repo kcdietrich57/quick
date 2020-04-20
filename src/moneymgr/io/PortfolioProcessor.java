@@ -1,6 +1,7 @@
 package moneymgr.io;
 
 import moneymgr.model.Account;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.SecurityPosition;
 import moneymgr.model.Statement;
@@ -11,7 +12,7 @@ public class PortfolioProcessor {
 	public static void fixPortfolios() {
 		fixPortfolio(SecurityPortfolio.portfolio);
 
-		for (Account a : Account.getAccounts()) {
+		for (Account a : MoneyMgrModel.getAccounts()) {
 			if (a.isInvestmentAccount()) {
 				fixPortfolio(a.securities);
 				

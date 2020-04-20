@@ -8,6 +8,7 @@ import java.util.List;
 
 import moneymgr.model.InvestmentTxn;
 import moneymgr.model.Lot;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Security;
 import moneymgr.model.TxAction;
 import moneymgr.util.Common;
@@ -45,7 +46,7 @@ public class LotProcessor {
 
 	/** Create lots for all security transactions, all accounts */
 	public static void setupSecurityLots() {
-		for (Security sec : Security.getSecurities()) {
+		for (Security sec : MoneyMgrModel.getSecurities()) {
 			List<InvestmentTxn> txns = new ArrayList<InvestmentTxn>(sec.getTransactions());
 			Collections.sort(txns, sortTransactionsForLots);
 
@@ -536,7 +537,7 @@ public class LotProcessor {
 
 		Common.reportInfo("\nSummary of open lots:");
 
-		for (Security sec : Security.getSecurities()) {
+		for (Security sec : MoneyMgrModel.getSecurities()) {
 			logLotsHistory(sec, sec.getLots(), SUMMARY_ONLY);
 		}
 	}

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import moneymgr.model.Account;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Security;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.SecurityPosition;
@@ -49,7 +50,7 @@ public class StatementProcessor {
 			List<Statement> stmts = loadStatementsSection(qrdr.getFileReader());
 
 			for (Statement stmt : stmts) {
-				Account a = Account.currAccountBeingLoaded;
+				Account a = MoneyMgrModel.currAccountBeingLoaded;
 				a.statements.add(stmt);
 			}
 		}
@@ -70,12 +71,12 @@ public class StatementProcessor {
 
 			case StmtsAccount: {
 				String aname = qline.value;
-				Account a = Account.findAccount(aname);
+				Account a = MoneyMgrModel.findAccount(aname);
 				if (a == null) {
 					Common.reportError("Can't find account: " + aname);
 				}
 
-				Account.currAccountBeingLoaded = a;
+				MoneyMgrModel.currAccountBeingLoaded = a;
 				currstmt = null;
 				break;
 			}
@@ -120,7 +121,7 @@ public class StatementProcessor {
 							? QDate.getDateForEndOfMonth(year, month) //
 							: new QDate(year, month, day);
 
-					Account acct = Account.currAccountBeingLoaded;
+					Account acct = MoneyMgrModel.currAccountBeingLoaded;
 					Statement prevstmt = null;
 
 					if (!acct.statements.isEmpty()) {
@@ -171,7 +172,7 @@ public class StatementProcessor {
 				String valStr = ((vidx >= 0) && (vidx + ssx < ss.length)) ? ss[vidx + ssx] : "x";
 				String priceStr = ((pidx >= 0) && (pidx + ssx < ss.length)) ? ss[pidx + ssx] : "x";
 
-				Security sec = Security.findSecurity(secStr);
+				Security sec = MoneyMgrModel.findSecurity(secStr);
 				if (sec == null) {
 					Common.reportError("Unknown security: " + secStr);
 				}

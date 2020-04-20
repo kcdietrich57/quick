@@ -9,7 +9,7 @@ import java.util.List;
 
 import moneymgr.model.QPrice;
 import moneymgr.model.Security;
-import moneymgr.model.Security.SplitInfo;
+import moneymgr.model.Security.StockSplitInfo;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -35,7 +35,7 @@ public class QQuoteLoader {
 		}
 
 		List<QPrice> prices = sec.prices;
-		List<SplitInfo> splits = sec.splits;
+		List<StockSplitInfo> splits = sec.splits;
 
 		assert prices.isEmpty() && splits.isEmpty();
 
@@ -92,7 +92,7 @@ public class QQuoteLoader {
 					BigDecimal splitAdjust = new BigDecimal(newshrStr).divide(new BigDecimal(oldshrStr));
 					splitDate = Common.parseQDate(dateStr);
 
-					SplitInfo si = new SplitInfo(splitDate, splitAdjust);
+					StockSplitInfo si = new StockSplitInfo(splitDate, splitAdjust);
 
 					splits.add(si);
 					Collections.sort(splits, (o1, o2) -> o1.splitDate.compareTo(o2.splitDate));

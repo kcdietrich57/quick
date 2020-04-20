@@ -99,7 +99,7 @@ public class SecurityPortfolio {
 
 	/** Find a position for a security id. Create it if it does not exist. */
 	public SecurityPosition getPosition(int secid) {
-		return getPosition(Security.getSecurity(secid));
+		return getPosition(MoneyMgrModel.getSecurity(secid));
 	}
 
 	/** Find a position for a security. Create it if it does not exist. */
@@ -154,7 +154,7 @@ public class SecurityPortfolio {
 	public Map<Account, PositionInfo> getOpenPositionsForDateByAccount(Security sec, QDate d) {
 		Map<Account, PositionInfo> ret = new HashMap<>();
 
-		for (Account acct : Account.getAccounts()) {
+		for (Account acct : MoneyMgrModel.getAccounts()) {
 			PositionInfo values = acct.getSecurityValueForDate(sec, d);
 
 			if (values != null) {

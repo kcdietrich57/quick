@@ -8,6 +8,7 @@ import java.util.List;
 import moneymgr.io.Reconciler;
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.Statement;
 import moneymgr.ui.AccountSelectionListener;
@@ -41,7 +42,7 @@ public class ReconcileTransactionTableModel //
 			this.curAccount = (Account)obj;
 		} else if (obj instanceof Statement) {
 			this.curStatement = (Statement) obj;
-			this.curAccount = Account.getAccountByID(curStatement.acctid);
+			this.curAccount = MoneyMgrModel.getAccountByID(curStatement.acctid);
 		} else {
 			return;
 		}

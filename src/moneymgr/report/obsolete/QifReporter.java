@@ -4,6 +4,7 @@ import java.util.Date;
 
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
+import moneymgr.model.MoneyMgrModel;
 
 /** Various reporting functions - used by obsolete QifLoader */
 public class QifReporter {
@@ -16,7 +17,7 @@ public class QifReporter {
 		int reconciled = 0;
 		int unreconciled = 0;
 
-		for (GenericTxn t : GenericTxn.getAllTransactions()) {
+		for (GenericTxn t : MoneyMgrModel.getAllTransactions()) {
 			if (t == null) {
 				++nullt;
 			} else if (t.stmtdate != null) {

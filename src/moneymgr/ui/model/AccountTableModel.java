@@ -6,6 +6,7 @@ import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
 import moneymgr.model.Account;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.ui.MainWindow;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
@@ -38,7 +39,7 @@ public class AccountTableModel //
 	public void reload() {
 		this.accounts.clear();
 
-		List<Account> accts = Account.getSortedAccounts(this.showTodayBalance);
+		List<Account> accts = MoneyMgrModel.getSortedAccounts(this.showTodayBalance);
 		for (Account acct : accts) {
 			if (accountIsVisible(acct)) {
 				this.accounts.add(acct);

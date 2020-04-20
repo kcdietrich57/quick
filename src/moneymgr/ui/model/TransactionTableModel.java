@@ -4,6 +4,7 @@ import java.util.List;
 
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Statement;
 import moneymgr.ui.AccountSelectionListener;
 import moneymgr.ui.MainWindow;
@@ -36,7 +37,7 @@ public class TransactionTableModel //
 			txns = this.curAccount.getTransactions();
 		} else if (obj instanceof Statement) {
 			curStatement = (Statement) obj;
-			curAccount = Account.getAccountByID(curStatement.acctid);
+			curAccount = MoneyMgrModel.getAccountByID(curStatement.acctid);
 			txns = curStatement.transactions;
 		} else {
 			return;

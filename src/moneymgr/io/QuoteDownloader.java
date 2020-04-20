@@ -17,8 +17,8 @@ import java.util.Scanner;
 import org.json.JSONObject;
 
 import app.QifDom;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.QPrice;
-import moneymgr.model.Security;
 import moneymgr.util.Common;
 
 /**
@@ -93,7 +93,7 @@ public class QuoteDownloader {
 			BigDecimal splitPrice = quote.getBigDecimal(splitPriceKey);
 
 			prices.add(new QPrice(Common.parseQDate(date), //
-					Security.findSecurity(symbol).secid, //
+					MoneyMgrModel.findSecurity(symbol).secid, //
 					closingPrice, splitPrice));
 		}
 

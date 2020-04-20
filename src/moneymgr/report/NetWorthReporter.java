@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import app.QifDom;
 import moneymgr.model.Account;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.report.CashFlowModel.AcctInfo;
 import moneymgr.report.StatusForDateModel.AccountSummary;
 import moneymgr.report.StatusForDateModel.Section;
@@ -133,7 +134,7 @@ public class NetWorthReporter {
 
 		b.date = d;
 
-		for (Account a : Account.getAccounts()) {
+		for (Account a : MoneyMgrModel.getAccounts()) {
 			final BigDecimal amt = a.getValueForDate(d);
 
 			b.netWorth = b.netWorth.add(amt);

@@ -3,6 +3,7 @@ package moneymgr.report;
 import java.math.BigDecimal;
 
 import moneymgr.model.Account;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.report.StatusForDateModel.AccountSummary;
 import moneymgr.report.StatusForDateModel.Section;
 import moneymgr.report.StatusForDateModel.SecuritySummary;
@@ -98,7 +99,7 @@ public class InvestmentPerformanceReporter {
 
 		b.date = d;
 
-		for (Account a : Account.getAccounts()) {
+		for (Account a : MoneyMgrModel.getAccounts()) {
 			final BigDecimal amt = a.getValueForDate(d);
 
 			b.netWorth = b.netWorth.add(amt);

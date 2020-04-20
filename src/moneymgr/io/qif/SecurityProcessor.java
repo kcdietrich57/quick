@@ -9,6 +9,7 @@ import moneymgr.io.QuoteDownloader;
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.QPrice;
 import moneymgr.model.Security;
 import moneymgr.model.SecurityPortfolio;
@@ -33,15 +34,15 @@ public class SecurityProcessor {
 			}
 
 			Security existing = (sec.symbol != null) //
-					? Security.findSecurityBySymbol(sec.symbol) //
-					: Security.findSecurityByName(sec.getName());
+					? MoneyMgrModel.findSecurityBySymbol(sec.symbol) //
+					: MoneyMgrModel.findSecurityByName(sec.getName());
 
 			if (existing != null) {
 				if (!existing.names.contains(sec.getName())) {
 					existing.names.add(sec.getName());
 				}
 			} else {
-				Security.addSecurity(sec);
+				MoneyMgrModel.addSecurity(sec);
 			}
 		}
 	}
@@ -94,10 +95,10 @@ public class SecurityProcessor {
 	/** Process security txns (global, accounts) after loading from QIF */
 	public static void processSecurities() {
 		// Process global porfolio info
-		processSecurities2(SecurityPortfolio.portfolio, GenericTxn.getAllTransactions());
+		processSecurities2(SecurityPortfolio.portfolio, MoneyMgrModel.getAllTransactions());
 
 		// Process holdings for each account
-		for (Account a : Account.getAccounts()) {
+		for (Account a : MoneyMgrModel.getAccounts()) {
 			if (a.isInvestmentAccount()) {
 				processSecurities2(a.securities, a.getTransactions());
 			}
@@ -140,7 +141,7 @@ public class SecurityProcessor {
 		// Load saved quote data
 		for (File f : quoteFiles) {
 			String symbol = f.getName().replaceFirst(".csv", "");
-			Security sec = Security.findSecurityBySymbol(symbol);
+			Security sec = MoneyMgrModel.findSecurityBySymbol(symbol);
 
 			if (sec != null) {
 				QQuoteLoader.loadQuoteFile(sec, f);
@@ -148,7 +149,7 @@ public class SecurityProcessor {
 		}
 
 		// Download quotes from service
-		for (Security sec : Security.getSecurities()) {
+		for (Security sec : MoneyMgrModel.getSecurities()) {
 			String symbol = sec.getSymbol();
 
 			if (symbol != null) {
@@ -187,7 +188,7 @@ public class SecurityProcessor {
 				break;
 			}
 
-			Security sec = Security.getSecurity(price.secid);
+			Security sec = MoneyMgrModel.getSecurity(price.secid);
 			if (sec != null) {
 				sec.addPrice(price);
 			}

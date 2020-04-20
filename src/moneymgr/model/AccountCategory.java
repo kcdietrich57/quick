@@ -7,7 +7,6 @@ import java.util.List;
 // TODO relocate this to the reports package
 /** Defines account types for itemizing in reports and charts */
 public enum AccountCategory {
-
 	ASSET(true, "Asset", //
 			new AccountType[] { AccountType.Asset }), //
 	RETIREMENT(true, "Retirement", //

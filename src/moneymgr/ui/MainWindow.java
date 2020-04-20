@@ -17,7 +17,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
 import app.QifDom;
-import moneymgr.model.GenericTxn;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.ui.chart.BalanceChart;
 import moneymgr.ui.chart.BalanceChart_old;
 import moneymgr.ui.chart.ISIOptionsChart;
@@ -239,11 +239,11 @@ public class MainWindow extends JPanel {
 			break;
 
 		case All:
-			return GenericTxn.getFirstTransactionDate();
+			return MoneyMgrModel.getFirstTransactionDate();
 		}
 
-		if (first.compareTo(GenericTxn.getFirstTransactionDate()) < 0) {
-			first = GenericTxn.getFirstTransactionDate();
+		if (first.compareTo(MoneyMgrModel.getFirstTransactionDate()) < 0) {
+			first = MoneyMgrModel.getFirstTransactionDate();
 		}
 
 		return first;
@@ -277,11 +277,11 @@ public class MainWindow extends JPanel {
 			break;
 
 		case All:
-			return GenericTxn.getLastTransactionDate();
+			return MoneyMgrModel.getLastTransactionDate();
 		}
 
-		if (last.compareTo(GenericTxn.getLastTransactionDate()) > 0) {
-			last = GenericTxn.getLastTransactionDate();
+		if (last.compareTo(MoneyMgrModel.getLastTransactionDate()) > 0) {
+			last = MoneyMgrModel.getLastTransactionDate();
 		}
 
 		return last;
@@ -354,11 +354,11 @@ public class MainWindow extends JPanel {
 
 	/** Set current display date */
 	public void setAsOfDate(QDate date) {
-		if (date.compareTo(GenericTxn.getFirstTransactionDate()) < 0) {
-			date = GenericTxn.getFirstTransactionDate();
+		if (date.compareTo(MoneyMgrModel.getFirstTransactionDate()) < 0) {
+			date = MoneyMgrModel.getFirstTransactionDate();
 		}
-		if (date.compareTo(GenericTxn.getLastTransactionDate()) > 0) {
-			date = GenericTxn.getLastTransactionDate();
+		if (date.compareTo(MoneyMgrModel.getLastTransactionDate()) > 0) {
+			date = MoneyMgrModel.getLastTransactionDate();
 		}
 
 		// TODO distinguish between effective date (for calculating balances, etc)

@@ -7,6 +7,7 @@ import java.util.StringTokenizer;
 import moneymgr.io.Reconciler;
 import moneymgr.io.qif.QifDomReader;
 import moneymgr.model.Account;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.report.NetWorthReporter;
 import moneymgr.report.ReconcileStatusReporter;
 import moneymgr.report.obsolete.AccountReporter;
@@ -73,7 +74,7 @@ public class QifLoader {
 				} else {
 					final String aname = s.substring(1).trim();
 
-					final Account a = Account.findAccount(aname);
+					final Account a = MoneyMgrModel.findAccount(aname);
 					if (a != null) {
 						AccountReporter.reportStatus(a, "m");
 					}
@@ -100,7 +101,7 @@ public class QifLoader {
 			} else if (s.startsWith("g")) {
 				final String aname = s.substring(1).trim();
 
-				Account a = Account.findAccount(aname);
+				Account a = MoneyMgrModel.findAccount(aname);
 				if (a != null) {
 					QifReporter.generateMonthlyStatements(a);
 				}

@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import moneymgr.model.Account;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Statement;
 import moneymgr.report.ReconcileStatusReporter.ReconcileStatusModel.AccountInfo;
 import moneymgr.util.Common;
@@ -140,7 +141,7 @@ public class ReconcileStatusReporter {
 	public static ReconcileStatusModel buildReportStatusModel() {
 		ReconcileStatusModel model = new ReconcileStatusModel();
 
-		List<Account> accountsByLastStatement = new ArrayList<>(Account.getAccounts());
+		List<Account> accountsByLastStatement = new ArrayList<>(MoneyMgrModel.getAccounts());
 
 		Collections.sort(accountsByLastStatement, compareLastBalancedStatementDate);
 

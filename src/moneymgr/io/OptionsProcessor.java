@@ -12,6 +12,7 @@ import app.QifDom;
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Security;
 import moneymgr.model.StockOption;
 import moneymgr.util.Common;
@@ -52,9 +53,9 @@ public class OptionsProcessor {
 				if (op.equals("ESPP")) {
 					// 09/30/90 ESPP "ISI ESPP Stock" 241 4.04 4.75 973.64 1144.75
 					String secname = toker.nextToken();
-					Security sec = Security.findSecurity(secname);
+					Security sec = MoneyMgrModel.findSecurity(secname);
 					String acctname = toker.nextToken(); // .replaceAll("_", " ");
-					Account acct = Account.findAccount(acctname);
+					Account acct = MoneyMgrModel.findAccount(acctname);
 					BigDecimal shares = new BigDecimal(toker.nextToken());
 					BigDecimal buyPrice = new BigDecimal(toker.nextToken());
 					BigDecimal cost = new BigDecimal(toker.nextToken());
@@ -72,9 +73,9 @@ public class OptionsProcessor {
 					if (op.equals("GRANT")) {
 						// 05/23/91 GRANT 2656 ASCL ISI_Options 500 6.00 Y 4 10y
 						String secname = toker.nextToken();
-						Security sec = Security.findSecurity(secname);
+						Security sec = MoneyMgrModel.findSecurity(secname);
 						String acctname = toker.nextToken(); // .replaceAll("_", " ");
-						Account acct = Account.findAccount(acctname);
+						Account acct = MoneyMgrModel.findAccount(acctname);
 						BigDecimal shares = new BigDecimal(toker.nextToken());
 						BigDecimal price = new BigDecimal(toker.nextToken());
 						String vestPeriod = toker.nextToken();
@@ -146,10 +147,10 @@ public class OptionsProcessor {
 
 	/** Post-load processing for stock options */
 	public static void matchOptionsWithTransactions() {
-		matchOptionsWithTransactions(GenericTxn.getAllTransactions());
+		matchOptionsWithTransactions(MoneyMgrModel.getAllTransactions());
 
 		// TODO seems we are processing transactions twice here.
-		for (Account a : Account.getAccounts()) {
+		for (Account a : MoneyMgrModel.getAccounts()) {
 			if (a.isInvestmentAccount()) {
 				matchOptionsWithTransactions(a.getTransactions());
 			}

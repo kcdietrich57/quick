@@ -24,7 +24,7 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import moneymgr.model.GenericTxn;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.util.QDate;
 
 /**
@@ -175,8 +175,8 @@ public class TimeSliderPanel extends JPanel {
 	}
 
 	private void createDateSlider() {
-		QDate start = GenericTxn.getFirstTransactionDate();
-		QDate end = GenericTxn.getLastTransactionDate();
+		QDate start = MoneyMgrModel.getFirstTransactionDate();
+		QDate end = MoneyMgrModel.getLastTransactionDate();
 		int years = (end.getYear() - start.getYear()) + 1;
 		int months = years * 12;
 
@@ -231,7 +231,7 @@ public class TimeSliderPanel extends JPanel {
 
 	/** Convert months since start of history to the date */
 	private QDate convertMonthsToDate(int months) {
-		int startyear = GenericTxn.getFirstTransactionDate().getYear();
+		int startyear = MoneyMgrModel.getFirstTransactionDate().getYear();
 		QDate date = new QDate(startyear, 1, 1);
 		QDate sdate = date.addMonths(months);
 
@@ -242,7 +242,7 @@ public class TimeSliderPanel extends JPanel {
 	public static int convertDateToMonths(QDate date) {
 		int months = 0;
 
-		int year = GenericTxn.getFirstTransactionDate().getYear();
+		int year = MoneyMgrModel.getFirstTransactionDate().getYear();
 		int y = date.getYear();
 
 		while (year < y) {

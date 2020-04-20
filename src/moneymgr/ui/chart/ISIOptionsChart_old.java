@@ -8,6 +8,7 @@ import org.knowm.xchart.QuickChart;
 import org.knowm.xchart.XYChart;
 
 import moneymgr.model.Account;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.StockOption;
 import moneymgr.ui.MainWindow;
 import moneymgr.util.QDate;
@@ -18,7 +19,7 @@ public class ISIOptionsChart_old {
 		private double[] yData;
 
 		public ISIOptionsChartData(QDate start, QDate end) {
-			Account acct = Account.findAccount("ISI Options");
+			Account acct = MoneyMgrModel.findAccount("ISI Options");
 
 			List<QDate> dates = new ArrayList<QDate>();
 			List<BigDecimal> high = new ArrayList<BigDecimal>();
@@ -109,7 +110,7 @@ public class ISIOptionsChart_old {
 			end = new QDate(2003, 12, 31);
 		}
 
-		Account acct = Account.findAccount("ISI Options");
+		Account acct = MoneyMgrModel.findAccount("ISI Options");
 
 		List<QDate> dates = new ArrayList<QDate>();
 		List<BigDecimal> high = new ArrayList<BigDecimal>();

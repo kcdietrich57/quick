@@ -2,7 +2,6 @@ package moneymgr.model;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -15,102 +14,30 @@ import moneymgr.util.QDate;
 
 /** Class representing a security, its price history, activity, and so on */
 public class Security {
-	/** Map symbol to security */
-	private static final Map<String, Security> securities = new HashMap<>();
-
-	/** Securities indexed by ID */
-	private static final List<Security> securitiesByID = new ArrayList<>();
-
-	public static Collection<Security> getSecurities() {
-		return Collections.unmodifiableCollection(securities.values());
-	}
-
-	public static List<Security> getSecuritiesById() {
-		return Collections.unmodifiableList(securitiesByID);
-	}
-
-	/**
-	 * Introduce a new security - checks for already existing security first.<br>
-	 * It is an error if the name or symbol is already used.
-	 */
-	public static void addSecurity(Security sec) {
-		Security existingByName = findSecurityByName(sec.getName());
-		if (existingByName != null) {
-			Common.reportError("Adding duplicate security name '" + sec.getName() + "'");
-		}
-
-		Security existingBySymbol = (sec.symbol != null) ? securities.get(sec.symbol) : null;
-		if (existingBySymbol != null) {
-			Common.reportError("Adding duplicate security symbol '" + sec.symbol + "'");
-		}
-
-		if (sec.secid != (securities.size() + 1)) {
-			Common.reportError("Bad security id '" + sec.secid + "'" //
-					+ " should be " + (securities.size() + 1));
-		}
-
-		while (securitiesByID.size() <= sec.secid) {
-			securitiesByID.add(null);
-		}
-
-		securitiesByID.set(sec.secid, sec);
-		securities.put(sec.symbol.toUpperCase(), sec);
-	}
-
-	public static Security getSecurity(int secid) {
-		return securitiesByID.get(secid);
-	}
-
-	/** Look up a security whose name or symbol matches an input string. */
-	public static Security findSecurity(String nameOrSymbol) {
-		final Security s = findSecurityBySymbol(nameOrSymbol);
-
-		return (s != null) ? s : findSecurityByName(nameOrSymbol);
-	}
-
-	/**
-	 * Look up a security whose name matches an input string.<br>
-	 * Quicken windows QIF export uses security name, not symbol.
-	 */
-	public static Security findSecurityByName(String name) {
-		for (Security sec : securities.values()) {
-			if ((sec != null) && sec.names.contains(name)) {
-				return sec;
-			}
-		}
-
-		return null;
-	}
-
-	/** Look up a security whose symbol matches an input string. */
-	public static Security findSecurityBySymbol(String sym) {
-		return securities.get(sym.toUpperCase());
-	}
-
 	/** Information about a split involving this security */
-	public static class SplitInfo {
+	public static class StockSplitInfo {
 		/** Date of the split */
 		public QDate splitDate;
 
 		/** Multiplier applied to shares for the split (newsh = oldsh * ratio) */
 		public BigDecimal splitRatio;
 
-		public SplitInfo(QDate date, BigDecimal ratio) {
+		public StockSplitInfo(QDate date, BigDecimal ratio) {
 			this.splitDate = date;
 			this.splitRatio = ratio;
 		}
 
-		public SplitInfo(InvestmentTxn tx) {
+		public StockSplitInfo(InvestmentTxn tx) {
 			this(tx.getDate(), tx.getSplitRatio());
 		}
-		
+
 		public boolean equals(Object other) {
-			if (!(other instanceof SplitInfo)) {
+			if (!(other instanceof StockSplitInfo)) {
 				return false;
 			}
-			
-			return this.splitDate.equals(((SplitInfo)other).splitDate) && //
-					Common.isEffectivelyEqual(this.splitRatio, ((SplitInfo)other).splitRatio);
+
+			return this.splitDate.equals(((StockSplitInfo) other).splitDate) && //
+					Common.isEffectivelyEqual(this.splitRatio, ((StockSplitInfo) other).splitRatio);
 		}
 	}
 
@@ -141,11 +68,11 @@ public class Security {
 	public final List<QPrice> prices = new ArrayList<>();
 
 	/** TODO make private - Information about splits for this security */
-	public final List<SplitInfo> splits = new ArrayList<>();
+	public final List<StockSplitInfo> splits = new ArrayList<>();
 
 	/** Constructor - quicken-style info */
 	public Security(String symbol, String name, String type, String goal) {
-		this.secid = securities.size() + 1;
+		this.secid = MoneyMgrModel.nextSecurityId();
 
 		this.symbol = (symbol != null) ? symbol : name;
 
@@ -182,13 +109,13 @@ public class Security {
 	}
 
 	public static void fixSplits() {
-		for (Security sec : getSecurities()) {
+		for (Security sec : MoneyMgrModel.getSecurities()) {
 			sec.splits.clear();
-			SplitInfo last = null;
+			StockSplitInfo last = null;
 
 			for (InvestmentTxn tx : sec.getTransactions()) {
 				if (tx.getAction() == TxAction.STOCKSPLIT) {
-					SplitInfo info = new SplitInfo(tx);
+					StockSplitInfo info = new StockSplitInfo(tx);
 					if (!info.equals(last)) {
 						sec.splits.add(info);
 						last = info;
@@ -333,7 +260,7 @@ public class Security {
 	public BigDecimal getSplitRatioForDate(QDate d) {
 		BigDecimal ret = BigDecimal.ONE;
 
-		for (SplitInfo si : this.splits) {
+		for (StockSplitInfo si : this.splits) {
 			if (si.splitDate.compareTo(d) < 0) {
 				break;
 			}

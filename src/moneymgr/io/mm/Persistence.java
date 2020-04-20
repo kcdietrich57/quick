@@ -23,7 +23,7 @@ import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.MultiSplitTxn;
 import moneymgr.model.QPrice;
 import moneymgr.model.Security;
-import moneymgr.model.Security.SplitInfo;
+import moneymgr.model.Security.StockSplitInfo;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.SecurityPosition;
 import moneymgr.model.SimpleTxn;
@@ -298,7 +298,7 @@ public class Persistence {
 		wtr.print(
 				"  [\"acctid\",\"name\",\"acctypeid\",\"desc\",\"closedate\",\"statfreq\",\"statday\",\"bal\",\"clearbal\"]");
 		sep = ",";
-		List<Account> accts = Account.getAccountsById();
+		List<Account> accts = MoneyMgrModel.getAccountsById();
 		for (int acctid = 1; acctid < accts.size(); ++acctid) {
 			Account ac = accts.get(acctid);
 			String line;
@@ -340,7 +340,7 @@ public class Persistence {
 		wtr.print("  [\"secid\",\"symbol\",\"[name]\",\"type\",\"[split]\",\"[[date,price]]\"]");
 
 		final String sep = ",";
-		List<Security> securities = Security.getSecuritiesById();
+		List<Security> securities = MoneyMgrModel.getSecuritiesById();
 		for (int secid = 1; secid < securities.size(); ++secid) {
 			Security sec = securities.get(secid);
 			String line;
@@ -359,7 +359,7 @@ public class Persistence {
 
 				String splits = "[";
 				sep2 = "";
-				for (SplitInfo split : sec.splits) {
+				for (StockSplitInfo split : sec.splits) {
 					splits += sep2;
 					// TODO probably wrong format for ratio
 					splits += String.format("[%d,\"%f\"]", //
@@ -420,7 +420,7 @@ public class Persistence {
 				+ "\"srcLotid\",\"[childLotid]\"]");
 
 		final String sep = ",";
-		List<Lot> lots = Lot.getLots();
+		List<Lot> lots = MoneyMgrModel.getLots();
 		for (int lotid = 1; lotid < lots.size(); ++lotid) {
 			Lot lot = lots.get(lotid);
 
@@ -470,7 +470,7 @@ public class Persistence {
 				+ "]");
 
 		final String sep = ",";
-		List<StockOption> opts = StockOption.options;
+		List<StockOption> opts = MoneyMgrModel.options;
 		for (int optid = 1; optid < opts.size(); ++optid) {
 			StockOption opt = opts.get(optid);
 
@@ -521,7 +521,7 @@ public class Persistence {
 						+ "\"secid\",\"secaction\",\"shares\",\"shareprice\",\"splitratio\",\"optid\",\"[split]\",\"[secxfer]\",\"[lot]\"]");
 
 		final String sep = ",";
-		List<GenericTxn> txns = GenericTxn.getAllTransactions();
+		List<GenericTxn> txns = MoneyMgrModel.getAllTransactions();
 		for (int txid = 1; txid < txns.size(); ++txid) {
 			GenericTxn tx = txns.get(txid);
 
@@ -678,7 +678,7 @@ public class Persistence {
 				+ "\"holdings\"]");
 
 		final String sep = ",";
-		for (Account acct : Account.getAccountsById()) {
+		for (Account acct : MoneyMgrModel.getAccountsById()) {
 			// TODO Assign statement id and reference/store accordingly
 			if (acct == null) {
 				continue;

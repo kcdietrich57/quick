@@ -7,6 +7,7 @@ import java.util.List;
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Security;
 import moneymgr.model.SecurityPosition;
 import moneymgr.model.Statement;
@@ -38,7 +39,7 @@ public class StatementDetails {
 	 * acctname;date;bal;cashBal;numTx;numPos;[cashTx;][sec;numTx[txIdx;shareBal;]]
 	 */
 	public static String formatStatementForSave(Statement stmt) {
-		Account a = Account.getAccountByID(stmt.acctid);
+		Account a = MoneyMgrModel.getAccountByID(stmt.acctid);
 
 		String s = String.format("%s;%s;%5.2f;%5.2f;%d;%d", //
 				a.name, //
@@ -164,7 +165,7 @@ public class StatementDetails {
 		String txCountStr = ss[ssx++].trim();
 		String secCountStr = ss[ssx++].trim();
 
-		this.acctid = Account.findAccount(acctname).acctid;
+		this.acctid = MoneyMgrModel.findAccount(acctname).acctid;
 		this.date = Common.parseQDate(dateStr);
 		this.closingBalance = new BigDecimal(closeStr);
 		this.closingCashBalance = new BigDecimal(closeCashStr);
@@ -211,7 +212,7 @@ public class StatementDetails {
 			txinfo.cknum = Integer.parseInt(cknumStr);
 			txinfo.cashAmount = new BigDecimal(amtStr);
 			if (secStr.length() > 0) {
-				txinfo.security = Security.findSecurity(secStr);
+				txinfo.security = MoneyMgrModel.findSecurity(secStr);
 				txinfo.shares = (shrStr.length() > 0) ? Common.parseDecimal(shrStr) : BigDecimal.ZERO;
 			}
 
@@ -223,7 +224,7 @@ public class StatementDetails {
 			String symStr = ss[ssx++].trim();
 			String numtxStr = ss[ssx++].trim();
 
-			Security sec = Security.findSecurity(symStr);
+			Security sec = MoneyMgrModel.findSecurity(symStr);
 
 			StatementPosition spos = new StatementPosition();
 			spos.sec = sec;

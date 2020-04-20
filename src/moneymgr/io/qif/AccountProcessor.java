@@ -2,6 +2,7 @@ package moneymgr.io.qif;
 
 import moneymgr.model.Account;
 import moneymgr.model.AccountType;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -25,7 +26,7 @@ public class AccountProcessor {
 				break;
 			}
 
-			Account.currAccountBeingLoaded = acct;
+			MoneyMgrModel.currAccountBeingLoaded = acct;
 		}
 	}
 
@@ -44,7 +45,7 @@ public class AccountProcessor {
 
 			switch (qline.type) {
 			case EndOfSection:
-				return Account.makeAccount(name, type, desc, closedate, statfreq, statdom);
+				return MoneyMgrModel.makeAccount(name, type, desc, closedate, statfreq, statdom);
 
 			case AcctType:
 				if (type == null) {

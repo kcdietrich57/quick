@@ -2,7 +2,6 @@ package moneymgr.model;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import moneymgr.util.Common;
@@ -17,14 +16,6 @@ import moneymgr.util.QDate;
  * 4. Disposal date (determines short/long term gains, from disposing txn)
  */
 public class Lot {
-	private static int nextlotid = 1;
-
-	private final static List<Lot> lots = new ArrayList<Lot>();
-
-	public static final List<Lot> getLots() {
-		return Collections.unmodifiableList(Lot.lots);
-	}
-
 	public final int lotid;
 	public final int acctid;
 	public final int secid;
@@ -68,11 +59,11 @@ public class Lot {
 			BigDecimal shares, BigDecimal basisPrice, //
 			InvestmentTxn createTxn, //
 			Lot srcLot) {
-		this.lotid = nextlotid++;
-		while (Lot.lots.size() <= this.lotid) {
-			Lot.lots.add(null);
+		this.lotid = MoneyMgrModel.nextlotid++;
+		while (MoneyMgrModel.lots.size() <= this.lotid) {
+			MoneyMgrModel.lots.add(null);
 		}
-		Lot.lots.set(this.lotid, this);
+		MoneyMgrModel.lots.set(this.lotid, this);
 
 		this.acctid = acctid;
 		this.createDate = date;
@@ -214,7 +205,7 @@ public class Lot {
 				"] " + //
 				this.acctid + " " + //
 				getAcquisitionDate().toString() + " " + //
-				Security.getSecurity(this.secid).getSymbol() + " " + //
+				MoneyMgrModel.getSecurity(this.secid).getSymbol() + " " + //
 				Common.formatAmount3(this.shares) + " " + //
 				Common.formatAmount(getCostBasis());
 

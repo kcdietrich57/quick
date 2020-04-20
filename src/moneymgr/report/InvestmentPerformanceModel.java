@@ -10,6 +10,7 @@ import moneymgr.model.Account;
 import moneymgr.model.AccountType;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Security;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.SecurityPosition;
@@ -250,7 +251,7 @@ public class InvestmentPerformanceModel {
 		this.startStatusModel = new StatusForDateModel(startDate);
 		this.endStatusModel = new StatusForDateModel(endDate);
 
-		this.txns = GenericTxn.getInvestmentTransactions(startDate, endDate);
+		this.txns = MoneyMgrModel.getInvestmentTransactions(startDate, endDate);
 
 		build();
 	}
@@ -340,7 +341,7 @@ public class InvestmentPerformanceModel {
 
 		List<AccountSummary> asums = new ArrayList<AccountSummary>();
 
-		for (Account a : Account.getAccounts()) {
+		for (Account a : MoneyMgrModel.getAccounts()) {
 			if (!a.isInvestmentAccount() //
 					|| (a.getOpenDate().compareTo(endDate()) >= 0) //
 					|| (a.closeDate != null && a.closeDate.compareTo(startDate()) <= 0)) {

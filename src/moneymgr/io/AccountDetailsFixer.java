@@ -2,6 +2,7 @@ package moneymgr.io;
 
 import moneymgr.model.Account;
 import moneymgr.model.AccountType;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -36,7 +37,7 @@ public class AccountDetailsFixer {
 		}
 
 		if (type == null) {
-			Account existing = Account.findAccount(name);
+			Account existing = MoneyMgrModel.findAccount(name);
 			type = (existing == null) ? AccountType.Bank : existing.type;
 		}
 

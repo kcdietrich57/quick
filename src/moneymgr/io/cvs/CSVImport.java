@@ -136,24 +136,24 @@ public class CSVImport {
 
 		System.out.println("Processing csv file");
 
-		GenericTxn.isAlternativeImport = true;
+		MoneyMgrModel.isAlternativeImport = true;
 
 		System.out.println(String.format("There are %d transactions from DIETRICH.QIF", //
-				GenericTxn.getAllTransactions().size()));
+				MoneyMgrModel.getAllTransactions().size()));
 
 		CSVImport.importCSV(importDir + "DIETRICH.csv");
 
 		System.out.println(String.format("After import, there are now %d transactions from DIETRICH.QIF", //
-				GenericTxn.getAllTransactions().size()));
-		Collections.sort(GenericTxn.alternateTransactions, new Comparator<GenericTxn>() {
+				MoneyMgrModel.getAllTransactions().size()));
+		Collections.sort(MoneyMgrModel.alternateTransactions, new Comparator<GenericTxn>() {
 			public int compare(GenericTxn o1, GenericTxn o2) {
 				return o1.getDate().compareTo(o2.getDate());
 			}
 		});
 
-		List<GenericTxn> txns = GenericTxn.alternateTransactions;
+		List<GenericTxn> txns = MoneyMgrModel.alternateTransactions;
 		System.out.println(String.format("There are %d transactions from MAC export", //
-				GenericTxn.alternateTransactions.size()));
+				MoneyMgrModel.alternateTransactions.size()));
 	}
 
 	/** Map MAC tx to WIN tx */
@@ -207,7 +207,7 @@ public class CSVImport {
 				String msg = "\n" + msgs[ii] + "\n-------------------------------------";
 				out.println(msg);
 
-				for (Account acct : Account.getAccounts()) {
+				for (Account acct : MoneyMgrModel.getAccounts()) {
 					List<TransactionInfo> tuples = this.transactionsMap.get(acct.name);
 					if (tuples == null) {
 						continue;
@@ -263,7 +263,7 @@ public class CSVImport {
 
 			int unmatchedWindowsTxns = 0;
 
-			for (GenericTxn gtx : GenericTxn.getAllTransactions()) {
+			for (GenericTxn gtx : MoneyMgrModel.getAllTransactions()) {
 				if (!isWinTxnMatched(gtx, true)) {
 //					out.println(gtx.toString());
 					++unmatchedWindowsTxns;
@@ -338,7 +338,7 @@ public class CSVImport {
 
 		out.println("\nUnrecognized Accounts\n=====================");
 		for (String acctName : accts) {
-			Account acct = Account.findAccount(acctName);
+			Account acct = MoneyMgrModel.findAccount(acctName);
 
 			if (acct == null) {
 				out.println(acctName);
@@ -368,7 +368,7 @@ public class CSVImport {
 
 		out.println("\nUnrecognized Security\n=====================");
 		for (String secName : secNames) {
-			Security sec = Security.findSecurity(secName);
+			Security sec = MoneyMgrModel.findSecurity(secName);
 
 			if (sec == null) {
 				out.println(secName);
@@ -460,11 +460,11 @@ public class CSVImport {
 
 		infoMessage(mactxn.toString());
 
-		Account acct = Account.getAccountByID(mactxn.getAccountID());
-		List<SimpleTxn> txns = Account.findMatchingTransactions(acct, mactxn);
+		Account acct = MoneyMgrModel.getAccountByID(mactxn.getAccountID());
+		List<SimpleTxn> txns = MoneyMgrModel.findMatchingTransactions(acct, mactxn);
 
 		if (txns.isEmpty()) {
-			txns = Account.findMatchingTransactions(acct, mactxn);
+			txns = MoneyMgrModel.findMatchingTransactions(acct, mactxn);
 		}
 		for (Iterator<SimpleTxn> iter = txns.iterator(); iter.hasNext();) {
 			if (isMatched(iter.next())) {
@@ -565,7 +565,7 @@ public class CSVImport {
 				} else if (cat.contentEquals("Tesla Loan")) {
 					cat = "TeslaLoan";
 				}
-				xferAcct = Account.findAccount(cat);
+				xferAcct = MoneyMgrModel.findAccount(cat);
 				catid = (xferAcct != null) ? -xferAcct.acctid : 0;
 			} else {
 				c = (!cat.isEmpty()) ? MoneyMgrModel.findCategory(cat) : null;
@@ -632,7 +632,7 @@ public class CSVImport {
 				}
 
 				if (itxn.getCashTransferAcctid() > 0) {
-					itxn.accountForTransfer = Account.getAccountByID(itxn.getCashTransferAcctid()).name;
+					itxn.accountForTransfer = MoneyMgrModel.getAccountByID(itxn.getCashTransferAcctid()).name;
 					itxn.setAction((inflow.isEmpty()) ? TxAction.XOUT : TxAction.XIN);
 					itxn.cashTransferred = amount;
 				} else {
@@ -645,7 +645,7 @@ public class CSVImport {
 						: Common.getDecimal(fees);
 				itxn.price = BigDecimal.ZERO;
 				if (!sec.isEmpty()) {
-					itxn.security = Security.findSecurity(sec);
+					itxn.security = MoneyMgrModel.findSecurity(sec);
 				}
 
 				// 0.42 shares @ 1.00

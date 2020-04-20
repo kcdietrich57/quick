@@ -7,6 +7,7 @@ import app.QifDom;
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.SecurityPosition;
 import moneymgr.util.Common;
@@ -33,7 +34,7 @@ public class DomReporter {
 		System.out.println("Accounts");
 		System.out.println("============================");
 
-		for (Account a : Account.getAccounts()) {
+		for (Account a : MoneyMgrModel.getAccounts()) {
 			if (!a.isInvestmentAccount() || //
 					Common.isEffectivelyZero(a.balance)) {
 				continue;
@@ -187,7 +188,7 @@ public class DomReporter {
 					System.out.println(String.format( //
 							"  %-12s  %-20s  %-10s  %s  %s", //
 							t.getDate().toString(), //
-							Account.getAccountByID(t.getAccountID()).name, //
+							MoneyMgrModel.getAccountByID(t.getAccountID()).name, //
 							t.getAction().toString(), //
 							Common.formatAmount3(t.getShares()), //
 							Common.formatAmount3(shrbal)));

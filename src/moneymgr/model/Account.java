@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import moneymgr.io.AccountDetailsFixer;
 import moneymgr.model.SecurityPosition.PositionInfo;
 import moneymgr.ui.MainWindow;
 import moneymgr.util.Common;
@@ -22,171 +21,85 @@ import moneymgr.util.QDate;
  * and daily balances
  */
 public class Account {
-	/** Account list ordered by first/last txn dates (no gaps/nulls) */
-	private static final List<Account> accounts = new ArrayList<>();
+	/**
+	 * TODO This duplicates TransactionCleaner findMatchesForTransfer()<br>
+	 * Find existing transaction(s) that match a transaction being loaded.<br>
+	 * Date is close, amount matches (or the amount of a split).
+	 */
+	public static List<SimpleTxn> findMatchingTransactions(Account acct, SimpleTxn tx, boolean dummy) {
+		List<SimpleTxn> txns = new ArrayList<>();
+		int TOLERANCE = 5; // days
 
-	/** Account list indexed by acctid (size > numAccounts, may have gaps/nulls) */
-	private static final List<Account> accountsByID = new ArrayList<>();
+		BigDecimal amt = tx.getAmount().abs();
 
-	/** Tracks current context as we are loading */
-	public static Account currAccountBeingLoaded = null;
-
-	public static Account makeAccount( //
-			String name, AccountType type, String desc, QDate closeDate, //
-			int statFreq, int statDayOfMonth) {
-		Account acct = Account.findAccount(name);
-
-		if (acct == null) {
-			type = AccountDetailsFixer.fixType(name, type);
-			acct = new Account(name, type, desc, closeDate, statFreq, statDayOfMonth);
-			Account.addAccount(acct);
-		} else {
-			AccountDetailsFixer.updateAccount(acct, //
-					closeDate, statFreq, statDayOfMonth);
-		}
-
-		return acct;
-	}
-
-	private static int getNextAccountID() {
-		return (accountsByID.isEmpty()) ? 1 : accountsByID.size();
-	}
-
-	public static int getNumAccounts() {
-		return accounts.size();
-	}
-
-	/** Return list of accounts ordered by date - no nulls */
-	public static List<Account> getAccounts() {
-		return Collections.unmodifiableList(accounts);
-	}
-
-	/** Return list of accounts indexed by id - contains nulls */
-	public static List<Account> getAccountsById() {
-		return Collections.unmodifiableList(accountsByID);
-	}
-
-	public static Account getAccountByID(int acctid) {
-		return accountsByID.get(acctid);
-	}
-
-	/** Compare two accounts by date of first and last transaction, then name */
-	private static int compareAccountsByTxnDateAndName(Account a1, Account a2) {
-		if (a1 == null) {
-			return (a2 == null) ? 0 : 1;
-		} else if (a2 == null) {
-			return -1;
-		}
-
-		int ct1 = a1.transactions.size();
-		int ct2 = a2.transactions.size();
-
-		if (ct1 == 0) {
-			return (ct2 == 0) ? 0 : -1;
-		} else if (ct2 == 0) {
-			return 1;
-		}
-
-		final GenericTxn firsttxn1 = a1.transactions.get(0);
-		final GenericTxn lasttxn1 = a1.transactions.get(ct1 - 1);
-		final GenericTxn firsttxn2 = a2.transactions.get(0);
-		final GenericTxn lasttxn2 = a2.transactions.get(ct2 - 1);
-
-		int diff = firsttxn1.getDate().compareTo(firsttxn2.getDate());
-		if (diff != 0) {
-			return diff;
-		}
-
-		diff = lasttxn1.getDate().compareTo(lasttxn2.getDate());
-		if (diff != 0) {
-			return diff;
-		}
-
-		return (a1.name.compareTo(a2.name));
-	}
-
-	/** Compare two accounts by date of first and last transaction, then name */
-	private static int compareAccountsByTypeAndName(Account a1, Account a2) {
-		int diff;
-
-		if (a1.type != a2.type) {
-			AccountCategory cat1 = AccountCategory.forAccountType(a1.type);
-			AccountCategory cat2 = AccountCategory.forAccountType(a2.type);
-
-			diff = cat1.getAccountListOrder() - cat2.getAccountListOrder();
-			if (diff != 0) {
-				return diff;
-			}
-
-			return a1.type.compareTo(a2.type);
-		}
-
-		BigDecimal cv1 = a1.getValueForDate(MainWindow.instance.asOfDate()).abs();
-		BigDecimal cv2 = a2.getValueForDate(MainWindow.instance.asOfDate()).abs();
-
-		diff = cv2.subtract(cv1).signum();
-		return (diff != 0) //
-				? diff //
-				: a1.name.compareTo(a2.name);
-	}
-
-	/** Get Account list sorted on isOpen|type|name */
-	public static List<Account> getSortedAccounts(boolean showToday) {
-		List<Account> accts = new ArrayList<>();
-		QDate thedate = (showToday) ? QDate.today() : MainWindow.instance.asOfDate();
-
-		for (Account acct : accounts) {
-			if (acct.isOpenAsOf(thedate)) {
-				accts.add(acct);
+		int idx = acct.getTransactionIndexForDate(tx.getDate());
+		for (; idx > 0; --idx) {
+			if (tx.getDate().subtract(acct.transactions.get(idx - 1).getDate()) > TOLERANCE) {
+				break;
 			}
 		}
 
-		Collections.sort(accts, new Comparator<Account>() {
-			public int compare(Account a1, Account a2) {
-				return compareAccountsByTypeAndName(a1, a2);
+		for (; idx < acct.transactions.size(); ++idx) {
+			GenericTxn t = acct.transactions.get(idx);
+			int diff = t.getDate().subtract(tx.getDate());
+			if (diff > TOLERANCE) {
+				break;
+			}
+			if (-diff > TOLERANCE) {
+				continue;
+			}
+
+			// Match scenarios:
+			// Amount matches win txn
+			// Amount matches split in win txn
+			// Amount matches split in xfer with win txn
+			if (Common.isEffectivelyEqual(t.getAmount().abs(), amt.abs())) {
+				// Match win txn directly
+				txns.add(t);
+			} else if (t.hasSplits()) {
+				// Match split in win txn
+				for (SplitTxn st : t.getSplits()) {
+					if (Common.isEffectivelyEqual(st.getAmount().abs(), amt.abs())) {
+						txns.add(st);
+					}
+				}
+			} else {
+				// Match split in win xfer txn
+				SimpleTxn xt = t.getCashTransferTxn();
+				if (xt != null) {
+					for (SplitTxn st : xt.getSplits()) {
+						if (Common.isEffectivelyEqual(st.getAmount().abs(), amt.abs())) {
+							txns.add(t);
+						}
+					}
+				}
+			}
+		}
+
+		for (Iterator<SimpleTxn> iter = txns.iterator(); iter.hasNext();) {
+			SimpleTxn txn = iter.next();
+			if (txn.isCredit() != tx.isCredit()) {
+				iter.remove();
+			} else if (txn instanceof InvestmentTxn) {
+				InvestmentTxn itxn = (InvestmentTxn) txn;
+				InvestmentTxn itx = (InvestmentTxn) tx;
+
+				if (!itxn.getSecurityName().equals(itx.getSecurityName())) {
+					iter.remove();
+				}
+			}
+		}
+
+		txns.sort(new Comparator<SimpleTxn>() {
+			public int compare(SimpleTxn o1, SimpleTxn o2) {
+				int diff1 = Math.abs(o1.getDate().subtract(tx.getDate()));
+				int diff2 = Math.abs(o2.getDate().subtract(tx.getDate()));
+
+				return diff1 - diff2;
 			}
 		});
 
-		return accts;
-	}
-
-	/** Add an account, maintaining proper ordering in the list(s) */
-	public static void addAccount(Account acct) {
-		if (acct.acctid == 0) {
-			Common.reportError("Account '" + acct.name + "' has zero acctid");
-		}
-
-		while (accountsByID.size() <= acct.acctid) {
-			accountsByID.add(null);
-		}
-
-		accountsByID.set(acct.acctid, acct);
-		accounts.add(acct);
-
-		Account.currAccountBeingLoaded = acct;
-
-		Collections.sort(accounts, (a1, a2) -> {
-			return compareAccountsByTxnDateAndName(a1, a2);
-		});
-	}
-
-	/** Look up an account by name */
-	public static Account findAccount(String name) {
-		name = name.toLowerCase();
-
-		for (Account acct : accounts) {
-			if (acct.name.equalsIgnoreCase(name)) {
-				return acct;
-			}
-		}
-
-		for (Account acct : accounts) {
-			if (acct.name.toLowerCase().startsWith(name)) {
-				return acct;
-			}
-		}
-
-		return null;
+		return txns;
 	}
 
 	public final int acctid;
@@ -209,7 +122,7 @@ public class Account {
 
 	public Account(String name, AccountType type, String desc, QDate closeDate, //
 			int statFreq, int statDayOfMonth) {
-		this.acctid = getNextAccountID();
+		this.acctid = MoneyMgrModel.nextAccountID();
 
 		this.name = name;
 		this.type = type;
@@ -302,16 +215,16 @@ public class Account {
 
 	public void addTransaction(GenericTxn txn) {
 		int idx = // getTransactionIndexForDate(txn);
-				GenericTxn.getTransactionInsertIndexByDate(this.transactions, txn);
+				MoneyMgrModel.getTransactionInsertIndexByDate(this.transactions, txn);
 
 		this.transactions.add(idx, txn);
 	}
 
 	/** Find the index to insert a new transaction in a list sorted by date */
 	private int getTransactionIndexForDate(QDate date) {
-		GenericTxn.SEARCH.setDate(date);
+		MoneyMgrModel.SEARCH.setDate(date);
 
-		return getTransactionIndexForDate(GenericTxn.SEARCH);
+		return getTransactionIndexForDate(MoneyMgrModel.SEARCH);
 	}
 
 	static final Comparator<GenericTxn> c = new Comparator<GenericTxn>() {
@@ -679,7 +592,7 @@ public class Account {
 	private BigDecimal getCashValueForDate(QDate d) {
 		BigDecimal cashBal = null; // BigDecimal.ZERO;
 
-		int idx = GenericTxn.getLastTransactionIndexOnOrBeforeDate(this.transactions, d);
+		int idx = MoneyMgrModel.getLastTransactionIndexOnOrBeforeDate(this.transactions, d);
 
 		while ((idx >= 0) && (cashBal == null)) {
 			GenericTxn tx = this.transactions.get(idx--);
@@ -715,119 +628,6 @@ public class Account {
 						pos.getValueForDate(d));
 	}
 
-	public static SimpleTxn getMatchTx(SimpleTxn tx, SimpleTxn matchtxn) {
-		if (Common.isEffectivelyEqual(tx.getAmount().abs(), matchtxn.getAmount().abs())) {
-			return matchtxn;
-		}
-
-		SimpleTxn xtxn = matchtxn.getCashTransferTxn();
-		if (xtxn != null) {
-			matchtxn = xtxn;
-		}
-
-		if (matchtxn.hasSplits()) {
-			for (SimpleTxn stx : matchtxn.getSplits()) {
-				if (Common.isEffectivelyEqual(tx.getAmount().abs(), stx.getAmount().abs())) {
-					return stx;
-				}
-			}
-		}
-
-		Common.reportError("Can't find match");
-		return null;
-	}
-
-	/**
-	 * TODO This duplicates TransactionCleaner findMatchesForTransfer()<br>
-	 * Find existing transaction(s) that match a transaction being loaded.<br>
-	 * Date is close, amount matches (or the amount of a split).
-	 */
-	public static List<SimpleTxn> findMatchingTransactions(Account acct, SimpleTxn tx) {
-		List<SimpleTxn> ret = Account.findMatchingTransactions(acct, tx, false);
-
-		if (ret.size() > 1) {
-			List<SimpleTxn> newret = new ArrayList<>(ret);
-			for (Iterator<SimpleTxn> iter = newret.iterator(); iter.hasNext();) {
-				SimpleTxn st = iter.next();
-				if (!st.getDate().equals(tx.getDate())) {
-					iter.remove();
-				} else if (st.getCatid() != tx.getCatid()) {
-					iter.remove();
-				}
-			}
-
-			if (!newret.isEmpty() && newret.size() < ret.size()) {
-//				if (newret.size() > 1 //
-//						&& !Common.isEffectivelyZero(tx.getAmount())) {
-//					System.out.println("xyzzy");
-//				}
-				ret = newret;
-			}
-		}
-
-		if (ret.size() > 1) {
-			int parentmemomatch = 0;
-			int memomatch = 0;
-			int checkmatch = 0;
-			SimpleTxn parentmemotx = null;
-			SimpleTxn memotx = null;
-			SimpleTxn checktx = null;
-
-			for (SimpleTxn stx : ret) {
-//				System.out.println("xyzzy " + tx.toString());
-				SimpleTxn mtxn = getMatchTx(tx, stx);
-
-				if (mtxn.getMemo().equals(tx.getMemo())) {
-					++memomatch;
-					memotx = stx;
-				}
-				if ((mtxn instanceof SplitTxn) && (tx instanceof SplitTxn)) {
-					// System.out.println("xyzzy " + tx.toString());
-					if (tx.toString().contains("7/11/89")) {
-						// System.out.println("xyzzy");
-					}
-					GenericTxn mtxn_parent = ((SplitTxn) mtxn).getContainingTxn();
-					GenericTxn tx_parent = ((SplitTxn) tx).getContainingTxn();
-					if (!tx.getMemo().isEmpty()) {
-						if (tx.getMemo().equals(mtxn.getMemo()) //
-								|| tx.getMemo().equals(mtxn_parent.getMemo())) {
-							++parentmemomatch;
-							parentmemotx = stx;
-						}
-					}
-					if (!tx_parent.getMemo().isEmpty()) {
-						if (tx_parent.getMemo().equals(mtxn.getMemo()) //
-								|| tx_parent.getMemo().equals(mtxn_parent.getMemo())) {
-							++parentmemomatch;
-							parentmemotx = stx;
-						}
-					}
-				}
-				if (mtxn.getCheckNumber() == tx.getCheckNumber()) {
-					++checkmatch;
-					checktx = stx;
-				}
-			}
-
-			if (checkmatch == 1) {
-				ret.clear();
-				ret.add(checktx);
-			} else if (parentmemomatch == 1) {
-				ret.clear();
-				ret.add(parentmemotx);
-			} else if (memomatch == 1) {
-				ret.clear();
-				ret.add(memotx);
-			}
-		}
-
-		if (ret.size() > 1) {
-//			System.out.println(tx.toString());
-//			System.out.println("xyzzy");
-		}
-		return ret;
-	}
-
 //	public List<SimpleTxn> findPotentialMatchingTransactions(SimpleTxn tx) {
 //		List<SimpleTxn> txns = new ArrayList<>();
 //		int TOLERANCE = 3; // days
@@ -858,87 +658,6 @@ public class Account {
 //
 //		return txns;
 //	}
-
-	/**
-	 * TODO This duplicates TransactionCleaner findMatchesForTransfer()<br>
-	 * Find existing transaction(s) that match a transaction being loaded.<br>
-	 * Date is close, amount matches (or the amount of a split).
-	 */
-	private static List<SimpleTxn> findMatchingTransactions(Account acct, SimpleTxn tx, boolean dummy) {
-		List<SimpleTxn> txns = new ArrayList<>();
-		int TOLERANCE = 5; // days
-
-		BigDecimal amt = tx.getAmount().abs();
-
-		int idx = acct.getTransactionIndexForDate(tx.getDate());
-		for (; idx > 0; --idx) {
-			if (tx.getDate().subtract(acct.transactions.get(idx - 1).getDate()) > TOLERANCE) {
-				break;
-			}
-		}
-
-		for (; idx < acct.transactions.size(); ++idx) {
-			GenericTxn t = acct.transactions.get(idx);
-			int diff = t.getDate().subtract(tx.getDate());
-			if (diff > TOLERANCE) {
-				break;
-			}
-			if (-diff > TOLERANCE) {
-				continue;
-			}
-
-			// Match scenarios:
-			// Amount matches win txn
-			// Amount matches split in win txn
-			// Amount matches split in xfer with win txn
-			if (Common.isEffectivelyEqual(t.getAmount().abs(), amt.abs())) {
-				// Match win txn directly
-				txns.add(t);
-			} else if (t.hasSplits()) {
-				// Match split in win txn
-				for (SplitTxn st : t.getSplits()) {
-					if (Common.isEffectivelyEqual(st.getAmount().abs(), amt.abs())) {
-						txns.add(st);
-					}
-				}
-			} else {
-				// Match split in win xfer txn
-				SimpleTxn xt = t.getCashTransferTxn();
-				if (xt != null) {
-					for (SplitTxn st : xt.getSplits()) {
-						if (Common.isEffectivelyEqual(st.getAmount().abs(), amt.abs())) {
-							txns.add(t);
-						}
-					}
-				}
-			}
-		}
-
-		for (Iterator<SimpleTxn> iter = txns.iterator(); iter.hasNext();) {
-			SimpleTxn txn = iter.next();
-			if (txn.isCredit() != tx.isCredit()) {
-				iter.remove();
-			} else if (txn instanceof InvestmentTxn) {
-				InvestmentTxn itxn = (InvestmentTxn) txn;
-				InvestmentTxn itx = (InvestmentTxn) tx;
-
-				if (!itxn.getSecurityName().equals(itx.getSecurityName())) {
-					iter.remove();
-				}
-			}
-		}
-
-		txns.sort(new Comparator<SimpleTxn>() {
-			public int compare(SimpleTxn o1, SimpleTxn o2) {
-				int diff1 = Math.abs(o1.getDate().subtract(tx.getDate()));
-				int diff2 = Math.abs(o2.getDate().subtract(tx.getDate()));
-
-				return diff1 - diff2;
-			}
-		});
-
-		return txns;
-	}
 
 	/**
 	 * Gather transactions that might belong to a statement.<br>

@@ -6,6 +6,7 @@ import java.util.List;
 
 import moneymgr.model.Account;
 import moneymgr.model.AccountCategory;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Security;
 import moneymgr.model.SecurityPosition;
 import moneymgr.model.StockOption;
@@ -94,7 +95,7 @@ public class StatusForDateModel {
 
 	/** Construct model from account info */
 	private void build() {
-		for (Account acct : Account.getAccounts()) {
+		for (Account acct : MoneyMgrModel.getAccounts()) {
 			if (!acct.isOpenOn(this.date)) {
 				continue;
 			}
@@ -121,7 +122,7 @@ public class StatusForDateModel {
 				StatusForDateModel.SecuritySummary ssummary = new StatusForDateModel.SecuritySummary();
 
 				StockOption opt = opts.get(0);
-				Security sec = Security.getSecurity(opt.secid);
+				Security sec = MoneyMgrModel.getSecurity(opt.secid);
 
 				ssummary.name = "Options:" + sec.getName();
 				ssummary.shares = opt.getAvailableShares(true);
