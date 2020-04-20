@@ -136,24 +136,25 @@ public class CSVImport {
 
 		System.out.println("Processing csv file");
 
-		MoneyMgrModel.currModel.isAlternativeImport = true;
-
-		System.out.println(String.format("There are %d transactions from DIETRICH.QIF", //
-				MoneyMgrModel.currModel.getAllTransactions().size()));
-
-		CSVImport.importCSV(importDir + "DIETRICH.csv");
-
-		System.out.println(String.format("After import, there are now %d transactions from DIETRICH.QIF", //
-				MoneyMgrModel.currModel.getAllTransactions().size()));
-		Collections.sort(MoneyMgrModel.currModel.alternateTransactions, new Comparator<GenericTxn>() {
-			public int compare(GenericTxn o1, GenericTxn o2) {
-				return o1.getDate().compareTo(o2.getDate());
-			}
-		});
-
-		List<GenericTxn> txns = MoneyMgrModel.currModel.alternateTransactions;
-		System.out.println(String.format("There are %d transactions from MAC export", //
-				MoneyMgrModel.currModel.alternateTransactions.size()));
+		// TODO import into separate MoneyManagerModel instead
+//		MoneyMgrModel.currModel.isAlternativeImport = true;
+//
+//		System.out.println(String.format("There are %d transactions from DIETRICH.QIF", //
+//				MoneyMgrModel.currModel.getAllTransactions().size()));
+//
+//		CSVImport.importCSV(importDir + "DIETRICH.csv");
+//
+//		System.out.println(String.format("After import, there are now %d transactions from DIETRICH.QIF", //
+//				MoneyMgrModel.currModel.getAllTransactions().size()));
+//		Collections.sort(MoneyMgrModel.currModel.alternateTransactions, new Comparator<GenericTxn>() {
+//			public int compare(GenericTxn o1, GenericTxn o2) {
+//				return o1.getDate().compareTo(o2.getDate());
+//			}
+//		});
+//
+//		List<GenericTxn> txns = MoneyMgrModel.currModel.alternateTransactions;
+//		System.out.println(String.format("There are %d transactions from MAC export", //
+//				MoneyMgrModel.currModel.alternateTransactions.size()));
 	}
 
 	/** Map MAC tx to WIN tx */

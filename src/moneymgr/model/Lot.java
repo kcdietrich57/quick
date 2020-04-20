@@ -59,12 +59,7 @@ public class Lot {
 			BigDecimal shares, BigDecimal basisPrice, //
 			InvestmentTxn createTxn, //
 			Lot srcLot) {
-		// TODO fix this
-		this.lotid = MoneyMgrModel.currModel.nextlotid++;
-		while (MoneyMgrModel.currModel.lots.size() <= this.lotid) {
-			MoneyMgrModel.currModel.lots.add(null);
-		}
-		MoneyMgrModel.currModel.lots.set(this.lotid, this);
+		this.lotid = MoneyMgrModel.currModel.nextLotId();
 
 		this.acctid = acctid;
 		this.createDate = date;
@@ -75,6 +70,8 @@ public class Lot {
 		this.disposingTransaction = null;
 		this.sourceLot = srcLot;
 		this.childLots = new ArrayList<>();
+
+		MoneyMgrModel.currModel.addLot(this);
 	}
 
 	/**

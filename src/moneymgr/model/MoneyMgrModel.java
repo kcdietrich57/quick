@@ -21,7 +21,7 @@ public class MoneyMgrModel {
 
 	private final List<Category> categories = new ArrayList<>();
 
-	public int getNextCategoryID() {
+	public int nextCategoryID() {
 		return (categories.isEmpty()) ? 1 : categories.size();
 	}
 
@@ -432,19 +432,19 @@ public class MoneyMgrModel {
 	private final List<GenericTxn> allTransactionsByID = new ArrayList<>();
 
 	/** All transactions sorted by date. Will not contain null values */
-	public final List<GenericTxn> allTransactionsByDate = new ArrayList<>();
+	private final List<GenericTxn> allTransactionsByDate = new ArrayList<>();
 
-	/**
-	 * For testing alternative import methods, setting this to true will redirect
-	 * the imported data to an location separate from the primary data structures,
-	 * for comparison purposes.
-	 */
-	public boolean isAlternativeImport = false;
-
-	/**
-	 * A list of transactions from alternative import methods, in order of import.
-	 */
-	public final List<GenericTxn> alternateTransactions = new ArrayList<>();
+//	/**
+//	 * For testing alternative import methods, setting this to true will redirect
+//	 * the imported data to an location separate from the primary data structures,
+//	 * for comparison purposes.
+//	 */
+//	public boolean isAlternativeImport = false;
+//
+//	/**
+//	 * A list of transactions from alternative import methods, in order of import.
+//	 */
+//	public final List<GenericTxn> alternateTransactions = new ArrayList<>();
 
 	/** Compare two transactions by date, ascending */
 	private final Comparator<GenericTxn> compareByDate = new Comparator<GenericTxn>() {
@@ -482,9 +482,10 @@ public class MoneyMgrModel {
 			return;
 		}
 
-		if (this.isAlternativeImport) {
-			this.alternateTransactions.add(txn);
-		} else {
+//		if (this.isAlternativeImport) {
+//			this.alternateTransactions.add(txn);
+//		} else
+		{
 			while (this.allTransactionsByID.size() < (txn.txid + 1)) {
 				this.allTransactionsByID.add(null);
 			}
@@ -498,10 +499,23 @@ public class MoneyMgrModel {
 	}
 
 	/** Insert a transaction into the date-sorted list */
-	public void addTransactionDate(GenericTxn txn) {
+	private void addTransactionDate(GenericTxn txn) {
 		int idx = getTransactionInsertIndexByDate(allTransactionsByDate, txn);
 
 		allTransactionsByDate.add(idx, txn);
+	}
+
+	/** Fix up information about a transaction whose date has changed */
+	public void changeTransactionDate(GenericTxn txn, QDate olddate) {
+		if (txn.getAccountID() != 0) {
+			if (olddate != null) {
+				this.allTransactionsByDate.remove(txn);
+			}
+
+			if (txn.getDate() != null) {
+				addTransactionDate(txn);
+			}
+		}
 	}
 
 	/** Return the date of the earliest transaction */
@@ -724,9 +738,19 @@ public class MoneyMgrModel {
 
 	// -------------------------------------
 
-	public int nextlotid = 1;
+	private List<Lot> lots = new ArrayList<Lot>();
 
-	public List<Lot> lots = new ArrayList<Lot>();
+	public int nextLotId() {
+		return (this.lots.isEmpty()) ? 1 : this.lots.size();
+	}
+
+	public void addLot(Lot lot) {
+		while (this.lots.size() <= lot.lotid) {
+			this.lots.add(null);
+		}
+
+		this.lots.set(lot.lotid, lot);
+	}
 
 	public final List<Lot> getLots() {
 		return Collections.unmodifiableList(this.lots);
@@ -734,5 +758,21 @@ public class MoneyMgrModel {
 
 	// -------------------------------------
 
-	public final List<StockOption> options = new ArrayList<>();
+	private final List<StockOption> stockOptions = new ArrayList<>();
+
+	public int nextStockOptionId() {
+		return this.stockOptions.size();
+	}
+
+	public void addStockOption(StockOption opt) {
+		while (this.stockOptions.size() <= opt.optid) {
+			this.stockOptions.add(null);
+		}
+
+		this.stockOptions.set(opt.optid, opt);
+	}
+
+	public List<StockOption> getStockOptions() {
+		return Collections.unmodifiableList(this.stockOptions);
+	}
 }

@@ -86,15 +86,10 @@ public abstract class GenericTxn //
 
 	/** Update the date of this transaction - update date-sorted list */
 	public void setDate(QDate date) {
-		if ((getAccountID() != 0) && (getDate() != null)) {
-			MoneyMgrModel.currModel.allTransactionsByDate.remove(this);
-		}
-
+		QDate olddate = this.date;
 		this.date = date;
 
-		if ((getAccountID() != 0) && (getDate() != null)) {
-			MoneyMgrModel.currModel.addTransactionDate(this);
-		}
+		MoneyMgrModel.currModel.changeTransactionDate(this, olddate);
 	}
 
 	/** TODO poorly named - Comparison by date and check number */

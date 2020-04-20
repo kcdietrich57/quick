@@ -206,7 +206,7 @@ public class Persistence {
 		wtr.print("  [\"id\",\"name\",\"desc\",\"isExpense\"]");
 		String sep = ",";
 		int id = 1;
-		for (int catid = 1; catid < MoneyMgrModel.currModel.getNextCategoryID(); ++catid) {
+		for (int catid = 1; catid < MoneyMgrModel.currModel.nextCategoryID(); ++catid) {
 			while (id++ < catid) {
 				wtr.println(sep);
 				wtr.print("  [0]");
@@ -470,7 +470,7 @@ public class Persistence {
 				+ "]");
 
 		final String sep = ",";
-		List<StockOption> opts = MoneyMgrModel.currModel.options;
+		List<StockOption> opts = MoneyMgrModel.currModel.getStockOptions();
 		for (int optid = 1; optid < opts.size(); ++optid) {
 			StockOption opt = opts.get(optid);
 
