@@ -688,7 +688,7 @@ public class InvestmentTxn extends GenericTxn {
 				int idx = lots.indexOf(lot);
 				int srcidx = -1;
 
-				if (lot.sourceLot == null) {
+				if ((lot.sourceLot == null) && (lot.createTransaction == this)) {
 					status = "+";
 				} else {
 					srcidx = lots.indexOf(lot.sourceLot);
