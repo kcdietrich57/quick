@@ -117,7 +117,7 @@ public class Account {
 	public BigDecimal clearedBalance;
 
 	private final List<GenericTxn> transactions;
-	public final List<Statement> statements;
+	private final List<Statement> statements;
 	public final SecurityPortfolio securities;
 
 	public Account(int acctid, String name, String desc, AccountType type, int statFreq, int statDayOfMonth) {
@@ -345,6 +345,20 @@ public class Account {
 		}
 
 		return duedate.subtract(QDate.today());
+	}
+
+	public int getNumStatements() {
+		return this.statements.size();
+	}
+
+	public List<Statement> getStatements() {
+		return Collections.unmodifiableList(this.statements);
+	}
+
+	public void addStatement(Statement s) {
+		if (!this.statements.contains(s)) {
+			this.statements.add(s);
+		}
 	}
 
 	private Statement getFirstStatementAfter(QDate date) {

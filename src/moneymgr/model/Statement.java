@@ -383,4 +383,39 @@ public class Statement {
 
 		return s;
 	}
+
+	public boolean matches(Statement other) {
+		return matches(other, false);
+	}
+
+	public boolean matches(Statement other, boolean deep) {
+		if ((this.acctid != other.acctid) //
+				|| !this.date.equals(other.date) //
+				|| !Common.isEffectivelyEqual(this.closingBalance, other.closingBalance) //
+				|| !Common.isEffectivelyEqual(this.cashBalance, other.cashBalance) //
+				|| (this.isBalanced != other.isBalanced) //
+				|| (this.transactions.size() != other.transactions.size()) //
+				|| ((this.prevStatement == null) != (other.prevStatement == null))) {
+			return false;
+		}
+
+		for (int ii = 0; ii < this.transactions.size(); ++ii) {
+			GenericTxn txn = this.transactions.get(ii);
+			GenericTxn otxn = other.transactions.get(ii);
+
+			if (!txn.matches(otxn)) {
+				return false;
+			}
+		}
+
+		// holdings
+
+		if (deep //
+				&& (this.prevStatement != null) //
+				&& !this.prevStatement.matches(other.prevStatement, deep)) {
+			return false;
+		}
+
+		return true;
+	}
 }

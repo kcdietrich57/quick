@@ -688,7 +688,7 @@ public class Persistence {
 				continue;
 			}
 
-			for (Statement stmt : acct.statements) {
+			for (Statement stmt : acct.getStatements()) {
 				String txns = "[";
 				String sep2 = "";
 				for (GenericTxn tx : stmt.transactions) {
@@ -793,8 +793,7 @@ public class Persistence {
 		processAccounts(model, json);
 		processSecurities(model, json);
 		processTransactions(model, json);
-
-		Object stats = json.get("Statements");
+		processStatements(model, json);
 
 		/**
 		 * To reconstruct the data completely, do the following:<br>
@@ -1131,6 +1130,75 @@ public class Persistence {
 					JSONArray secxfers = ((JSONArray) tuple.get(SECXFERS));
 					JSONArray lots = ((JSONArray) tuple.get(LOTS));
 				}
+			}
+		}
+	}
+
+	private void processStatements(MoneyMgrModel model, JSONObject json) {
+		int ACCTID = -1;
+		int DATE = -1;
+		int ISBAL = -1;
+		int PREVDATE = -1;
+		int TOTBAL = -1;
+		int CASHBAL = -1;
+		int TXNS = -1;
+		int HOLDINGS = -1;
+
+		boolean first = true;
+		JSONArray secs = (JSONArray) json.get("Statements");
+
+		for (Object secobj : secs) {
+			JSONArray tuple = (JSONArray) secobj;
+
+			if (first) {
+				for (int ii = 0; ii < tuple.size(); ++ii) {
+					String s = (String) tuple.get(ii);
+
+					if (s.equalsIgnoreCase("acctid")) {
+						ACCTID = ii;
+					} else if (s.equalsIgnoreCase("date")) {
+						DATE = ii;
+					} else if (s.equalsIgnoreCase("isbal")) {
+						ISBAL = ii;
+					} else if (s.equalsIgnoreCase("prevdate")) {
+						PREVDATE = ii;
+					} else if (s.equalsIgnoreCase("totbal")) {
+						TOTBAL = ii;
+					} else if (s.equalsIgnoreCase("cashbal")) {
+						CASHBAL = ii;
+					} else if (s.equalsIgnoreCase("txns")) {
+						TXNS = ii;
+					} else if (s.equalsIgnoreCase("holdings")) {
+						HOLDINGS = ii;
+					}
+
+					first = false;
+				}
+			} else {
+				int acctid = ((Long) tuple.get(ACCTID)).intValue();
+				QDate date = QDate.fromRawData(((Long) tuple.get(DATE)).intValue());
+				QDate prevdate = QDate.fromRawData(((Long) tuple.get(PREVDATE)).intValue());
+				BigDecimal totbal = new BigDecimal((String) tuple.get(TOTBAL));
+				BigDecimal cashbal = new BigDecimal((String) tuple.get(CASHBAL));
+				boolean isbal = ((Boolean) tuple.get(ISBAL)).booleanValue();
+
+				Account acct = MoneyMgrModel.currModel.getAccountByID(acctid);
+				Statement prevstmt = (prevdate != null) ? acct.getStatement(prevdate) : null;
+
+				Statement stmt = new Statement(acctid, date, totbal, cashbal, prevstmt);
+				acct.addStatement(stmt);
+
+				stmt.isBalanced = isbal;
+
+				JSONArray txnids = (JSONArray) tuple.get(TXNS);
+				for (Object txnidobj : txnids) {
+					int txid = ((Long) txnidobj).intValue();
+					GenericTxn tx = MoneyMgrModel.currModel.getTransaction(txid);
+
+					stmt.addTransaction(tx);
+				}
+
+				JSONArray holdings = (JSONArray) tuple.get(HOLDINGS);
 			}
 		}
 	}

@@ -22,8 +22,8 @@ public class ReconcileStatusReporter {
 			return (o1 == null) ? ((o2 == null) ? 0 : 1) : -1;
 		}
 
-		if (o1.statements.isEmpty()) {
-			return (o2.statements.isEmpty()) ? 0 : -1;
+		if (o1.getNumStatements() == 0) {
+			return (o2.getNumStatements() == 0) ? 0 : -1;
 		}
 
 		QDate d1 = o1.getLastBalancedStatementDate();
@@ -33,7 +33,8 @@ public class ReconcileStatusReporter {
 			return (d1 == null) ? ((d2 == null) ? 0 : 1) : -1;
 		}
 
-		return (o2.statements.isEmpty()) ? 1 : d1.compareTo(d2);
+		// TODO I don't see how o2 could have no stmts here
+		return (o2.getNumStatements() == 0) ? 1 : d1.compareTo(d2);
 	};
 
 	/** Print reconcile status report - obsolete QifLoader only */

@@ -51,7 +51,7 @@ public class StatementProcessor {
 
 			for (Statement stmt : stmts) {
 				Account a = MoneyMgrModel.currModel.currAccountBeingLoaded;
-				a.statements.add(stmt);
+				a.addStatement(stmt);
 			}
 		}
 	}
@@ -122,12 +122,10 @@ public class StatementProcessor {
 							: new QDate(year, month, day);
 
 					Account acct = MoneyMgrModel.currModel.currAccountBeingLoaded;
-					Statement prevstmt = null;
 
-					if (!acct.statements.isEmpty()) {
-						prevstmt = acct.statements.get(acct.statements.size() - 1);
-					}
+					Statement prevstmt = acct.getLastStatement();
 
+					// TODO what if there is a stmt in stmts, but not the last one?
 					if (!stmts.isEmpty()) {
 						Statement s = stmts.get(stmts.size() - 1);
 						if (s.acctid == acct.acctid) {
@@ -220,6 +218,5 @@ public class StatementProcessor {
 				Common.reportError("syntax error");
 			}
 		}
-
 	}
 }

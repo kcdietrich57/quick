@@ -47,7 +47,7 @@ public class StatementTableModel //
 			if (MainWindow.instance.asOfDate().compareTo(QDate.today()) < 0) {
 				Statement laststmt = null;
 
-				for (Statement stmt : acct.statements) {
+				for (Statement stmt : acct.getStatements()) {
 					if (MainWindow.instance.asOfDate().compareTo(stmt.date) >= 0) {
 						this.statements.add(stmt);
 						laststmt = stmt;
@@ -57,7 +57,7 @@ public class StatementTableModel //
 				// TODO do we keep creating statements each time the acct is selected?
 				unclearedStmt = acct.createUnclearedStatement(laststmt);
 			} else {
-				this.statements.addAll(acct.statements);
+				this.statements.addAll(acct.getStatements());
 
 				unclearedStmt = acct.getUnclearedStatement();
 			}

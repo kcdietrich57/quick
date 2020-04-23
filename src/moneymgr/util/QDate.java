@@ -10,6 +10,10 @@ public class QDate implements Comparable<QDate> {
 	}
 
 	public static QDate fromRawData(int raw) {
+		if (raw <= 0) {
+			return null;
+		}
+
 		return new QDate(raw / 10000, (raw / 100) % 100, raw % 100);
 	}
 

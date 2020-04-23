@@ -1,5 +1,7 @@
 package moneymgr.report.obsolete;
 
+import java.util.List;
+
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.Statement;
@@ -9,22 +11,20 @@ import moneymgr.util.Common;
 public class AccountReporter {
 
 	public static void reportStatus(Account acct, String interval) {
-		if (acct.statements.isEmpty()) {
+		if (acct.getNumStatements() == 0) {
 			System.out.println("No statements for " + acct.getDisplayName(36));
 		} else {
 			System.out.println();
 			System.out.println("-------------------------------------\n" //
 					+ acct.getDisplayName(36));
 			System.out.println(String.format("%d Statements, %d Transactions", //
-					acct.statements.size(), acct.getNumTransactions()));
+					acct.getNumStatements(), acct.getNumTransactions()));
 			System.out.println("-------------------------------------");
 
-			final int nn = Math.max(0, acct.statements.size() - 12);
+			final int nn = Math.max(0, acct.getNumStatements() - 12);
 			int ct = 0;
 
-			for (int ii = nn; ii < acct.statements.size(); ++ii) {
-				final Statement s = acct.statements.get(ii);
-
+			for (Statement s : acct.getStatements()) {
 				if (ct++ == 3) {
 					ct = 1;
 					System.out.println();
@@ -39,7 +39,7 @@ public class AccountReporter {
 
 			System.out.println("Uncleared transactions as of last statement:");
 
-			for (GenericTxn t : acct.statements.get(acct.statements.size() - 1).unclearedTransactions) {
+			for (GenericTxn t : acct.getLastStatement().unclearedTransactions) {
 				System.out.println(String.format("  %s  %s  %s", //
 						t.getDate().toString(), //
 						Common.formatAmount(t.getAmount()), //

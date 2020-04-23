@@ -222,7 +222,7 @@ public class Reconciler {
 
 		pw.println("" + StatementDetails.CURRENT_VERSION);
 		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
-			for (Statement s : a.statements) {
+			for (Statement s : a.getStatements()) {
 				pw.println(StatementDetails.formatStatementForSave(s));
 			}
 		}

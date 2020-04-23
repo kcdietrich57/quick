@@ -16,7 +16,7 @@ public class PortfolioProcessor {
 			if (a.isInvestmentAccount()) {
 				fixPortfolio(a.securities);
 
-				for (Statement stat : a.statements) {
+				for (Statement stat : a.getStatements()) {
 					fixPortfolio(stat.holdings);
 				}
 			}
