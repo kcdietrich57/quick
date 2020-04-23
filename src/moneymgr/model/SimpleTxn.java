@@ -35,8 +35,6 @@ public abstract class SimpleTxn implements Txn {
 	private static int cashok = 0;
 	private static int cashbad = 0;
 
-	private static int nextid = 1;
-
 	private final int acctid;
 	public final int txid;
 
@@ -50,8 +48,8 @@ public abstract class SimpleTxn implements Txn {
 	/** In the case of a cash transfer, the other transaction involved */
 	private SimpleTxn xtxn_cash;
 
-	public SimpleTxn(int acctid) {
-		this.txid = nextid++;
+	public SimpleTxn(int txid, int acctid) {
+		this.txid = txid;
 
 		this.acctid = acctid;
 		this.amount = null;
@@ -59,6 +57,10 @@ public abstract class SimpleTxn implements Txn {
 
 		this.catid = 0;
 		this.xtxn_cash = null;
+	}
+
+	public SimpleTxn(int acctid) {
+		this(MoneyMgrModel.currModel.createTxid(), acctid);
 	}
 
 	/**
@@ -371,6 +373,12 @@ public abstract class SimpleTxn implements Txn {
 		Security sec = getSecurity();
 
 		return (sec != null) ? sec.secid : 0;
+	}
+
+	public final String getSecuritySymbol() {
+		Security sec = getSecurity();
+
+		return (sec != null) ? sec.getSymbol() : "";
 	}
 
 	public final String getSecurityName() {

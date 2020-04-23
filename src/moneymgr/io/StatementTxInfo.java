@@ -54,8 +54,8 @@ public class StatementTxInfo {
 
 		this.action = tx.getAction().toString();
 
-		if (tx.security != null) {
-			this.security = tx.security;
+		if (tx.getSecurity() != null) {
+			this.security = tx.getSecurity();
 			this.shares = tx.getShares();
 		}
 	}

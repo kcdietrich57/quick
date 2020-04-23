@@ -16,13 +16,17 @@ public class NonInvestmentTxn extends GenericTxn {
 	// Why shouldn't an investment txn have splits?
 	private final List<SplitTxn> splits;
 
-	public NonInvestmentTxn(int acctid) {
-		super(acctid);
+	public NonInvestmentTxn(int txid, int acctid) {
+		super(txid, acctid);
 
 		this.chkNumber = "";
 
 //		this.address = new ArrayList<String>();
 		this.splits = new ArrayList<>();
+	}
+
+	public NonInvestmentTxn(int acctid) {
+		this(MoneyMgrModel.currModel.createTxid(), acctid);
 	}
 
 	public int compareWith(TransactionInfo tuple, SimpleTxn othersimp) {

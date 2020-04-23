@@ -1,5 +1,7 @@
 package moneymgr.model;
 
+import moneymgr.util.Common;
+
 /** Transaction category for tracking/budgeting */
 public class Category {
 	public final int catid;
@@ -7,11 +9,15 @@ public class Category {
 	public final String description;
 	public final boolean isExpense;
 
-	public Category(String name, String desc, boolean isExpense) {
-		this.catid = MoneyMgrModel.currModel.nextCategoryID();
+	public Category(int catid, String name, String desc, boolean isExpense) {
+		this.catid = catid;
 		this.name = name;
 		this.description = desc;
 		this.isExpense = isExpense;
+	}
+
+	public Category(String name, String desc, boolean isExpense) {
+		this(MoneyMgrModel.currModel.nextCategoryID(), name, desc, isExpense);
 	}
 
 	public String toString() {
@@ -21,5 +27,12 @@ public class Category {
 				+ "\n";
 
 		return s;
+	}
+
+	public boolean matches(Category other) {
+		return (this.catid == other.catid) //
+				&& Common.safeEquals(this.name, other.name) //
+				&& Common.safeEquals(this.description, other.description) //
+				&& (this.isExpense == other.isExpense);
 	}
 }

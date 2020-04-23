@@ -3,11 +3,13 @@ package moneymgr.io.mm;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.LineNumberReader;
 import java.io.PrintStream;
+import java.io.Reader;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -21,6 +23,7 @@ import moneymgr.model.InvestmentTxn;
 import moneymgr.model.Lot;
 import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.MultiSplitTxn;
+import moneymgr.model.NonInvestmentTxn;
 import moneymgr.model.QPrice;
 import moneymgr.model.Security;
 import moneymgr.model.Security.StockSplitInfo;
@@ -31,7 +34,9 @@ import moneymgr.model.SplitTxn;
 import moneymgr.model.Statement;
 import moneymgr.model.StockOption;
 import moneymgr.model.TxAction;
+import moneymgr.model.InvestmentTxn.ShareAction;
 import moneymgr.util.Common;
+import moneymgr.util.QDate;
 
 /** Read/write data in native (JSON) format */
 public class Persistence {
@@ -90,8 +95,7 @@ public class Persistence {
 	}
 
 	private static String decodeString(String s) {
-		// Strip quotes
-		StringBuilder sb = new StringBuilder(s.substring(1, s.length() - 1));
+		StringBuilder sb = new StringBuilder(s);
 
 		int idx = 0;
 		String sub = null;
@@ -190,7 +194,6 @@ public class Persistence {
 	}
 
 	private String filename;
-	private LineNumberReader rdr;
 	private PrintStream wtr;
 
 	public Persistence(String filename) {
@@ -296,7 +299,7 @@ public class Persistence {
 		// ------------------------------------------------
 
 		wtr.print(
-				"  [\"acctid\",\"name\",\"acctypeid\",\"desc\",\"closedate\",\"statfreq\",\"statday\",\"bal\",\"clearbal\"]");
+				"  [\"acctid\",\"name\",\"accttypeid\",\"desc\",\"closedate\",\"statfreq\",\"statday\",\"bal\",\"clearbal\"]");
 		sep = ",";
 		List<Account> accts = MoneyMgrModel.currModel.getAccountsById();
 		for (int acctid = 1; acctid < accts.size(); ++acctid) {
@@ -516,9 +519,10 @@ public class Persistence {
 		wtr.println("\"Transactions\": [");
 		// ------------------------------------------------
 
-		wtr.print(
-				"  [\"id\",\"date\",\"statdate\",\"acctid\",\"xtxid\",\"action\",\"payee\",\"cknum\",\"memo\",\"amt\",\"cat\"," //
-						+ "\"secid\",\"secaction\",\"shares\",\"shareprice\",\"splitratio\",\"optid\",\"[split]\",\"[secxfer]\",\"[lot]\"]");
+		wtr.print("  [\"id\",\"date\",\"statdate\",\"acctid\",\"xtxid\",\"action\"," //
+				+ "\"payee\",\"cknum\",\"memo\",\"amt\",\"cat\"," //
+				+ "\"secid\",\"secaction\",\"shares\",\"shareprice\",\"splitratio\"," //
+				+ "\"optid\",\"[split]\",\"[secxfer]\",\"[lot]\"]");
 
 		final String sep = ",";
 		List<GenericTxn> txns = MoneyMgrModel.currModel.getAllTransactions();
@@ -622,7 +626,7 @@ public class Persistence {
 						sdate, //
 						tx.getAccountID(), //
 						((tx.getCashTransferTxn() != null) ? tx.getCashTransferTxn().txid : 0), //
-						encodeString(tx.getAction().name()), //
+						encodeString(tx.getAction().key), //
 						encodeString(tx.getPayee()), //
 						tx.getCheckNumber(), //
 						encodeString(tx.getMemo()), //
@@ -729,7 +733,7 @@ public class Persistence {
 		wtr.println("]");
 	}
 
-	public void save() {
+	public void saveJSON() {
 		try {
 			this.wtr = new PrintStream(this.filename);
 		} catch (FileNotFoundException e) {
@@ -750,28 +754,47 @@ public class Persistence {
 		wtr.close();
 	}
 
-	// TODO testing
-	public void validate() {
-		load();
+	public void safeClose(Reader rdr) {
+		try {
+			if (rdr != null) {
+				rdr.close();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
-	public Object load() {
-		Object obj;
+	public JSONObject loadJSON() {
+		JSONObject obj = null;
+		FileReader rdr = null;
 
 		try {
-			obj = new JSONParser().parse(new FileReader(this.filename));
+			rdr = new FileReader(this.filename);
+			obj = (JSONObject) new JSONParser().parse(rdr);
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
-			return null;
+		} finally {
+			safeClose(rdr);
 		}
 
-		JSONObject jo = (JSONObject) obj;
+		return obj;
+	}
 
-		Object accts = jo.get("Accounts");
-		Object cats = jo.get("Categories");
-		Object secs = jo.get("Securities");
-		Object trans = jo.get("Transactions");
-		Object stats = jo.get("Statements");
+	// TODO testing
+	public void buildModel(String name) {
+		MoneyMgrModel model = MoneyMgrModel.changeModel(name);
+
+		JSONObject json = loadJSON();
+		if (json == null) {
+			return;
+		}
+
+		processCategories(model, json);
+		processAccounts(model, json);
+		processSecurities(model, json);
+		processTransactions(model, json);
+
+		Object stats = json.get("Statements");
 
 		/**
 		 * To reconstruct the data completely, do the following:<br>
@@ -785,6 +808,330 @@ public class Persistence {
 		 * 8. Create options<br>
 		 * 9. Create statements<br>
 		 */
-		return jo;
+	}
+
+	private void processCategories(MoneyMgrModel model, JSONObject json) {
+		int CATID = -1;
+		int NAME = -1;
+		int DESC = -1;
+		int EXP = -1;
+
+		boolean first = true;
+		JSONArray cats = (JSONArray) json.get("Categories");
+
+		for (Object catobj : cats) {
+			JSONArray tuple = (JSONArray) catobj;
+
+			if (first) {
+				for (int ii = 0; ii < tuple.size(); ++ii) {
+					String s = (String) tuple.get(ii);
+					if (s.equalsIgnoreCase("id")) {
+						CATID = ii;
+					} else if (s.equalsIgnoreCase("name")) {
+						NAME = ii;
+					} else if (s.equalsIgnoreCase("desc")) {
+						DESC = ii;
+					} else if (s.equalsIgnoreCase("isexpense")) {
+						EXP = ii;
+					}
+				}
+
+				first = false;
+			} else {
+				int catid = ((Long) tuple.get(CATID)).intValue();
+				String name = decodeString((String) tuple.get(NAME));
+				String desc = decodeString((String) tuple.get(DESC));
+				boolean isExp = ((Boolean) tuple.get(EXP)).booleanValue();
+
+				Category cat = new Category(catid, name, desc, isExp);
+				model.addCategory(cat);
+			}
+		}
+	}
+
+	private void processAccounts(MoneyMgrModel model, JSONObject json) {
+		int ACCTID = -1;
+		int NAME = -1;
+		int ACCTTYPEID = -1;
+		int DESC = -1;
+		int CLOSEDATE = -1;
+		int STATFREQ = -1;
+		int STATDAY = -1;
+//		int BAL = -1;
+//		int CLEARBAL = -1;
+
+		boolean first = true;
+		JSONArray accts = (JSONArray) json.get("Accounts");
+
+		for (Object acctobj : accts) {
+			JSONArray tuple = (JSONArray) acctobj;
+			if (first) {
+				for (int ii = 0; ii < tuple.size(); ++ii) {
+					String s = (String) tuple.get(ii);
+
+					// "acctid","name","accttypeid","desc","closedate","statfreq","statday","bal","clearbal"
+					if (s.equalsIgnoreCase("acctid")) {
+						ACCTID = ii;
+					} else if (s.equalsIgnoreCase("accttypeid")) {
+						ACCTTYPEID = ii;
+					} else if (s.equalsIgnoreCase("name")) {
+						NAME = ii;
+					} else if (s.equalsIgnoreCase("desc")) {
+						DESC = ii;
+					} else if (s.equalsIgnoreCase("closedate")) {
+						CLOSEDATE = ii;
+					} else if (s.equalsIgnoreCase("statfreq")) {
+						STATFREQ = ii;
+					} else if (s.equalsIgnoreCase("statday")) {
+						STATDAY = ii;
+//					} else if (s.equalsIgnoreCase("bal")) {
+//						BAL = ii;
+//					} else if (s.equalsIgnoreCase("clearbal")) {
+//						CLEARBAL = ii;
+					}
+				}
+
+				first = false;
+			} else {
+				int acctid = ((Long) tuple.get(ACCTID)).intValue();
+				int typeid = ((Long) tuple.get(ACCTTYPEID)).intValue();
+				String name = decodeString((String) tuple.get(NAME));
+				String desc = decodeString((String) tuple.get(DESC));
+				int statfreq = ((Long) tuple.get(STATFREQ)).intValue();
+				int statday = ((Long) tuple.get(STATDAY)).intValue();
+				// TODO BigDecimal bal = new BigDecimal((String) tuple.get(BAL));
+				// TODO BigDecimal clearbal = new BigDecimal((String) tuple.get(CLEARBAL));
+
+				int rawdate = ((Long) tuple.get(CLOSEDATE)).intValue();
+				QDate closedate = QDate.fromRawData(rawdate);
+
+				AccountType atype = AccountType.byId(typeid);
+
+				Account acct = new Account(acctid, name, desc, atype, statfreq, statday);
+				acct.closeDate = closedate;
+
+				model.addAccount(acct);
+			}
+		}
+	}
+
+	private void processSecurities(MoneyMgrModel model, JSONObject json) {
+		int SECID = -1;
+		int SYMBOL = -1;
+		int NAMES = -1;
+		int TYPE = -1;
+		int SPLITS = -1;
+		int PRICES = -1;
+
+		boolean first = true;
+		JSONArray secs = (JSONArray) json.get("Securities");
+
+		for (Object secobj : secs) {
+			JSONArray tuple = (JSONArray) secobj;
+
+			if (first) {
+				for (int ii = 0; ii < tuple.size(); ++ii) {
+					String s = (String) tuple.get(ii);
+
+					if (s.equalsIgnoreCase("secid")) {
+						SECID = ii;
+					} else if (s.equalsIgnoreCase("symbol")) {
+						SYMBOL = ii;
+					} else if (s.equalsIgnoreCase("[name]")) {
+						NAMES = ii;
+					} else if (s.equalsIgnoreCase("type")) {
+						TYPE = ii;
+					} else if (s.equalsIgnoreCase("[split]")) {
+						SPLITS = ii;
+					} else if (s.equalsIgnoreCase("[[date,price]]")) {
+						PRICES = ii;
+					}
+				}
+
+				first = false;
+			} else {
+				int secid = ((Long) tuple.get(SECID)).intValue();
+				String symbol = decodeString((String) tuple.get(SYMBOL));
+				String type = decodeString((String) tuple.get(TYPE));
+
+				JSONArray jnames = (JSONArray) tuple.get(NAMES);
+				List<String> names = new ArrayList<String>();
+				for (Object jname : jnames) {
+					String name = (String) jname;
+					names.add(name);
+				}
+
+				String name = names.get(0);
+				String goal = "";
+
+				Security sec = new Security(symbol, name, type, goal);
+
+				JSONArray jprices = (JSONArray) tuple.get(PRICES);
+				List<QPrice> prices = new ArrayList<QPrice>();
+				for (Object jprice : jprices) {
+					JSONArray jpriceinfo = (JSONArray) jprice;
+
+					int rawdate = ((Long) jpriceinfo.get(0)).intValue();
+					QDate date = QDate.fromRawData(rawdate);
+					BigDecimal price = new BigDecimal((String) jpriceinfo.get(1));
+
+					// TODO need more price details? (e.g. split adjusted price)
+					QPrice qprice = new QPrice(date, secid, price, price);
+					prices.add(qprice);
+					sec.addPrice(qprice);
+				}
+
+				// TODO what to do with splits here?
+				JSONArray jsplits = (JSONArray) tuple.get(SPLITS);
+				List<Object> splits = new ArrayList<Object>();
+				for (Object jsplit : jsplits) {
+					JSONArray jsplitinfo = (JSONArray) jsplit;
+
+					int rawdate = ((Long) jsplitinfo.get(0)).intValue();
+					QDate date = QDate.fromRawData(rawdate);
+					BigDecimal ratio = new BigDecimal((String) jsplitinfo.get(1));
+
+					splits.add(jsplit);
+				}
+
+				model.addSecurity(sec);
+			}
+		}
+	}
+
+	private void processTransactions(MoneyMgrModel model, JSONObject json) {
+		int TXID = -1;
+		int DATE = -1;
+		int STATDATE = -1;
+		int ACCTID = -1;
+		int XTXID = -1;
+		int ACTION = -1;
+		int PAYEE = -1;
+		int CKNUM = -1;
+		int MEMO = -1;
+		int AMT = -1;
+		int CAT = -1;
+		int SECID = -1;
+		int SECACTION = -1;
+		int SHARES = -1;
+		int SHAREPRICE = -1;
+		int SPLITRATIO = -1;
+		int OPTID = -1;
+		int SPLITS = -1;
+		int SECXFERS = -1;
+		int LOTS = -1;
+
+		boolean first = true;
+		JSONArray secs = (JSONArray) json.get("Transactions");
+
+		for (Object secobj : secs) {
+			JSONArray tuple = (JSONArray) secobj;
+
+			if (first) {
+				for (int ii = 0; ii < tuple.size(); ++ii) {
+					String s = (String) tuple.get(ii);
+
+					if (s.equalsIgnoreCase("id")) {
+						TXID = ii;
+					} else if (s.equalsIgnoreCase("date")) {
+						DATE = ii;
+					} else if (s.equalsIgnoreCase("statdate")) {
+						STATDATE = ii;
+					} else if (s.equalsIgnoreCase("acctid")) {
+						ACCTID = ii;
+					} else if (s.equalsIgnoreCase("xtxid")) {
+						XTXID = ii;
+					} else if (s.equalsIgnoreCase("action")) {
+						ACTION = ii;
+					} else if (s.equalsIgnoreCase("payee")) {
+						PAYEE = ii;
+					} else if (s.equalsIgnoreCase("cknum")) {
+						CKNUM = ii;
+					} else if (s.equalsIgnoreCase("memo")) {
+						MEMO = ii;
+					} else if (s.equalsIgnoreCase("amt")) {
+						AMT = ii;
+					} else if (s.equalsIgnoreCase("cat")) {
+						CAT = ii;
+					} else if (s.equalsIgnoreCase("secid")) {
+						SECID = ii;
+					} else if (s.equalsIgnoreCase("secaction")) {
+						SECACTION = ii;
+					} else if (s.equalsIgnoreCase("shares")) {
+						SHARES = ii;
+					} else if (s.equalsIgnoreCase("shareprice")) {
+						SHAREPRICE = ii;
+					} else if (s.equalsIgnoreCase("splitratio")) {
+						SPLITRATIO = ii;
+					} else if (s.equalsIgnoreCase("optid")) {
+						OPTID = ii;
+					} else if (s.equalsIgnoreCase("[split]")) {
+						SPLITS = ii;
+					} else if (s.equalsIgnoreCase("[secxfer]")) {
+						SECXFERS = ii;
+					} else if (s.equalsIgnoreCase("[lot]")) {
+						LOTS = ii;
+					}
+				}
+
+				first = false;
+			} else {
+				int txid = ((Long) tuple.get(TXID)).intValue();
+				if (txid <= 0) {
+					continue;
+				}
+
+				int acctid = ((Long) tuple.get(ACCTID)).intValue();
+
+				GenericTxn tx;
+				NonInvestmentTxn ntx = null;
+				InvestmentTxn itx = null;
+
+				Account acct = MoneyMgrModel.currModel.getAccountByID(acctid);
+				if (acct.isInvestmentAccount()) {
+					itx = new InvestmentTxn(txid, acctid);
+					tx = itx;
+				} else {
+					ntx = new NonInvestmentTxn(txid, acctid);
+					tx = ntx;
+				}
+
+				QDate date = QDate.fromRawData(((Long) tuple.get(DATE)).intValue());
+				TxAction action = TxAction.parseAction((String) tuple.get(ACTION));
+				BigDecimal amt = new BigDecimal((String) tuple.get(AMT));
+				String payee = decodeString((String) tuple.get(PAYEE));
+				String memo = (String) tuple.get(MEMO);
+				int cknum = ((Long) tuple.get(CKNUM)).intValue(); // decodeString((String) tuple.get(CKNUM));
+				QDate stmtdate = QDate.fromRawData(((Long) tuple.get(STATDATE)).intValue());
+
+				int xtxid = ((Long) tuple.get(XTXID)).intValue();
+				int catid = ((Long) tuple.get(CAT)).intValue();
+
+				int secid = ((Long) tuple.get(SECID)).intValue();
+				ShareAction secaction = ShareAction.parseAction((String) tuple.get(SECACTION));
+				BigDecimal shares = new BigDecimal((String) tuple.get(SHARES));
+				BigDecimal shareprice = new BigDecimal((String) tuple.get(SHAREPRICE));
+				BigDecimal splitratio = new BigDecimal((String) tuple.get(SPLITRATIO));
+				int optid = ((Long) tuple.get(OPTID)).intValue();
+
+				tx.setDate(date);
+				tx.setAction(action);
+				tx.setCatid(catid);
+				tx.setAmount(amt);
+				tx.setPayee(payee);
+				tx.setMemo(memo);
+				tx.setCheckNumber(Integer.toString(cknum));
+				tx.stmtdate = stmtdate;
+
+				JSONArray splits = ((JSONArray) tuple.get(SPLITS));
+
+				if (secid > 0) {
+					itx.setSecurity(MoneyMgrModel.currModel.getSecurity(secid));
+
+					JSONArray secxfers = ((JSONArray) tuple.get(SECXFERS));
+					JSONArray lots = ((JSONArray) tuple.get(LOTS));
+				}
+			}
+		}
 	}
 }

@@ -17,9 +17,164 @@ import moneymgr.util.QDate;
 
 /** Class comprising the complete MoneyManager data model */
 public class MoneyMgrModel {
-	public static MoneyMgrModel currModel = new MoneyMgrModel();
+	private static final Map<String, MoneyMgrModel> models = new HashMap<String, MoneyMgrModel>();
+	public static MoneyMgrModel currModel;
+
+	public static MoneyMgrModel changeModel(String name) {
+		MoneyMgrModel.currModel = MoneyMgrModel.models.get(name);
+
+		if (MoneyMgrModel.currModel == null) {
+			// Common.reportError(String.format("Model '%s' does not exist", name));
+			new MoneyMgrModel(name);
+		}
+
+		return MoneyMgrModel.currModel;
+	}
+
+	public static void compareModels(String name1, String name2) {
+		MoneyMgrModel m1 = MoneyMgrModel.models.get(name1);
+		MoneyMgrModel m2 = MoneyMgrModel.models.get(name2);
+
+		/**
+		 * 1. Compare categories <br>
+		 * 2. Compare securities <br>
+		 * 3. Compare account types<br>
+		 * 4. Compare account categories<br>
+		 * 5. Compare accounts<br>
+		 * 6. Compare transactions<br>
+		 * 7. Compare lots<br>
+		 * 8. Compare options<br>
+		 * 9. Compare statements<br>
+		 */
+		System.out.println("Comparing JSON model");
+
+		compareCategories(m1, m2);
+		compareSecurities(m1, m2);
+		compareAccounts(m1, m2);
+		compareTransactions(m1, m2);
+
+		System.out.println("Compare complete");
+	}
+
+	static int txct = 0;
+
+	private static void compareTransactions(MoneyMgrModel m1, MoneyMgrModel m2) {
+		List<GenericTxn> txns1 = m1.getAllTransactions();
+		List<GenericTxn> txns2 = m2.getAllTransactions();
+
+		if (txns1.size() != txns2.size()) {
+			System.out.println("Transaction count different");
+		}
+
+		for (int ii = 0; ii < txns1.size() && ii < txns2.size(); ++ii) {
+			GenericTxn t1 = txns1.get(ii);
+			GenericTxn t2 = txns2.get(ii);
+
+			if (t1 != null && t2 != null) {
+				if (!t1.matches(t2)) {
+					++txct;
+					t1.matches(t2);
+					System.out.println(t1.toString());
+					System.out.println("Transaction mismatch " + txct);
+				}
+			} else if ((t1 == null) != (t2 == null)) {
+				System.out.println("Transaction missing");
+			}
+		}
+	}
+
+	private static void compareAccounts(MoneyMgrModel m1, MoneyMgrModel m2) {
+		List<Account> accts1 = m1.getAccountsById();
+		List<Account> accts2 = m2.getAccountsById();
+
+		if (accts1.size() != accts2.size()) {
+			System.out.println("Account count different");
+		}
+
+		for (int ii = 0; ii < accts1.size() && ii < accts2.size(); ++ii) {
+			Account a1 = accts1.get(ii);
+			Account a2 = accts2.get(ii);
+
+			if (a1 != null && a2 != null) {
+				if (!a1.matches(a2)) {
+					System.out.println("Account mismatch");
+				}
+			} else if ((a1 == null) != (a2 == null)) {
+				System.out.println("Account missing");
+			}
+		}
+	}
+
+	private static void compareSecurities(MoneyMgrModel m1, MoneyMgrModel m2) {
+		List<Security> secs1 = m1.getSecuritiesById();
+		List<Security> secs2 = m2.getSecuritiesById();
+
+		if (secs1.size() != secs2.size()) {
+			System.out.println("Security count different");
+		}
+
+		for (int ii = 0; ii < secs1.size() && ii < secs2.size(); ++ii) {
+			Security s1 = secs1.get(ii);
+			Security s2 = secs2.get(ii);
+
+			if (s1 != null && s2 != null) {
+				if (!s1.matches(s2)) {
+					System.out.println("Security mismatch");
+				}
+			} else if ((s1 == null) != (s2 == null)) {
+				System.out.println("Security missing");
+			}
+		}
+	}
+
+	private static void compareCategories(MoneyMgrModel m1, MoneyMgrModel m2) {
+		List<Category> cats1 = m1.getCategories();
+		List<Category> cats2 = m2.getCategories();
+
+		if (cats1.size() != cats2.size()) {
+			System.out.println("Category count different");
+		}
+
+		for (int ii = 0; ii < cats1.size() && ii < cats2.size(); ++ii) {
+			Category c1 = cats1.get(ii);
+			Category c2 = cats2.get(ii);
+
+			if (c1 != null && c2 != null) {
+				if (!c1.matches(c2)) {
+					System.out.println("Category mismatch");
+				}
+			} else if ((c1 == null) != (c2 == null)) {
+				System.out.println("Category missing");
+			}
+		}
+	}
+
+	private int nextTxid = 1;
+
+	public int createTxid() {
+		return this.nextTxid++;
+	}
+
+	public MoneyMgrModel(String name) {
+		int nn = 0;
+		String thename = name;
+		while (MoneyMgrModel.models.containsKey(thename)) {
+			thename = String.format("%s_%d", name, nn++);
+		}
+
+		this.name = thename;
+		MoneyMgrModel.models.put(thename, this);
+
+		MoneyMgrModel.currModel = this;
+	}
+
+	public final String name;
 
 	private final List<Category> categories = new ArrayList<>();
+
+	public List<Category> getCategories() {
+		return Collections.unmodifiableList(this.categories);
+	}
 
 	public int nextCategoryID() {
 		return (categories.isEmpty()) ? 1 : categories.size();
@@ -434,18 +589,6 @@ public class MoneyMgrModel {
 	/** All transactions sorted by date. Will not contain null values */
 	private final List<GenericTxn> allTransactionsByDate = new ArrayList<>();
 
-//	/**
-//	 * For testing alternative import methods, setting this to true will redirect
-//	 * the imported data to an location separate from the primary data structures,
-//	 * for comparison purposes.
-//	 */
-//	public boolean isAlternativeImport = false;
-//
-//	/**
-//	 * A list of transactions from alternative import methods, in order of import.
-//	 */
-//	public final List<GenericTxn> alternateTransactions = new ArrayList<>();
-
 	/** Compare two transactions by date, ascending */
 	private final Comparator<GenericTxn> compareByDate = new Comparator<GenericTxn>() {
 		public int compare(GenericTxn o1, GenericTxn o2) {
@@ -459,8 +602,6 @@ public class MoneyMgrModel {
 	public static GenericTxn SEARCH() {
 		if (SEARCH_TX == null) {
 			SEARCH_TX = new NonInvestmentTxn(0);
-//			this.allTransactionsByID.remove(SEARCH.txid);
-//			this.allTransactionsByDate.remove(SEARCH);
 		}
 
 		return SEARCH_TX;
@@ -478,23 +619,18 @@ public class MoneyMgrModel {
 
 	/** Add a new transaction to the appropriate collection(s) */
 	public void addTransaction(GenericTxn txn) {
-		if (txn.txid <= 0) {
+		if (txn.txid <= 0 || txn.getAccountID() <= 0) {
 			return;
 		}
 
-//		if (this.isAlternativeImport) {
-//			this.alternateTransactions.add(txn);
-//		} else
-		{
-			while (this.allTransactionsByID.size() < (txn.txid + 1)) {
-				this.allTransactionsByID.add(null);
-			}
+		while (this.allTransactionsByID.size() < (txn.txid + 1)) {
+			this.allTransactionsByID.add(null);
+		}
 
-			this.allTransactionsByID.set(txn.txid, txn);
+		this.allTransactionsByID.set(txn.txid, txn);
 
-			if (txn.getDate() != null) {
-				addTransactionDate(txn);
-			}
+		if (txn.getDate() != null) {
+			addTransactionDate(txn);
 		}
 	}
 
@@ -508,9 +644,9 @@ public class MoneyMgrModel {
 	/** Fix up information about a transaction whose date has changed */
 	public void changeTransactionDate(GenericTxn txn, QDate olddate) {
 		if (txn.getAccountID() != 0) {
-			if (olddate != null) {
-				this.allTransactionsByDate.remove(txn);
-			}
+			// TODOif (olddate != null) {
+			this.allTransactionsByDate.remove(txn);
+			// }
 
 			if (txn.getDate() != null) {
 				addTransactionDate(txn);
@@ -675,11 +811,6 @@ public class MoneyMgrModel {
 			}
 
 			Common.reportError("getTransactionIndexByDate: strange date comparison");
-//			if (diff > 0) {
-//				--idx;
-//			} else if (diff > 0) {
-//				++idx;
-//			}
 		}
 
 		if (idx < 0) {

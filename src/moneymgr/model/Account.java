@@ -116,19 +116,16 @@ public class Account {
 	public BigDecimal balance;
 	public BigDecimal clearedBalance;
 
-	private List<GenericTxn> transactions;
-	public List<Statement> statements;
-	public SecurityPortfolio securities;
+	private final List<GenericTxn> transactions;
+	public final List<Statement> statements;
+	public final SecurityPortfolio securities;
 
-	public Account(String name, AccountType type, String desc, QDate closeDate, //
-			int statFreq, int statDayOfMonth) {
-		this.acctid = MoneyMgrModel.currModel.nextAccountID();
-
+	public Account(int acctid, String name, String desc, AccountType type, int statFreq, int statDayOfMonth) {
+		this.acctid = acctid;
 		this.name = name;
+		this.description = (desc != null) ? desc : "";
 		this.type = type;
 		this.acctCategory = AccountCategory.forAccountType(type);
-		this.description = (desc != null) ? desc : "";
-		this.closeDate = closeDate;
 		this.statementFrequency = (statFreq > 0) ? statFreq : 30;
 		this.statementDayOfMonth = (statDayOfMonth > 0) ? statDayOfMonth : 30;
 
@@ -137,6 +134,13 @@ public class Account {
 		this.transactions = new ArrayList<>();
 		this.statements = new ArrayList<>();
 		this.securities = new SecurityPortfolio(null);
+	}
+
+	public Account(String name, AccountType type, String desc, QDate closeDate, //
+			int statFreq, int statDayOfMonth) {
+		this(MoneyMgrModel.currModel.nextAccountID(), name, desc, type, statFreq, statDayOfMonth);
+
+		this.closeDate = closeDate;
 	}
 
 	public Account(String name, AccountType type) {
@@ -708,5 +712,9 @@ public class Account {
 		s += this.securities.toString();
 
 		return s;
+	}
+
+	public boolean matches(Account other) {
+		return this.name.equals(other.name);
 	}
 }

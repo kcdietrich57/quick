@@ -106,10 +106,11 @@ public class Statement {
 
 		if (txn instanceof InvestmentTxn) {
 			InvestmentTxn itxn = (InvestmentTxn) txn;
+			Security sec = itxn.getSecurity();
 
-			if (itxn.security != null) {
-				if (this.holdings.findPosition(itxn.security) == null) {
-					this.holdings.createPosition(itxn.security.secid);
+			if (sec != null) {
+				if (this.holdings.findPosition(sec) == null) {
+					this.holdings.createPosition(sec.secid);
 				}
 
 				this.holdings.addTransaction(txn);
@@ -345,6 +346,7 @@ public class Statement {
 			bals.add("close:" + Common.formatAmount3(pos.getEndingShares()).trim());
 		}
 
+		// TODO System.out.print() in toString()??????
 		for (int idx = 0; idx < sname.size(); ++idx) {
 			System.out.print(String.format("%20s  ", sname.get(idx)));
 		}

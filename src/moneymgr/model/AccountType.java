@@ -62,6 +62,10 @@ public enum AccountType { //
 		return AccountType.Bank;
 	}
 
+	public static AccountType byId(int id) {
+		return accountTypes.get(id);
+	}
+
 	public boolean isLiability() {
 		return !this.isAsset;
 	}

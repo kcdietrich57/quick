@@ -161,7 +161,7 @@ public class OptionsProcessor {
 	private static void matchOptionsWithTransactions(List<GenericTxn> txns) {
 		for (GenericTxn gtxn : txns) {
 			if (!(gtxn instanceof InvestmentTxn) //
-					|| (((InvestmentTxn) gtxn).security == null)) {
+					|| (((InvestmentTxn) gtxn).getSecurity() == null)) {
 				continue;
 			}
 

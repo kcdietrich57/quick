@@ -52,33 +52,20 @@ public class SecurityPortfolio {
 
 	/** Add a transaction, update the security position it affects, if any */
 	public void addTransaction(GenericTxn txn) {
-		if (!(txn instanceof InvestmentTxn)) {
-			return;
+		Security sec = txn.getSecurity();
+		if (sec != null) {
+			SecurityPosition pos = getPosition(sec);
+			pos.addTransaction((InvestmentTxn) txn);
 		}
-
-		InvestmentTxn itx = (InvestmentTxn) txn;
-		if (itx.security == null) {
-			return;
-		}
-
-		SecurityPosition pos = getPosition(itx.security);
-
-		pos.addTransaction(itx);
 	}
 
 	/** Remove a transaction, update the security position it affects, if any */
 	public void removeTransaction(GenericTxn txn) {
-		if (!(txn instanceof InvestmentTxn)) {
-			return;
+		Security sec = txn.getSecurity();
+		if (sec != null) {
+			SecurityPosition pos = getPosition(sec);
+			pos.removeTransaction((InvestmentTxn) txn);
 		}
-
-		InvestmentTxn itx = (InvestmentTxn) txn;
-		if (itx.security == null) {
-			return;
-		}
-
-		SecurityPosition pos = getPosition(itx.security);
-		pos.removeTransaction(itx);
 	}
 
 	/** Find a position for a security, if it exists */

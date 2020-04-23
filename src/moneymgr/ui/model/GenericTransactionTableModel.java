@@ -15,6 +15,7 @@ import javax.swing.table.TableColumnModel;
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
+import moneymgr.model.Security;
 import moneymgr.model.Statement;
 import moneymgr.model.TxAction;
 import moneymgr.ui.model.TableProperties.ColumnProperties;
@@ -105,6 +106,7 @@ public abstract class GenericTransactionTableModel //
 
 	public Object getValueAt(int row, int col) {
 		GenericTxn tx = getTransactionAt(row);
+		Security sec = tx.getSecurity();
 
 		if (tx == null || col < 0 || col >= getColumnCount()) {
 			return null;
@@ -118,15 +120,9 @@ public abstract class GenericTransactionTableModel //
 			return tx.getAction().toString();
 
 		case 2:
-			if (tx instanceof InvestmentTxn) {
-				InvestmentTxn itx = (InvestmentTxn) tx;
-
-				if (itx.security != null) {
-					return itx.security.getName();
-				}
-			}
-
-			return Common.stringValue(tx.getPayee());
+			return (sec != null) //
+					? sec.getName() //
+					: Common.stringValue(tx.getPayee());
 
 		case 3:
 			return Common.stringValue(tx.getAmount());
@@ -144,6 +140,7 @@ public abstract class GenericTransactionTableModel //
 
 			if (tx instanceof InvestmentTxn) {
 				InvestmentTxn itx = (InvestmentTxn) tx;
+				String sym = itx.getSecuritySymbol();
 
 				if (itx.isStockOptionTxn()) {
 					if (itx.option == null) {
@@ -157,13 +154,13 @@ public abstract class GenericTransactionTableModel //
 
 					switch (itx.getAction()) {
 					case GRANT:
-						return itx.security.symbol + " " + shrs.toString();
+						return sym + " " + shrs.toString();
 					case VEST: {
 						try {
 							BigDecimal gshrs = itx.option.grantShares;
 							BigDecimal cnt = new BigDecimal(itx.option.vestCount);
 							BigDecimal vshrs = gshrs.divide(cnt, RoundingMode.DOWN);
-							return itx.security.symbol + " " + vshrs.toString() //
+							return sym + " " + vshrs.toString() //
 									+ "/" + gshrs.toString();
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -173,13 +170,13 @@ public abstract class GenericTransactionTableModel //
 					case EXERCISE:
 					case EXERCISEX:
 					case EXPIRE:
-						return itx.security.symbol + " " + itx.option.grantShares.toString();
+						return sym + " " + itx.option.grantShares.toString();
 
 					default:
 						return "";
 
 					}
-				} else if (itx.security != null) {
+				} else if (itx.getSecurity() != null) {
 					return Common.formatAmount3(itx.getShares()).trim() + "@" //
 							+ Common.formatAmount3(itx.getShareCost()).trim();
 				}

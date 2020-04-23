@@ -114,8 +114,7 @@ public class SecurityProcessor {
 	 */
 	private static void processSecurities2(SecurityPortfolio port, List<GenericTxn> txns) {
 		for (GenericTxn gtxn : txns) {
-			if (!(gtxn instanceof InvestmentTxn) //
-					|| (((InvestmentTxn) gtxn).security == null)) {
+			if ((gtxn == null) || (gtxn.getSecurity() == null)) {
 				continue;
 			}
 
@@ -125,7 +124,7 @@ public class SecurityProcessor {
 				StockOption.processSplit(txn);
 			}
 
-			SecurityPosition pos = port.getPosition(txn.security);
+			SecurityPosition pos = port.getPosition(txn.getSecurity());
 			pos.addTransaction(txn);
 		}
 	}

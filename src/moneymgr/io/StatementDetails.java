@@ -83,8 +83,8 @@ public class StatementDetails {
 	public static String formatInvestmentTransactionForSave(InvestmentTxn txn) {
 		String secString = ";";
 
-		if (txn.security != null) {
-			secString = txn.security.getSymbol() + ";";
+		if (txn.getSecurity() != null) {
+			secString = txn.getSecuritySymbol() + ";";
 			if (txn.getShares() != null) {
 				secString += String.format("%5.2f", txn.getShares());
 			}

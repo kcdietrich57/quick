@@ -298,7 +298,7 @@ public class TransactionCleaner {
 				return diff;
 			}
 
-			diff = o1.security.getName().compareTo(o2.security.getName());
+			diff = o1.getSecurityName().compareTo(o2.getSecurityName());
 			if (diff != 0) {
 				return diff;
 			}
@@ -331,8 +331,8 @@ public class TransactionCleaner {
 
 			InvestmentTxn t = xins.get(0);
 
-			inshrs = gatherTransactionsForSecurityTransfer(ins, xins, null, t.security, t.getDate());
-			outshrs = gatherTransactionsForSecurityTransfer(outs, xouts, unmatched, t.security, t.getDate());
+			inshrs = gatherTransactionsForSecurityTransfer(ins, xins, null, t.getSecurity(), t.getDate());
+			outshrs = gatherTransactionsForSecurityTransfer(outs, xouts, unmatched, t.getSecurity(), t.getDate());
 
 			if (outs.isEmpty()) {
 				unmatched.addAll(ins);
@@ -357,7 +357,7 @@ public class TransactionCleaner {
 						"%-20s : %10s %8s %8s INSH=%10s (%3d txns) OUTSH=%10s (%d txns)", //
 						t.getAccount().name, //
 						t.getAction().toString(), //
-						t.security.symbol, //
+						t.getSecuritySymbol(), //
 						t.getDate().toString(), //
 						Common.formatAmount3(inshrs), ins.size(), //
 						Common.formatAmount3(outshrs), outs.size());
@@ -374,7 +374,7 @@ public class TransactionCleaner {
 				String s = String.format("%-20s : %10s %8s %8s SHR=%s%10s", //
 						t.getAccount().name, //
 						t.getAction().toString(), //
-						t.security.symbol, //
+						t.getSecuritySymbol(), //
 						t.getDate().toString(), //
 						pad, //
 						Common.formatAmount3(t.getShares()));
@@ -403,7 +403,7 @@ public class TransactionCleaner {
 		// Skip earlier Txs, gathering in unmatched
 		while (t.getDate().compareTo(d) < 0 || //
 				(t.getDate().equals(d) //
-						&& (t.security.getName().compareTo(s.getName()) < 0))) {
+						&& (t.getSecurityName().compareTo(s.getName()) < 0))) {
 			unmatched.add(srctxns.remove(0));
 			if (srctxns.isEmpty()) {
 				break;
@@ -416,7 +416,7 @@ public class TransactionCleaner {
 		while (!srctxns.isEmpty()) {
 			t = srctxns.get(0);
 
-			if ((t.security != s) || //
+			if ((t.getSecurity() != s) || //
 					(t.getDate().compareTo(d) != 0)) {
 				break;
 			}

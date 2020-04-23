@@ -3,6 +3,7 @@ package moneymgr.model;
 import java.math.BigDecimal;
 
 import moneymgr.io.TransactionInfo;
+import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
 /** Common transaction info - subclassed by Investment vs NonInvestment txn */
@@ -20,17 +21,21 @@ public abstract class GenericTxn //
 	/** Keeps track of account balance - depends on order of transactions */
 	public BigDecimal runningTotal;
 
-	public GenericTxn(int acctid) {
-		super(acctid);
+	public GenericTxn(int txid, int acctid) {
+		super(txid, acctid);
 
 		this.date = null;
 		this.payee = "";
 		this.stmtdate = null;
 		this.runningTotal = null;
 
-		if (this.txid > 0) {
+		if (this.txid > 0 && getAccountID() > 0) {
 			MoneyMgrModel.currModel.addTransaction(this);
 		}
+	}
+
+	public GenericTxn(int acctid) {
+		this(MoneyMgrModel.currModel.createTxid(), acctid);
 	}
 
 	public void setCheckNumber(String cknum) {
@@ -109,5 +114,14 @@ public abstract class GenericTxn //
 
 	public String formatValue() {
 		return super.formatValue();
+	}
+
+	public boolean matches(GenericTxn other) {
+		BigDecimal v1 = getAmount();
+		BigDecimal v2 = other.getAmount();
+		boolean vmatches = Common.isEffectivelyEqual(v1, v2);
+		return getAccountID() == other.getAccountID() //
+				&& getDate().equals(other.getDate()) //
+				&& vmatches;
 	}
 }

@@ -132,20 +132,18 @@ public class CSVImport {
 
 	/** TESTING: Import CSV file and compare to QIF version */
 	public static void testMacImport() {
-		String importDir = "/Users/greg/Documents/workspace/Quicken/qif/";
+		String importDir = "/Users/greg/qif/";
 
 		System.out.println("Processing csv file");
 
 		// TODO import into separate MoneyManagerModel instead
-//		MoneyMgrModel.currModel.isAlternativeImport = true;
-//
-//		System.out.println(String.format("There are %d transactions from DIETRICH.QIF", //
-//				MoneyMgrModel.currModel.getAllTransactions().size()));
-//
-//		CSVImport.importCSV(importDir + "DIETRICH.csv");
-//
-//		System.out.println(String.format("After import, there are now %d transactions from DIETRICH.QIF", //
-//				MoneyMgrModel.currModel.getAllTransactions().size()));
+		System.out.println(String.format("There are %d transactions from DIETRICH.QIF", //
+				MoneyMgrModel.currModel.getAllTransactions().size()));
+
+		CSVImport.importCSV(importDir + "DIETRICH.csv");
+
+		System.out.println(String.format("After import, there are now %d transactions from DIETRICH.QIF", //
+				MoneyMgrModel.currModel.getAllTransactions().size()));
 //		Collections.sort(MoneyMgrModel.currModel.alternateTransactions, new Comparator<GenericTxn>() {
 //			public int compare(GenericTxn o1, GenericTxn o2) {
 //				return o1.getDate().compareTo(o2.getDate());
@@ -646,7 +644,7 @@ public class CSVImport {
 						: Common.getDecimal(fees);
 				itxn.price = BigDecimal.ZERO;
 				if (!sec.isEmpty()) {
-					itxn.security = MoneyMgrModel.currModel.findSecurity(sec);
+					itxn.setSecurity(MoneyMgrModel.currModel.findSecurity(sec));
 				}
 
 				// 0.42 shares @ 1.00

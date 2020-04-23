@@ -39,8 +39,8 @@ public class TransactionProcessor {
 				continue;
 			}
 
-			if ((txn.security != null) && (txn.price != null)) {
-				txn.security.addTransaction(txn);
+			if ((txn.getSecurity() != null) && (txn.price != null)) {
+				txn.getSecurity().addTransaction(txn);
 			}
 
 			MoneyMgrModel.currModel.currAccountBeingLoaded.addTransaction(txn);
@@ -78,59 +78,71 @@ public class TransactionProcessor {
 
 				break;
 			}
+
 			case InvAction:
 				txn.setAction(TxAction.parseAction(qline.value));
 				tinfo.setValue(TransactionInfo.ACTION_IDX, qline.value);
 				break;
+
 			case InvClearedStatus:
 				// Ignore
 				break;
+
 			case InvCommission:
 				txn.commission = Common.getDecimal(qline.value);
 				tinfo.setValue(TransactionInfo.COMMISSION_IDX, qline.value);
 				break;
+
 			case InvDate:
 				txn.setDate(Common.parseQDate(qline.value));
 				tinfo.setValue(TransactionInfo.DATE_IDX, qline.value);
 				break;
+
 			case InvMemo:
 				txn.setMemo(qline.value);
 				tinfo.setValue(TransactionInfo.MEMO_IDX, qline.value);
 				break;
+
 			case InvPrice:
 				txn.price = Common.getDecimal(qline.value);
 				tinfo.setValue(TransactionInfo.PRICE_IDX, qline.value);
 				break;
+
 			case InvQuantity:
 				txn.setQuantity(Common.getDecimal(qline.value));
 				tinfo.setValue(TransactionInfo.SHARES_IDX, qline.value);
 				break;
+
 			case InvSecurity:
-				txn.security = MoneyMgrModel.currModel.findSecurityByName(qline.value);
-				if (txn.security == null) {
-					txn.security = MoneyMgrModel.currModel.findSecurityByName(qline.value);
+				txn.setSecurity(MoneyMgrModel.currModel.findSecurityByName(qline.value));
+				tinfo.setValue(TransactionInfo.SECURITY_IDX, qline.value);
+
+				if (txn.getSecurity() == null) {
 					Common.reportWarning("Txn for acct " + txn.getAccountID() + ". " //
 							+ "No security '" + qline.value + "' was found.");
 				}
-				tinfo.setValue(TransactionInfo.SECURITY_IDX, qline.value);
+
 				break;
+
 			case InvFirstLine:
 				// txn.textFirstLine = qline.value;
 				break;
+
 			case InvXferAmt:
 				txn.cashTransferred = Common.getDecimal(qline.value);
 				tinfo.setValue(TransactionInfo.XAMOUNT_IDX, qline.value);
 				break;
+
 			case InvXferAcct: {
 				int catid = Common.parseCategory(qline.value);
 				if (catid < 0) {
 					txn.accountForTransfer = qline.value;
 				}
+
 				txn.setCatid(catid);
-				tinfo.setValue(TransactionInfo.CATEGORY_IDX, qline.value);
-			}
 				tinfo.setValue(TransactionInfo.XACCOUNT_IDX, qline.value);
 				break;
+			}
 
 			default:
 				Common.reportError("syntax error; txn: " + qline);

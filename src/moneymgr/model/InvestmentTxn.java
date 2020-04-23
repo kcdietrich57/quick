@@ -5,8 +5,10 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import app.QifDom;
 import moneymgr.io.TransactionInfo;
@@ -19,7 +21,37 @@ public class InvestmentTxn extends GenericTxn {
 			Collections.unmodifiableList(new ArrayList<InvestmentTxn>());
 
 	public enum ShareAction {
-		NO_ACTION, NEW_SHARES, DISPOSE_SHARES, TRANSFER_OUT, TRANSFER_IN, SPLIT
+		NO_ACTION("None"), NEW_SHARES("New"), DISPOSE_SHARES("Dispose"), TRANSFER_OUT("Xout"), TRANSFER_IN("Xin"),
+		SPLIT("Split");
+
+		private static Map<String, ShareAction> byname = new HashMap<String, InvestmentTxn.ShareAction>();
+
+		private String name;
+
+		private ShareAction(String name) {
+			this.name = name;
+		}
+
+		private static void addAction(ShareAction act) {
+			ShareAction.byname.put(act.name, act);
+		}
+
+		public static ShareAction parseAction(String name) {
+			if (ShareAction.byname.isEmpty()) {
+				addAction(NO_ACTION);
+				addAction(NEW_SHARES);
+				addAction(DISPOSE_SHARES);
+				addAction(TRANSFER_IN);
+				addAction(TRANSFER_OUT);
+				addAction(SPLIT);
+			}
+
+			return ShareAction.byname.get(name);
+		}
+
+		public String toString() {
+			return this.name;
+		}
 	}
 
 	/** TODO TxAction not for non-investment txns? Action taken by transaction */
@@ -43,8 +75,8 @@ public class InvestmentTxn extends GenericTxn {
 
 	// public String textFirstLine;
 
-	public InvestmentTxn(int acctid) {
-		super(acctid);
+	public InvestmentTxn(int txid, int acctid) {
+		super(txid, acctid);
 
 		this.action = TxAction.OTHER;
 		this.security = null;
@@ -60,6 +92,10 @@ public class InvestmentTxn extends GenericTxn {
 		this.lots = new ArrayList<>();
 		this.lotsCreated = new ArrayList<>();
 		this.lotsDisposed = new ArrayList<>();
+	}
+
+	public InvestmentTxn(int acctid) {
+		this(MoneyMgrModel.currModel.createTxid(), acctid);
 	}
 
 	/** Construct a dummy transaction for a split (see LotProcessor) */
@@ -129,6 +165,10 @@ public class InvestmentTxn extends GenericTxn {
 
 	public Security getSecurity() {
 		return this.security;
+	}
+
+	public void setSecurity(Security sec) {
+		this.security = sec;
 	}
 
 	public List<InvestmentTxn> getSecurityTransferTxns() {
@@ -482,7 +522,7 @@ public class InvestmentTxn extends GenericTxn {
 			String s = "Inconsistent " + this.action + " transaction:" + //
 					" acct=" + MoneyMgrModel.currModel.getAccountByID(getAccountID()).name + //
 					" " + getDate().toString() + "\n" + //
-					"  sec=" + this.security.getName() + //
+					"  sec=" + this.getSecurityName() + //
 					" qty=" + this.quantity + //
 					" price=" + this.price;
 
@@ -522,7 +562,7 @@ public class InvestmentTxn extends GenericTxn {
 					getCashAmount());
 		}
 
-		s += " " + ((this.security != null) ? this.security.getSymbol() : getPayee());
+		s += " " + ((this.security != null) ? this.getSecuritySymbol() : getPayee());
 
 		if (isStockOptionTxn() && (this.option != null)) {
 			s += "  Option info: " + this.option.toString();
@@ -541,7 +581,7 @@ public class InvestmentTxn extends GenericTxn {
 		s += " " + Common.formatAmount(getAmount()).trim();
 		s += " " + this.action;
 		if (this.security != null) {
-			s += " " + this.security.getName();
+			s += " " + this.getSecurityName();
 			s += " price=" + this.price;
 			if (getAction() == TxAction.STOCKSPLIT) {
 				s += " spratio=" + getSplitRatio();
@@ -598,7 +638,7 @@ public class InvestmentTxn extends GenericTxn {
 		if (this.security != null) {
 			ret += "\n";
 			ret += String.format("  %s   %s @ %s", //
-					this.security.getSymbol(), //
+					getSecuritySymbol(), //
 					Common.formatAmount3(this.quantity.abs()).trim(), //
 					Common.formatAmount(this.price).trim());
 		}

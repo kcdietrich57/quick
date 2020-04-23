@@ -299,7 +299,7 @@ public class TransactionInfo {
 			itxn.accountForTransfer = this.xaccount.name;
 			itxn.cashTransferred = this.xamount;
 			itxn.commission = this.commission;
-			itxn.security = this.security;
+			itxn.setSecurity(this.security);
 		}
 
 		txn.setDate(this.date);

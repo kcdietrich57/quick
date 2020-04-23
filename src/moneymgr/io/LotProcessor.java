@@ -166,7 +166,7 @@ public class LotProcessor {
 
 	/** Create a lot for new shares created by a transaction */
 	private static void addShares(List<Lot> thelots, InvestmentTxn txn) {
-		Lot lot = new Lot(txn.getAccountID(), txn.getDate(), txn.security.secid, //
+		Lot lot = new Lot(txn.getAccountID(), txn.getDate(), txn.getSecurityId(), //
 				txn.getShares(), txn.getShareCost(), txn);
 		addLot(thelots, lot);
 

@@ -70,16 +70,19 @@ public class Security {
 	/** TODO make private - Information about splits for this security */
 	public final List<StockSplitInfo> splits = new ArrayList<>();
 
-	/** Constructor - quicken-style info */
-	public Security(String symbol, String name, String type, String goal) {
-		this.secid = MoneyMgrModel.currModel.nextSecurityId();
-
+	public Security(int secid, String symbol, String name, String type, String goal) {
+		this.secid = secid;
 		this.symbol = (symbol != null) ? symbol : name;
+		this.type = type;
+		this.goal = goal;
 
 		this.names = new ArrayList<>();
 		this.names.add(name);
-		this.type = type;
-		this.goal = goal;
+	}
+
+	/** Constructor - quicken-style info */
+	public Security(String symbol, String name, String type, String goal) {
+		this(MoneyMgrModel.currModel.nextSecurityId(), symbol, name, type, goal);
 	}
 
 	public Security(String symbol, String name) {
@@ -291,5 +294,10 @@ public class Security {
 				+ "\n";
 
 		return s;
+	}
+
+	public boolean matches(Security other) {
+		return this.symbol.equals(other.symbol) //
+				&& this.getName().equals(other.getName());
 	}
 }

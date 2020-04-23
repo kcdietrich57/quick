@@ -9,6 +9,10 @@ public class QDate implements Comparable<QDate> {
 		return new QDate(new Date());
 	}
 
+	public static QDate fromRawData(int raw) {
+		return new QDate(raw / 10000, (raw / 100) % 100, raw % 100);
+	}
+
 	/** Raw integer date value (YYYYMMDD) */
 	private final int datevalue;
 

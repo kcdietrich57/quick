@@ -190,7 +190,7 @@ public class StockOption {
 		for (StockOption opt : MoneyMgrModel.currModel.getStockOptions()) {
 			if ((opt.srcOption == null) //
 					&& opt.date.equals(txn.getDate()) //
-					&& (opt.secid == txn.security.secid) //
+					&& (opt.secid == txn.getSecurityId()) //
 					&& (opt.acctid == txn.getAccountID())) {
 				if (// QifDom.verbose &&
 				!opt.grantShares.equals(txn.getShares())) {
@@ -209,7 +209,7 @@ public class StockOption {
 		}
 
 		if (QifDom.verbose) {
-			Common.reportWarning("Can't find match for ESPP transaction " + txn.security.getSymbol());
+			Common.reportWarning("Can't find match for ESPP transaction " + txn.getSecuritySymbol());
 		}
 	}
 
@@ -220,7 +220,7 @@ public class StockOption {
 // TODO fix other actions similarly
 			if ((opt.srcOption == null) //
 					&& opt.date.equals(txn.getDate()) //
-					&& (opt.secid == txn.security.secid) //
+					&& (opt.secid == txn.getSecurityId()) //
 					&& (opt.acctid == txn.getAccountID())) {
 				if (QifDom.verbose && !opt.grantShares.equals(txn.getShares())) {
 					// TODO grant transactions in quicken have 0 shares
@@ -239,7 +239,9 @@ public class StockOption {
 		}
 
 		if (QifDom.verbose) {
-			Common.reportWarning("Can't find match for option grant transaction " + txn.security.getSymbol());
+			Common.reportWarning( //
+					"Can't find match for option grant transaction " //
+							+ txn.getSecuritySymbol());
 		}
 	}
 
@@ -247,7 +249,7 @@ public class StockOption {
 	public static void processVest(InvestmentTxn txn) {
 		for (StockOption opt : MoneyMgrModel.currModel.getStockOptions()) {
 			if ((opt.srcOption != null) //
-					&& (opt.secid == txn.security.secid) //
+					&& (opt.secid == txn.getSecurityId()) //
 					&& opt.date.equals(txn.getDate()) //
 					&& (opt.vestCurrent != opt.srcOption.vestCurrent)) {
 				if (opt.transaction == null) {
@@ -293,7 +295,7 @@ public class StockOption {
 	public static void processExercise(InvestmentTxn txn) {
 		for (StockOption opt : MoneyMgrModel.currModel.getStockOptions()) {
 			if ((opt.srcOption != null) //
-					&& (opt.secid == txn.security.secid) //
+					&& (opt.secid == txn.getSecurityId()) //
 					&& opt.date.equals(txn.getDate()) //
 					&& (opt.vestCurrent == opt.srcOption.vestCurrent) //
 					&& (opt.getAvailableShares(true).compareTo( //
@@ -315,7 +317,7 @@ public class StockOption {
 	/** Match up an expire transaction with the option object */
 	public static void processExpire(InvestmentTxn txn) {
 		for (StockOption opt : MoneyMgrModel.currModel.getStockOptions()) {
-			if ((opt.secid == txn.security.secid) //
+			if ((opt.secid == txn.getSecurityId()) //
 					&& opt.date.equals(txn.getDate()) //
 					&& (opt.srcOption != null) //
 					&& (opt.vestCurrent == opt.srcOption.vestCurrent) //

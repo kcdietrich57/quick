@@ -455,9 +455,14 @@ public class SecurityPosition {
 
 	/** Get value as of a given date */
 	public BigDecimal getValueForDate(QDate d) {
-		return getValueForIndex( //
-				d, //
-				MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate(this.transactions, d));
+		try {
+			return getValueForIndex( //
+					d, //
+					MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate(this.transactions, d));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return BigDecimal.ZERO;
+		}
 	}
 
 	/** Get shares held on a given date */
