@@ -52,12 +52,11 @@ public class TransactionCleaner {
 
 	/** A txn may have multiple splits transferring to/from another account. */
 	private void massageSplits(GenericTxn txn) {
-		if (!(txn instanceof NonInvestmentTxn)) {
+		if (!txn.hasSplits()) {
 			return;
 		}
 
-		NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
-		List<SplitTxn> splits = nitxn.getSplits();
+		List<SplitTxn> splits = txn.getSplits();
 
 		for (int ii = 0; ii < splits.size(); ++ii) {
 			SplitTxn stxn = splits.get(ii);
@@ -74,15 +73,16 @@ public class TransactionCleaner {
 				if (stxn.getCatid() == stxn2.getCatid()) {
 					if (mtxn == null) {
 						mtxn = new MultiSplitTxn(txn);
+						MoneyMgrModel.currModel.addTransaction(mtxn);
 						splits.set(ii, mtxn);
 
-						mtxn.setAmount(stxn.getAmount());
+						// mtxn.setAmount(stxn.getAmount());
 						mtxn.setCatid(stxn.getCatid());
-						mtxn.subsplits.add(stxn);
+						mtxn.addSplit(stxn);
 					}
 
-					mtxn.setAmount(mtxn.getAmount().add(stxn2.getAmount()));
-					mtxn.subsplits.add(stxn2);
+					// mtxn.setAmount(mtxn.getAmount().add(stxn2.getAmount()));
+					mtxn.addSplit(stxn2);
 
 					splits.remove(jj);
 					--jj;
@@ -110,7 +110,7 @@ public class TransactionCleaner {
 					}
 				}
 
-				t.runningTotal = a.balance;
+				t.setRunningTotal(a.balance);
 			}
 		}
 	}
@@ -130,7 +130,14 @@ public class TransactionCleaner {
 	private void connectTransfers(GenericTxn txn) {
 		if (txn.hasSplits()) {
 			for (SimpleTxn stxn : ((NonInvestmentTxn) txn).getSplits()) {
-				connectTransfers(stxn, txn.getDate());
+				// TODO verify we don't connect subsplits, just multisplit
+				if (false && stxn instanceof MultiSplitTxn) {
+					for (SimpleTxn sstxn : stxn.getSplits()) {
+						connectTransfers(sstxn, txn.getDate());
+					}
+				} else {
+					connectTransfers(stxn, txn.getDate());
+				}
 			}
 		} else if ((txn.getCatid() < 0) && //
 		// NB opening balance shows up as xfer to same acct
@@ -152,7 +159,8 @@ public class TransactionCleaner {
 			return;
 		}
 
-		if ((txn.getCashTransferTxn() != null) && (txn.getCashTransferTxn().getCashTransferTxn() == txn)) {
+		if ((txn.getCashTransferTxn() != null) //
+				&& (txn.getCashTransferTxn().getCashTransferTxn() == txn)) {
 			return;
 		}
 
@@ -169,8 +177,8 @@ public class TransactionCleaner {
 		if (matchingTxns.isEmpty()) {
 			++failedXfers;
 
-			Common.reportInfo("match not found for xfer: " + txn);
-			Common.reportInfo("  " + failedXfers + " of " + totalXfers + " failed");
+			Common.debugInfo("match not found for xfer: " + txn);
+			Common.debugInfo("  " + failedXfers + " of " + totalXfers + " failed");
 
 			return;
 		}
@@ -190,8 +198,8 @@ public class TransactionCleaner {
 			xtxn = matchingTxns.get(0);
 		}
 
-		txn.setXtxn(xtxn);
-		xtxn.setXtxn(txn);
+		txn.setCashTransferTxn(xtxn);
+		xtxn.setCashTransferTxn(txn);
 	}
 
 	/** Look for transfer candidates in an account */
@@ -274,7 +282,7 @@ public class TransactionCleaner {
 		List<InvestmentTxn> xouts = new ArrayList<InvestmentTxn>();
 
 		// Gather all security transfers
-		for (GenericTxn txn : MoneyMgrModel.currModel.getAllTransactions()) {
+		for (SimpleTxn txn : MoneyMgrModel.currModel.getAllTransactions()) {
 			if (txn instanceof InvestmentTxn) {
 				if ((txn.getAction() == TxAction.SHRS_IN)) {
 					xins.add((InvestmentTxn) txn);
@@ -361,7 +369,7 @@ public class TransactionCleaner {
 						t.getDate().toString(), //
 						Common.formatAmount3(inshrs), ins.size(), //
 						Common.formatAmount3(outshrs), outs.size());
-				Common.reportInfo(s);
+				Common.debugInfo(s);
 			}
 		}
 
@@ -378,7 +386,7 @@ public class TransactionCleaner {
 						t.getDate().toString(), //
 						pad, //
 						Common.formatAmount3(t.getShares()));
-				Common.reportInfo(s);
+				Common.debugInfo(s);
 			}
 		}
 	}

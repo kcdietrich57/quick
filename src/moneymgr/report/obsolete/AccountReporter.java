@@ -1,7 +1,5 @@
 package moneymgr.report.obsolete;
 
-import java.util.List;
-
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.Statement;

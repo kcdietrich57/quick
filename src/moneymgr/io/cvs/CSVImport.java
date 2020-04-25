@@ -262,8 +262,8 @@ public class CSVImport {
 
 			int unmatchedWindowsTxns = 0;
 
-			for (GenericTxn gtx : MoneyMgrModel.currModel.getAllTransactions()) {
-				if (!isWinTxnMatched(gtx, true)) {
+			for (SimpleTxn stx : MoneyMgrModel.currModel.getAllTransactions()) {
+				if (!isWinTxnMatched(stx, true)) {
 //					out.println(gtx.toString());
 					++unmatchedWindowsTxns;
 				}
@@ -594,6 +594,7 @@ public class CSVImport {
 					Common.reportWarning("Can't add split to investment txn");
 				}
 				txn = new SplitTxn(this.lasttxn);
+				MoneyMgrModel.currModel.addTransaction(txn);
 				this.lasttxn.addSplit((SplitTxn) txn);
 			} else if (acct.isNonInvestmentAccount()) {
 				txn = new NonInvestmentTxn(acct.acctid);
@@ -609,7 +610,7 @@ public class CSVImport {
 
 			txn.setAmount(amount);
 			txn.setMemo(memo);
-			txn.setXtxn(null);
+			txn.setCashTransferTxn(null);
 			txn.setCatid(catid);
 
 			if (txn instanceof GenericTxn) {

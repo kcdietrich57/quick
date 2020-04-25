@@ -2,12 +2,14 @@ package moneymgr.model.compare;
 
 import java.util.List;
 
+import app.MoneyMgrApp;
 import moneymgr.model.Account;
 import moneymgr.model.Category;
-import moneymgr.model.GenericTxn;
 import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Security;
+import moneymgr.model.SimpleTxn;
 import moneymgr.model.Statement;
+import moneymgr.util.Common;
 
 public class CompareModels {
 	public static void compareModels(MoneyMgrModel m1, MoneyMgrModel m2) {
@@ -22,30 +24,32 @@ public class CompareModels {
 		 * 8. Compare options<br>
 		 * 9. Compare statements<br>
 		 */
-		System.out.println("Comparing JSON model");
-
+		Common.reportInfo(String.format("Categories: %s", MoneyMgrApp.elapsedTime()));
 		compareCategories(m1, m2);
+		Common.reportInfo(String.format("Securities: %s", MoneyMgrApp.elapsedTime()));
 		compareSecurities(m1, m2);
+		Common.reportInfo(String.format("Accounts: %s", MoneyMgrApp.elapsedTime()));
 		compareAccounts(m1, m2);
+		Common.reportInfo(String.format("Transactions: %s", MoneyMgrApp.elapsedTime()));
 		compareTransactions(m1, m2);
+		Common.reportInfo(String.format("Statements: %s", MoneyMgrApp.elapsedTime()));
 		compareStatements(m1, m2);
-
-		System.out.println("Compare complete");
+		Common.reportInfo(String.format("Complete: %s", MoneyMgrApp.elapsedTime()));
 	}
 
 	static int txct = 0;
 
 	private static void compareTransactions(MoneyMgrModel m1, MoneyMgrModel m2) {
-		List<GenericTxn> txns1 = m1.getAllTransactions();
-		List<GenericTxn> txns2 = m2.getAllTransactions();
+		List<SimpleTxn> txns1 = m1.getAllTransactions();
+		List<SimpleTxn> txns2 = m2.getAllTransactions();
 
 		if (txns1.size() != txns2.size()) {
 			System.out.println("Transaction count different");
 		}
 
 		for (int ii = 0; ii < txns1.size() && ii < txns2.size(); ++ii) {
-			GenericTxn t1 = txns1.get(ii);
-			GenericTxn t2 = txns2.get(ii);
+			SimpleTxn t1 = txns1.get(ii);
+			SimpleTxn t2 = txns2.get(ii);
 
 			if (t1 != null && t2 != null) {
 				if (!t1.matches(t2)) {

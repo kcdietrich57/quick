@@ -5,6 +5,7 @@ import java.util.Date;
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.MoneyMgrModel;
+import moneymgr.model.SimpleTxn;
 
 /** Various reporting functions - used by obsolete QifLoader */
 public class QifReporter {
@@ -17,7 +18,13 @@ public class QifReporter {
 		int reconciled = 0;
 		int unreconciled = 0;
 
-		for (GenericTxn t : MoneyMgrModel.currModel.getAllTransactions()) {
+		for (SimpleTxn st : MoneyMgrModel.currModel.getAllTransactions()) {
+			if ((st != null) && !(st instanceof GenericTxn)) {
+				continue;
+			}
+
+			GenericTxn t = (GenericTxn) st;
+
 			if (t == null) {
 				++nullt;
 			} else if (t.stmtdate != null) {
@@ -55,7 +62,7 @@ public class QifReporter {
 				// End of month
 				if (!first) {
 					// Append balance to this year's line
-					System.out.print(String.format(" %4.2f", lasttx.runningTotal));
+					System.out.print(String.format(" %4.2f", lasttx.getRunningTotal()));
 				}
 
 				// New year, or skipped month

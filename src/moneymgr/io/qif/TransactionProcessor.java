@@ -244,6 +244,7 @@ public class TransactionProcessor {
 				if (cursplit == null || cursplit.getCatid() != 0) {
 					cursplit = new SplitTxn(txn);
 					txn.addSplit(cursplit);
+					MoneyMgrModel.currModel.addTransaction(cursplit);
 				}
 
 				if (qline.value == null || qline.value.trim().isEmpty()) {
@@ -260,6 +261,7 @@ public class TransactionProcessor {
 				if (cursplit == null || cursplit.getAmount() != null) {
 					txn.addSplit(cursplit);
 					cursplit = new SplitTxn(txn);
+					MoneyMgrModel.currModel.addTransaction(cursplit);
 				}
 
 				cursplit.setAmount(Common.getDecimal(qline.value));

@@ -140,7 +140,7 @@ public class LotProcessor {
 			break;
 
 		case NO_ACTION:
-			Common.reportInfo("Skipping transaction: " + txn.toString());
+			Common.debugInfo("Skipping transaction: " + txn.toString());
 			break;
 		}
 
@@ -295,7 +295,7 @@ public class LotProcessor {
 
 		s += "\nBalance: " + Common.formatAmount(bal);
 
-		Common.reportInfo(s);
+		Common.debugInfo(s);
 
 		return s;
 	}
@@ -535,7 +535,7 @@ public class LotProcessor {
 		boolean SUMMARY_ONLY = true;
 		boolean FULL_DETAILS = !SUMMARY_ONLY;
 
-		Common.reportInfo("\nSummary of open lots:");
+		Common.debugInfo("\nSummary of open lots:");
 
 		for (Security sec : MoneyMgrModel.currModel.getSecurities()) {
 			logLotsHistory(sec, sec.getLots(), SUMMARY_ONLY);
@@ -581,7 +581,7 @@ public class LotProcessor {
 			sb.append(String.format("  bal=%12s", Common.formatAmount3(balance)));
 		}
 
-		Common.reportInfo(sb.toString());
+		Common.debugInfo(sb.toString());
 
 		return balance;
 	}

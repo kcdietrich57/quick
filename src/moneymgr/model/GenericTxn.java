@@ -19,7 +19,15 @@ public abstract class GenericTxn //
 	public QDate stmtdate;
 
 	/** Keeps track of account balance - depends on order of transactions */
-	public BigDecimal runningTotal;
+	private BigDecimal runningTotal;
+
+	public BigDecimal getRunningTotal() {
+		return this.runningTotal;
+	}
+
+	public void setRunningTotal(BigDecimal tot) {
+		this.runningTotal = tot;
+	}
 
 	public GenericTxn(int txid, int acctid) {
 		super(txid, acctid);
@@ -36,6 +44,11 @@ public abstract class GenericTxn //
 
 	public GenericTxn(int acctid) {
 		this(MoneyMgrModel.currModel.createTxid(), acctid);
+	}
+
+	
+	public QDate getStatementDate() {
+		return this.stmtdate;
 	}
 
 	public void setCheckNumber(String cknum) {

@@ -185,7 +185,7 @@ public abstract class GenericTransactionTableModel //
 			return ""; // Common.stringValue(tx.runningTotal);
 
 		case 7:
-			return Common.stringValue(tx.runningTotal);
+			return Common.stringValue(tx.getRunningTotal());
 		}
 
 		return null;

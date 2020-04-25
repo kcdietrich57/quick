@@ -9,6 +9,7 @@ import moneymgr.model.MoneyMgrModel;
 import moneymgr.report.CashFlow;
 import moneymgr.report.InvestmentPerformanceModel;
 import moneymgr.ui.MainFrame;
+import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
 /**
@@ -19,13 +20,33 @@ public class MoneyMgrApp {
 	public static final String WIN_JSON_MODEL_NAME = "Windows JSON";
 	public static Scanner scn;
 
+	private static long startupTime;
+	private static long lapTime;
+
+	public static String elapsedTime() {
+		long now = System.currentTimeMillis();
+		long elapsed = now - startupTime;
+		long lap = now - lapTime;
+
+		lapTime = now;
+
+		String ret = String.format("%1.1fs - elapsed %1.1fs", //
+				elapsed / 1000.0, //
+				lap / 1000.0);
+		
+		return ret;
+	}
+
 	public static void main(String[] args) {
+		Common.reportInfo("Starting MoneyManager");
+		startupTime = System.currentTimeMillis();
+		lapTime = startupTime;
+
 		MoneyMgrModel.changeModel(WIN_QIF_MODEL_NAME);
 
+		Common.reportInfo("Loading data");
 		MoneyMgrApp.scn = new Scanner(System.in);
 		QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
-
-		MainFrame.createUI();
 
 		// ----------------------------------------------------------
 
@@ -36,11 +57,17 @@ public class MoneyMgrApp {
 //			System.out.println("  " + entry.getKey() + ": " + entry.getValue());
 //		}
 
-		Persistence persistence = new Persistence("/tmp/dietrich.mm");
-		persistence.saveJSON();
-		persistence.buildModel(WIN_JSON_MODEL_NAME);
+		String jsonFilename = "qif/DIETRICH.json";
+		
+		Common.reportInfo(String.format("Load complete: %s\nSaving JSON", elapsedTime()));
+		Persistence persistence = new Persistence();
+		persistence.saveJSON(jsonFilename);
+
+		Common.reportInfo(String.format("JSON saved: %s\nLoading JSON", elapsedTime()));
+		persistence.loadJSON(WIN_JSON_MODEL_NAME, jsonFilename);
+
+		Common.reportInfo(String.format("JSON loaded: %s\nComparing models", elapsedTime()));
 		MoneyMgrModel.compareModels(WIN_QIF_MODEL_NAME, WIN_JSON_MODEL_NAME);
-		MoneyMgrModel.changeModel(WIN_QIF_MODEL_NAME);
 
 		if (ENABLE_EXPERIMENTAL_CODE) {
 			InvestmentPerformanceModel model = new InvestmentPerformanceModel( //
@@ -51,6 +78,13 @@ public class MoneyMgrApp {
 
 			runExperimentalCode();
 		}
+
+		Common.reportInfo(String.format("Load complete: %s\nBuilding UI", elapsedTime()));
+		MoneyMgrModel.changeModel(WIN_QIF_MODEL_NAME);
+		//MoneyMgrModel.changeModel(WIN_JSON_MODEL_NAME);
+		MainFrame.createUI(MoneyMgrModel.currModel);
+
+		Common.reportInfo(String.format("Startup complete: %s", elapsedTime()));
 	}
 
 	/** This function will run experimental code for the current data */

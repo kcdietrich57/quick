@@ -14,6 +14,7 @@ import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
 import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Security;
+import moneymgr.model.SimpleTxn;
 import moneymgr.model.StockOption;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
@@ -66,7 +67,7 @@ public class OptionsProcessor {
 							acct.acctid, sec.secid, //
 							shares, buyPrice, cost, mktPrice, value);
 
-					Common.reportInfo("ESPP: " + opt.toString());
+					Common.debugInfo("ESPP: " + opt.toString());
 				} else {
 					String name = toker.nextToken();
 
@@ -86,14 +87,14 @@ public class OptionsProcessor {
 								acct.acctid, sec.secid, //
 								shares, price, vestPeriodMonths, vestCount, 0);
 
-						Common.reportInfo("Granted: " + opt.toString());
+						Common.debugInfo("Granted: " + opt.toString());
 					} else if (op.equals("VEST")) {
 						// 05/23/92 VEST 2656 1
 						int vestNumber = Integer.parseInt(toker.nextToken());
 
 						StockOption opt = StockOption.vest(name, date, vestNumber);
 
-						Common.reportInfo("Vested: " + opt.toString());
+						Common.debugInfo("Vested: " + opt.toString());
 
 					} else if (op.equals("SPLIT")) {
 						// 09/16/92 SPLIT 2656 2 1 [1000/3.00]
@@ -102,20 +103,20 @@ public class OptionsProcessor {
 
 						StockOption opt = StockOption.split(name, date, newShares, oldShares);
 
-						Common.reportInfo("Split: " + opt.toString());
+						Common.debugInfo("Split: " + opt.toString());
 					} else if (op.equals("EXPIRE")) {
 						// 05/23/01 EXPIRE 2656
 						StockOption opt = StockOption.expire(name, date);
 
 						if (opt != null) {
-							Common.reportInfo("Expire: " + opt.toString());
+							Common.debugInfo("Expire: " + opt.toString());
 						}
 					} else if (op.equals("CANCEL")) {
 						// 05/23/01 CANCEL 2656
 						StockOption opt = StockOption.cancel(name, date);
 
 						if (opt != null) {
-							Common.reportInfo("Cancel: " + opt.toString());
+							Common.debugInfo("Cancel: " + opt.toString());
 						}
 					} else if (op.equals("EXERCISE")) {
 						// 09/19/95 EXERCISE 2656 2000 32.75
@@ -124,7 +125,7 @@ public class OptionsProcessor {
 
 						StockOption opt = StockOption.exercise(name, date, shares);
 
-						Common.reportInfo("Exercise: " + opt.toString());
+						Common.debugInfo("Exercise: " + opt.toString());
 					}
 				}
 
@@ -142,84 +143,93 @@ public class OptionsProcessor {
 		}
 
 		List<StockOption> openOptions = StockOption.getOpenOptions();
-		Common.reportInfo("\nOpen Stock Options:\n" + openOptions.toString());
+		Common.debugInfo("\nOpen Stock Options:\n" + openOptions.toString());
 	}
 
 	/** Post-load processing for stock options */
 	public static void matchOptionsWithTransactions() {
-		matchOptionsWithTransactions(MoneyMgrModel.currModel.getAllTransactions());
+		matchOptionsWithAllTransactions(MoneyMgrModel.currModel.getAllTransactions());
 
 		// TODO seems we are processing transactions twice here.
 		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			if (a.isInvestmentAccount()) {
-				matchOptionsWithTransactions(a.getTransactions());
+				matchOptionsWithAccountTransactions(a.getTransactions());
 			}
 		}
 	}
 
 	/** Process options (either global for all txns, or one account's txns) */
-	private static void matchOptionsWithTransactions(List<GenericTxn> txns) {
+	private static void matchOptionsWithAccountTransactions(List<GenericTxn> txns) {
 		for (GenericTxn gtxn : txns) {
-			if (!(gtxn instanceof InvestmentTxn) //
-					|| (((InvestmentTxn) gtxn).getSecurity() == null)) {
-				continue;
+			if ((gtxn != null) && (gtxn.getSecurity() != null)) {
+				matchOptionsWithTransactions((InvestmentTxn) gtxn);
 			}
+		}
+	}
 
-			InvestmentTxn txn = (InvestmentTxn) gtxn;
-
-			// SecurityPosition pos = port.getPosition(txn.security);
-			// pos.transactions.add(txn);
-
-			switch (txn.getAction()) {
-			case SHRS_IN:
-			case REINV_DIV:
-			case REINV_LG:
-			case REINV_SH:
-			case REINV_INT:
-			case SHRS_OUT:
-			case SELL:
-			case SELLX:
-				// pos.shares = pos.shares.add(txn.getShares());
-				break;
-
-			case BUY:
-			case BUYX:
-				StockOption.processEspp(txn);
-				break;
-
-			case GRANT:
-				StockOption.processGrant(txn);
-				break;
-
-			case VEST:
-				StockOption.processVest(txn);
-				break;
-
-			case EXERCISE:
-			case EXERCISEX:
-				StockOption.processExercise(txn);
-				break;
-
-			case EXPIRE:
-				StockOption.processExpire(txn);
-				break;
-
-			case STOCKSPLIT:
-				// StockOption.processSplit(txn);
-				//
-				// pos.shares = pos.shares.multiply(txn.getShares());
-				// pos.shares = pos.shares.divide(BigDecimal.TEN);
-				break;
-
-			case CASH:
-			case DIV:
-			case INT_INC:
-			case MISC_INCX:
-				break;
-
-			default:
-				break;
+	/** Process options (either global for all txns, or one account's txns) */
+	private static void matchOptionsWithAllTransactions(List<SimpleTxn> txns) {
+		for (SimpleTxn gtxn : txns) {
+			if ((gtxn != null) && (gtxn.getSecurity() != null)) {
+				matchOptionsWithTransactions((InvestmentTxn) gtxn);
 			}
+		}
+	}
+
+	/** Process options (either global for all txns, or one account's txns) */
+	private static void matchOptionsWithTransactions(InvestmentTxn txn) {
+		// SecurityPosition pos = port.getPosition(txn.security);
+		// pos.transactions.add(txn);
+
+		switch (txn.getAction()) {
+		case SHRS_IN:
+		case REINV_DIV:
+		case REINV_LG:
+		case REINV_SH:
+		case REINV_INT:
+		case SHRS_OUT:
+		case SELL:
+		case SELLX:
+			// pos.shares = pos.shares.add(txn.getShares());
+			break;
+
+		case BUY:
+		case BUYX:
+			StockOption.processEspp(txn);
+			break;
+
+		case GRANT:
+			StockOption.processGrant(txn);
+			break;
+
+		case VEST:
+			StockOption.processVest(txn);
+			break;
+
+		case EXERCISE:
+		case EXERCISEX:
+			StockOption.processExercise(txn);
+			break;
+
+		case EXPIRE:
+			StockOption.processExpire(txn);
+			break;
+
+		case STOCKSPLIT:
+			// StockOption.processSplit(txn);
+			//
+			// pos.shares = pos.shares.multiply(txn.getShares());
+			// pos.shares = pos.shares.divide(BigDecimal.TEN);
+			break;
+
+		case CASH:
+		case DIV:
+		case INT_INC:
+		case MISC_INCX:
+			break;
+
+		default:
+			break;
 		}
 	}
 }

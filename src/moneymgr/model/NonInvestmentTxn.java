@@ -72,7 +72,7 @@ public class NonInvestmentTxn extends GenericTxn {
 	}
 
 	public boolean hasSplits() {
-		return !this.splits.isEmpty();
+		return (this.splits != null) && !this.splits.isEmpty();
 	}
 
 	public List<SplitTxn> getSplits() {
@@ -163,7 +163,7 @@ public class NonInvestmentTxn extends GenericTxn {
 			s += ")";
 		}
 		s += " memo=" + getMemo();
-		s += " bal=" + this.runningTotal;
+		s += " bal=" + this.getRunningTotal();
 
 		if ((this.splits != null) && !this.splits.isEmpty()) {
 			s += "\n  splits \n";

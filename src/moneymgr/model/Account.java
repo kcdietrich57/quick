@@ -615,7 +615,7 @@ public class Account {
 		while ((idx >= 0) && (cashBal == null)) {
 			GenericTxn tx = this.transactions.get(idx--);
 
-			cashBal = tx.runningTotal;
+			cashBal = tx.getRunningTotal();
 		}
 
 		return (cashBal != null) ? cashBal : BigDecimal.ZERO;

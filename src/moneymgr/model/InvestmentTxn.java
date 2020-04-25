@@ -105,7 +105,7 @@ public class InvestmentTxn extends GenericTxn {
 		setDate(txn.getDate());
 		setAmount(txn.getAmount());
 
-		this.runningTotal = BigDecimal.ZERO;
+		setRunningTotal(BigDecimal.ZERO);
 		this.stmtdate = null;
 
 		this.action = txn.action;

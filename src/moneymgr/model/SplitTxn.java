@@ -1,5 +1,7 @@
 package moneymgr.model;
 
+import java.math.BigDecimal;
+
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -11,10 +13,28 @@ import moneymgr.util.QDate;
 public class SplitTxn extends SimpleTxn {
 	private SimpleTxn parent;
 
-	public SplitTxn(SimpleTxn parent) {
-		super(parent.getAccountID());
+	public SplitTxn(int txid, SimpleTxn parent) {
+		super(txid, parent.getAccountID());
 
 		this.parent = parent;
+		// TODO why does this break things? setAmount(BigDecimal.ZERO);
+	}
+
+	public SplitTxn(SimpleTxn parent) {
+		this(MoneyMgrModel.currModel.createTxid(), parent);
+	}
+
+	public SimpleTxn getParent() {
+		return this.parent;
+	}
+
+	public void setParent(SimpleTxn parent) {
+		this.parent = parent;
+	}
+
+	public SimpleTxn getCashTransferTxn() {
+		SimpleTxn xtxn = super.getCashTransferTxn();
+		return (xtxn != null) ? xtxn : getParent().getCashTransferTxn();
 	}
 
 	public int getAccountID() {

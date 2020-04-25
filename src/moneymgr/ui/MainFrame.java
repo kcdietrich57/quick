@@ -6,16 +6,19 @@ import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+import moneymgr.model.MoneyMgrModel;
+
 /** Top level application frame */
 @SuppressWarnings("serial")
 public class MainFrame extends JFrame {
 	public static MainFrame appFrame;
 
 	public MainWindow mainWindow;
+	public MoneyMgrModel model;
 
 	/** Create the GUI and show it. (Run in event-dispatching thread). */
-	private static void createAndShowGUI() {
-		appFrame = new MainFrame("Money Manager");
+	private static void createAndShowGUI(MoneyMgrModel model) {
+		appFrame = new MainFrame("Money Manager", model);
 		appFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		MainWindow mainWindow = new MainWindow();
@@ -37,15 +40,23 @@ public class MainFrame extends JFrame {
 		mainWindow.setSplitPosition();
 	}
 
-	public static void createUI() {
+	public static void createUI(MoneyMgrModel model) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				createAndShowGUI();
+				createAndShowGUI(model);
 			}
 		});
 	}
 
-	public MainFrame(String name) {
+	public MainFrame(String name, MoneyMgrModel model) {
 		super(name);
+
+		this.model = model;
+	}
+
+	public void setModel(MoneyMgrModel model) {
+		this.model = model;
+
+		// TODO refresh UI
 	}
 }

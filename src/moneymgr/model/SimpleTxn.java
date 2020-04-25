@@ -244,6 +244,14 @@ public abstract class SimpleTxn implements Txn {
 		// not implemented
 	}
 
+	public QDate getStatementDate() {
+		return null;
+	}
+	
+	public void setStatementDate(QDate date) {
+		// not applicable
+	}
+
 	public boolean hasSplits() {
 		return false;
 	}
@@ -272,7 +280,7 @@ public abstract class SimpleTxn implements Txn {
 		return this.xtxn_cash;
 	}
 
-	public void setXtxn(SimpleTxn txn) {
+	public void setCashTransferTxn(SimpleTxn txn) {
 		this.xtxn_cash = txn;
 	}
 
@@ -282,6 +290,10 @@ public abstract class SimpleTxn implements Txn {
 
 	public String getPayee() {
 		return "";
+	}
+	
+	public void setPayee(String payee) {
+		// Not applicable
 	}
 
 	public String getCategory() {
@@ -476,5 +488,9 @@ public abstract class SimpleTxn implements Txn {
 		s += " memo=" + getMemo();
 
 		return s;
+	}
+
+	public boolean matches(SimpleTxn other) {
+		return true;
 	}
 }

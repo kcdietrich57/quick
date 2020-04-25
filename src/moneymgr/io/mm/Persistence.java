@@ -7,13 +7,16 @@ import java.io.PrintStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import moneymgr.io.qif.TransactionCleaner;
 import moneymgr.model.Account;
 import moneymgr.model.AccountCategory;
 import moneymgr.model.AccountType;
@@ -140,7 +143,7 @@ public class Persistence {
 		return sb.toString();
 	}
 
-	public static void validateTransfers(GenericTxn tx, int[] counts) {
+	public static void validateTransfers(SimpleTxn tx, int[] counts) {
 		boolean isTransfer = tx.getAction().isTransfer //
 				|| (tx.getCashTransferAcctid() > 0);
 
@@ -160,6 +163,13 @@ public class Persistence {
 			return;
 		}
 
+		if (tx instanceof SplitTxn) {
+			SplitTxn stxn = (SplitTxn) tx;
+
+			if (!stxn.getParent().getSplits().contains(tx)) {
+				err = "Broken split/parent link";
+			}
+		}
 		if ((xacctid > 0) //
 				&& (xtxn == null) && ((xtxns == null) || xtxns.isEmpty())) {
 			err = "xacctid set but no xtxn exists";
@@ -193,11 +203,9 @@ public class Persistence {
 		}
 	}
 
-	private String filename;
 	private PrintStream wtr;
 
-	public Persistence(String filename) {
-		this.filename = filename;
+	public Persistence() {
 	}
 
 	private void saveCategories() {
@@ -525,9 +533,9 @@ public class Persistence {
 				+ "\"optid\",\"[split]\",\"[secxfer]\",\"[lot]\"]");
 
 		final String sep = ",";
-		List<GenericTxn> txns = MoneyMgrModel.currModel.getAllTransactions();
+		List<SimpleTxn> txns = MoneyMgrModel.currModel.getAllTransactions();
 		for (int txid = 1; txid < txns.size(); ++txid) {
-			GenericTxn tx = txns.get(txid);
+			SimpleTxn tx = txns.get(txid);
 
 			if (tx == null) {
 				line = "  [0]";
@@ -539,25 +547,18 @@ public class Persistence {
 					splits += sep1;
 
 					if (split instanceof MultiSplitTxn) {
-						splits += "[";
+						splits += String.format("[%d,[", split.txid);
 
 						String sep2 = "";
 						for (SplitTxn ssplit : ((MultiSplitTxn) split).subsplits) {
 							splits += sep2;
-							splits += String.format("[%d,%s,\"%s\"]", //
-									ssplit.getCatid(), //
-									encodeString(ssplit.getMemo()), //
-									Common.formatAmount(ssplit.getAmount()).trim());
+							splits += String.format("%d", ssplit.txid);
 							sep2 = ",";
 						}
 
-						splits += "]";
+						splits += "]]";
 					} else {
-						splits += String.format("[%d,%s,\"%s\"]", //
-								split.getCatid(), //
-								encodeString(split.getMemo()), //
-								Common.formatAmount(split.getAmount()).trim() //
-						);
+						splits += String.format("%d", split.txid);
 					}
 
 					sep1 = ",";
@@ -573,7 +574,9 @@ public class Persistence {
 				// NonInvestmentTxn
 				// InvestmentTxn
 
-				int sdate = (tx.stmtdate != null) ? tx.stmtdate.getRawValue() : 0;
+				int sdate = (tx.getStatementDate() != null) //
+						? tx.getStatementDate().getRawValue() //
+						: 0;
 
 				validateTransfers(tx, errcount);
 
@@ -733,9 +736,9 @@ public class Persistence {
 		wtr.println("]");
 	}
 
-	public void saveJSON() {
+	public void saveJSON(String filename) {
 		try {
-			this.wtr = new PrintStream(this.filename);
+			this.wtr = new PrintStream(filename);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return;
@@ -764,12 +767,12 @@ public class Persistence {
 		}
 	}
 
-	public JSONObject loadJSON() {
+	private JSONObject load(String filename) {
 		JSONObject obj = null;
 		FileReader rdr = null;
 
 		try {
-			rdr = new FileReader(this.filename);
+			rdr = new FileReader(filename);
 			obj = (JSONObject) new JSONParser().parse(rdr);
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
@@ -781,12 +784,12 @@ public class Persistence {
 	}
 
 	// TODO testing
-	public void buildModel(String name) {
-		MoneyMgrModel model = MoneyMgrModel.changeModel(name);
+	public MoneyMgrModel loadJSON(String modelName, String filename) {
+		MoneyMgrModel model = MoneyMgrModel.changeModel(modelName);
 
-		JSONObject json = loadJSON();
+		JSONObject json = load(filename);
 		if (json == null) {
-			return;
+			return null;
 		}
 
 		processCategories(model, json);
@@ -806,7 +809,14 @@ public class Persistence {
 		 * 7. Create lots<br>
 		 * 8. Create options<br>
 		 * 9. Create statements<br>
+		 * Last - replay transactions to populate dynamic info (running totals, etc)
+		 * TODO process security transactions/holdings
 		 */
+
+		Account a = MoneyMgrModel.currModel.findAccount("Checking");
+		new TransactionCleaner().cleanUpTransactions();
+
+		return model;
 	}
 
 	private void processCategories(MoneyMgrModel model, JSONObject json) {
@@ -1020,6 +1030,8 @@ public class Persistence {
 		int SECXFERS = -1;
 		int LOTS = -1;
 
+		Set<Integer> pendingTransfers = new HashSet<Integer>();
+
 		boolean first = true;
 		JSONArray secs = (JSONArray) json.get("Transactions");
 
@@ -1082,17 +1094,20 @@ public class Persistence {
 
 				int acctid = ((Long) tuple.get(ACCTID)).intValue();
 
-				GenericTxn tx;
-				NonInvestmentTxn ntx = null;
-				InvestmentTxn itx = null;
+				GenericTxn gtx = null;
 
 				Account acct = MoneyMgrModel.currModel.getAccountByID(acctid);
-				if (acct.isInvestmentAccount()) {
-					itx = new InvestmentTxn(txid, acctid);
-					tx = itx;
+
+				SimpleTxn stx = MoneyMgrModel.currModel.getSimpleTransaction(txid);
+
+				if (stx != null) {
+					Common.debugInfo("Filling in split transaction");
+				} else if (acct.isInvestmentAccount()) {
+					gtx = new InvestmentTxn(txid, acctid);
+					stx = gtx;
 				} else {
-					ntx = new NonInvestmentTxn(txid, acctid);
-					tx = ntx;
+					gtx = new NonInvestmentTxn(txid, acctid);
+					stx = gtx;
 				}
 
 				QDate date = QDate.fromRawData(((Long) tuple.get(DATE)).intValue());
@@ -1104,6 +1119,23 @@ public class Persistence {
 				QDate stmtdate = QDate.fromRawData(((Long) tuple.get(STATDATE)).intValue());
 
 				int xtxid = ((Long) tuple.get(XTXID)).intValue();
+				if (xtxid > 0) {
+					if (xtxid > txid) {
+						pendingTransfers.add(new Integer(txid));
+					} else {
+						SimpleTxn xtxn = MoneyMgrModel.currModel.getSimpleTransaction(xtxid);
+						if (xtxn != null) {
+							stx.setCashTransferTxn(xtxn);
+							xtxn.setCashTransferTxn(stx);
+
+							pendingTransfers.remove(new Integer(xtxid));
+						} else {
+							Common.reportWarning( //
+									String.format("Can't find xtxn for %d: %d", txid, xtxid));
+						}
+					}
+				}
+
 				int catid = ((Long) tuple.get(CAT)).intValue();
 
 				int secid = ((Long) tuple.get(SECID)).intValue();
@@ -1113,22 +1145,78 @@ public class Persistence {
 				BigDecimal splitratio = new BigDecimal((String) tuple.get(SPLITRATIO));
 				int optid = ((Long) tuple.get(OPTID)).intValue();
 
-				tx.setDate(date);
-				tx.setAction(action);
-				tx.setCatid(catid);
-				tx.setAmount(amt);
-				tx.setPayee(payee);
-				tx.setMemo(memo);
-				tx.setCheckNumber(Integer.toString(cknum));
-				tx.stmtdate = stmtdate;
+				if (!(stx instanceof SplitTxn)) {
+					stx.setDate(date);
+				}
+
+				stx.setAction(action);
+				stx.setCatid(catid);
+				stx.setAmount(amt);
+				stx.setPayee(payee);
+				stx.setMemo(memo);
+				stx.setCheckNumber(Integer.toString(cknum));
+				stx.setStatementDate(stmtdate);
 
 				JSONArray splits = ((JSONArray) tuple.get(SPLITS));
 
+				int count = splits.size();
+				for (Object splitobj : splits) {
+					SplitTxn stxn = null;
+
+					if (splitobj instanceof Long) {
+						int splitid = ((Long) splitobj).intValue();
+
+						SimpleTxn simptxn = MoneyMgrModel.currModel.getSimpleTransaction(splitid);
+						if (simptxn instanceof SplitTxn) {
+							stxn = (SplitTxn) simptxn;
+						} else {
+							// TODO this is a reference to a tx that is not loaded yet
+							// Fill in the details later
+							stxn = new SplitTxn(splitid, stx);
+							MoneyMgrModel.currModel.addTransaction(stxn);
+						}
+
+					} else {
+						JSONArray split = (JSONArray) splitobj;
+
+						int splitid = ((Long) split.get(0)).intValue();
+
+						MultiSplitTxn mstxn = new MultiSplitTxn(splitid, stx);
+						MoneyMgrModel.currModel.addTransaction(mstxn);
+						stxn = mstxn;
+
+						for (Object subsplitobj : (JSONArray) split.get(1)) {
+							int ssplitid = ((Long) subsplitobj).intValue();
+
+							SplitTxn sstxn;
+							SimpleTxn simptxn = MoneyMgrModel.currModel.getSimpleTransaction(ssplitid);
+							if (simptxn instanceof SplitTxn) {
+								sstxn = (SplitTxn) simptxn;
+							} else {
+								// TODO this is a reference to a tx that is not loaded yet
+								// Fill in the details later
+								sstxn = new SplitTxn(ssplitid, mstxn);
+								MoneyMgrModel.currModel.addTransaction(sstxn);
+							}
+
+							mstxn.addSplit(sstxn);
+						}
+					}
+
+					stx.addSplit(stxn);
+				}
+
 				if (secid > 0) {
+					InvestmentTxn itx = (InvestmentTxn) gtx;
+
 					itx.setSecurity(MoneyMgrModel.currModel.getSecurity(secid));
 
 					JSONArray secxfers = ((JSONArray) tuple.get(SECXFERS));
 					JSONArray lots = ((JSONArray) tuple.get(LOTS));
+				}
+
+				if (gtx != null) {
+					acct.addTransaction(gtx);
 				}
 			}
 		}

@@ -21,12 +21,13 @@ public class MoneyMgrModel {
 	private static final Map<String, MoneyMgrModel> models = new HashMap<String, MoneyMgrModel>();
 	public static MoneyMgrModel currModel;
 
+	/** Change the current model for load/save. This does not affect the UI. */
 	public static MoneyMgrModel changeModel(String name) {
 		MoneyMgrModel.currModel = MoneyMgrModel.models.get(name);
 
 		if (MoneyMgrModel.currModel == null) {
 			// Common.reportError(String.format("Model '%s' does not exist", name));
-			new MoneyMgrModel(name);
+			MoneyMgrModel.currModel = new MoneyMgrModel(name);
 		}
 
 		return MoneyMgrModel.currModel;
@@ -51,8 +52,6 @@ public class MoneyMgrModel {
 
 		this.name = thename;
 		MoneyMgrModel.models.put(thename, this);
-
-		MoneyMgrModel.currModel = this;
 	}
 
 	public final String name;
@@ -471,7 +470,7 @@ public class MoneyMgrModel {
 	}
 
 	/** All transactions indexed by ID. May contain gaps/null values */
-	private final List<GenericTxn> allTransactionsByID = new ArrayList<>();
+	private final List<SimpleTxn> allTransactionsByID = new ArrayList<>();
 
 	/** All transactions sorted by date. Will not contain null values */
 	private final List<GenericTxn> allTransactionsByDate = new ArrayList<>();
@@ -495,7 +494,7 @@ public class MoneyMgrModel {
 	}
 
 	/** Return transaction list indexed by ID */
-	public List<GenericTxn> getAllTransactions() {
+	public List<SimpleTxn> getAllTransactions() {
 		return Collections.unmodifiableList(allTransactionsByID);
 	}
 
@@ -505,6 +504,12 @@ public class MoneyMgrModel {
 	}
 
 	public GenericTxn getTransaction(int txid) {
+		SimpleTxn txn = getSimpleTransaction(txid);
+
+		return (txn instanceof GenericTxn) ? (GenericTxn) txn : null;
+	}
+
+	public SimpleTxn getSimpleTransaction(int txid) {
 		if ((txid > 0) && (txid < this.allTransactionsByID.size())) {
 			return this.allTransactionsByID.get(txid);
 		}
@@ -513,7 +518,7 @@ public class MoneyMgrModel {
 	}
 
 	/** Add a new transaction to the appropriate collection(s) */
-	public void addTransaction(GenericTxn txn) {
+	public void addTransaction(SimpleTxn txn) {
 		if (txn.txid <= 0 || txn.getAccountID() <= 0) {
 			return;
 		}
@@ -522,10 +527,16 @@ public class MoneyMgrModel {
 			this.allTransactionsByID.add(null);
 		}
 
+		if (this.allTransactionsByID.get(txn.txid) != null) {
+			Common.reportWarning(String.format("Replacing transaction %d", txn.txid));
+			Common.reportInfo(this.allTransactionsByID.get(txn.txid).toString());
+			Common.reportInfo(txn.toString());
+		}
+
 		this.allTransactionsByID.set(txn.txid, txn);
 
-		if (txn.getDate() != null) {
-			addTransactionDate(txn);
+		if ((txn instanceof GenericTxn) && (txn.getDate() != null)) {
+			addTransactionDate((GenericTxn) txn);
 		}
 	}
 

@@ -14,6 +14,7 @@ import moneymgr.model.QPrice;
 import moneymgr.model.Security;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.SecurityPosition;
+import moneymgr.model.SimpleTxn;
 import moneymgr.model.StockOption;
 import moneymgr.model.TxAction;
 import moneymgr.util.Common;
@@ -95,12 +96,12 @@ public class SecurityProcessor {
 	/** Process security txns (global, accounts) after loading from QIF */
 	public static void processSecurities() {
 		// Process global porfolio info
-		processSecurities2(SecurityPortfolio.portfolio, MoneyMgrModel.currModel.getAllTransactions());
+		processAllSecurities2(SecurityPortfolio.portfolio, MoneyMgrModel.currModel.getAllTransactions());
 
 		// Process holdings for each account
 		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			if (a.isInvestmentAccount()) {
-				processSecurities2(a.securities, a.getTransactions());
+				processAccountSecurities2(a.securities, a.getTransactions());
 			}
 		}
 	}
@@ -112,21 +113,30 @@ public class SecurityProcessor {
 	 * Add share balance to positions.<br>
 	 * Process splits along the way.
 	 */
-	private static void processSecurities2(SecurityPortfolio port, List<GenericTxn> txns) {
-		for (GenericTxn gtxn : txns) {
-			if ((gtxn == null) || (gtxn.getSecurity() == null)) {
-				continue;
+	private static void processAllSecurities2(SecurityPortfolio port, List<SimpleTxn> txns) {
+		for (SimpleTxn stxn : txns) {
+			if ((stxn != null) && (stxn.getSecurity() != null)) {
+				processSecurities2(port, (InvestmentTxn) stxn);
 			}
-
-			InvestmentTxn txn = (InvestmentTxn) gtxn;
-			if (txn.getAction() == TxAction.STOCKSPLIT) {
-				// TODO processSplit() - only keep one split tx, not one per acct
-				StockOption.processSplit(txn);
-			}
-
-			SecurityPosition pos = port.getPosition(txn.getSecurity());
-			pos.addTransaction(txn);
 		}
+	}
+
+	private static void processAccountSecurities2(SecurityPortfolio port, List<GenericTxn> txns) {
+		for (SimpleTxn stxn : txns) {
+			if ((stxn != null) && (stxn.getSecurity() != null)) {
+				processSecurities2(port, (InvestmentTxn) stxn);
+			}
+		}
+	}
+
+	private static void processSecurities2(SecurityPortfolio port, InvestmentTxn txn) {
+		if (txn.getAction() == TxAction.STOCKSPLIT) {
+			// TODO processSplit() - only keep one split tx, not one per acct
+			StockOption.processSplit(txn);
+		}
+
+		SecurityPosition pos = port.getPosition(txn.getSecurity());
+		pos.addTransaction(txn);
 	}
 
 	/** Load quotes from CSV input files in a specified directory */
@@ -153,7 +163,7 @@ public class SecurityProcessor {
 
 			if (symbol != null) {
 				int warningCount = 0;
-				Common.reportInfo("Loading/comparing price history for " + symbol);
+				Common.debugInfo("Loading/comparing price history for " + symbol);
 
 				List<QPrice> prices = QuoteDownloader.loadPriceHistory(symbol);
 

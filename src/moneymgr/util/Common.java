@@ -23,6 +23,11 @@ public class Common {
 
 	/** Log info message */
 	public static void reportInfo(String s) {
+		System.out.println("**** Info: " + s);
+	}
+
+	/** Log info message */
+	public static void debugInfo(String s) {
 		if (QifDom.verbose) {
 			System.out.println("**** Info: " + s);
 		}
