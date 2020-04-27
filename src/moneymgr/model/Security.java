@@ -39,6 +39,16 @@ public class Security {
 			return this.splitDate.equals(((StockSplitInfo) other).splitDate) && //
 					Common.isEffectivelyEqual(this.splitRatio, ((StockSplitInfo) other).splitRatio);
 		}
+
+		public String toString() {
+			return String.format("Split(%s,%s)", //
+					this.splitDate.toString(), this.splitRatio.toString());
+		}
+
+		public boolean matches(StockSplitInfo other) {
+			return this.splitDate.equals(other.splitDate) //
+					&& Common.isEffectivelyEqual(this.splitRatio, other.splitRatio);
+		}
 	}
 
 	public final int secid;
@@ -74,7 +84,7 @@ public class Security {
 		this.secid = secid;
 		this.symbol = (symbol != null) ? symbol : name;
 		this.type = type;
-		this.goal = goal;
+		this.goal = (goal != null) ? goal : "";
 
 		this.names = new ArrayList<>();
 		this.names.add(name);
@@ -111,6 +121,10 @@ public class Security {
 		this.lots.addAll(lots);
 	}
 
+	public void addLot(Lot lot) {
+		this.lots.add(lot);
+	}
+
 	public static void fixSplits() {
 		for (Security sec : MoneyMgrModel.currModel.getSecurities()) {
 			sec.splits.clear();
@@ -128,8 +142,20 @@ public class Security {
 		}
 	}
 
+	private InvestmentTxn getLastTransaction() {
+		return this.transactions.isEmpty() //
+				? null
+				: this.transactions.get(this.transactions.size() - 1);
+	}
+
 	/** Add a new transaction involving this security */
 	public void addTransaction(InvestmentTxn txn) {
+		InvestmentTxn lastt = getLastTransaction();
+		if ((lastt != null) && (txn.getDate().compareTo(lastt.getDate()) >= 0)) {
+			this.transactions.add(txn);
+			return;
+		}
+
 		InvestmentTxn search_tx = new InvestmentTxn(0);
 		search_tx.setDate(txn.getDate());
 		int idx = Collections.binarySearch(this.transactions, search_tx);
@@ -178,8 +204,8 @@ public class Security {
 		int diff = newPrice.date.compareTo(p.date);
 
 		if (diff == 0) {
-			BigDecimal oldp = p.getSplitAdjustedPrice();
-			BigDecimal newp = newPrice.getSplitAdjustedPrice();
+			BigDecimal oldp = p.getPrice(); // p.getSplitAdjustedPrice();
+			BigDecimal newp = newPrice.getPrice(); // newPrice.getSplitAdjustedPrice();
 
 			this.prices.set(idx, newPrice);
 
@@ -221,7 +247,7 @@ public class Security {
 		}
 
 		// We either have no price history, or the date is before the start
-		return new QPrice(date, this.secid, BigDecimal.ZERO, null);
+		return new QPrice(date, this.secid, BigDecimal.ZERO);
 	}
 
 	/**
@@ -232,7 +258,7 @@ public class Security {
 	 */
 	private int getPriceIndexForDate(QDate date) {
 		int idx = Collections.binarySearch(this.prices, //
-				new QPrice(date, 1, BigDecimal.ZERO, BigDecimal.ZERO), //
+				new QPrice(date, 1, BigDecimal.ZERO), //
 				new Comparator<QPrice>() {
 					public int compare(QPrice p1, QPrice p2) {
 						return p1.date.compareTo(p2.date);
@@ -297,7 +323,80 @@ public class Security {
 	}
 
 	public boolean matches(Security other) {
-		return this.symbol.equals(other.symbol) //
-				&& this.getName().equals(other.getName());
+		if (!this.symbol.equals(other.symbol) //
+				|| !Common.safeEquals(this.goal, other.goal) //
+				|| !this.type.equals(other.type) //
+				|| !this.getName().equals(other.getName())) {
+			return false;
+		}
+
+		for (String name : this.names) {
+			if (!other.names.contains(name)) {
+				return false;
+			}
+		}
+
+		if (this.splits.size() != other.splits.size()) {
+			return false;
+		}
+
+		if (this.prices.size() != other.prices.size()) {
+			return false;
+		}
+
+		if (this.transactions.size() != other.transactions.size()) {
+			for (int idx = 0; idx < this.transactions.size() && idx < other.transactions.size(); ++idx) {
+				InvestmentTxn tx = this.transactions.get(idx);
+				InvestmentTxn otx = other.transactions.get(idx);
+
+				if (!tx.matches(otx)) {
+					break;
+				}
+			}
+
+			return false;
+		}
+
+		for (int idx = 0; idx < this.splits.size(); ++idx) {
+			StockSplitInfo ssi = this.splits.get(idx);
+			StockSplitInfo ossi = other.splits.get(idx);
+
+			if (!ssi.matches(ossi)) {
+				return false;
+			}
+		}
+
+		for (int idx = 0; idx < this.prices.size(); ++idx) {
+			QPrice price = this.prices.get(idx);
+			QPrice oprice = other.prices.get(idx);
+
+			if (!price.matches(oprice)) {
+				return false;
+			}
+		}
+
+		for (int idx = 0; idx < this.transactions.size(); ++idx) {
+			InvestmentTxn txn = this.transactions.get(idx);
+			InvestmentTxn otxn = other.transactions.get(idx);
+
+			if (!txn.matches(otxn)) {
+				return false;
+			}
+		}
+
+		if (this.lots.size() != other.lots.size()) {
+			return false;
+		}
+
+		for (int idx = 0; idx < this.lots.size(); ++idx) {
+			Lot lot = this.lots.get(idx);
+			Lot olot = other.lots.get(idx);
+
+			if (!lot.matches(olot)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

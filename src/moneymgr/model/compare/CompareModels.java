@@ -13,27 +13,31 @@ import moneymgr.util.Common;
 
 public class CompareModels {
 	public static void compareModels(MoneyMgrModel m1, MoneyMgrModel m2) {
-		/**
-		 * 1. Compare categories <br>
-		 * 2. Compare securities <br>
-		 * 3. Compare account types<br>
-		 * 4. Compare account categories<br>
-		 * 5. Compare accounts<br>
-		 * 6. Compare transactions<br>
-		 * 7. Compare lots<br>
-		 * 8. Compare options<br>
-		 * 9. Compare statements<br>
-		 */
 		Common.reportInfo(String.format("Categories: %s", MoneyMgrApp.elapsedTime()));
 		compareCategories(m1, m2);
+
 		Common.reportInfo(String.format("Securities: %s", MoneyMgrApp.elapsedTime()));
 		compareSecurities(m1, m2);
+
+		Common.reportInfo(String.format("Account Types: %s", MoneyMgrApp.elapsedTime()));
+
+		Common.reportInfo(String.format("Account Categories: %s", MoneyMgrApp.elapsedTime()));
+
 		Common.reportInfo(String.format("Accounts: %s", MoneyMgrApp.elapsedTime()));
 		compareAccounts(m1, m2);
+
 		Common.reportInfo(String.format("Transactions: %s", MoneyMgrApp.elapsedTime()));
 		compareTransactions(m1, m2);
+
+		Common.reportInfo(String.format("Portfolio: %s", MoneyMgrApp.elapsedTime()));
+
+		Common.reportInfo(String.format("Lots: %s", MoneyMgrApp.elapsedTime()));
+
+		Common.reportInfo(String.format("Options: %s", MoneyMgrApp.elapsedTime()));
+
 		Common.reportInfo(String.format("Statements: %s", MoneyMgrApp.elapsedTime()));
 		compareStatements(m1, m2);
+
 		Common.reportInfo(String.format("Complete: %s", MoneyMgrApp.elapsedTime()));
 	}
 
@@ -101,6 +105,7 @@ public class CompareModels {
 			if (s1 != null && s2 != null) {
 				if (!s1.matches(s2)) {
 					System.out.println("Security mismatch");
+					s1.matches(s2);
 				}
 			} else if ((s1 == null) != (s2 == null)) {
 				System.out.println("Security missing");

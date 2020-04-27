@@ -46,7 +46,6 @@ public abstract class GenericTxn //
 		this(MoneyMgrModel.currModel.createTxid(), acctid);
 	}
 
-	
 	public QDate getStatementDate() {
 		return this.stmtdate;
 	}

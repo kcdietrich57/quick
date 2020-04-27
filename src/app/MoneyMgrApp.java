@@ -33,7 +33,7 @@ public class MoneyMgrApp {
 		String ret = String.format("%1.1fs - elapsed %1.1fs", //
 				elapsed / 1000.0, //
 				lap / 1000.0);
-		
+
 		return ret;
 	}
 
@@ -44,9 +44,10 @@ public class MoneyMgrApp {
 
 		MoneyMgrModel.changeModel(WIN_QIF_MODEL_NAME);
 
-		Common.reportInfo("Loading data");
+		Common.reportInfo("Loading QIF data");
 		MoneyMgrApp.scn = new Scanner(System.in);
 		QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
+		Common.reportInfo(String.format("Load complete: %s", elapsedTime()));
 
 		// ----------------------------------------------------------
 
@@ -57,19 +58,8 @@ public class MoneyMgrApp {
 //			System.out.println("  " + entry.getKey() + ": " + entry.getValue());
 //		}
 
-		String jsonFilename = "qif/DIETRICH.json";
-		
-		Common.reportInfo(String.format("Load complete: %s\nSaving JSON", elapsedTime()));
-		Persistence persistence = new Persistence();
-		persistence.saveJSON(jsonFilename);
-
-		Common.reportInfo(String.format("JSON saved: %s\nLoading JSON", elapsedTime()));
-		persistence.loadJSON(WIN_JSON_MODEL_NAME, jsonFilename);
-
-		Common.reportInfo(String.format("JSON loaded: %s\nComparing models", elapsedTime()));
-		MoneyMgrModel.compareModels(WIN_QIF_MODEL_NAME, WIN_JSON_MODEL_NAME);
-
 		if (ENABLE_EXPERIMENTAL_CODE) {
+			Common.reportInfo(String.format("Running experimental code"));
 			InvestmentPerformanceModel model = new InvestmentPerformanceModel( //
 					new QDate(2018, 8, 1), //
 					QDate.today());
@@ -77,11 +67,36 @@ public class MoneyMgrApp {
 			System.out.println(model.toString());
 
 			runExperimentalCode();
+			Common.reportInfo(String.format("Experimental code complete: %s", elapsedTime()));
 		}
 
-		Common.reportInfo(String.format("Load complete: %s\nBuilding UI", elapsedTime()));
-		MoneyMgrModel.changeModel(WIN_QIF_MODEL_NAME);
-		//MoneyMgrModel.changeModel(WIN_JSON_MODEL_NAME);
+		String jsonFilename = "qif/DIETRICH.json";
+
+		boolean savejson = false;
+		boolean loadjson = false;
+
+		Persistence persistence = new Persistence();
+
+		if (savejson) {
+			Common.reportInfo(String.format("Saving JSON"));
+			persistence.saveJSON(MoneyMgrModel.currModel, jsonFilename);
+			Common.reportInfo(String.format("JSON saved: %s", elapsedTime()));
+		}
+
+		if (loadjson) {
+			Common.reportInfo(String.format("Loading JSON"));
+			persistence.loadJSON(WIN_JSON_MODEL_NAME, jsonFilename);
+			Common.reportInfo(String.format("JSON loaded: %s", elapsedTime()));
+
+			Common.reportInfo(String.format("Comparing models"));
+			MoneyMgrModel.compareModels(WIN_QIF_MODEL_NAME, WIN_JSON_MODEL_NAME);
+			Common.reportInfo(String.format("Load complete: %s", elapsedTime()));
+
+			MoneyMgrModel.changeModel(WIN_QIF_MODEL_NAME);
+			MoneyMgrModel.changeModel(WIN_JSON_MODEL_NAME);
+		}
+
+		Common.reportInfo(String.format("Building UI"));
 		MainFrame.createUI(MoneyMgrModel.currModel);
 
 		Common.reportInfo(String.format("Startup complete: %s", elapsedTime()));

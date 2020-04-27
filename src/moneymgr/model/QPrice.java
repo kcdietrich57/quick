@@ -3,6 +3,7 @@ package moneymgr.model;
 import java.math.BigDecimal;
 
 import moneymgr.io.qif.QFileReader;
+import moneymgr.model.Security.StockSplitInfo;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -14,17 +15,17 @@ public class QPrice implements Comparable<QPrice> {
 	/** price is the price on the date of the quote */
 	private final BigDecimal price;
 	/** splitAdjustedPrice is the price adjusted for later splits */
-	private final BigDecimal splitAdjustedPrice;
+	private BigDecimal splitAdjustedPrice;
 
 	public QPrice(QDate date, int secid, BigDecimal price, BigDecimal splitAdjPrice) {
 		this.date = date;
 		this.secid = secid;
 		this.price = price;
 		this.splitAdjustedPrice = splitAdjPrice;
+	}
 
-		if (splitAdjPrice != null) {
-			// System.out.println("xyzzy");
-		}
+	public QPrice(QDate date, int secid, BigDecimal price) {
+		this(date, secid, price, null);
 	}
 
 	public BigDecimal getPrice() {
@@ -32,9 +33,17 @@ public class QPrice implements Comparable<QPrice> {
 	}
 
 	public BigDecimal getSplitAdjustedPrice() {
-		return (this.splitAdjustedPrice != null) //
-				? this.splitAdjustedPrice //
-				: this.price;
+		if (this.splitAdjustedPrice == null) {
+			this.splitAdjustedPrice = this.price;
+
+			for (StockSplitInfo split : MoneyMgrModel.currModel.getSecurity(this.secid).splits) {
+				if (split.splitDate.compareTo(this.date) > 0) {
+					this.splitAdjustedPrice = this.splitAdjustedPrice.divide(split.splitRatio);
+				}
+			}
+		}
+
+		return this.splitAdjustedPrice;
 	}
 
 	/** Read/parse QIF security price (symbol/price/date) */
@@ -86,8 +95,8 @@ public class QPrice implements Comparable<QPrice> {
 		final String datestr = s.substring(1, idx);
 		final QDate date = Common.parseQDate(datestr);
 
-		// figure out splitAdjustedPrice (or ignore quicken price history?)
-		QPrice p = new QPrice(date, sec.secid, price, null);
+		// TODO figure out splitAdjustedPrice (or ignore quicken price history?)
+		QPrice p = new QPrice(date, sec.secid, price);
 
 		// Ex: "FEQIX",48 3/4," 2/16' 0"
 		qfr.nextPriceLine(qline);
@@ -112,7 +121,8 @@ public class QPrice implements Comparable<QPrice> {
 	}
 
 	public int compareTo(QPrice o) {
-		return this.getSplitAdjustedPrice().compareTo(o.getSplitAdjustedPrice());
+		// return this.getSplitAdjustedPrice().compareTo(o.getSplitAdjustedPrice());
+		return this.getPrice().compareTo(o.getPrice());
 	}
 
 	public String toString() {
@@ -126,5 +136,13 @@ public class QPrice implements Comparable<QPrice> {
 		}
 
 		return s;
+	}
+
+	public boolean matches(QPrice other) {
+		return this.secid == other.secid //
+				&& this.date.equals(other.date) //
+				// && Common.isEffectivelyEqual(this.getSplitAdjustedPrice(),
+				// other.getSplitAdjustedPrice()) //
+				&& Common.isEffectivelyEqual(this.price, other.price);
 	}
 }

@@ -1,7 +1,5 @@
 package moneymgr.model;
 
-import java.math.BigDecimal;
-
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 

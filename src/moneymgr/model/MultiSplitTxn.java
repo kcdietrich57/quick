@@ -16,7 +16,7 @@ public class MultiSplitTxn extends SplitTxn {
 
 	public MultiSplitTxn(int txid, SimpleTxn parent) {
 		super(txid, parent);
-		
+
 		setAmount(BigDecimal.ZERO);
 	}
 
@@ -36,7 +36,7 @@ public class MultiSplitTxn extends SplitTxn {
 		}
 		this.subsplits.add(txn);
 		txn.setParent(this);
-		
+
 		if (getAmount() != null && txn.getAmount() != null) {
 			setAmount(getAmount().add(txn.getAmount()));
 		} else {

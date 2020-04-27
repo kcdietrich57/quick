@@ -33,12 +33,20 @@ public class TransactionCleaner {
 	private int totalXfers = 0;
 	private int failedXfers = 0;
 
-	public void cleanUpTransactions() {
+	public void cleanUpTransactionsFromQIF() {
 		cleanUpSplits();
 		calculateRunningTotals();
 		connectTransfers();
 		connectSecurityTransfers();
 		LotProcessor.setupSecurityLots();
+	}
+
+	public void cleanUpTransactionsFromJSON() {
+		cleanUpSplits();
+		calculateRunningTotals();
+		connectTransfers();
+		connectSecurityTransfers();
+//		LotProcessor.setupSecurityLots();
 	}
 
 	/** Correct any issues with split transactions */
@@ -131,11 +139,12 @@ public class TransactionCleaner {
 		if (txn.hasSplits()) {
 			for (SimpleTxn stxn : ((NonInvestmentTxn) txn).getSplits()) {
 				// TODO verify we don't connect subsplits, just multisplit
-				if (false && stxn instanceof MultiSplitTxn) {
-					for (SimpleTxn sstxn : stxn.getSplits()) {
-						connectTransfers(sstxn, txn.getDate());
-					}
-				} else {
+//				if (false && stxn instanceof MultiSplitTxn) {
+//					for (SimpleTxn sstxn : stxn.getSplits()) {
+//						connectTransfers(sstxn, txn.getDate());
+//					}
+//				} else
+				{
 					connectTransfers(stxn, txn.getDate());
 				}
 			}

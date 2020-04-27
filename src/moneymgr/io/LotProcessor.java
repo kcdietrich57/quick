@@ -152,7 +152,7 @@ public class LotProcessor {
 		int idx = 0;
 		for (; idx < thelots.size(); ++idx) {
 			Lot lot = thelots.get(idx);
-			if (lot.disposingTransaction != null) {
+			if (lot.getDisposingTransaction() != null) {
 				continue;
 			}
 
@@ -255,7 +255,7 @@ public class LotProcessor {
 			}
 
 			// Consume source lot
-			srcLot.disposingTransaction = txn;
+			srcLot.setDisposingTransaction(txn);
 			txn.lotsDisposed.add(srcLot);
 			txn.lots.add(srcLot);
 
@@ -352,15 +352,16 @@ public class LotProcessor {
 					srcLot = splitLot[0];
 				}
 
-				// Consume the entire source lot
-				Lot newDstLot = new Lot(srcLot, dstTxn.getAccountID(), srcTxn, dstTxn);
+				// Consume the entire source lot (dispose lot in src, create in dst)
+				Lot newDstLot = new Lot(srcLot, dstTxn.getAccountID(), dstTxn, srcTxn);
 				addLot(thelots, newDstLot);
 
 				sharesLeftInSrcTxn = sharesLeftInSrcTxn.subtract(newDstLot.shares);
 
-				srcLot.disposingTransaction = srcTxn;
+				srcLot.setDisposingTransaction(srcTxn);
 				srcTxn.lots.add(srcLot);
 
+				// TODO dangerous decimal comparison
 				if (sharesLeftInDstTxn.compareTo(newDstLot.shares) > 0) {
 					sharesLeftInDstTxn = sharesLeftInDstTxn.subtract(newDstLot.shares);
 				} else {
@@ -420,6 +421,7 @@ public class LotProcessor {
 					? txn //
 					: new InvestmentTxn(oldlot.acctid, txn);
 
+			// Effectively transfer the new resized lot into the same account
 			Lot newLot = new Lot(oldlot, oldlot.acctid, t, t);
 
 			newLots.add(newLot);
@@ -560,7 +562,7 @@ public class LotProcessor {
 		List<Lot> toplots = new ArrayList<Lot>();
 
 		for (Lot lot : origlots) {
-			if (lot.sourceLot == null) {
+			if (lot.getSourceLot() == null) {
 				toplots.add(lot);
 			}
 		}
@@ -633,7 +635,7 @@ public class LotProcessor {
 		for (Lot lot : lots) {
 			sb.append(indent + "- " + lot.toString());
 
-			logSecurityChildHierarchy(sb, lot.childLots, indent + "  ");
+			logSecurityChildHierarchy(sb, lot.getChildLots(), indent + "  ");
 		}
 	}
 }

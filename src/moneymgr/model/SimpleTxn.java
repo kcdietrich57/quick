@@ -247,7 +247,7 @@ public abstract class SimpleTxn implements Txn {
 	public QDate getStatementDate() {
 		return null;
 	}
-	
+
 	public void setStatementDate(QDate date) {
 		// not applicable
 	}
@@ -291,7 +291,7 @@ public abstract class SimpleTxn implements Txn {
 	public String getPayee() {
 		return "";
 	}
-	
+
 	public void setPayee(String payee) {
 		// Not applicable
 	}

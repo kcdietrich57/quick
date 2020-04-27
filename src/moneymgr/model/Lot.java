@@ -2,6 +2,7 @@ package moneymgr.model;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import moneymgr.util.Common;
@@ -26,14 +27,14 @@ public class Lot {
 	public final QDate createDate;
 
 	/** Lot this is derived from if not original purchase/grant */
-	public final Lot sourceLot;
-	public final List<Lot> childLots;
+	private final Lot sourceLot;
+	private final List<Lot> childLots;
 
 	/** The transaction that created this lot */
 	public final InvestmentTxn createTransaction;
 
 	/** The transaction that invalidated this lot */
-	public InvestmentTxn disposingTransaction;
+	private InvestmentTxn disposingTransaction;
 
 	/**
 	 * TODO unused addshares is always true<br>
@@ -42,25 +43,24 @@ public class Lot {
 	public boolean addshares = true;
 
 	/**
-	 * Construct a lot to track share history and tax basis.<br>
-	 * This may be from a sale/exercise, stock split, remainder from a partial sale,
-	 * or simple transfer between accounts.
+	 * Common constructor for a lot that is not yet disposed of or transferred.<br>
+	 * From purchase, transfer, split, etc.
 	 *
-	 * @param acctid     Account where shares are deposited
+	 * @param lotid      The lot id
+	 * @param acctid     Account where the lot's shares are kept
 	 * @param date       Date the lot object was created (may not be date of
-	 *                   acquisition)
-	 * @param secid      The security
+	 *                   acquisition - see source lot)
+	 * @param secid      The security involved
 	 * @param shares     The number of shares in the lot
-	 * @param basisPrice The cost basis of the lot
+	 * @param basisPrice The cost basis per share of the lot
 	 * @param createTxn  The transaction that created this lot
 	 * @param srcLot     The lot this is derived from if not a brand new lot
 	 */
-	private Lot(int acctid, QDate date, int secid, //
+	private Lot(int lotid, int acctid, QDate date, int secid, //
 			BigDecimal shares, BigDecimal basisPrice, //
 			InvestmentTxn createTxn, //
 			Lot srcLot) {
-		this.lotid = MoneyMgrModel.currModel.nextLotId();
-
+		this.lotid = lotid;
 		this.acctid = acctid;
 		this.createDate = date;
 		this.secid = secid;
@@ -75,59 +75,142 @@ public class Lot {
 	}
 
 	/**
-	 * Constructor for new shares added via BUY, etc
+	 * Constructor for a lot that is not yet disposed of or transferred.<br>
+	 * From purchase, transfer, split, etc.
 	 *
+	 * @param lotid      The lot id
 	 * @param acctid     Account where shares are deposited
 	 * @param date       Date the lot object was created (i.e. date of acquisition)
-	 * @param secid      The security
+	 * @param secid      The security involved
 	 * @param shares     The number of shares in the lot
-	 * @param basisPrice The cost basis of the lot
-	 * @param txn        The transaction that created this lot
+	 * @param basisPrice The cost basis per share of the lot
+	 * @param createTxn  The transaction that created this lot
 	 */
-	public Lot(int acctid, QDate date, int secid, //
+	public Lot(int lotid, int acctid, QDate date, int secid, //
 			BigDecimal shares, BigDecimal basisPrice, //
-			InvestmentTxn txn) {
-		this(acctid, date, secid, shares, basisPrice, txn, null);
+			InvestmentTxn createTxn) {
+		this(lotid, acctid, date, secid, shares, basisPrice, createTxn, null);
 
-		txn.lotsCreated.add(this);
+		createTxn.lotsCreated.add(this);
 	}
 
 	/**
-	 * Constructor for the dividing a lot for partial sale
+	 * Constructor for a lot that is not yet disposed of or transferred.<br>
+	 * From purchase, transfer, split, etc.
 	 *
-	 * @param srcLot The lot this is derived from if not a brand new lot
-	 * @param acctid Account where shares are deposited
-	 * @param shares The number of shares in the lot
-	 * @param txn    The transaction that created this lot
+	 * @param acctid     Account where shares are kept
+	 * @param date       Date the lot object was created (i.e. date of acquisition)
+	 * @param secid      The security involved
+	 * @param shares     The number of shares in the lot
+	 * @param basisPrice The cost basis per share of the lot
+	 * @param createTxn  The transaction that created this lot
 	 */
-	public Lot(Lot srcLot, int acctid, BigDecimal shares, InvestmentTxn txn) {
-		this(acctid, srcLot.createDate, srcLot.secid, shares, //
-				srcLot.getPriceBasis(), txn, srcLot);
+	public Lot(int acctid, QDate date, int secid, //
+			BigDecimal shares, BigDecimal basisPrice, //
+			InvestmentTxn createTxn) {
+		this(MoneyMgrModel.currModel.nextLotId(), acctid, date, secid, shares, basisPrice, createTxn);
+	}
 
-		checkChildLots(srcLot, shares);
+	/**
+	 * Constructor for dividing a lot for partial sale/transfer.<br>
+	 * Result lot is in the same account, with size <= the source lot.
+	 *
+	 * @param lotid     The lot id
+	 * @param srcLot    The original lot
+	 * @param acctid    Account where shares are kept
+	 * @param shares    The number of shares in the partial lot
+	 * @param createTxn The transaction that created the partial lot
+	 */
+	public Lot(int lotid, Lot srcLot, int acctid, BigDecimal shares, InvestmentTxn createTxn) {
+		this(lotid, acctid, srcLot.createDate, srcLot.secid, shares, //
+				srcLot.getPriceBasis(), createTxn, srcLot);
+
+		checkSufficientSrcLotShares(srcLot, shares);
 
 		this.sourceLot.childLots.add(this);
-		txn.lotsCreated.add(this);
+		createTxn.lotsCreated.add(this);
 
-		if (!txn.lotsDisposed.contains(srcLot)) {
-			txn.lotsDisposed.add(srcLot);
+		if (!createTxn.lotsDisposed.contains(srcLot)) {
+			createTxn.lotsDisposed.add(srcLot);
 		}
 	}
 
-	/** Constructor for the destination lot for a transfer/split transaction */
-	public Lot(Lot srcLot, int acctid, InvestmentTxn srcTxn, InvestmentTxn dstTxn) {
-		this(dstTxn.getAccountID(), srcLot.createDate, srcLot.secid, //
-				srcLot.shares.multiply(dstTxn.getSplitRatio()), //
-				srcLot.basisPrice, dstTxn, srcLot);
+	/**
+	 * Constructor for dividing a lot for partial sale/transfer.<br>
+	 * Result lot is in the same account, with size <= the source lot.
+	 *
+	 * @param srcLot The original lot
+	 * @param acctid Account where shares are kept
+	 * @param shares The number of shares in the partial lot
+	 * @param txn    The transaction that created the partial lot
+	 */
+	public Lot(Lot srcLot, int acctid, BigDecimal shares, InvestmentTxn txn) {
+		this(MoneyMgrModel.currModel.nextLotId(), srcLot, acctid, shares, txn);
+	}
 
+	/**
+	 * Constructor for a lot that has been disposed of.
+	 * 
+	 * @param lotid      The lot id
+	 * @param srcLot     The lot in the source account
+	 * @param acctid     The account containing the source lot
+	 * @param createTxn  The transaction creating the lot
+	 * @param disposeTxn The transaction disposing of the lot
+	 */
+	public Lot(int lotid, Lot srcLot, int acctid, InvestmentTxn createTxn, InvestmentTxn disposeTxn) {
+		this(lotid, createTxn.getAccountID(), //
+				((srcLot != null) ? srcLot.createDate : createTxn.getDate()), //
+				srcLot.secid, //
+				srcLot.shares.multiply(createTxn.getSplitRatio()), //
+				srcLot.basisPrice, createTxn, srcLot);
+
+		// The new lot in the destination is derived from the source lot
 		this.sourceLot.childLots.add(this);
-		dstTxn.lotsCreated.add(this);
-		srcTxn.lotsDisposed.add(srcLot);
 
-		// Dispose of the original lot if not already done
-		if (srcLot.disposingTransaction == null) {
-			srcLot.disposingTransaction = srcTxn;
+		createTxn.lotsCreated.add(this);
+
+		if (disposeTxn != null) {
+			disposeTxn.lotsDisposed.add(srcLot);
+
+			// Dispose of the original lot if not already done
+			if ((srcLot.disposingTransaction == null) //
+					// TODO check createTxn.xferTxn?
+					&& (srcLot.acctid == disposeTxn.getAccountID())) {
+				srcLot.disposingTransaction = disposeTxn;
+			}
 		}
+	}
+
+	/**
+	 * Constructor for a lot that has been disposed of.
+	 * 
+	 * @param srcLot     The lot in the source account
+	 * @param acctid     The account containing the source lot
+	 * @param createTxn  The transaction creating the lot
+	 * @param disposeTxn The transaction disposing of the lot
+	 */
+	public Lot(Lot srcLot, int acctid, InvestmentTxn createTxn, InvestmentTxn disposeTxn) {
+		this(MoneyMgrModel.currModel.nextLotId(), srcLot, acctid, createTxn, disposeTxn);
+	}
+
+	public Lot getSourceLot() {
+		return this.sourceLot;
+	}
+
+	public List<Lot> getChildLots() {
+		return Collections.unmodifiableList(this.childLots);
+	}
+
+	public InvestmentTxn getDisposingTransaction() {
+		return this.disposingTransaction;
+	}
+
+	public void setDisposingTransaction(InvestmentTxn txn) {
+		if (txn != null && txn.getAccountID() != this.acctid) {
+			System.out.println();
+		}
+
+		this.disposingTransaction = txn;
 	}
 
 	public boolean isDerivedFrom(Lot other) {
@@ -171,21 +254,23 @@ public class Lot {
 	 * lot with the remainder. Generally for the purposes of transferring or selling
 	 * part of a lot.
 	 *
-	 * @param txn    The transaction requiring the new lot
-	 * @param shares The number of shares required
+	 * @param txn       The transaction requiring the new lot
+	 * @param reqShares The number of shares required
 	 * @return A new lot of the desired size
 	 */
-	public Lot[] split(InvestmentTxn txn, BigDecimal shares) {
-		Lot remainderLot = new Lot(this, this.acctid, this.shares.subtract(shares), txn);
-		Lot returnLot = new Lot(this, this.acctid, shares, txn);
+	public Lot[] split(InvestmentTxn txn, BigDecimal reqShares) {
+		BigDecimal remShares = this.shares.subtract(reqShares);
 
-		this.disposingTransaction = txn;
+		Lot remLot = new Lot(this, this.acctid, remShares, txn);
+		Lot retLot = new Lot(this, this.acctid, reqShares, txn);
 
-		return new Lot[] { returnLot, remainderLot };
+		setDisposingTransaction(txn);
+
+		return new Lot[] { retLot, remLot };
 	}
 
-	/** Verify that child lots' shares add up to the correct total amount */
-	void checkChildLots(Lot lot, BigDecimal additionalShares) {
+	/** Verify that child lots' shares do not exceed the total amount */
+	private void checkSufficientSrcLotShares(Lot lot, BigDecimal additionalShares) {
 		BigDecimal sum = BigDecimal.ZERO;
 
 		for (Lot child : lot.childLots) {
@@ -253,5 +338,36 @@ public class Lot {
 //		}
 //
 //		s += " ]";
+	}
+
+	public boolean matches(Lot other) {
+		if (this.childLots.size() != other.childLots.size()) {
+			return false;
+		}
+
+		for (int idx = 0; idx < this.childLots.size(); ++idx) {
+			Lot child = this.childLots.get(idx);
+			Lot ochild = other.childLots.get(idx);
+
+			if (child.lotid != ochild.lotid) {
+				return false;
+			}
+		}
+
+		if ((this.disposingTransaction != null) != (other.disposingTransaction != null)) {
+			return false;
+		}
+
+		if ((this.disposingTransaction != null) //
+				&& (this.disposingTransaction.txid != other.disposingTransaction.txid)) {
+			return false;
+		}
+
+		return this.acctid == other.acctid //
+				&& this.addshares == other.addshares //
+				&& this.secid == other.secid //
+				&& Common.isEffectivelyEqual(this.shares, other.shares) //
+				&& Common.isEffectivelyEqual(this.basisPrice, other.basisPrice) //
+				&& this.createTransaction.txid == other.createTransaction.txid;
 	}
 }

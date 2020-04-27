@@ -62,7 +62,7 @@ public class QifDomReader {
 		processFile();
 
 		if (doCleanup) {
-			new TransactionCleaner().cleanUpTransactions();
+			new TransactionCleaner().cleanUpTransactionsFromQIF();
 		}
 	}
 

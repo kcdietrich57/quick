@@ -23,6 +23,7 @@ import moneymgr.model.AccountType;
 import moneymgr.model.Category;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
+import moneymgr.model.InvestmentTxn.ShareAction;
 import moneymgr.model.Lot;
 import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.MultiSplitTxn;
@@ -37,7 +38,6 @@ import moneymgr.model.SplitTxn;
 import moneymgr.model.Statement;
 import moneymgr.model.StockOption;
 import moneymgr.model.TxAction;
-import moneymgr.model.InvestmentTxn.ShareAction;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -208,7 +208,7 @@ public class Persistence {
 	public Persistence() {
 	}
 
-	private void saveCategories() {
+	private void saveCategories(MoneyMgrModel model) {
 		// ------------------------------------------------
 		wtr.println("");
 		wtr.println("\"Categories\": [");
@@ -217,13 +217,13 @@ public class Persistence {
 		wtr.print("  [\"id\",\"name\",\"desc\",\"isExpense\"]");
 		String sep = ",";
 		int id = 1;
-		for (int catid = 1; catid < MoneyMgrModel.currModel.nextCategoryID(); ++catid) {
+		for (int catid = 1; catid < model.nextCategoryID(); ++catid) {
 			while (id++ < catid) {
 				wtr.println(sep);
 				wtr.print("  [0]");
 			}
 
-			Category cat = MoneyMgrModel.currModel.getCategory(catid);
+			Category cat = model.getCategory(catid);
 
 			String line;
 			if (cat == null) {
@@ -244,7 +244,7 @@ public class Persistence {
 		wtr.println("],");
 	}
 
-	private void saveAccounts() {
+	private void saveAccounts(MoneyMgrModel model) {
 		String sep = "";
 
 		// ------------------------------------------------
@@ -309,7 +309,7 @@ public class Persistence {
 		wtr.print(
 				"  [\"acctid\",\"name\",\"accttypeid\",\"desc\",\"closedate\",\"statfreq\",\"statday\",\"bal\",\"clearbal\"]");
 		sep = ",";
-		List<Account> accts = MoneyMgrModel.currModel.getAccountsById();
+		List<Account> accts = model.getAccountsById();
 		for (int acctid = 1; acctid < accts.size(); ++acctid) {
 			Account ac = accts.get(acctid);
 			String line;
@@ -342,16 +342,16 @@ public class Persistence {
 		wtr.println("],");
 	}
 
-	void saveSecurities() {
+	void saveSecurities(MoneyMgrModel model) {
 		// ------------------------------------------------
 		wtr.println("");
 		wtr.println("\"Securities\": [");
 		// ------------------------------------------------
 
-		wtr.print("  [\"secid\",\"symbol\",\"[name]\",\"type\",\"[split]\",\"[[date,price]]\"]");
+		wtr.print("  [\"secid\",\"symbol\",\"[name]\",\"type\",\"[txn]\",\"[split]\",\"[[date,price]]\"]");
 
 		final String sep = ",";
-		List<Security> securities = MoneyMgrModel.currModel.getSecuritiesById();
+		List<Security> securities = model.getSecuritiesById();
 		for (int secid = 1; secid < securities.size(); ++secid) {
 			Security sec = securities.get(secid);
 			String line;
@@ -367,6 +367,15 @@ public class Persistence {
 					sep2 = ",";
 				}
 				secNames += "]";
+
+				String txns = "[";
+				sep2 = "";
+				for (InvestmentTxn txn : sec.getTransactions()) {
+					txns += sep2;
+					txns += String.format("%d", txn.txid);
+					sep2 = ",";
+				}
+				txns += "]";
 
 				String splits = "[";
 				sep2 = "";
@@ -404,11 +413,12 @@ public class Persistence {
 				}
 				prices += "    ]";
 
-				line = String.format("  [%d,%s,%s,%s,\n    %s,\n    %s\n  ]", //
+				line = String.format("  [%d,%s,%s,%s,\n    %s,\n    %s,\n    %s\n  ]", //
 						sec.secid, //
 						encodeString(sec.symbol), //
 						secNames, //
 						encodeString(sec.type), //
+						txns, //
 						splits, //
 						prices);
 			}
@@ -421,17 +431,18 @@ public class Persistence {
 		wtr.println("],");
 	}
 
-	void saveLots() {
+	void saveLots(MoneyMgrModel model) {
 		// ------------------------------------------------
 		wtr.println("");
 		wtr.println("\"Lots\": [");
 		// ------------------------------------------------
 
-		wtr.print("  [\"lotid\",\"date\",\"acctid\",\"secid\",\"shares\",\"basisprice\",\"createTxid\",\"disposeTxid\"," //
+		wtr.print("  [\"lotid\",\"date\",\"acctid\",\"secid\",\"shares\","
+				+ "\"basisprice\",\"createTxid\",\"disposeTxid\"," //
 				+ "\"srcLotid\",\"[childLotid]\"]");
 
 		final String sep = ",";
-		List<Lot> lots = MoneyMgrModel.currModel.getLots();
+		List<Lot> lots = model.getLots();
 		for (int lotid = 1; lotid < lots.size(); ++lotid) {
 			Lot lot = lots.get(lotid);
 
@@ -440,12 +451,10 @@ public class Persistence {
 				line = "  [0]";
 			} else {
 				String childlots = "[";
-				if (lot.childLots != null) {
-					String sep2 = "";
-					for (Lot child : lot.childLots) {
-						childlots += sep2 + child.lotid;
-						sep2 = ",";
-					}
+				String sep2 = "";
+				for (Lot child : lot.getChildLots()) {
+					childlots += sep2 + child.lotid;
+					sep2 = ",";
 				}
 				childlots += "]";
 
@@ -457,8 +466,8 @@ public class Persistence {
 						encodeString(Common.formatAmount3(lot.shares).trim()), //
 						encodeString(Common.formatAmount3(lot.basisPrice).trim()), //
 						lot.createTransaction.txid, //
-						((lot.disposingTransaction != null) ? lot.disposingTransaction.txid : 0), //
-						((lot.sourceLot != null) ? lot.sourceLot.lotid : 0), //
+						((lot.getDisposingTransaction() != null) ? lot.getDisposingTransaction().txid : 0), //
+						((lot.getSourceLot() != null) ? lot.getSourceLot().lotid : 0), //
 						childlots);
 			}
 
@@ -470,7 +479,7 @@ public class Persistence {
 		wtr.println("]");
 	}
 
-	void saveOptions() {
+	void saveOptions(MoneyMgrModel model) {
 		// ------------------------------------------------
 		wtr.println("");
 		wtr.println("\"Options\": [");
@@ -481,7 +490,7 @@ public class Persistence {
 				+ "]");
 
 		final String sep = ",";
-		List<StockOption> opts = MoneyMgrModel.currModel.getStockOptions();
+		List<StockOption> opts = model.getStockOptions();
 		for (int optid = 1; optid < opts.size(); ++optid) {
 			StockOption opt = opts.get(optid);
 
@@ -518,7 +527,7 @@ public class Persistence {
 		wtr.println("]");
 	}
 
-	void saveTransactions() {
+	void saveTransactions(MoneyMgrModel model) {
 		int errcount[] = { 0, 0 };
 		String line;
 
@@ -533,7 +542,7 @@ public class Persistence {
 				+ "\"optid\",\"[split]\",\"[secxfer]\",\"[lot]\"]");
 
 		final String sep = ",";
-		List<SimpleTxn> txns = MoneyMgrModel.currModel.getAllTransactions();
+		List<SimpleTxn> txns = model.getAllTransactions();
 		for (int txid = 1; txid < txns.size(); ++txid) {
 			SimpleTxn tx = txns.get(txid);
 
@@ -673,7 +682,7 @@ public class Persistence {
 		wtr.println("],");
 	}
 
-	void saveStatements() {
+	void saveStatements(MoneyMgrModel model) {
 		String line;
 
 		// ------------------------------------------------
@@ -685,7 +694,7 @@ public class Persistence {
 				+ "\"holdings\"]");
 
 		final String sep = ",";
-		for (Account acct : MoneyMgrModel.currModel.getAccountsById()) {
+		for (Account acct : model.getAccountsById()) {
 			// TODO Assign statement id and reference/store accordingly
 			if (acct == null) {
 				continue;
@@ -736,7 +745,7 @@ public class Persistence {
 		wtr.println("]");
 	}
 
-	public void saveJSON(String filename) {
+	public void saveJSON(MoneyMgrModel model, String filename) {
 		try {
 			this.wtr = new PrintStream(filename);
 		} catch (FileNotFoundException e) {
@@ -745,13 +754,13 @@ public class Persistence {
 		}
 
 		wtr.println("{");
-		saveCategories();
-		saveAccounts();
-		saveSecurities();
-		saveLots();
-		saveOptions();
-		saveTransactions();
-		saveStatements();
+		saveCategories(model);
+		saveAccounts(model);
+		saveSecurities(model);
+		saveLots(model);
+		saveOptions(model);
+		saveTransactions(model);
+		saveStatements(model);
 		wtr.println("}");
 
 		wtr.close();
@@ -783,7 +792,6 @@ public class Persistence {
 		return obj;
 	}
 
-	// TODO testing
 	public MoneyMgrModel loadJSON(String modelName, String filename) {
 		MoneyMgrModel model = MoneyMgrModel.changeModel(modelName);
 
@@ -796,6 +804,8 @@ public class Persistence {
 		processAccounts(model, json);
 		processSecurities(model, json);
 		processTransactions(model, json);
+		processLots(model, json);
+		processSecurityTransactions(model, json);
 		processStatements(model, json);
 
 		/**
@@ -813,8 +823,7 @@ public class Persistence {
 		 * TODO process security transactions/holdings
 		 */
 
-		Account a = MoneyMgrModel.currModel.findAccount("Checking");
-		new TransactionCleaner().cleanUpTransactions();
+		new TransactionCleaner().cleanUpTransactionsFromJSON();
 
 		return model;
 	}
@@ -924,6 +933,43 @@ public class Persistence {
 		}
 	}
 
+	private void processSecurityTransactions(MoneyMgrModel model, JSONObject json) {
+		int SECID = -1;
+		int TXNS = -1;
+		boolean first = true;
+
+		JSONArray secs = (JSONArray) json.get("Securities");
+
+		for (Object secobj : secs) {
+			JSONArray tuple = (JSONArray) secobj;
+
+			if (first) {
+				for (int ii = 0; ii < tuple.size(); ++ii) {
+					String s = (String) tuple.get(ii);
+
+					if (s.equalsIgnoreCase("secid")) {
+						SECID = ii;
+					} else if (s.equalsIgnoreCase("[txn]")) {
+						TXNS = ii;
+					}
+				}
+
+				first = false;
+			} else {
+				int secid = ((Long) tuple.get(SECID)).intValue();
+				Security sec = model.getSecurity(secid);
+
+				JSONArray jtxns = (JSONArray) tuple.get(TXNS);
+				for (Object txidobj : jtxns) {
+					int txid = ((Long) txidobj).intValue();
+					SimpleTxn txn = model.getTransaction(txid);
+
+					sec.addTransaction((InvestmentTxn) txn);
+				}
+			}
+		}
+	}
+
 	private void processSecurities(MoneyMgrModel model, JSONObject json) {
 		int SECID = -1;
 		int SYMBOL = -1;
@@ -931,6 +977,7 @@ public class Persistence {
 		int TYPE = -1;
 		int SPLITS = -1;
 		int PRICES = -1;
+		int TXNS = -1;
 
 		boolean first = true;
 		JSONArray secs = (JSONArray) json.get("Securities");
@@ -950,6 +997,8 @@ public class Persistence {
 						NAMES = ii;
 					} else if (s.equalsIgnoreCase("type")) {
 						TYPE = ii;
+					} else if (s.equalsIgnoreCase("[txn]")) {
+						TXNS = ii;
 					} else if (s.equalsIgnoreCase("[split]")) {
 						SPLITS = ii;
 					} else if (s.equalsIgnoreCase("[[date,price]]")) {
@@ -970,10 +1019,13 @@ public class Persistence {
 					names.add(name);
 				}
 
-				String name = names.get(0);
+				String name = names.remove(0);
+
 				String goal = "";
 
 				Security sec = new Security(symbol, name, type, goal);
+
+				sec.names.addAll(names);
 
 				JSONArray jprices = (JSONArray) tuple.get(PRICES);
 				List<QPrice> prices = new ArrayList<QPrice>();
@@ -985,14 +1037,12 @@ public class Persistence {
 					BigDecimal price = new BigDecimal((String) jpriceinfo.get(1));
 
 					// TODO need more price details? (e.g. split adjusted price)
-					QPrice qprice = new QPrice(date, secid, price, price);
+					QPrice qprice = new QPrice(date, secid, price);
 					prices.add(qprice);
 					sec.addPrice(qprice);
 				}
 
-				// TODO what to do with splits here?
 				JSONArray jsplits = (JSONArray) tuple.get(SPLITS);
-				List<Object> splits = new ArrayList<Object>();
 				for (Object jsplit : jsplits) {
 					JSONArray jsplitinfo = (JSONArray) jsplit;
 
@@ -1000,13 +1050,23 @@ public class Persistence {
 					QDate date = QDate.fromRawData(rawdate);
 					BigDecimal ratio = new BigDecimal((String) jsplitinfo.get(1));
 
-					splits.add(jsplit);
+					StockSplitInfo split = new StockSplitInfo(date, ratio);
+					sec.splits.add(split);
 				}
 
 				model.addSecurity(sec);
 			}
 		}
 	}
+
+	// TODO fix this
+	int SECACTION = -1;
+	int SHARES = -1;
+	int SHAREPRICE = -1;
+	int SPLITRATIO = -1;
+	int OPTID = -1;
+	int SECXFERS = -1;
+	int LOTS = -1;
 
 	private void processTransactions(MoneyMgrModel model, JSONObject json) {
 		int TXID = -1;
@@ -1021,14 +1081,7 @@ public class Persistence {
 		int AMT = -1;
 		int CAT = -1;
 		int SECID = -1;
-		int SECACTION = -1;
-		int SHARES = -1;
-		int SHAREPRICE = -1;
-		int SPLITRATIO = -1;
-		int OPTID = -1;
 		int SPLITS = -1;
-		int SECXFERS = -1;
-		int LOTS = -1;
 
 		Set<Integer> pendingTransfers = new HashSet<Integer>();
 
@@ -1096,9 +1149,9 @@ public class Persistence {
 
 				GenericTxn gtx = null;
 
-				Account acct = MoneyMgrModel.currModel.getAccountByID(acctid);
+				Account acct = model.getAccountByID(acctid);
 
-				SimpleTxn stx = MoneyMgrModel.currModel.getSimpleTransaction(txid);
+				SimpleTxn stx = model.getSimpleTransaction(txid);
 
 				if (stx != null) {
 					Common.debugInfo("Filling in split transaction");
@@ -1123,7 +1176,7 @@ public class Persistence {
 					if (xtxid > txid) {
 						pendingTransfers.add(new Integer(txid));
 					} else {
-						SimpleTxn xtxn = MoneyMgrModel.currModel.getSimpleTransaction(xtxid);
+						SimpleTxn xtxn = model.getSimpleTransaction(xtxid);
 						if (xtxn != null) {
 							stx.setCashTransferTxn(xtxn);
 							xtxn.setCashTransferTxn(stx);
@@ -1137,13 +1190,7 @@ public class Persistence {
 				}
 
 				int catid = ((Long) tuple.get(CAT)).intValue();
-
 				int secid = ((Long) tuple.get(SECID)).intValue();
-				ShareAction secaction = ShareAction.parseAction((String) tuple.get(SECACTION));
-				BigDecimal shares = new BigDecimal((String) tuple.get(SHARES));
-				BigDecimal shareprice = new BigDecimal((String) tuple.get(SHAREPRICE));
-				BigDecimal splitratio = new BigDecimal((String) tuple.get(SPLITRATIO));
-				int optid = ((Long) tuple.get(OPTID)).intValue();
 
 				if (!(stx instanceof SplitTxn)) {
 					stx.setDate(date);
@@ -1166,14 +1213,14 @@ public class Persistence {
 					if (splitobj instanceof Long) {
 						int splitid = ((Long) splitobj).intValue();
 
-						SimpleTxn simptxn = MoneyMgrModel.currModel.getSimpleTransaction(splitid);
+						SimpleTxn simptxn = model.getSimpleTransaction(splitid);
 						if (simptxn instanceof SplitTxn) {
 							stxn = (SplitTxn) simptxn;
 						} else {
 							// TODO this is a reference to a tx that is not loaded yet
 							// Fill in the details later
 							stxn = new SplitTxn(splitid, stx);
-							MoneyMgrModel.currModel.addTransaction(stxn);
+							model.addTransaction(stxn);
 						}
 
 					} else {
@@ -1182,21 +1229,21 @@ public class Persistence {
 						int splitid = ((Long) split.get(0)).intValue();
 
 						MultiSplitTxn mstxn = new MultiSplitTxn(splitid, stx);
-						MoneyMgrModel.currModel.addTransaction(mstxn);
+						model.addTransaction(mstxn);
 						stxn = mstxn;
 
 						for (Object subsplitobj : (JSONArray) split.get(1)) {
 							int ssplitid = ((Long) subsplitobj).intValue();
 
 							SplitTxn sstxn;
-							SimpleTxn simptxn = MoneyMgrModel.currModel.getSimpleTransaction(ssplitid);
+							SimpleTxn simptxn = model.getSimpleTransaction(ssplitid);
 							if (simptxn instanceof SplitTxn) {
 								sstxn = (SplitTxn) simptxn;
 							} else {
 								// TODO this is a reference to a tx that is not loaded yet
 								// Fill in the details later
 								sstxn = new SplitTxn(ssplitid, mstxn);
-								MoneyMgrModel.currModel.addTransaction(sstxn);
+								model.addTransaction(sstxn);
 							}
 
 							mstxn.addSplit(sstxn);
@@ -1209,15 +1256,130 @@ public class Persistence {
 				if (secid > 0) {
 					InvestmentTxn itx = (InvestmentTxn) gtx;
 
-					itx.setSecurity(MoneyMgrModel.currModel.getSecurity(secid));
-
-					JSONArray secxfers = ((JSONArray) tuple.get(SECXFERS));
-					JSONArray lots = ((JSONArray) tuple.get(LOTS));
+					handleTransactionSecurity(model, itx, tuple, secid);
 				}
 
 				if (gtx != null) {
 					acct.addTransaction(gtx);
 				}
+			}
+		}
+	}
+
+	private void handleTransactionSecurity( //
+			MoneyMgrModel model, InvestmentTxn itx, JSONArray tuple, int secid) {
+		Security sec = model.getSecurity(secid);
+		itx.setSecurity(sec);
+
+		// TODO derived - remove
+		ShareAction secaction = ShareAction.parseAction((String) tuple.get(SECACTION));
+		BigDecimal shares = new BigDecimal((String) tuple.get(SHARES));
+		BigDecimal shareprice = new BigDecimal((String) tuple.get(SHAREPRICE));
+		BigDecimal splitratio = new BigDecimal((String) tuple.get(SPLITRATIO));
+		int optid = ((Long) tuple.get(OPTID)).intValue();
+
+		itx.price = shareprice;
+
+		if (itx.getAction() == TxAction.STOCKSPLIT) {
+			itx.setQuantity(splitratio.multiply(BigDecimal.TEN));
+		} else {
+			itx.setQuantity(shares);
+		}
+
+		JSONArray lots = ((JSONArray) tuple.get(LOTS));
+
+		JSONArray secxfers = ((JSONArray) tuple.get(SECXFERS));
+	}
+
+	private void processLots(MoneyMgrModel model, JSONObject json) {
+		int LOTID = -1;
+		int DATE = -1;
+		int ACCTID = -1;
+		int SECID = -1;
+		int SHARES = -1;
+		int BASIS = -1;
+		int CTID = -1;
+		int DTID = -1;
+		int SRCLOTID = -1;
+		int CHILDLOTIDS = -1;
+
+		boolean first = true;
+		JSONArray secs = (JSONArray) json.get("Lots");
+
+		for (Object lotobj : secs) {
+			JSONArray tuple = (JSONArray) lotobj;
+
+			if (first) {
+				for (int ii = 0; ii < tuple.size(); ++ii) {
+					String s = (String) tuple.get(ii);
+
+					if (s.equalsIgnoreCase("lotid")) {
+						LOTID = ii;
+					} else if (s.equalsIgnoreCase("date")) {
+						DATE = ii;
+					} else if (s.equalsIgnoreCase("acctid")) {
+						ACCTID = ii;
+					} else if (s.equalsIgnoreCase("secid")) {
+						SECID = ii;
+					} else if (s.equalsIgnoreCase("shares")) {
+						SHARES = ii;
+					} else if (s.equalsIgnoreCase("basisprice")) {
+						BASIS = ii;
+					} else if (s.equalsIgnoreCase("createTxid")) {
+						CTID = ii;
+					} else if (s.equalsIgnoreCase("disposeTxid")) {
+						DTID = ii;
+					} else if (s.equalsIgnoreCase("srcLotid")) {
+						SRCLOTID = ii;
+					} else if (s.equalsIgnoreCase("[childLotid]")) {
+						CHILDLOTIDS = ii;
+					}
+				}
+
+				first = false;
+			} else {
+				int lotid = ((Long) tuple.get(LOTID)).intValue();
+				QDate createDate = QDate.fromRawData(((Long) tuple.get(DATE)).intValue());
+				int acctid = ((Long) tuple.get(ACCTID)).intValue();
+				int secid = ((Long) tuple.get(SECID)).intValue();
+				BigDecimal basisPrice = new BigDecimal((String) tuple.get(BASIS));
+				BigDecimal shares = new BigDecimal((String) tuple.get(SHARES));
+				// TODO boolean addshares = false;
+
+				int ctid = ((Long) tuple.get(CTID)).intValue();
+				InvestmentTxn createTxn = (ctid > 0) //
+						? (InvestmentTxn) model.getTransaction(ctid) //
+						: null;
+				int dtid = ((Long) tuple.get(DTID)).intValue();
+				InvestmentTxn disposingTxn = (dtid > 0) //
+						? (InvestmentTxn) model.getTransaction(dtid) //
+						: null;
+
+				int srcLotId = ((Long) tuple.get(SRCLOTID)).intValue();
+				Lot srcLot = (srcLotId > 0) ? model.getLot(srcLotId) : null;
+
+				int nextLotid = model.nextLotId();
+				JSONArray childids = (JSONArray) tuple.get(CHILDLOTIDS);
+				for (Object jchildid : childids) {
+					int childid = ((Long) jchildid).intValue();
+
+					Lot childlot = model.getLot(childid);
+					// lot.childLots.add(childlot);
+				}
+
+				Security sec = model.getSecurity(secid);
+
+				Lot lot = null;
+
+				if (srcLot == null || childids.isEmpty()) {
+					lot = new Lot(lotid, acctid, createDate, secid, shares, basisPrice, createTxn);
+				} else if (createTxn == disposingTxn) {
+					lot = new Lot(lotid, srcLot, acctid, shares, createTxn);
+				} else {
+					lot = new Lot(lotid, srcLot, acctid, createTxn, disposingTxn);
+				}
+
+				sec.addLot(lot);
 			}
 		}
 	}
@@ -1270,7 +1432,7 @@ public class Persistence {
 				BigDecimal cashbal = new BigDecimal((String) tuple.get(CASHBAL));
 				boolean isbal = ((Boolean) tuple.get(ISBAL)).booleanValue();
 
-				Account acct = MoneyMgrModel.currModel.getAccountByID(acctid);
+				Account acct = model.getAccountByID(acctid);
 				Statement prevstmt = (prevdate != null) ? acct.getStatement(prevdate) : null;
 
 				Statement stmt = new Statement(acctid, date, totbal, cashbal, prevstmt);
@@ -1281,7 +1443,7 @@ public class Persistence {
 				JSONArray txnids = (JSONArray) tuple.get(TXNS);
 				for (Object txnidobj : txnids) {
 					int txid = ((Long) txnidobj).intValue();
-					GenericTxn tx = MoneyMgrModel.currModel.getTransaction(txid);
+					GenericTxn tx = model.getTransaction(txid);
 
 					stmt.addTransaction(tx);
 				}

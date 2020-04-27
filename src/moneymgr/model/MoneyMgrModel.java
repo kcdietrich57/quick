@@ -793,6 +793,14 @@ public class MoneyMgrModel {
 		return Collections.unmodifiableList(this.lots);
 	}
 
+	public final Lot getLot(int lotid) {
+		if ((lotid < 0) || (lotid >= this.lots.size())) {
+			return null;
+		}
+
+		return this.lots.get(lotid);
+	}
+
 	// -------------------------------------
 
 	private final List<StockOption> stockOptions = new ArrayList<>();

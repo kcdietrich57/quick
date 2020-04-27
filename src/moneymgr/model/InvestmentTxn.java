@@ -613,7 +613,7 @@ public class InvestmentTxn extends GenericTxn {
 	 * 3 new not disposed
 	 */
 	private static int calcWeight(Lot lot, List<Lot> lots, List<Lot> disposedLots) {
-		boolean existing = (lot.sourceLot == null) || !lots.contains(lot.sourceLot);
+		boolean existing = (lot.getSourceLot() == null) || !lots.contains(lot.getSourceLot());
 		boolean disposed = disposedLots.contains(lot);
 
 		if (existing) {
@@ -728,10 +728,10 @@ public class InvestmentTxn extends GenericTxn {
 				int idx = lots.indexOf(lot);
 				int srcidx = -1;
 
-				if ((lot.sourceLot == null) && (lot.createTransaction == this)) {
+				if ((lot.getSourceLot() == null) && (lot.createTransaction == this)) {
 					status = "+";
 				} else {
-					srcidx = lots.indexOf(lot.sourceLot);
+					srcidx = lots.indexOf(lot.getSourceLot());
 
 					if (srcidx < 0) {
 						status = " ";
@@ -740,7 +740,7 @@ public class InvestmentTxn extends GenericTxn {
 					} else {
 						status = String.format( //
 								"LOTS_SORTED_IMPROPERLY([%d]%d -> [%d]%d)", //
-								srcidx, lot.sourceLot.lotid, idx, lot.lotid);
+								srcidx, lot.getSourceLot().lotid, idx, lot.lotid);
 					}
 
 					status += (this.lotsDisposed.contains(lot)) ? "x" : " ";
