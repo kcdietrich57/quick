@@ -491,6 +491,38 @@ public abstract class SimpleTxn implements Txn {
 	}
 
 	public boolean matches(SimpleTxn other) {
+		if (this.txid != other.txid //
+				|| this.acctid != other.acctid //
+				|| getAction() != other.getAction() //
+				|| !getDate().equals(other.getDate()) //
+				|| this.catid != other.catid //
+				|| !Common.isEffectivelyEqual(getAmount(), other.getAmount()) //
+				|| !Common.isEffectivelyEqual(getCashAmount(), other.getCashAmount()) //
+				|| !Common.isEffectivelyEqual(getGain(), other.getGain()) //
+				|| hasSplits() != other.hasSplits() //
+				|| getCashTransferAcctid() != other.getCashTransferAcctid() //
+				|| getSecurityId() != other.getSecurityId() //
+				|| isCredit() != other.isCredit() //
+				|| addsShares() != other.addsShares() //
+		) {
+			return false;
+		}
+
+		if (!getPayee().equals(other.getPayee()) //
+				|| !this.memo.equals(other.memo) //
+				|| getCheckNumber() != other.getCheckNumber() //
+		) {
+			return false;
+		}
+
+		for (int idx = 0; idx < getSecurityTransferTxns().size(); ++idx) {
+
+		}
+		
+		for (int idx = 0; idx < getSplits().size(); ++idx) {
+
+		}
+
 		return true;
 	}
 }

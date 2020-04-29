@@ -60,6 +60,9 @@ public class Lot {
 			BigDecimal shares, BigDecimal basisPrice, //
 			InvestmentTxn createTxn, //
 			Lot srcLot) {
+		if (lotid == 17 || lotid == 18 || lotid == 19) {
+			System.out.println("xyzzy");
+		}
 		this.lotid = lotid;
 		this.acctid = acctid;
 		this.createDate = date;
@@ -124,7 +127,9 @@ public class Lot {
 	public Lot(int lotid, Lot srcLot, int acctid, BigDecimal shares, InvestmentTxn createTxn) {
 		this(lotid, acctid, srcLot.createDate, srcLot.secid, shares, //
 				srcLot.getPriceBasis(), createTxn, srcLot);
-
+		if (srcLot.lotid == 18) {
+			System.out.println("xyzzy");
+		}
 		checkSufficientSrcLotShares(srcLot, shares);
 
 		this.sourceLot.childLots.add(this);
@@ -152,16 +157,18 @@ public class Lot {
 	 * Constructor for a lot that has been disposed of.
 	 * 
 	 * @param lotid      The lot id
+	 * @param shares     Lot size
 	 * @param srcLot     The lot in the source account
 	 * @param acctid     The account containing the source lot
 	 * @param createTxn  The transaction creating the lot
 	 * @param disposeTxn The transaction disposing of the lot
 	 */
-	public Lot(int lotid, Lot srcLot, int acctid, InvestmentTxn createTxn, InvestmentTxn disposeTxn) {
+	public Lot(int lotid, BigDecimal shares, Lot srcLot, int acctid, InvestmentTxn createTxn,
+			InvestmentTxn disposeTxn) {
 		this(lotid, createTxn.getAccountID(), //
 				((srcLot != null) ? srcLot.createDate : createTxn.getDate()), //
 				srcLot.secid, //
-				srcLot.shares.multiply(createTxn.getSplitRatio()), //
+				shares.multiply(createTxn.getSplitRatio()), //
 				srcLot.basisPrice, createTxn, srcLot);
 
 		// The new lot in the destination is derived from the source lot
@@ -190,7 +197,7 @@ public class Lot {
 	 * @param disposeTxn The transaction disposing of the lot
 	 */
 	public Lot(Lot srcLot, int acctid, InvestmentTxn createTxn, InvestmentTxn disposeTxn) {
-		this(MoneyMgrModel.currModel.nextLotId(), srcLot, acctid, createTxn, disposeTxn);
+		this(MoneyMgrModel.currModel.nextLotId(), srcLot.shares, srcLot, acctid, createTxn, disposeTxn);
 	}
 
 	public Lot getSourceLot() {
@@ -269,7 +276,10 @@ public class Lot {
 		return new Lot[] { retLot, remLot };
 	}
 
-	/** Verify that child lots' shares do not exceed the total amount */
+	/**
+	 * Verify that existing child lots' shares plus the new requested partial lot do
+	 * not exceed the total amount
+	 */
 	private void checkSufficientSrcLotShares(Lot lot, BigDecimal additionalShares) {
 		BigDecimal sum = BigDecimal.ZERO;
 

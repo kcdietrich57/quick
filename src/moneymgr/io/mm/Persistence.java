@@ -599,7 +599,6 @@ public class Persistence {
 				String lots = "[]";
 				int optid = 0;
 
-				// TODO investment transactions/stocksplit
 				if (tx instanceof InvestmentTxn) {
 					InvestmentTxn itx = (InvestmentTxn) tx;
 
@@ -617,13 +616,38 @@ public class Persistence {
 					}
 					securityTransferTxns += "]";
 
-					itx.getLots();
 					lots = "[";
+
+					String sep3 = "";
+					lots += sep3 + "[";
+					sep3 = ",";
 					sep2 = "";
 					for (Lot lot : itx.getLots()) {
 						lots += sep2 + lot.lotid;
 						sep2 = ",";
 					}
+					lots += "]";
+
+					sep3 = "";
+					lots += sep3 + "[";
+					sep3 = ",";
+					sep2 = "";
+					for (Lot lot : itx.lotsCreated) {
+						lots += sep2 + lot.lotid;
+						sep2 = ",";
+					}
+					lots += "]";
+
+					sep3 = "";
+					lots += sep3 + "[";
+					sep3 = ",";
+					sep2 = "";
+					for (Lot lot : itx.lotsDisposed) {
+						lots += sep2 + lot.lotid;
+						sep2 = ",";
+					}
+					lots += "]";
+
 					lots += "]";
 
 					if (itx.isStockOptionTxn() && (itx.option != null)) {
@@ -1286,9 +1310,18 @@ public class Persistence {
 			itx.setQuantity(shares);
 		}
 
-		JSONArray lots = ((JSONArray) tuple.get(LOTS));
-
 		JSONArray secxfers = ((JSONArray) tuple.get(SECXFERS));
+		for (Object xferobj : secxfers) {
+			int xferid = ((Long) xferobj).intValue();
+
+			InvestmentTxn txn = (InvestmentTxn) model.getTransaction(xferid);
+			if (txn != null) {
+				itx.addSecurityTransferTxn(txn);
+			}
+		}
+
+		JSONArray lots = ((JSONArray) tuple.get(LOTS));
+		// TODO there are no lots yet
 	}
 
 	private void processLots(MoneyMgrModel model, JSONObject json) {
@@ -1370,13 +1403,24 @@ public class Persistence {
 				Security sec = model.getSecurity(secid);
 
 				Lot lot = null;
-
-				if (srcLot == null || childids.isEmpty()) {
+				if (lotid == 18 || lotid == 21 || lotid == 22) {
+					System.out.println("xyzzy");
+				}
+				if (srcLot == null) {
 					lot = new Lot(lotid, acctid, createDate, secid, shares, basisPrice, createTxn);
 				} else if (createTxn == disposingTxn) {
 					lot = new Lot(lotid, srcLot, acctid, shares, createTxn);
 				} else {
-					lot = new Lot(lotid, srcLot, acctid, createTxn, disposingTxn);
+					if (!childids.isEmpty()) {
+						// Disposal involves a split - handle child lots
+						disposingTxn = null;
+					}
+					if (createTxn.getAction() == TxAction.STOCKSPLIT) {
+						// TODO Lot constructor below calculates new shares
+						shares = srcLot.shares;
+					}
+
+					lot = new Lot(lotid, shares, srcLot, acctid, createTxn, disposingTxn);
 				}
 
 				sec.addLot(lot);

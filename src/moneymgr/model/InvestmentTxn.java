@@ -17,8 +17,6 @@ import moneymgr.util.QDate;
 
 /** Transaction for investment account (may involve a security) */
 public class InvestmentTxn extends GenericTxn {
-	private static final List<InvestmentTxn> NO_XFER_TXNS = //
-			Collections.unmodifiableList(new ArrayList<InvestmentTxn>());
 
 	public enum ShareAction {
 		NO_ACTION("None"), NEW_SHARES("New"), DISPOSE_SHARES("Dispose"), TRANSFER_OUT("Xout"), TRANSFER_IN("Xin"),
@@ -87,7 +85,7 @@ public class InvestmentTxn extends GenericTxn {
 		this.commission = null;
 		this.accountForTransfer = "";
 		this.cashTransferred = null;
-		this.xferTxns = NO_XFER_TXNS;
+		this.xferTxns = new ArrayList<InvestmentTxn>();
 
 		this.lots = new ArrayList<>();
 		this.lotsCreated = new ArrayList<>();
@@ -116,7 +114,7 @@ public class InvestmentTxn extends GenericTxn {
 		this.commission = txn.commission;
 		this.accountForTransfer = txn.accountForTransfer;
 		this.cashTransferred = txn.cashTransferred;
-		this.xferTxns = NO_XFER_TXNS;
+		this.xferTxns = new ArrayList<InvestmentTxn>();
 
 		this.lots = new ArrayList<>();
 		this.lotsCreated = new ArrayList<>();
@@ -172,18 +170,25 @@ public class InvestmentTxn extends GenericTxn {
 	}
 
 	public List<InvestmentTxn> getSecurityTransferTxns() {
-		return (this.xferTxns == NO_XFER_TXNS) //
+		return (this.xferTxns.isEmpty()) //
 				? this.xferTxns //
 				: Collections.unmodifiableList(this.xferTxns);
 	}
 
 	public void setSecurityTransferTxns(List<InvestmentTxn> txns) {
-		if (this.xferTxns == NO_XFER_TXNS) {
+		if (this.xferTxns.isEmpty()) {
 			this.xferTxns = new ArrayList<InvestmentTxn>();
 		}
 
 		this.xferTxns.clear();
 		this.xferTxns.addAll(txns);
+	}
+
+	public void addSecurityTransferTxn(InvestmentTxn txn) {
+		if (!this.xferTxns.contains(txn)) {
+			this.xferTxns.add(txn);
+			txn.addSecurityTransferTxn(this);
+		}
 	}
 
 	public void setQuantity(BigDecimal qty) {
