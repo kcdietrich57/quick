@@ -60,9 +60,6 @@ public class Lot {
 			BigDecimal shares, BigDecimal basisPrice, //
 			InvestmentTxn createTxn, //
 			Lot srcLot) {
-		if (lotid == 17 || lotid == 18 || lotid == 19) {
-			System.out.println("xyzzy");
-		}
 		this.lotid = lotid;
 		this.acctid = acctid;
 		this.createDate = date;
@@ -127,12 +124,24 @@ public class Lot {
 	public Lot(int lotid, Lot srcLot, int acctid, BigDecimal shares, InvestmentTxn createTxn) {
 		this(lotid, acctid, srcLot.createDate, srcLot.secid, shares, //
 				srcLot.getPriceBasis(), createTxn, srcLot);
-		if (srcLot.lotid == 18) {
-			System.out.println("xyzzy");
-		}
 		checkSufficientSrcLotShares(srcLot, shares);
 
 		this.sourceLot.childLots.add(this);
+		createTxn.lotsCreated.add(this);
+
+		if (!createTxn.lotsDisposed.contains(srcLot)) {
+			createTxn.lotsDisposed.add(srcLot);
+		}
+	}
+
+	public Lot(int lotid, QDate date, int acctid, int secid, BigDecimal shares, BigDecimal basisprice,
+			InvestmentTxn createTxn, Lot srcLot) {
+		this(lotid, acctid, date, secid, shares, basisprice, createTxn, srcLot);
+
+		if (srcLot != null) {
+			this.sourceLot.childLots.add(this);
+		}
+
 		createTxn.lotsCreated.add(this);
 
 		if (!createTxn.lotsDisposed.contains(srcLot)) {

@@ -348,7 +348,7 @@ public class Persistence {
 		wtr.println("\"Securities\": [");
 		// ------------------------------------------------
 
-		wtr.print("  [\"secid\",\"symbol\",\"[name]\",\"type\",\"[txn]\",\"[split]\",\"[[date,price]]\"]");
+		wtr.print("  [\"secid\",\"symbol\",\"[name]\",\"type\",\"goal\",\"[txn]\",\"[split]\",\"[[date,price]]\"]");
 
 		final String sep = ",";
 		List<Security> securities = model.getSecuritiesById();
@@ -413,11 +413,12 @@ public class Persistence {
 				}
 				prices += "    ]";
 
-				line = String.format("  [%d,%s,%s,%s,\n    %s,\n    %s,\n    %s\n  ]", //
+				line = String.format("  [%d,%s,%s,%s,%s,\n    %s,\n    %s,\n    %s\n  ]", //
 						sec.secid, //
 						encodeString(sec.symbol), //
 						secNames, //
 						encodeString(sec.type), //
+						encodeString(sec.goal), //
 						txns, //
 						splits, //
 						prices);
@@ -999,6 +1000,7 @@ public class Persistence {
 		int SYMBOL = -1;
 		int NAMES = -1;
 		int TYPE = -1;
+		int GOAL = -1;
 		int SPLITS = -1;
 		int PRICES = -1;
 		int TXNS = -1;
@@ -1021,6 +1023,8 @@ public class Persistence {
 						NAMES = ii;
 					} else if (s.equalsIgnoreCase("type")) {
 						TYPE = ii;
+					} else if (s.equalsIgnoreCase("goal")) {
+						GOAL = ii;
 					} else if (s.equalsIgnoreCase("[txn]")) {
 						TXNS = ii;
 					} else if (s.equalsIgnoreCase("[split]")) {
@@ -1035,6 +1039,7 @@ public class Persistence {
 				int secid = ((Long) tuple.get(SECID)).intValue();
 				String symbol = decodeString((String) tuple.get(SYMBOL));
 				String type = decodeString((String) tuple.get(TYPE));
+				String goal = decodeString((String) tuple.get(GOAL));
 
 				JSONArray jnames = (JSONArray) tuple.get(NAMES);
 				List<String> names = new ArrayList<String>();
@@ -1044,8 +1049,6 @@ public class Persistence {
 				}
 
 				String name = names.remove(0);
-
-				String goal = "";
 
 				Security sec = new Security(symbol, name, type, goal);
 
@@ -1191,7 +1194,7 @@ public class Persistence {
 				TxAction action = TxAction.parseAction((String) tuple.get(ACTION));
 				BigDecimal amt = new BigDecimal((String) tuple.get(AMT));
 				String payee = decodeString((String) tuple.get(PAYEE));
-				String memo = (String) tuple.get(MEMO);
+				String memo = decodeString((String) tuple.get(MEMO));
 				int cknum = ((Long) tuple.get(CKNUM)).intValue(); // decodeString((String) tuple.get(CKNUM));
 				QDate stmtdate = QDate.fromRawData(((Long) tuple.get(STATDATE)).intValue());
 
@@ -1402,26 +1405,7 @@ public class Persistence {
 
 				Security sec = model.getSecurity(secid);
 
-				Lot lot = null;
-				if (lotid == 18 || lotid == 21 || lotid == 22) {
-					System.out.println("xyzzy");
-				}
-				if (srcLot == null) {
-					lot = new Lot(lotid, acctid, createDate, secid, shares, basisPrice, createTxn);
-				} else if (createTxn == disposingTxn) {
-					lot = new Lot(lotid, srcLot, acctid, shares, createTxn);
-				} else {
-					if (!childids.isEmpty()) {
-						// Disposal involves a split - handle child lots
-						disposingTxn = null;
-					}
-					if (createTxn.getAction() == TxAction.STOCKSPLIT) {
-						// TODO Lot constructor below calculates new shares
-						shares = srcLot.shares;
-					}
-
-					lot = new Lot(lotid, shares, srcLot, acctid, createTxn, disposingTxn);
-				}
+				Lot lot = new Lot(lotid, createDate, acctid, secid, shares, basisPrice, createTxn, srcLot);
 
 				sec.addLot(lot);
 			}

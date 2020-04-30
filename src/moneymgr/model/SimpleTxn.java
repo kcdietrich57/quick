@@ -2,6 +2,7 @@ package moneymgr.model;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -272,8 +273,11 @@ public abstract class SimpleTxn implements Txn {
 		this.catid = -acctid;
 	}
 
+	private static final List<InvestmentTxn> NO_TXN = //
+			Collections.unmodifiableList(new ArrayList<InvestmentTxn>());
+
 	public List<InvestmentTxn> getSecurityTransferTxns() {
-		return null;
+		return NO_TXN;
 	}
 
 	public SimpleTxn getCashTransferTxn() {
@@ -509,7 +513,7 @@ public abstract class SimpleTxn implements Txn {
 		}
 
 		if (!getPayee().equals(other.getPayee()) //
-				|| !this.memo.equals(other.memo) //
+				|| !Common.safeEquals(this.memo, other.memo) //
 				|| getCheckNumber() != other.getCheckNumber() //
 		) {
 			return false;
@@ -518,7 +522,7 @@ public abstract class SimpleTxn implements Txn {
 		for (int idx = 0; idx < getSecurityTransferTxns().size(); ++idx) {
 
 		}
-		
+
 		for (int idx = 0; idx < getSplits().size(); ++idx) {
 
 		}
