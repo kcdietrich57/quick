@@ -1405,7 +1405,7 @@ public class Persistence {
 
 				Security sec = model.getSecurity(secid);
 
-				Lot lot = new Lot(lotid, createDate, acctid, secid, shares, basisPrice, createTxn, srcLot);
+				Lot lot = new Lot(lotid, createDate, acctid, secid, shares, basisPrice, createTxn, disposingTxn, srcLot);
 
 				sec.addLot(lot);
 			}

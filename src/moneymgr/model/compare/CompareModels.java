@@ -103,8 +103,10 @@ public class CompareModels {
 			Security s2 = secs2.get(ii);
 
 			if (s1 != null && s2 != null) {
-				if (!s1.matches(s2)) {
-					System.out.println("Security mismatch");
+				String res = s1.matches(s2);
+				
+				if (res != null) {
+					System.out.println("Security mismatch: " + res);
 					s1.matches(s2);
 				}
 			} else if ((s1 == null) != (s2 == null)) {

@@ -118,11 +118,29 @@ public class Security {
 	/** Set/replace the set of lots for transactions on this security */
 	public void setLots(List<Lot> lots) {
 		this.lots.clear();
-		this.lots.addAll(lots);
+
+		for (Lot lot : lots) {
+			addLot(lot);
+		}
 	}
 
 	public void addLot(Lot lot) {
-		this.lots.add(lot);
+		int idx;
+
+		for (idx = this.lots.size(); idx > 0; --idx) {
+			Lot other = this.lots.get(idx - 1);
+			int diff = lot.createDate.compareTo(other.createDate);
+
+			if (diff == 0) {
+				if (lot.lotid > other.lotid) {
+					break;
+				}
+			} else if (diff > 0) {
+				break;
+			}
+		}
+
+		this.lots.add(idx, lot);
 	}
 
 	public static void fixSplits() {
@@ -322,39 +340,43 @@ public class Security {
 		return s;
 	}
 
-	public boolean matches(Security other) {
+	public String matches(Security other) {
 		if (!this.symbol.equals(other.symbol) //
 				|| !Common.safeEquals(this.goal, other.goal) //
 				|| !this.type.equals(other.type) //
 				|| !this.getName().equals(other.getName())) {
-			return false;
+			return "info1";
 		}
 
 		for (String name : this.names) {
 			if (!other.names.contains(name)) {
-				return false;
+				return "name";
 			}
 		}
 
 		if (this.splits.size() != other.splits.size()) {
-			return false;
+			return "numsplits";
 		}
 
 		if (this.prices.size() != other.prices.size()) {
-			return false;
+			return "numprices";
+		}
+
+		if (this.lots.size() != other.lots.size()) {
+			return "numlots";
 		}
 
 		if (this.transactions.size() != other.transactions.size()) {
-			for (int idx = 0; idx < this.transactions.size() && idx < other.transactions.size(); ++idx) {
-				InvestmentTxn tx = this.transactions.get(idx);
-				InvestmentTxn otx = other.transactions.get(idx);
+			return "numtxn";
+		}
 
-				if (!tx.matches(otx)) {
-					break;
-				}
+		for (int idx = 0; idx < this.transactions.size(); ++idx) {
+			InvestmentTxn tx = this.transactions.get(idx);
+			InvestmentTxn otx = other.transactions.get(idx);
+
+			if (!tx.matches(otx)) {
+				return "txn";
 			}
-
-			return false;
 		}
 
 		for (int idx = 0; idx < this.splits.size(); ++idx) {
@@ -362,7 +384,7 @@ public class Security {
 			StockSplitInfo ossi = other.splits.get(idx);
 
 			if (!ssi.matches(ossi)) {
-				return false;
+				return "stocksplit";
 			}
 		}
 
@@ -371,32 +393,20 @@ public class Security {
 			QPrice oprice = other.prices.get(idx);
 
 			if (!price.matches(oprice)) {
-				return false;
+				return "price";
 			}
-		}
-
-		for (int idx = 0; idx < this.transactions.size(); ++idx) {
-			InvestmentTxn txn = this.transactions.get(idx);
-			InvestmentTxn otxn = other.transactions.get(idx);
-
-			if (!txn.matches(otxn)) {
-				return false;
-			}
-		}
-
-		if (this.lots.size() != other.lots.size()) {
-			return false;
 		}
 
 		for (int idx = 0; idx < this.lots.size(); ++idx) {
 			Lot lot = this.lots.get(idx);
 			Lot olot = other.lots.get(idx);
 
-			if (!lot.matches(olot)) {
-				return false;
+			String res = lot.matches(olot);
+			if (res != null) {
+				return res;
 			}
 		}
 
-		return true;
+		return null;
 	}
 }

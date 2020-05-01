@@ -58,7 +58,7 @@ public class Lot {
 	 */
 	private Lot(int lotid, int acctid, QDate date, int secid, //
 			BigDecimal shares, BigDecimal basisPrice, //
-			InvestmentTxn createTxn, //
+			InvestmentTxn createTxn, InvestmentTxn disposingTxn, //
 			Lot srcLot) {
 		this.lotid = lotid;
 		this.acctid = acctid;
@@ -67,7 +67,7 @@ public class Lot {
 		this.shares = shares.abs();
 		this.basisPrice = basisPrice;
 		this.createTransaction = createTxn;
-		this.disposingTransaction = null;
+		this.disposingTransaction = disposingTxn;
 		this.sourceLot = srcLot;
 		this.childLots = new ArrayList<>();
 
@@ -89,7 +89,7 @@ public class Lot {
 	public Lot(int lotid, int acctid, QDate date, int secid, //
 			BigDecimal shares, BigDecimal basisPrice, //
 			InvestmentTxn createTxn) {
-		this(lotid, acctid, date, secid, shares, basisPrice, createTxn, null);
+		this(lotid, acctid, date, secid, shares, basisPrice, createTxn, null, null);
 
 		createTxn.lotsCreated.add(this);
 	}
@@ -123,7 +123,7 @@ public class Lot {
 	 */
 	public Lot(int lotid, Lot srcLot, int acctid, BigDecimal shares, InvestmentTxn createTxn) {
 		this(lotid, acctid, srcLot.createDate, srcLot.secid, shares, //
-				srcLot.getPriceBasis(), createTxn, srcLot);
+				srcLot.getPriceBasis(), createTxn, null, srcLot);
 		checkSufficientSrcLotShares(srcLot, shares);
 
 		this.sourceLot.childLots.add(this);
@@ -135,8 +135,8 @@ public class Lot {
 	}
 
 	public Lot(int lotid, QDate date, int acctid, int secid, BigDecimal shares, BigDecimal basisprice,
-			InvestmentTxn createTxn, Lot srcLot) {
-		this(lotid, acctid, date, secid, shares, basisprice, createTxn, srcLot);
+			InvestmentTxn createTxn, InvestmentTxn dispTxn, Lot srcLot) {
+		this(lotid, acctid, date, secid, shares, basisprice, createTxn, dispTxn, srcLot);
 
 		if (srcLot != null) {
 			this.sourceLot.childLots.add(this);
@@ -178,7 +178,7 @@ public class Lot {
 				((srcLot != null) ? srcLot.createDate : createTxn.getDate()), //
 				srcLot.secid, //
 				shares.multiply(createTxn.getSplitRatio()), //
-				srcLot.basisPrice, createTxn, srcLot);
+				srcLot.basisPrice, createTxn, null, srcLot);
 
 		// The new lot in the destination is derived from the source lot
 		this.sourceLot.childLots.add(this);
@@ -359,9 +359,9 @@ public class Lot {
 //		s += " ]";
 	}
 
-	public boolean matches(Lot other) {
+	public String matches(Lot other) {
 		if (this.childLots.size() != other.childLots.size()) {
-			return false;
+			return "numchildren";
 		}
 
 		for (int idx = 0; idx < this.childLots.size(); ++idx) {
@@ -369,24 +369,28 @@ public class Lot {
 			Lot ochild = other.childLots.get(idx);
 
 			if (child.lotid != ochild.lotid) {
-				return false;
+				return "childlot";
 			}
 		}
 
 		if ((this.disposingTransaction != null) != (other.disposingTransaction != null)) {
-			return false;
+			return String.format("Lot%d:disptxn:missing", this.lotid);
 		}
 
 		if ((this.disposingTransaction != null) //
 				&& (this.disposingTransaction.txid != other.disposingTransaction.txid)) {
-			return false;
+			return "disptxn:txid";
 		}
 
-		return this.acctid == other.acctid //
+		if (!(this.acctid == other.acctid //
 				&& this.addshares == other.addshares //
 				&& this.secid == other.secid //
 				&& Common.isEffectivelyEqual(this.shares, other.shares) //
 				&& Common.isEffectivelyEqual(this.basisPrice, other.basisPrice) //
-				&& this.createTransaction.txid == other.createTransaction.txid;
+				&& this.createTransaction.txid == other.createTransaction.txid)) {
+			return "geninfo";
+		}
+
+		return null;
 	}
 }
