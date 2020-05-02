@@ -72,7 +72,7 @@ public class MoneyMgrApp {
 
 		String jsonFilename = "qif/DIETRICH.json";
 
-		boolean savejson = false;
+		boolean savejson = true;
 		boolean loadjson = false;
 
 		Persistence persistence = new Persistence();
