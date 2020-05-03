@@ -144,7 +144,7 @@ public class Lot {
 
 		createTxn.lotsCreated.add(this);
 
-		if (!createTxn.lotsDisposed.contains(srcLot)) {
+		if (srcLot != null && !createTxn.lotsDisposed.contains(srcLot)) {
 			createTxn.lotsDisposed.add(srcLot);
 		}
 	}

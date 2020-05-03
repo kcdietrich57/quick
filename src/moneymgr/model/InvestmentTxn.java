@@ -767,4 +767,62 @@ public class InvestmentTxn extends GenericTxn {
 
 		return ret;
 	}
+
+	public String lotListMatches(List<Lot> list1, List<Lot> list2) {
+		if (list1.size() != list2.size()) {
+			return "size";
+		}
+
+		for (int idx = 0; idx < list1.size(); ++idx) {
+			Lot l1 = list1.get(idx);
+			Lot l2 = list2.get(idx);
+
+			String res = l1.matches(l2);
+			if (res != null) {
+				return res;
+			}
+		}
+
+		return null;
+	}
+
+	public String matches(InvestmentTxn other) {
+		String res = super.matches(other);
+		if (res != null) {
+			return res;
+		}
+
+		if (!Common.isEffectivelyEqual(getRunningTotal(), other.getRunningTotal()) //
+				|| (getShareAction() != other.getShareAction()) //
+				|| !Common.safeEquals(this.accountForTransfer, other.accountForTransfer) //
+				|| !Common.isEffectivelyEqual(this.cashTransferred, other.cashTransferred) //
+				|| !Common.isEffectivelyEqual(this.price, other.price) //
+				|| !Common.isEffectivelyEqual(this.commission, other.commission) //
+				|| !Common.isEffectivelyEqual(this.quantity, other.quantity) //
+				|| (isStockOptionTxn() != other.isStockOptionTxn()) //
+		) {
+			return "genInfo";
+		}
+
+		res = lotListMatches(this.lots, other.lots);
+		if (res != null) {
+			return "lots:" + res;
+		}
+		res = lotListMatches(this.lotsCreated, other.lotsCreated);
+		if (res != null) {
+			return "lotsCreated:" + res;
+		}
+		res = lotListMatches(this.lotsDisposed, other.lotsDisposed);
+		if (res != null) {
+			return "lotsDisposed:" + res;
+		}
+
+		if (isStockOptionTxn()) {
+			if ((other.option == null) || (this.option.optid != other.option.optid)) {
+				return "TxOption";
+			}
+		}
+
+		return null;
+	}
 }

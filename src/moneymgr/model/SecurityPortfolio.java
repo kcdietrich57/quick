@@ -242,4 +242,13 @@ public class SecurityPortfolio {
 
 		return s;
 	}
+
+	public String matches(SecurityPortfolio other) {
+		if (this.positions.size() != other.positions.size() //
+		) {
+			return "numpositions";
+		}
+// TODO implement matches
+		return null;
+	}
 }

@@ -56,11 +56,12 @@ public class CompareModels {
 			SimpleTxn t2 = txns2.get(ii);
 
 			if (t1 != null && t2 != null) {
-				if (!t1.matches(t2)) {
+				String res = t1.matches(t2);
+				if (res != null) {
 					++txct;
 					t1.matches(t2);
 					System.out.println(t1.toString());
-					System.out.println("Transaction mismatch " + txct);
+					System.out.println("Tx:" + res + ":" + txct);
 				}
 			} else if ((t1 == null) != (t2 == null)) {
 				System.out.println("Transaction missing");
@@ -81,8 +82,9 @@ public class CompareModels {
 			Account a2 = accts2.get(ii);
 
 			if (a1 != null && a2 != null) {
-				if (!a1.matches(a2)) {
-					System.out.println("Account mismatch");
+				String res = a1.matches(a2);
+				if (res != null) {
+					System.out.println("Account mismatch: " + res);
 				}
 			} else if ((a1 == null) != (a2 == null)) {
 				System.out.println("Account missing");
@@ -104,7 +106,7 @@ public class CompareModels {
 
 			if (s1 != null && s2 != null) {
 				String res = s1.matches(s2);
-				
+
 				if (res != null) {
 					System.out.println("Security mismatch: " + res);
 					s1.matches(s2);
@@ -163,8 +165,9 @@ public class CompareModels {
 			Statement s2 = stats2.get(ii);
 
 			if (s1 != null && s2 != null) {
-				if (!s1.matches(s2)) {
-					System.out.println("Statement mismatch");
+				String res = s1.matches(s2);
+				if (res != null) {
+					System.out.println("Statement mismatch:" + res);
 				}
 			} else if ((s1 == null) != (s2 == null)) {
 				System.out.println("Statement missing");

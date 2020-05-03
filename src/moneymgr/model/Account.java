@@ -728,7 +728,40 @@ public class Account {
 		return s;
 	}
 
-	public boolean matches(Account other) {
-		return this.name.equals(other.name);
+	public String matches(Account other) {
+		if (!this.name.equals(other.name) //
+				|| (this.type != other.type) //
+				|| !Common.isEffectivelyEqual(this.balance, other.balance) //
+				|| !Common.isEffectivelyEqual(this.clearedBalance, other.clearedBalance) //
+				|| ((this.closeDate == null) != (other.closeDate == null)) //
+				|| ((this.closeDate != null) && !this.closeDate.equals(other.closeDate)) //
+				|| !Common.safeEquals(this.description, other.description) //
+				|| (this.statementFrequency != other.statementFrequency) //
+				|| (this.statementDayOfMonth != other.statementDayOfMonth) //
+		) {
+			return "generalInfo";
+		}
+
+		String res = this.securities.matches(other.securities);
+		if (res != null) {
+			return "holdings:" + res;
+		}
+
+		// transactions
+		if (getNumTransactions() != other.getNumTransactions()) {
+			return "numtxn";
+		}
+
+		for (int idx = 0; idx < getNumTransactions(); ++idx) {
+			GenericTxn tx1 = this.transactions.get(idx);
+			GenericTxn tx2 = other.transactions.get(idx);
+
+			String ret = tx1.matches(tx2);
+			if (ret != null) {
+				return String.format("Tx%d:%s", idx, ret);
+			}
+		}
+
+		return null;
 	}
 }

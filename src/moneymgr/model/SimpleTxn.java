@@ -2,7 +2,6 @@ package moneymgr.model;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -494,7 +493,7 @@ public abstract class SimpleTxn implements Txn {
 		return s;
 	}
 
-	public boolean matches(SimpleTxn other) {
+	public String matches(SimpleTxn other) {
 		if (this.txid != other.txid //
 				|| this.acctid != other.acctid //
 				|| getAction() != other.getAction() //
@@ -508,25 +507,41 @@ public abstract class SimpleTxn implements Txn {
 				|| getSecurityId() != other.getSecurityId() //
 				|| isCredit() != other.isCredit() //
 				|| addsShares() != other.addsShares() //
-		) {
-			return false;
-		}
-
-		if (!getPayee().equals(other.getPayee()) //
+				|| !getPayee().equals(other.getPayee()) //
 				|| !Common.safeEquals(this.memo, other.memo) //
 				|| getCheckNumber() != other.getCheckNumber() //
 		) {
-			return false;
+			return "genInfo";
+		}
+
+		if (this.getSecurityTransferTxns().size() != other.getSecurityTransferTxns().size()) {
+			return "numSecXfer";
 		}
 
 		for (int idx = 0; idx < getSecurityTransferTxns().size(); ++idx) {
+			InvestmentTxn t1 = getSecurityTransferTxns().get(idx);
+			InvestmentTxn t2 = other.getSecurityTransferTxns().get(idx);
 
+			String res = t1.matches(t2);
+			if (res != null) {
+				return "xtxn:" + res;
+			}
+		}
+
+		if (getSplits().size() != other.getSplits().size()) {
+			return "numsplits";
 		}
 
 		for (int idx = 0; idx < getSplits().size(); ++idx) {
+			SplitTxn t1 = getSplits().get(idx);
+			SplitTxn t2 = other.getSplits().get(idx);
 
+			String res = t1.matches(t2);
+			if (res != null) {
+				return "splittxn:" + res;
+			}
 		}
 
-		return true;
+		return null;
 	}
 }

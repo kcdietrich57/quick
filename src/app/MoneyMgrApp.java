@@ -38,20 +38,28 @@ public class MoneyMgrApp {
 	}
 
 	public static void main(String[] args) {
+		boolean loadwin = true;
+		boolean savejson = true;
+		boolean loadjson = true;
+		boolean comparejson = true;
+		boolean usejson = false;
+
+		boolean ENABLE_EXPERIMENTAL_CODE = false;
+
 		Common.reportInfo("Starting MoneyManager");
 		startupTime = System.currentTimeMillis();
 		lapTime = startupTime;
 
-		MoneyMgrModel.changeModel(WIN_QIF_MODEL_NAME);
+		if (loadwin || savejson || comparejson) {
+			MoneyMgrModel.changeModel(WIN_QIF_MODEL_NAME);
 
-		Common.reportInfo("Loading QIF data");
-		MoneyMgrApp.scn = new Scanner(System.in);
-		QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
-		Common.reportInfo(String.format("Load complete: %s", elapsedTime()));
+			Common.reportInfo("Loading QIF data");
+			MoneyMgrApp.scn = new Scanner(System.in);
+			QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
+			Common.reportInfo(String.format("Load complete: %s", elapsedTime()));
+		}
 
 		// ----------------------------------------------------------
-
-		boolean ENABLE_EXPERIMENTAL_CODE = false;
 
 //		System.out.println("Mismatched quotes:");
 //		for (Entry<String, Integer> entry : Security.dupQuotes.entrySet()) {
@@ -70,10 +78,9 @@ public class MoneyMgrApp {
 			Common.reportInfo(String.format("Experimental code complete: %s", elapsedTime()));
 		}
 
-		String jsonFilename = "qif/DIETRICH.json";
+		// ----------------------------------------------------------
 
-		boolean savejson = true;
-		boolean loadjson = false;
+		String jsonFilename = "qif/DIETRICH.json";
 
 		Persistence persistence = new Persistence();
 
@@ -83,18 +90,19 @@ public class MoneyMgrApp {
 			Common.reportInfo(String.format("JSON saved: %s", elapsedTime()));
 		}
 
-		if (loadjson) {
+		if (loadjson || comparejson || usejson) {
 			Common.reportInfo(String.format("Loading JSON"));
 			persistence.loadJSON(WIN_JSON_MODEL_NAME, jsonFilename);
 			Common.reportInfo(String.format("JSON loaded: %s", elapsedTime()));
-
-			Common.reportInfo(String.format("Comparing models"));
-			MoneyMgrModel.compareModels(WIN_QIF_MODEL_NAME, WIN_JSON_MODEL_NAME);
-			Common.reportInfo(String.format("Load complete: %s", elapsedTime()));
-
-			MoneyMgrModel.changeModel(WIN_QIF_MODEL_NAME);
-			MoneyMgrModel.changeModel(WIN_JSON_MODEL_NAME);
 		}
+
+		if (comparejson) {
+			Common.reportInfo(String.format("Comparing QIF/JSON models"));
+			MoneyMgrModel.compareModels(WIN_QIF_MODEL_NAME, WIN_JSON_MODEL_NAME);
+			Common.reportInfo(String.format("Compare complete: %s", elapsedTime()));
+		}
+
+		MoneyMgrModel.changeModel((usejson) ? WIN_JSON_MODEL_NAME : WIN_QIF_MODEL_NAME);
 
 		Common.reportInfo(String.format("Building UI"));
 		MainFrame.createUI(MoneyMgrModel.currModel);

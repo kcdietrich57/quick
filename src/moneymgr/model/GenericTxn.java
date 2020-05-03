@@ -128,12 +128,16 @@ public abstract class GenericTxn //
 		return super.formatValue();
 	}
 
-	public boolean matches(GenericTxn other) {
-		BigDecimal v1 = getAmount();
-		BigDecimal v2 = other.getAmount();
-		boolean vmatches = Common.isEffectivelyEqual(v1, v2);
-		return getAccountID() == other.getAccountID() //
-				&& getDate().equals(other.getDate()) //
-				&& vmatches;
+	public String matches(GenericTxn other) {
+		String res = super.matches(other);
+		if (res != null) {
+			return res;
+		}
+
+		if (!Common.isEffectivelyEqual(getRunningTotal(), other.getRunningTotal())) {
+			return "runningTotal";
+		}
+
+		return null;
 	}
 }

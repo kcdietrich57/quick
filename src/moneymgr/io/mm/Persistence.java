@@ -23,7 +23,6 @@ import moneymgr.model.AccountType;
 import moneymgr.model.Category;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
-import moneymgr.model.InvestmentTxn.ShareAction;
 import moneymgr.model.Lot;
 import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.MultiSplitTxn;
@@ -328,8 +327,8 @@ public class Persistence {
 						close, //
 						ac.statementFrequency, //
 						ac.statementDayOfMonth, //
-						Common.formatAmount(ac.balance).trim(), //
-						Common.formatAmount(ac.clearedBalance).trim());
+						encodeAmount(ac.balance), //
+						encodeAmount(ac.clearedBalance));
 
 				// TODO ac.securities
 			}
@@ -402,9 +401,9 @@ public class Persistence {
 						prices += "      ";
 					}
 
-					prices += String.format("[%d,\"%s\"]", //
+					prices += String.format("[%d,%s]", //
 							price.date.getRawValue(), //
-							Common.formatAmount3(price).trim());
+							encodeAmount3(price.getPrice()));
 					sep2 = ",";
 				}
 
@@ -464,8 +463,8 @@ public class Persistence {
 						lot.createDate.getRawValue(), //
 						lot.acctid, //
 						lot.secid, //
-						encodeString(Common.formatAmount3(lot.shares).trim()), //
-						encodeString(Common.formatAmount3(lot.basisPrice).trim()), //
+						encodeAmount3(lot.shares), //
+						encodeAmount3(lot.basisPrice), //
 						lot.createTransaction.txid, //
 						((lot.getDisposingTransaction() != null) ? lot.getDisposingTransaction().txid : 0), //
 						((lot.getSourceLot() != null) ? lot.getSourceLot().lotid : 0), //
@@ -540,7 +539,9 @@ public class Persistence {
 		wtr.print("  [\"id\",\"date\",\"statdate\",\"acctid\",\"xtxid\",\"action\"," //
 				+ "\"payee\",\"cknum\",\"memo\",\"amt\",\"cat\"," //
 				+ "\"secid\",\"secaction\",\"shares\",\"shareprice\",\"splitratio\"," //
-				+ "\"optid\",\"[split]\",\"[secxfer]\",\"[lot]\"]");
+				+ "\"optid\",\"[split]\",\"[secxfer]\",\"[lot]\"" //
+				+ "\"xacct\",\"xfercash\",\"commission\"" //
+				+ "]");
 
 		final String sep = ",";
 		List<SimpleTxn> txns = model.getAllTransactions();
@@ -595,7 +596,10 @@ public class Persistence {
 				BigDecimal shares = BigDecimal.ZERO;
 				BigDecimal shareprice = BigDecimal.ZERO;
 				BigDecimal splitratio = BigDecimal.ONE;
+				BigDecimal xfercash = BigDecimal.ZERO;
+				BigDecimal commission = BigDecimal.ZERO;
 
+				String xacctName = "";
 				String securityTransferTxns = "[]";
 				String lots = "[]";
 				int optid = 0;
@@ -603,11 +607,14 @@ public class Persistence {
 				if (tx instanceof InvestmentTxn) {
 					InvestmentTxn itx = (InvestmentTxn) tx;
 
+					xacctName = itx.accountForTransfer;
 					// TODO encode share action
 					shareaction = itx.getShareAction().toString();
 					shares = itx.getShares();
-					shareprice = itx.getShareCost();
+					shareprice = itx.price;
 					splitratio = itx.getSplitRatio();
+					xfercash = itx.cashTransferred;
+					commission = itx.commission;
 
 					securityTransferTxns = "[";
 					String sep2 = "";
@@ -657,7 +664,7 @@ public class Persistence {
 					}
 				}
 
-				line = String.format("  [%d,%d,%d,%d,%d,%s,%s,%d,%s,\"%s\",%d,%d,%s,%s,%s,%s,%d", //
+				line = String.format("  [%d,%d,%d,%d,%d,%s,%s,%d,%s,%s,%d,%d,%s,%s,%s,%s,%d", //
 						tx.txid, //
 						tx.getDate().getRawValue(), //
 						sdate, //
@@ -667,14 +674,14 @@ public class Persistence {
 						encodeString(tx.getPayee()), //
 						tx.getCheckNumber(), //
 						encodeString(tx.getMemo()), //
-						Common.formatAmount(tx.getAmount()).trim(), //
+						encodeAmount(tx.getAmount()), //
 						tx.getCatid(), // TODO catid or splits, not both
 
 						secid, //
 						encodeString(shareaction), //
-						encodeString(Common.formatAmount3(shares).trim()), //
-						encodeString(Common.formatAmount(shareprice).trim()), //
-						encodeString(Common.formatAmount(splitratio).trim()), //
+						encodeAmount3(shares), //
+						encodeAmount(shareprice), //
+						encodeAmount(splitratio), //
 						optid);
 
 				line += sep;
@@ -695,8 +702,14 @@ public class Persistence {
 				}
 				line += lots;
 
-				line += "]";
+				line += sep;
+				line += "\n    ";
+				line += String.format("%s,%s,%s", //
+						encodeString(xacctName), //
+						encodeAmount(xfercash), //
+						encodeAmount(commission));
 
+				line += "]";
 			}
 
 			wtr.println(sep);
@@ -743,21 +756,21 @@ public class Persistence {
 				String holdings = "[";
 				sep2 = "";
 				for (SecurityPosition p : h.positions) {
-					holdings += sep2 + String.format("[%d,\"%s\",\"%s\"]", //
+					holdings += sep2 + String.format("[%d,%s,%s]", //
 							p.security.secid, //
-							Common.formatAmount3(p.getEndingShares()).trim(), //
-							Common.formatAmount(p.endingValue).trim());
+							encodeAmount3(p.getEndingShares()), //
+							encodeAmount(p.endingValue));
 					sep2 = ",";
 				}
 				holdings += "]";
 
-				line = String.format("  [%d,%d,%s,%s,\"%s\",\"%s\",\n    %s,\n    %s]", //
+				line = String.format("  [%d,%d,%s,%s,%s,%s,\n    %s,\n    %s]", //
 						stmt.acctid, //
 						stmt.date.getRawValue(), //
 						stmt.isBalanced, //
 						prevdate, //
-						Common.formatAmount(stmt.closingBalance).trim(), //
-						Common.formatAmount(stmt.getCashBalance()).trim(), //
+						encodeAmount(stmt.closingBalance), //
+						encodeAmount(stmt.getCashBalance()), //
 						txns, //
 						holdings);
 
@@ -1087,13 +1100,36 @@ public class Persistence {
 	}
 
 	// TODO fix this
-	int SECACTION = -1;
 	int SHARES = -1;
 	int SHAREPRICE = -1;
 	int SPLITRATIO = -1;
 	int OPTID = -1;
 	int SECXFERS = -1;
 	int LOTS = -1;
+	int XACCT = -1;
+	int XFERCASH = -1;
+	int COMMISSION = -1;
+
+	private int[][] getTransactionLotids(JSONObject json, int txid) {
+		int[][] ret = new int[3][];
+
+		JSONArray txns = (JSONArray) json.get("Transactions");
+		JSONArray txn = (JSONArray) txns.get(txid);
+		JSONArray txnlotids = (JSONArray) txn.get(LOTS);
+
+		for (int idx = 0; idx < ret.length; ++idx) {
+			JSONArray lotids = (JSONArray) txnlotids.get(idx);
+
+			int ids[] = new int[lotids.size()];
+			ret[idx] = ids;
+
+			for (int ii = 0; ii < lotids.size(); ++ii) {
+				ids[ii] = ((Long) lotids.get(ii)).intValue();
+			}
+		}
+
+		return ret;
+	}
 
 	private void processTransactions(MoneyMgrModel model, JSONObject json) {
 		int TXID = -1;
@@ -1113,10 +1149,10 @@ public class Persistence {
 		Set<Integer> pendingTransfers = new HashSet<Integer>();
 
 		boolean first = true;
-		JSONArray secs = (JSONArray) json.get("Transactions");
+		JSONArray txns = (JSONArray) json.get("Transactions");
 
-		for (Object secobj : secs) {
-			JSONArray tuple = (JSONArray) secobj;
+		for (Object txnobj : txns) {
+			JSONArray tuple = (JSONArray) txnobj;
 
 			if (first) {
 				for (int ii = 0; ii < tuple.size(); ++ii) {
@@ -1146,8 +1182,6 @@ public class Persistence {
 						CAT = ii;
 					} else if (s.equalsIgnoreCase("secid")) {
 						SECID = ii;
-					} else if (s.equalsIgnoreCase("secaction")) {
-						SECACTION = ii;
 					} else if (s.equalsIgnoreCase("shares")) {
 						SHARES = ii;
 					} else if (s.equalsIgnoreCase("shareprice")) {
@@ -1162,6 +1196,12 @@ public class Persistence {
 						SECXFERS = ii;
 					} else if (s.equalsIgnoreCase("[lot]")) {
 						LOTS = ii;
+					} else if (s.equalsIgnoreCase("xacct")) {
+						XACCT = ii;
+					} else if (s.equalsIgnoreCase("xfercash")) {
+						XFERCASH = ii;
+					} else if (s.equalsIgnoreCase("commission")) {
+						COMMISSION = ii;
 					}
 				}
 
@@ -1298,11 +1338,15 @@ public class Persistence {
 		Security sec = model.getSecurity(secid);
 		itx.setSecurity(sec);
 
-		// TODO derived - remove
-		ShareAction secaction = ShareAction.parseAction((String) tuple.get(SECACTION));
 		BigDecimal shares = new BigDecimal((String) tuple.get(SHARES));
 		BigDecimal shareprice = new BigDecimal((String) tuple.get(SHAREPRICE));
 		BigDecimal splitratio = new BigDecimal((String) tuple.get(SPLITRATIO));
+
+		itx.accountForTransfer = decodeString((String) tuple.get(XACCT));
+		itx.cashTransferred = new BigDecimal((String) tuple.get(XFERCASH));
+		itx.commission = new BigDecimal((String) tuple.get(COMMISSION));
+
+		// TODO option doesn't exist yet?
 		int optid = ((Long) tuple.get(OPTID)).intValue();
 
 		itx.price = shareprice;
@@ -1405,9 +1449,34 @@ public class Persistence {
 
 				Security sec = model.getSecurity(secid);
 
-				Lot lot = new Lot(lotid, createDate, acctid, secid, shares, basisPrice, createTxn, disposingTxn, srcLot);
+				Lot lot = new Lot(lotid, createDate, acctid, secid, shares, basisPrice, createTxn, disposingTxn,
+						srcLot);
 
 				sec.addLot(lot);
+			}
+		}
+
+		for (SimpleTxn txn : model.getAllTransactions()) {
+			if (!(txn instanceof InvestmentTxn)) {
+				continue;
+			}
+
+			InvestmentTxn itxn = (InvestmentTxn) txn;
+
+			int[][] txlotids = getTransactionLotids(json, txn.txid);
+			Object[] lotlists = new Object[] { itxn.lots, itxn.lotsCreated, itxn.lotsDisposed };
+
+			for (int idx = 0; idx < lotlists.length; ++idx) {
+				int[] lotids = txlotids[idx];
+				List<Lot> lotlist = ((List<Lot>) lotlists[idx]);
+
+				for (int lotid : lotids) {
+					Lot lot = model.getLot(lotid);
+
+					if (!lotlist.contains(lot)) {
+						lotlist.add(lot);
+					}
+				}
 			}
 		}
 	}

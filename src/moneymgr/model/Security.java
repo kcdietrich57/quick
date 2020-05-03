@@ -374,8 +374,9 @@ public class Security {
 			InvestmentTxn tx = this.transactions.get(idx);
 			InvestmentTxn otx = other.transactions.get(idx);
 
-			if (!tx.matches(otx)) {
-				return "txn";
+			String res = tx.matches(otx);
+			if (res != null) {
+				return "txn:" + res;
 			}
 		}
 

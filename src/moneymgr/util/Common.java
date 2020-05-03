@@ -116,6 +116,19 @@ public class Common {
 
 	/** Are two values equal (or very close) */
 	public static boolean isEffectivelyEqual(BigDecimal d1, BigDecimal d2) {
+		if (d1 == null) {
+			d1 = BigDecimal.ZERO;
+		}
+		if (d2 == null) {
+			d2 = BigDecimal.ZERO;
+		}
+
+		if (d1 == null) {
+			return (d2 == null);
+		} else if (d2 == null) {
+			return false;
+		}
+
 		final BigDecimal diff = d1.subtract(d2).abs();
 		return (CLOSE_ENOUGH_TO_ZERO.compareTo(diff) > 0);
 	}
@@ -237,32 +250,32 @@ public class Common {
 
 	/** Format a decimal value to two places */
 	public static String formatAmount(BigDecimal amt) {
-		return (amt != null) ? String.format("%10.2f", amt) : "null";
+		return (amt != null) ? String.format("%10.2f", amt) : "0.0";
 	}
 
 	/** Format a decimal value as integer */
 	public static String formatAmount0(BigDecimal amt) {
-		return (amt != null) ? String.format("%,10.0f", amt) : "null";
+		return (amt != null) ? String.format("%,10.0f", amt) : "0.0";
 	}
 
 	/** Format a decimal value to three places */
 	public static String formatAmount3(BigDecimal amt) {
-		return (amt != null) ? String.format("%10.3f", amt) : "null";
+		return (amt != null) ? String.format("%10.3f", amt) : "0.0";
 	}
 
 	/** Format a decimal value to two places */
 	public static String formatAmount(QPrice amt) {
-		return (amt != null) ? formatAmount(amt.getPrice()) : "null";
+		return (amt != null) ? formatAmount(amt.getPrice()) : "0.0";
 	}
 
 	/** Format a decimal value as integer */
 	public static String formatAmount0(QPrice amt) {
-		return (amt != null) ? formatAmount0(amt.getPrice()) : "null";
+		return (amt != null) ? formatAmount0(amt.getPrice()) : "0.0";
 	}
 
 	/** Format a decimal value to three places */
 	public static String formatAmount3(QPrice amt) {
-		return (amt != null) ? formatAmount3(amt.getPrice()) : "null";
+		return (amt != null) ? formatAmount3(amt.getPrice()) : "0.0";
 	}
 
 	/** Format a date mm/dd/yy */
