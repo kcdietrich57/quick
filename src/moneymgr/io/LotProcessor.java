@@ -170,7 +170,7 @@ public class LotProcessor {
 				txn.getShares(), txn.getShareCost(), txn);
 		addLot(thelots, lot);
 
-		txn.lots.add(lot);
+		txn.addLot(lot);
 	}
 
 	/** Get open lots for account */
@@ -256,8 +256,8 @@ public class LotProcessor {
 
 			// Consume source lot
 			srcLot.setDisposingTransaction(txn);
-			txn.lotsDisposed.add(srcLot);
-			txn.lots.add(srcLot);
+			txn.addDisposedLot(srcLot);
+			txn.addLot(srcLot);
 
 			sharesRemaining = sharesRemaining.subtract(srcLot.shares);
 		}
@@ -359,7 +359,7 @@ public class LotProcessor {
 				sharesLeftInSrcTxn = sharesLeftInSrcTxn.subtract(newDstLot.shares);
 
 				srcLot.setDisposingTransaction(srcTxn);
-				srcTxn.lots.add(srcLot);
+				srcTxn.addLot(srcLot);
 
 				// TODO dangerous decimal comparison
 				if (sharesLeftInDstTxn.compareTo(newDstLot.shares) > 0) {

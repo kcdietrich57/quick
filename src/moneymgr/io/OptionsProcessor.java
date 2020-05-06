@@ -51,6 +51,8 @@ public class OptionsProcessor {
 				QDate date = Common.parseQDate(datestr);
 				String op = toker.nextToken();
 
+				StockOption opt = null;
+
 				if (op.equals("ESPP")) {
 					// 09/30/90 ESPP "ISI ESPP Stock" 241 4.04 4.75 973.64 1144.75
 					String secname = toker.nextToken();
@@ -63,7 +65,7 @@ public class OptionsProcessor {
 					BigDecimal mktPrice = new BigDecimal(toker.nextToken());
 					BigDecimal value = new BigDecimal(toker.nextToken());
 
-					StockOption opt = StockOption.esppPurchase(date, //
+					opt = StockOption.esppPurchase(date, //
 							acct.acctid, sec.secid, //
 							shares, buyPrice, cost, mktPrice, value);
 
@@ -83,7 +85,7 @@ public class OptionsProcessor {
 						int vestPeriodMonths = (vestPeriod.charAt(0) == 'Y') ? 12 : 3;
 						int vestCount = Integer.parseInt(toker.nextToken());
 
-						StockOption opt = StockOption.grant(name, date, //
+						opt = StockOption.grant(name, date, //
 								acct.acctid, sec.secid, //
 								shares, price, vestPeriodMonths, vestCount, 0);
 
@@ -92,7 +94,7 @@ public class OptionsProcessor {
 						// 05/23/92 VEST 2656 1
 						int vestNumber = Integer.parseInt(toker.nextToken());
 
-						StockOption opt = StockOption.vest(name, date, vestNumber);
+						opt = StockOption.vest(name, date, vestNumber);
 
 						Common.debugInfo("Vested: " + opt.toString());
 
@@ -101,19 +103,19 @@ public class OptionsProcessor {
 						int newShares = Integer.parseInt(toker.nextToken());
 						int oldShares = Integer.parseInt(toker.nextToken());
 
-						StockOption opt = StockOption.split(name, date, newShares, oldShares);
+						opt = StockOption.split(name, date, newShares, oldShares);
 
 						Common.debugInfo("Split: " + opt.toString());
 					} else if (op.equals("EXPIRE")) {
 						// 05/23/01 EXPIRE 2656
-						StockOption opt = StockOption.expire(name, date);
+						opt = StockOption.expire(name, date);
 
 						if (opt != null) {
 							Common.debugInfo("Expire: " + opt.toString());
 						}
 					} else if (op.equals("CANCEL")) {
 						// 05/23/01 CANCEL 2656
-						StockOption opt = StockOption.cancel(name, date);
+						opt = StockOption.cancel(name, date);
 
 						if (opt != null) {
 							Common.debugInfo("Cancel: " + opt.toString());
@@ -123,10 +125,14 @@ public class OptionsProcessor {
 						BigDecimal shares = new BigDecimal(toker.nextToken());
 						// BigDecimal price = new BigDecimal(toker.nextToken());
 
-						StockOption opt = StockOption.exercise(name, date, shares);
+						opt = StockOption.exercise(name, date, shares);
 
 						Common.debugInfo("Exercise: " + opt.toString());
 					}
+				}
+
+				if (opt != null) {
+					MoneyMgrModel.currModel.addStockOption(opt);
 				}
 
 				line = rdr.readLine();

@@ -316,19 +316,19 @@ public class Persistence {
 			if (ac == null) {
 				line = "  [0]";
 			} else {
-				int close = (ac.closeDate != null) ? ac.closeDate.getRawValue() : 0;
+				int close = (ac.getCloseDate() != null) ? ac.getCloseDate().getRawValue() : 0;
 
-				line = String.format("  [%d,%s,%d,%s,%d,%d,%d,\"%s\",\"%s\"]", //
+				line = String.format("  [%d,%s,%d,%s,%d,%d,%d,%s,%s]", //
 						ac.acctid, //
 						encodeString(ac.name), //
 						ac.type.id, //
 						// ac.acctCategory.label, //
 						encodeString(ac.description), //
 						close, //
-						ac.statementFrequency, //
-						ac.statementDayOfMonth, //
-						encodeAmount(ac.balance), //
-						encodeAmount(ac.clearedBalance));
+						ac.getStatementFrequency(), //
+						ac.getStatementDay(), //
+						encodeAmount(ac.getBalance()), //
+						encodeAmount(ac.getClearedBalance()));
 
 				// TODO ac.securities
 			}
@@ -486,7 +486,7 @@ public class Persistence {
 		// ------------------------------------------------
 
 		wtr.print("  [\"optid\",\"name\",\"date\",\"acctid\",\"secid\",\"shares\",\"strikeprice\",\"marketprice\"," //
-				+ "  \"cost\",\"origmarketvalue\",\"lifetimemonths\",\"vestcount\",\"txid\",\"canceldate\",\"srcoptid\"" //
+				+ "  \"cost\",\"origmarketvalue\",\"lifetimemonths\",\"vestfreq\",\"vestcount\",\"txid\",\"canceldate\",\"srcoptid\"" //
 				+ "]");
 
 		final String sep = ",";
@@ -610,7 +610,7 @@ public class Persistence {
 					xacctName = itx.accountForTransfer;
 					// TODO encode share action
 					shareaction = itx.getShareAction().toString();
-					shares = itx.getShares();
+					shares = itx.getQuantity();
 					shareprice = itx.price;
 					splitratio = itx.getSplitRatio();
 					xfercash = itx.cashTransferred;
@@ -640,7 +640,7 @@ public class Persistence {
 					lots += sep3 + "[";
 					sep3 = ",";
 					sep2 = "";
-					for (Lot lot : itx.lotsCreated) {
+					for (Lot lot : itx.getCreatedLots()) {
 						lots += sep2 + lot.lotid;
 						sep2 = ",";
 					}
@@ -650,7 +650,7 @@ public class Persistence {
 					lots += sep3 + "[";
 					sep3 = ",";
 					sep2 = "";
-					for (Lot lot : itx.lotsDisposed) {
+					for (Lot lot : itx.getDisposedLots()) {
 						lots += sep2 + lot.lotid;
 						sep2 = ",";
 					}
@@ -843,6 +843,7 @@ public class Persistence {
 		processSecurities(model, json);
 		processTransactions(model, json);
 		processLots(model, json);
+		processOptions(model, json);
 		processSecurityTransactions(model, json);
 		processStatements(model, json);
 
@@ -964,7 +965,7 @@ public class Persistence {
 				AccountType atype = AccountType.byId(typeid);
 
 				Account acct = new Account(acctid, name, desc, atype, statfreq, statday);
-				acct.closeDate = closedate;
+				acct.setCloseDate(closedate);
 
 				model.addAccount(acct);
 			}
@@ -1017,6 +1018,7 @@ public class Persistence {
 		int SPLITS = -1;
 		int PRICES = -1;
 		int TXNS = -1;
+		// TODO security txns
 
 		boolean first = true;
 		JSONArray secs = (JSONArray) json.get("Securities");
@@ -1384,9 +1386,9 @@ public class Persistence {
 		int CHILDLOTIDS = -1;
 
 		boolean first = true;
-		JSONArray secs = (JSONArray) json.get("Lots");
+		JSONArray lots = (JSONArray) json.get("Lots");
 
-		for (Object lotobj : secs) {
+		for (Object lotobj : lots) {
 			JSONArray tuple = (JSONArray) lotobj;
 
 			if (first) {
@@ -1449,8 +1451,8 @@ public class Persistence {
 
 				Security sec = model.getSecurity(secid);
 
-				Lot lot = new Lot(lotid, createDate, acctid, secid, shares, basisPrice, createTxn, disposingTxn,
-						srcLot);
+				Lot lot = new Lot(lotid, createDate, acctid, secid, //
+						shares, basisPrice, createTxn, disposingTxn, srcLot);
 
 				sec.addLot(lot);
 			}
@@ -1464,19 +1466,131 @@ public class Persistence {
 			InvestmentTxn itxn = (InvestmentTxn) txn;
 
 			int[][] txlotids = getTransactionLotids(json, txn.txid);
-			Object[] lotlists = new Object[] { itxn.lots, itxn.lotsCreated, itxn.lotsDisposed };
 
-			for (int idx = 0; idx < lotlists.length; ++idx) {
+			for (int idx = 0; idx < txlotids.length; ++idx) {
 				int[] lotids = txlotids[idx];
-				List<Lot> lotlist = ((List<Lot>) lotlists[idx]);
 
 				for (int lotid : lotids) {
 					Lot lot = model.getLot(lotid);
 
-					if (!lotlist.contains(lot)) {
-						lotlist.add(lot);
+					switch (idx) {
+					case 0:
+						itxn.addLot(lot);
+						break;
+					case 1:
+						itxn.addCreatedLot(lot);
+						break;
+					case 2:
+						itxn.addDisposedLot(lot);
+						break;
 					}
 				}
+			}
+		}
+	}
+
+	private void processOptions(MoneyMgrModel model, JSONObject json) {
+		int OPTID = -1;
+		int NAME = -1;
+		int DATE = -1;
+		int ACCTID = -1;
+		int SECID = -1;
+		int SHARES = -1;
+		int STRIKEPRICE = -1;
+		int MARKETPRICE = -1;
+		int COST = -1;
+		int ORIGMARKETVALUE = -1;
+		int LIFETIMEMONTHS = -1;
+		int VESTFREQ = -1;
+		int VESTCOUNT = -1;
+		int TXID = -1;
+		int CANCELDATE = -1;
+		int SRCOPTID = -1;
+
+		boolean first = true;
+		JSONArray opts = (JSONArray) json.get("Options");
+
+		for (Object optobj : opts) {
+			JSONArray tuple = (JSONArray) optobj;
+
+			if (first) {
+				for (int ii = 0; ii < tuple.size(); ++ii) {
+					String s = (String) tuple.get(ii);
+
+					if (s.equalsIgnoreCase("optid")) {
+						OPTID = ii;
+					} else if (s.equalsIgnoreCase("name")) {
+						NAME = ii;
+					} else if (s.equalsIgnoreCase("date")) {
+						DATE = ii;
+					} else if (s.equalsIgnoreCase("acctid")) {
+						ACCTID = ii;
+					} else if (s.equalsIgnoreCase("secid")) {
+						SECID = ii;
+					} else if (s.equalsIgnoreCase("shares")) {
+						SHARES = ii;
+					} else if (s.equalsIgnoreCase("strikeprice")) {
+						STRIKEPRICE = ii;
+					} else if (s.equalsIgnoreCase("marketprice")) {
+						MARKETPRICE = ii;
+					} else if (s.equalsIgnoreCase("cost")) {
+						COST = ii;
+					} else if (s.equalsIgnoreCase("origmarketvalue")) {
+						ORIGMARKETVALUE = ii;
+					} else if (s.equalsIgnoreCase("lifetimemonths")) {
+						LIFETIMEMONTHS = ii;
+					} else if (s.equalsIgnoreCase("vestfreq")) {
+						VESTFREQ = ii;
+					} else if (s.equalsIgnoreCase("vestcount")) {
+						VESTCOUNT = ii;
+					} else if (s.equalsIgnoreCase("txid")) {
+						TXID = ii;
+					} else if (s.equalsIgnoreCase("canceldate")) {
+						CANCELDATE = ii;
+					} else if (s.equalsIgnoreCase("srcoptid")) {
+						SRCOPTID = ii;
+					}
+				}
+
+				first = false;
+			} else {
+				int optid = ((Long) tuple.get(OPTID)).intValue();
+				int acctid = ((Long) tuple.get(ACCTID)).intValue();
+				int secid = ((Long) tuple.get(SECID)).intValue();
+				int srcoptid = ((Long) tuple.get(SRCOPTID)).intValue();
+				String name = (String) tuple.get(NAME);
+				QDate date = QDate.fromRawData(((Long) tuple.get(DATE)).intValue());
+				QDate canceldate = QDate.fromRawData(((Long) tuple.get(CANCELDATE)).intValue());
+
+				int lifetimemonths = ((Long) tuple.get(LIFETIMEMONTHS)).intValue();
+				int vestfreq = ((Long) tuple.get(VESTFREQ)).intValue();
+				int vestcount = ((Long) tuple.get(VESTCOUNT)).intValue();
+				BigDecimal shares = new BigDecimal((String) tuple.get(SHARES));
+				BigDecimal strikeprice = new BigDecimal((String) tuple.get(STRIKEPRICE));
+				BigDecimal marketprice = new BigDecimal((String) tuple.get(MARKETPRICE));
+				BigDecimal cost = new BigDecimal((String) tuple.get(COST));
+				BigDecimal origmarketvalue = new BigDecimal((String) tuple.get(ORIGMARKETVALUE));
+
+				int txid = ((Long) tuple.get(TXID)).intValue();
+
+				StockOption srcopt = null;
+				if (srcoptid > 0) {
+					srcopt = model.getStockOption(srcoptid);
+				}
+
+				StockOption opt = new StockOption( //
+						optid, name, date, acctid, secid, shares, //
+						strikeprice, cost, marketprice, origmarketvalue, //
+						lifetimemonths, vestfreq, vestcount);
+
+				opt.cancelDate = canceldate;
+
+				if (txid > 0) {
+					opt.transaction = (InvestmentTxn) model.getTransaction(txid);
+					opt.transaction.option = opt;
+				}
+
+				model.addStockOption(opt);
 			}
 		}
 	}
@@ -1492,10 +1606,10 @@ public class Persistence {
 		int HOLDINGS = -1;
 
 		boolean first = true;
-		JSONArray secs = (JSONArray) json.get("Statements");
+		JSONArray stats = (JSONArray) json.get("Statements");
 
-		for (Object secobj : secs) {
-			JSONArray tuple = (JSONArray) secobj;
+		for (Object statobj : stats) {
+			JSONArray tuple = (JSONArray) statobj;
 
 			if (first) {
 				for (int ii = 0; ii < tuple.size(); ++ii) {
@@ -1546,6 +1660,7 @@ public class Persistence {
 				}
 
 				JSONArray holdings = (JSONArray) tuple.get(HOLDINGS);
+				// TODO statement holdings
 			}
 		}
 	}

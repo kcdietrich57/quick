@@ -67,9 +67,9 @@ public class InvestmentTxn extends GenericTxn {
 	private List<InvestmentTxn> xferTxns;
 
 	/** These break down security activity by lots */
-	public final List<Lot> lots;
-	public final List<Lot> lotsCreated;
-	public final List<Lot> lotsDisposed;
+	private final List<Lot> lots;
+	private final List<Lot> lotsCreated;
+	private final List<Lot> lotsDisposed;
 
 	// public String textFirstLine;
 
@@ -220,6 +220,10 @@ public class InvestmentTxn extends GenericTxn {
 		}
 	}
 
+	public BigDecimal getQuantity() {
+		return this.quantity;
+	}
+
 	public BigDecimal getShares() {
 		if ((this.quantity == null) //
 				|| isStockOptionTxn() //
@@ -328,7 +332,60 @@ public class InvestmentTxn extends GenericTxn {
 
 	/** Get lots that contain shares affected by this transaction */
 	public List<Lot> getLots() {
-		return this.lots;
+		return Collections.unmodifiableList(this.lots);
+	}
+
+	/** Get lots that contain shares affected by this transaction */
+	public List<Lot> getCreatedLots() {
+		return Collections.unmodifiableList(this.lotsCreated);
+	}
+
+	/** Get lots that contain shares affected by this transaction */
+	public List<Lot> getDisposedLots() {
+		return Collections.unmodifiableList(this.lotsDisposed);
+	}
+
+	public void addLot(Lot lot) {
+		if ((lot != null) && !this.lots.contains(lot)) {
+			for (int idx = 0; idx < this.lots.size(); ++idx) {
+				if (lot.lotid < this.lots.get(idx).lotid) {
+					this.lots.add(idx, lot);
+					return;
+				}
+			}
+
+			this.lots.add(lot);
+		}
+	}
+
+	public void addCreatedLot(Lot lot) {
+		if ((lot != null) && !this.lotsCreated.contains(lot)) {
+			for (int idx = 0; idx < this.lotsCreated.size(); ++idx) {
+				if (lot.lotid < this.lotsCreated.get(idx).lotid) {
+					this.lotsCreated.add(idx, lot);
+					return;
+				}
+			}
+
+			this.lotsCreated.add(lot);
+		}
+	}
+
+	public void addDisposedLot(Lot lot) {
+		if ((lot != null) && (lot.acctid != getAccountID())) {
+			return;
+		}
+
+		if ((lot != null) && !this.lotsDisposed.contains(lot)) {
+			for (int idx = 0; idx < this.lotsDisposed.size(); ++idx) {
+				if (lot.lotid < this.lotsDisposed.get(idx).lotid) {
+					this.lotsDisposed.add(idx, lot);
+					return;
+				}
+			}
+
+			this.lotsDisposed.add(lot);
+		}
 	}
 
 	/**
@@ -798,10 +855,17 @@ public class InvestmentTxn extends GenericTxn {
 				|| !Common.isEffectivelyEqual(this.cashTransferred, other.cashTransferred) //
 				|| !Common.isEffectivelyEqual(this.price, other.price) //
 				|| !Common.isEffectivelyEqual(this.commission, other.commission) //
-				|| !Common.isEffectivelyEqual(this.quantity, other.quantity) //
 				|| (isStockOptionTxn() != other.isStockOptionTxn()) //
 		) {
 			return "genInfo";
+		}
+
+		if (getAction() != TxAction.VEST) {
+			if (!Common.isEffectivelyEqual(this.quantity, other.quantity)) {
+				return "nonVestQuantity";
+			}
+
+			// TODO System.out.println("xyzzy - ignoring vest quantity");
 		}
 
 		res = lotListMatches(this.lots, other.lots);

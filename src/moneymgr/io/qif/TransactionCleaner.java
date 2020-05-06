@@ -105,21 +105,25 @@ public class TransactionCleaner {
 	 */
 	private void calculateRunningTotals() {
 		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
-			a.clearedBalance = a.balance = BigDecimal.ZERO;
+			BigDecimal bal = BigDecimal.ZERO;
+			BigDecimal cleared = BigDecimal.ZERO;
 
 			for (GenericTxn t : a.getTransactions()) {
 				BigDecimal amt = t.getCashAmount();
 
-				if (!amt.equals(BigDecimal.ZERO)) {
-					a.balance = a.balance.add(amt);
+				if (!Common.isEffectivelyZero(amt)) {
+					bal = bal.add(amt);
 
 					if (t.isCleared()) {
-						a.clearedBalance = a.clearedBalance.add(amt);
+						cleared = cleared.add(amt);
 					}
 				}
 
-				t.setRunningTotal(a.balance);
+				t.setRunningTotal(bal);
 			}
+
+			a.setBalance(bal);
+			a.setClearedBalance(cleared);
 		}
 	}
 

@@ -36,12 +36,12 @@ public class DomReporter {
 
 		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			if (!a.isInvestmentAccount() || //
-					Common.isEffectivelyZero(a.balance)) {
+					Common.isEffectivelyZero(a.getBalance())) {
 				continue;
 			}
 
 			if (compact) {
-				System.out.println(a.name + " " + a.type + " " + a.balance);
+				System.out.println(a.name + " " + a.type + " " + a.getBalance());
 				continue;
 			}
 

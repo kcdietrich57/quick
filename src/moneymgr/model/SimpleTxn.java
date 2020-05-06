@@ -522,9 +522,8 @@ public abstract class SimpleTxn implements Txn {
 			InvestmentTxn t1 = getSecurityTransferTxns().get(idx);
 			InvestmentTxn t2 = other.getSecurityTransferTxns().get(idx);
 
-			String res = t1.matches(t2);
-			if (res != null) {
-				return "xtxn:" + res;
+			if (t1.txid != t2.txid) {
+				return "xtxn:mismatch";
 			}
 		}
 

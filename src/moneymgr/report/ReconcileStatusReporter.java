@@ -69,7 +69,7 @@ public class ReconcileStatusReporter {
 				this.tcount = a.getNumTransactions();
 
 				this.name = a.getDisplayName(25);
-				this.balance = a.balance;
+				this.balance = a.getBalance();
 				this.lStat = a.getLastStatement();
 				this.lStatDate = (this.lStat != null) ? this.lStat.date : null;
 				this.firstUnclearedTxDate = a.getFirstUnclearedTransactionDate();

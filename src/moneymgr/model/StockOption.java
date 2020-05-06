@@ -49,7 +49,7 @@ public class StockOption {
 			BigDecimal cost, //
 			BigDecimal mktPrice, //
 			BigDecimal value) {
-		StockOption opt = new StockOption(date, acctid, secid, //
+		StockOption opt = new StockOption("espp", date, acctid, secid, //
 				shares, buyPrice, cost, mktPrice, value);
 
 		return opt;
@@ -422,7 +422,8 @@ public class StockOption {
 	 * @param mktPrice Market share price on purchase date
 	 * @param mktValue Market value of shares on purchase date
 	 */
-	public StockOption( //
+	private StockOption( //
+			String name, //
 			QDate date, //
 			int acctid, //
 			int secid, //
@@ -436,7 +437,7 @@ public class StockOption {
 		this.srcOption = null;
 		this.cancelDate = null;
 
-		this.name = "espp";
+		this.name = name;
 		this.date = date;
 
 		this.acctid = acctid;
@@ -452,12 +453,10 @@ public class StockOption {
 		this.vestCount = 0;
 		this.vestFrequencyMonths = 0;
 		this.vestCurrent = 0;
-
-		MoneyMgrModel.currModel.addStockOption(this);
 	}
 
 	/** Create a new option (GRANT) */
-	public StockOption( //
+	private StockOption( //
 			String name, //
 			QDate date, //
 			int acctid, //
@@ -489,12 +488,10 @@ public class StockOption {
 		this.vestCurrent = 0;
 
 		this.sharesRemaining = this.grantShares;
-
-		MoneyMgrModel.currModel.addStockOption(this);
 	}
 
 	/** Change the vesting of an option (VEST) */
-	public StockOption( //
+	private StockOption( //
 			StockOption src, //
 			QDate date, //
 			int vestNumber) {
@@ -520,12 +517,10 @@ public class StockOption {
 		this.lifetimeMonths = src.lifetimeMonths;
 
 		this.sharesRemaining = src.sharesRemaining;
-
-		MoneyMgrModel.currModel.addStockOption(this);
 	}
 
 	/** Process a stocksplit (SPLIT) */
-	public StockOption( //
+	private StockOption( //
 			StockOption src, //
 			QDate date, //
 			int newshr, //
@@ -555,12 +550,10 @@ public class StockOption {
 		this.lifetimeMonths = src.lifetimeMonths;
 
 		this.sharesRemaining = src.sharesRemaining.multiply(ratio);
-
-		MoneyMgrModel.currModel.addStockOption(this);
 	}
 
 	/** Exercise/cancel part of the option (EXERCISE/CANCEL/EXPIRE) */
-	public StockOption( //
+	private StockOption( //
 			StockOption src, //
 			QDate date, //
 			BigDecimal shares) {
@@ -586,17 +579,44 @@ public class StockOption {
 		this.lifetimeMonths = src.lifetimeMonths;
 
 		this.sharesRemaining = src.sharesRemaining.subtract(shares);
-
-		MoneyMgrModel.currModel.addStockOption(this);
 	}
 
 	/** Cancel an option (CANCEL/EXPIRE) */
-	public StockOption( //
+	private StockOption( //
 			StockOption src, //
 			QDate date) {
 		this(src, date, BigDecimal.ZERO);
 
 		this.cancelDate = date;
+	}
+
+	public StockOption( //
+			int optid, String name, QDate date, int acctid, int secid, BigDecimal shares, //
+			BigDecimal strikeprice, BigDecimal cost, //
+			BigDecimal marketprice, BigDecimal origmarketvalue, //
+			int lifetimeMonths, int vestFrequency, int vestCount) {
+		this.optid = optid;
+
+		this.srcOption = null;
+		this.cancelDate = null;
+
+		this.name = name;
+		this.date = date;
+
+		this.acctid = acctid;
+		this.secid = secid;
+		this.grantShares = shares;
+		this.strikePrice = strikeprice;
+		this.marketPrice = marketprice;
+		this.cost = null;
+		this.marketValueAtPurchase = null;
+
+		this.lifetimeMonths = lifetimeMonths;
+		this.vestFrequencyMonths = vestFrequency;
+		this.vestCount = vestCount;
+		this.vestCurrent = 0;
+
+		this.sharesRemaining = this.grantShares;
 	}
 
 	/** Return whether this option is still in play on a given date */

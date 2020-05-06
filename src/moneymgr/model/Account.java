@@ -109,12 +109,12 @@ public class Account {
 	public final AccountCategory acctCategory;
 	public final String description;
 
-	public QDate closeDate;
-	public int statementFrequency;
-	public int statementDayOfMonth;
+	private QDate closeDate;
+	private int statementFrequency;
+	private int statementDayOfMonth;
 
-	public BigDecimal balance;
-	public BigDecimal clearedBalance;
+	private BigDecimal balance;
+	private BigDecimal clearedBalance;
 
 	private final List<GenericTxn> transactions;
 	private final List<Statement> statements;
@@ -126,8 +126,8 @@ public class Account {
 		this.description = (desc != null) ? desc : "";
 		this.type = type;
 		this.acctCategory = AccountCategory.forAccountType(type);
-		this.statementFrequency = (statFreq > 0) ? statFreq : 30;
-		this.statementDayOfMonth = (statDayOfMonth > 0) ? statDayOfMonth : 30;
+
+		setStatementFrequency(statFreq, statDayOfMonth);
 
 		this.balance = this.clearedBalance = BigDecimal.ZERO;
 
@@ -145,6 +145,35 @@ public class Account {
 
 	public Account(String name, AccountType type) {
 		this(name, type, "", null, -1, -1);
+	}
+
+	public int getStatementFrequency() {
+		return this.statementFrequency;
+	}
+
+	public int getStatementDay() {
+		return this.statementDayOfMonth;
+	}
+
+	public BigDecimal getBalance() {
+		return this.balance;
+	}
+
+	public BigDecimal getClearedBalance() {
+		return this.clearedBalance;
+	}
+
+	public void setBalance(BigDecimal bal) {
+		this.balance = bal;
+	}
+
+	public void setClearedBalance(BigDecimal bal) {
+		this.clearedBalance = bal;
+	}
+
+	public void setStatementFrequency(int freq, int dom) {
+		this.statementFrequency = (freq > 0) ? freq : 30;
+		this.statementDayOfMonth = (dom > 0) ? dom : 30;
 	}
 
 	public String getDisplayName(int length) {
@@ -185,6 +214,22 @@ public class Account {
 
 	public QDate getCloseDate() {
 		return this.closeDate;
+	}
+
+	public void setCloseDate(QDate date) {
+		if ((date == null) && (this.closeDate != null)) {
+			Common.reportWarning( //
+					String.format("Clearing close date for %s - was %s", //
+							this.name, this.closeDate.toString()));
+		}
+
+		if ((this.closeDate != null) && !this.closeDate.equals(date)) {
+			Common.reportWarning( //
+					String.format("Changing close date for %s from %s to %s", //
+							this.name, this.closeDate.toString(), date.toString()));
+		}
+
+		this.closeDate = date;
 	}
 
 	/** Was the account open on a given date */
@@ -742,12 +787,6 @@ public class Account {
 			return "generalInfo";
 		}
 
-		String res = this.securities.matches(other.securities);
-		if (res != null) {
-			return "holdings:" + res;
-		}
-
-		// transactions
 		if (getNumTransactions() != other.getNumTransactions()) {
 			return "numtxn";
 		}
@@ -760,6 +799,11 @@ public class Account {
 			if (ret != null) {
 				return String.format("Tx%d:%s", idx, ret);
 			}
+		}
+
+		String res = this.securities.matches(other.securities);
+		if (res != null) {
+			return "holdings:" + res;
 		}
 
 		return null;

@@ -336,7 +336,6 @@ public class InvestmentPerformanceModel {
 
 		for (GenericTxn gt : this.txns) {
 			InvestmentTxn txn = (InvestmentTxn) gt;
-
 		}
 
 		List<AccountSummary> asums = new ArrayList<AccountSummary>();
@@ -344,7 +343,8 @@ public class InvestmentPerformanceModel {
 		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			if (!a.isInvestmentAccount() //
 					|| (a.getOpenDate().compareTo(endDate()) >= 0) //
-					|| (a.closeDate != null && a.closeDate.compareTo(startDate()) <= 0)) {
+					|| ((a.getCloseDate() != null) //
+							&& (a.getCloseDate().compareTo(startDate()) <= 0))) {
 				continue;
 			}
 

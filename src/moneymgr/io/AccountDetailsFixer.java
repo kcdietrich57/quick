@@ -55,11 +55,7 @@ public class AccountDetailsFixer {
 					+ "acct name '" + acct.name + "'");
 		}
 
-		if (acct.closeDate == null) {
-			acct.closeDate = closeDate;
-		}
-
-		acct.statementFrequency = freq;
-		acct.statementDayOfMonth = dom;
+		acct.setCloseDate(closeDate);
+		acct.setStatementFrequency(freq, dom);
 	}
 }

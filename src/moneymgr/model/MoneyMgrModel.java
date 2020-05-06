@@ -817,6 +817,12 @@ public class MoneyMgrModel {
 		this.stockOptions.set(opt.optid, opt);
 	}
 
+	public StockOption getStockOption(int optid) {
+		return ((optid > 0) && (optid < this.stockOptions.size())) //
+				? this.stockOptions.get(optid) //
+				: null;
+	}
+
 	public List<StockOption> getStockOptions() {
 		return Collections.unmodifiableList(this.stockOptions);
 	}

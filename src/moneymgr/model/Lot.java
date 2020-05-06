@@ -91,7 +91,7 @@ public class Lot {
 			InvestmentTxn createTxn) {
 		this(lotid, acctid, date, secid, shares, basisPrice, createTxn, null, null);
 
-		createTxn.lotsCreated.add(this);
+		createTxn.addCreatedLot(this);
 	}
 
 	/**
@@ -127,11 +127,8 @@ public class Lot {
 		checkSufficientSrcLotShares(srcLot, shares);
 
 		this.sourceLot.childLots.add(this);
-		createTxn.lotsCreated.add(this);
-
-		if (!createTxn.lotsDisposed.contains(srcLot)) {
-			createTxn.lotsDisposed.add(srcLot);
-		}
+		createTxn.addCreatedLot(this);
+		createTxn.addDisposedLot(srcLot);
 	}
 
 	public Lot(int lotid, QDate date, int acctid, int secid, BigDecimal shares, BigDecimal basisprice,
@@ -142,10 +139,19 @@ public class Lot {
 			this.sourceLot.childLots.add(this);
 		}
 
-		createTxn.lotsCreated.add(this);
+		createTxn.addCreatedLot(this);
 
-		if (srcLot != null && !createTxn.lotsDisposed.contains(srcLot)) {
-			createTxn.lotsDisposed.add(srcLot);
+		if (dispTxn != null) {
+			if (acctid == dispTxn.getAccountID()) {
+				dispTxn.addDisposedLot(this);
+			}
+//			else if (srcLot != null) {
+//				if (dispTxn.getAccountID() == srcLot.acctid) {
+//					dispTxn.addDisposedLot(srcLot);
+//				} else if ((createTxn != null) && (createTxn.getAccountID() == srcLot.acctid)) {
+//					createTxn.addDisposedLot(srcLot);
+//				}
+//			}
 		}
 	}
 
@@ -183,10 +189,10 @@ public class Lot {
 		// The new lot in the destination is derived from the source lot
 		this.sourceLot.childLots.add(this);
 
-		createTxn.lotsCreated.add(this);
+		createTxn.addCreatedLot(this);
 
 		if (disposeTxn != null) {
-			disposeTxn.lotsDisposed.add(srcLot);
+			disposeTxn.addDisposedLot(srcLot);
 
 			// Dispose of the original lot if not already done
 			if ((srcLot.disposingTransaction == null) //
