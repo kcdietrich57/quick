@@ -411,6 +411,7 @@ public class Statement {
 
 		String res = this.holdings.matches(other.holdings);
 		if (res != null) {
+			this.holdings.matches(other.holdings);
 			return "Holdings:" + res;
 		}
 

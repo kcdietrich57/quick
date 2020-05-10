@@ -171,7 +171,7 @@ public class DomReporter {
 	}
 
 	private static void reportGlobalPortfolio() {
-		for (SecurityPosition p : SecurityPortfolio.portfolio.positions) {
+		for (SecurityPosition p : MoneyMgrModel.currModel.portfolio.positions) {
 			System.out.println("Sec: " + p.security.getName());
 
 			System.out.println(String.format( //

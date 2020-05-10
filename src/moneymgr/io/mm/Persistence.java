@@ -89,11 +89,15 @@ public class Persistence {
 	}
 
 	private static String encodeAmount3(BigDecimal amt) {
-		return encodeString(Common.formatAmount3(amt).trim());
+		return encodeAmount(amt);
 	}
 
 	private static String encodeAmount(BigDecimal amt) {
-		return encodeString(Common.formatAmount3(amt).trim());
+		if (amt == null) {
+			amt = BigDecimal.ZERO;
+		}
+
+		return encodeString(amt.toString());
 	}
 
 	private static String decodeString(String s) {
@@ -401,9 +405,10 @@ public class Persistence {
 						prices += "      ";
 					}
 
-					prices += String.format("[%d,%s]", //
+					prices += String.format("[%d,%s,%s]", //
 							price.date.getRawValue(), //
-							encodeAmount3(price.getPrice()));
+							encodeAmount3(price.getPrice()), //
+							encodeAmount3(price.getSplitAdjustedPrice()));
 					sep2 = ",";
 				}
 
@@ -1007,6 +1012,15 @@ public class Persistence {
 				}
 			}
 		}
+
+		for (SimpleTxn tx : model.getAllTransactions()) {
+			if (tx instanceof GenericTxn) {
+				GenericTxn gtx = (GenericTxn) tx;
+
+				model.portfolio.addTransaction(gtx);
+				tx.getAccount().securities.addTransaction(gtx);
+			}
+		}
 	}
 
 	private void processSecurities(MoneyMgrModel model, JSONObject json) {
@@ -1077,9 +1091,9 @@ public class Persistence {
 					int rawdate = ((Long) jpriceinfo.get(0)).intValue();
 					QDate date = QDate.fromRawData(rawdate);
 					BigDecimal price = new BigDecimal((String) jpriceinfo.get(1));
+					BigDecimal saprice = new BigDecimal((String) jpriceinfo.get(2));
 
-					// TODO need more price details? (e.g. split adjusted price)
-					QPrice qprice = new QPrice(date, secid, price);
+					QPrice qprice = new QPrice(date, secid, price, saprice);
 					prices.add(qprice);
 					sec.addPrice(qprice);
 				}
@@ -1095,6 +1109,9 @@ public class Persistence {
 					StockSplitInfo split = new StockSplitInfo(date, ratio);
 					sec.splits.add(split);
 				}
+
+				// TODO process security transactions
+				Object txns = tuple.get(TXNS);
 
 				model.addSecurity(sec);
 			}
@@ -1660,7 +1677,17 @@ public class Persistence {
 				}
 
 				JSONArray holdings = (JSONArray) tuple.get(HOLDINGS);
-				// TODO statement holdings
+				for (Object hold_obj : holdings) {
+					JSONArray hold = (JSONArray) hold_obj;
+
+					int secid = ((Long) hold.get(0)).intValue();
+					BigDecimal qty = new BigDecimal((String) hold.get(1));
+					BigDecimal value = new BigDecimal((String) hold.get(2));
+
+					SecurityPosition pos = stmt.holdings.getPosition(secid);
+					pos.setExpectedEndingShares(qty);
+					pos.endingValue = value;
+				}
 			}
 		}
 	}

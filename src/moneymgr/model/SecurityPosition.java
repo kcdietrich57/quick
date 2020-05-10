@@ -43,9 +43,9 @@ public class SecurityPosition {
 		public String toString() {
 			return String.format("%8s: %12s %8s %12s", //
 					this.security.getSymbol(), //
-					Common.formatAmount3(this.shares), //
-					Common.formatAmount3(this.price), //
-					Common.formatAmount(this.value));
+					Common.formatAmount3(this.shares).trim(), //
+					Common.formatAmount3(this.price).trim(), //
+					Common.formatAmount(this.value).trim());
 		}
 	}
 
@@ -265,6 +265,11 @@ public class SecurityPosition {
 				: null;
 	}
 
+	public QDate getFirstTransactionDate() {
+		return (this.transactions.isEmpty()) ? null //
+				: this.transactions.get(0).getDate();
+	}
+
 	public List<InvestmentTxn> getTransactions() {
 		return Collections.unmodifiableList(this.transactions);
 	}
@@ -425,8 +430,11 @@ public class SecurityPosition {
 
 	/** Update running share totals in this position */
 	public void updateShareBalances() {
-		BigDecimal shrbal = BigDecimal.ZERO;
 		this.shrBalance.clear();
+
+		BigDecimal shrbal = (getPreviousPosition() != null) //
+				? getPreviousPosition().getEndingShares() //
+				: BigDecimal.ZERO;
 
 		for (InvestmentTxn t : this.transactions) {
 			if (t.getAction() == TxAction.STOCKSPLIT) {
@@ -456,9 +464,9 @@ public class SecurityPosition {
 	/** Get value as of a given date */
 	public BigDecimal getValueForDate(QDate d) {
 		try {
-			return getValueForIndex( //
-					d, //
-					MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate(this.transactions, d));
+			int txidx = MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate( //
+					this.transactions, d);
+			return getValueForIndex(d, txidx);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return BigDecimal.ZERO;

@@ -10,7 +10,7 @@ import moneymgr.model.Statement;
 public class PortfolioProcessor {
 	/** Update global portfolio and each account portfolio */
 	public static void fixPortfolios() {
-		fixPortfolio(SecurityPortfolio.portfolio);
+		fixPortfolio(MoneyMgrModel.currModel.portfolio);
 
 		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			if (a.isInvestmentAccount()) {

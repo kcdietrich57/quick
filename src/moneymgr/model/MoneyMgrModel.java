@@ -96,6 +96,11 @@ public class MoneyMgrModel {
 
 	// -------------------------------------
 
+	/** The global history of all securities */
+	public SecurityPortfolio portfolio = new SecurityPortfolio(null);
+
+	// -------------------------------------
+
 	/** Map symbol to security */
 	private final Map<String, Security> securities = new HashMap<>();
 
@@ -476,7 +481,7 @@ public class MoneyMgrModel {
 	private final List<GenericTxn> allTransactionsByDate = new ArrayList<>();
 
 	/** Compare two transactions by date, ascending */
-	private final Comparator<GenericTxn> compareByDate = new Comparator<GenericTxn>() {
+	private static final Comparator<GenericTxn> compareByDate = new Comparator<GenericTxn>() {
 		public int compare(GenericTxn o1, GenericTxn o2) {
 			return o1.getDate().subtract(o2.getDate());
 		}
@@ -653,7 +658,7 @@ public class MoneyMgrModel {
 	}
 
 	/** Return the index of the first transaction on a date. (<0 if none) */
-	private int getFirstTransactionIndexByDate( //
+	private static int getFirstTransactionIndexByDate( //
 			List<? extends GenericTxn> txns, QDate date) {
 		SEARCH().setDate(date);
 
@@ -661,7 +666,7 @@ public class MoneyMgrModel {
 	}
 
 	/** Return the index of the last transaction on a date. (<0 if none) */
-	private int getLastTransactionIndexByDate( //
+	private static int getLastTransactionIndexByDate( //
 			List<? extends GenericTxn> txns, QDate date) {
 		SEARCH().setDate(date);
 
@@ -675,7 +680,7 @@ public class MoneyMgrModel {
 	}
 
 	/**
-	 * Return the index for inserting a transaction into a sorted list by date
+	 * Return the index for inserting a transaction into a list sorted by date
 	 *
 	 * @param txn
 	 * @param before If true, the insertion point before the first txn on the date
@@ -698,7 +703,7 @@ public class MoneyMgrModel {
 	 *                    If INSERT the index after all txns on or before the date.
 	 * @return Index; -(insert index + 1) if FIRST/LAST and no match exists
 	 */
-	private int getTransactionIndexByDate(List<? extends GenericTxn> txns, GenericTxn txn, TxIndexType which) {
+	private static int getTransactionIndexByDate(List<? extends GenericTxn> txns, GenericTxn txn, TxIndexType which) {
 		if (txns.isEmpty()) {
 			return (which == TxIndexType.INSERT) ? 0 : -1;
 		}

@@ -160,7 +160,7 @@ public class Security {
 		}
 	}
 
-	private InvestmentTxn getLastTransaction() {
+	public InvestmentTxn getLastTransaction() {
 		return this.transactions.isEmpty() //
 				? null
 				: this.transactions.get(this.transactions.size() - 1);
@@ -340,6 +340,15 @@ public class Security {
 		return s;
 	}
 
+	public int hashCode() {
+		return this.symbol.hashCode();
+	}
+
+	public boolean equals(Object obj) {
+		return (obj instanceof Security) //
+				&& this.symbol.equals(((Security) obj).symbol);
+	}
+
 	public String matches(Security other) {
 		if (!this.symbol.equals(other.symbol) //
 				|| !Common.safeEquals(this.goal, other.goal) //
@@ -405,6 +414,36 @@ public class Security {
 			String res = lot.matches(olot);
 			if (res != null) {
 				return res;
+			}
+		}
+
+		if (!this.transactions.isEmpty()) {
+			InvestmentTxn tx1 = this.transactions.get(0);
+			QDate lastDate = getLastTransaction().getDate();
+
+			for (QDate date = tx1.getDate(); //
+					date.compareTo(lastDate) <= 0; //
+					date = date.addDays(1)) {
+
+				QPrice p1 = getPriceForDate(date);
+				QPrice p2 = other.getPriceForDate(date);
+
+				if (!p1.equals(p2)) {
+					return String.format("security %s %s price(%s vs %s)", //
+							getName(), date.toString(), p1.toString(), p2.toString());
+//					Common.formatAmount(getPriceForDate(date).getPrice()), //
+//					Common.formatAmount(other.getPriceForDate(date).getPrice()));
+				}
+
+				BigDecimal r1 = getSplitRatioForDate(date);
+				BigDecimal r2 = other.getSplitRatioForDate(date);
+
+				if (!Common.isEffectivelyEqual(r1, r2)) {
+					return String.format("security %s %s splitratio(%s vs %s)", //
+							getName(), date.toString(), //
+							Common.formatAmount(r1).trim(), //
+							Common.formatAmount(r2).trim());
+				}
 			}
 		}
 

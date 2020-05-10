@@ -96,7 +96,8 @@ public class SecurityProcessor {
 	/** Process security txns (global, accounts) after loading from QIF */
 	public static void processSecurities() {
 		// Process global porfolio info
-		processAllSecurities2(SecurityPortfolio.portfolio, MoneyMgrModel.currModel.getAllTransactions());
+		processAllSecurities2(MoneyMgrModel.currModel.portfolio, //
+				MoneyMgrModel.currModel.getAllTransactions());
 
 		// Process holdings for each account
 		for (Account a : MoneyMgrModel.currModel.getAccounts()) {

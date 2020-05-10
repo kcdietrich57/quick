@@ -115,6 +115,12 @@ public class CompareModels {
 				System.out.println("Security missing");
 			}
 		}
+		
+		String res = m1.portfolio.matches(m2.portfolio);
+		if (res != null) {
+			System.out.println("Portfolio:" + res);
+			m1.portfolio.matches(m2.portfolio);
+		}
 	}
 
 	private static void compareCategories(MoneyMgrModel m1, MoneyMgrModel m2) {

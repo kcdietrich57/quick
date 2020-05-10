@@ -365,7 +365,8 @@ public class StockOption {
 		List<StockOption> retOptions = new ArrayList<>();
 
 		for (StockOption opt : MoneyMgrModel.currModel.getStockOptions()) {
-			if ((opt.acctid == acct.acctid) //
+			if ((opt != null) //
+					&& (opt.acctid == acct.acctid) //
 					&& (opt.getAvailableShares(true).signum() != 0) //
 					&& opt.isLiveOn(date)) {
 				retOptions.add(opt);

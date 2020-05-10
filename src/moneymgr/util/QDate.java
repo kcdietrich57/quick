@@ -203,6 +203,10 @@ public class QDate implements Comparable<QDate> {
 		return QDate.getDateForEndOfMonth(year, month);
 	}
 
+	public int hashCode() {
+		return this.getRawValue();
+	}
+
 	public boolean equals(Object obj) {
 		return (obj instanceof QDate) //
 				&& this.datevalue == ((QDate) obj).datevalue;
