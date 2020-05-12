@@ -106,11 +106,12 @@ public class StatementDetails {
 		List<InvestmentTxn> txns = pos.getTransactions();
 		int numtx = txns.size();
 		String s = pos.security.getName() + ";" + numtx;
+		List<BigDecimal> shrbal = pos.getShareBalances();
 
 		for (int ii = 0; ii < numtx; ++ii) {
 			InvestmentTxn t = txns.get(ii);
 			int txidx = stat.transactions.indexOf(t);
-			BigDecimal bal = pos.shrBalance.get(ii);
+			BigDecimal bal = shrbal.get(ii);
 
 			assert txidx >= 0;
 

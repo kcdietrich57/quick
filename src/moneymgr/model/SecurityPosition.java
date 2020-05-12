@@ -164,6 +164,7 @@ public class SecurityPosition {
 
 	public final SecurityPortfolio portfolio;
 	public final Security security;
+
 	private BigDecimal actualEndingShares;
 	private BigDecimal expectedEndingShares;
 
@@ -171,10 +172,10 @@ public class SecurityPosition {
 	private final List<InvestmentTxn> transactions;
 
 	/** Running share balance per transaction */
-	public final List<BigDecimal> shrBalance;
+	private final List<BigDecimal> shrBalance;
 
 	/** Set if this represents a PIT (i.e. statement). Null otherwise. */
-	public BigDecimal endingValue;
+	private BigDecimal endingValue;
 
 	/**
 	 * Create a position
@@ -247,6 +248,18 @@ public class SecurityPosition {
 		int ii = MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate(getTransactions(), d);
 
 		return (ii >= 0) && Common.isEffectivelyZero(this.shrBalance.get(ii));
+	}
+
+	public BigDecimal getEndingValue() {
+		return this.endingValue;
+	}
+
+	public void setEndingValue(BigDecimal value) {
+		this.endingValue = value;
+	}
+
+	public List<BigDecimal> getShareBalances() {
+		return Collections.unmodifiableList(this.shrBalance);
 	}
 
 	/** Reset transactions and sharecount */
@@ -342,18 +355,19 @@ public class SecurityPosition {
 			return;
 		}
 
-		boolean hassplit = false;
-		BigDecimal splitratio = null;
-
 		int idx = 0;
-		while (idx < this.transactions.size() //
+		while ((idx < this.transactions.size()) //
 				&& (compareByDate.compare(txn, this.transactions.get(idx)) > 0)) {
 			++idx;
 		}
 
+		boolean hassplit = false;
+		BigDecimal splitratio = null;
+
 		while (idx < this.transactions.size() //
-				&& (compareByDate.compare(txn, this.transactions.get(idx)) > 0)) {
+				&& (compareByDate.compare(txn, this.transactions.get(idx)) == 0)) {
 			InvestmentTxn tx = this.transactions.get(idx);
+
 			if (tx.getAction() == TxAction.STOCKSPLIT) {
 				if (hassplit) {
 					if (tx.getSplitRatio().compareTo(splitratio) != 0) {
@@ -368,7 +382,7 @@ public class SecurityPosition {
 			++idx;
 		}
 
-		if ((txn.getAction() == TxAction.STOCKSPLIT) && hassplit) {
+		if (hassplit && (txn.getAction() == TxAction.STOCKSPLIT)) {
 			return;
 		}
 
@@ -388,6 +402,7 @@ public class SecurityPosition {
 				shrbal = shrbal.multiply(txn.getSplitRatio());
 			} else {
 				BigDecimal shrs = txn.getShares();
+
 				if (shrs != null) {
 					shrbal = shrbal.add(shrs);
 				}

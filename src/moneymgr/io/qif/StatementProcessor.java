@@ -179,7 +179,7 @@ public class StatementProcessor {
 				SecurityPosition pos = // new SecurityPosition(hold, sec);
 						hold.getPosition(sec);
 
-				pos.endingValue = (valStr.equals("x")) ? null : new BigDecimal(valStr);
+				pos.setEndingValue((valStr.equals("x")) ? null : new BigDecimal(valStr));
 				BigDecimal endingShares = (qtyStr.equals("x")) ? null : new BigDecimal(qtyStr);
 				BigDecimal price = (priceStr.equals("x")) ? null : new BigDecimal(priceStr);
 				BigDecimal price4date = sec.getPriceForDate(currstmt.date).getPrice();
@@ -190,7 +190,7 @@ public class StatementProcessor {
 				// price on the day of the statement.
 				// If we know two of the values, we can calculate the third.
 				if (endingShares == null) {
-					if (pos.endingValue == null) {
+					if (pos.getEndingValue() == null) {
 						Common.reportError("Missing security info in stmt");
 					}
 
@@ -198,13 +198,13 @@ public class StatementProcessor {
 						price = price4date;
 					}
 
-					endingShares = pos.endingValue.divide(price, RoundingMode.HALF_UP);
-				} else if (pos.endingValue == null) {
+					endingShares = pos.getEndingValue().divide(price, RoundingMode.HALF_UP);
+				} else if (pos.getEndingValue() == null) {
 					if (price == null) {
 						price = price4date;
 					}
 
-					pos.endingValue = price.multiply(endingShares);
+					pos.setEndingValue(price.multiply(endingShares));
 				} else if (price == null) {
 					price = price4date;
 				}

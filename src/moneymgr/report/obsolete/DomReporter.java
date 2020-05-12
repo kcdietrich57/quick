@@ -148,12 +148,13 @@ public class DomReporter {
 					"Date", "Action", "Shares", "Balance"));
 
 			List<InvestmentTxn> txns = p.getTransactions();
+			List<BigDecimal> shrbals = p.getShareBalances();
 
 			for (int ii = 0; ii < txns.size(); ++ii) {
 				InvestmentTxn t = txns.get(ii);
 
 				if (t.getShares() != null) {
-					BigDecimal shrbal = p.shrBalance.get(ii);
+					BigDecimal shrbal = shrbals.get(ii);
 
 					System.out.println(String.format( //
 							"  %-12s  %-10s  %s  %s", //
@@ -179,11 +180,13 @@ public class DomReporter {
 					"Date", "Account", "Action", "Shares", "Balance"));
 
 			List<InvestmentTxn> txns = p.getTransactions();
+			List<BigDecimal> shrbals = p.getShareBalances();
+
 			for (int ii = 0; ii < txns.size(); ++ii) {
 				InvestmentTxn t = txns.get(ii);
 
 				if (t.getShares() != null) {
-					BigDecimal shrbal = p.shrBalance.get(ii);
+					BigDecimal shrbal = shrbals.get(ii);
 
 					System.out.println(String.format( //
 							"  %-12s  %-20s  %-10s  %s  %s", //

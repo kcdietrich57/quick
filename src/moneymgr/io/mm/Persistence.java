@@ -40,6 +40,14 @@ import moneymgr.model.TxAction;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
+/*
+ Splits
+ 9/16/92 olde options
+ 6/14/93 olde espp options
+ 6/26/95 olde espp options
+ 6/27/95 w&r
+ 6/13/03 etrade options smithbarney tdiraEtrade
+ */
 /** Read/write data in native (JSON) format */
 public class Persistence {
 	private static String encodeString(String s) {
@@ -764,7 +772,7 @@ public class Persistence {
 					holdings += sep2 + String.format("[%d,%s,%s]", //
 							p.security.secid, //
 							encodeAmount3(p.getEndingShares()), //
-							encodeAmount(p.endingValue));
+							encodeAmount(p.getEndingValue()));
 					sep2 = ",";
 				}
 				holdings += "]";
@@ -1686,7 +1694,7 @@ public class Persistence {
 
 					SecurityPosition pos = stmt.holdings.getPosition(secid);
 					pos.setExpectedEndingShares(qty);
-					pos.endingValue = value;
+					pos.setEndingValue(value);
 				}
 			}
 		}
