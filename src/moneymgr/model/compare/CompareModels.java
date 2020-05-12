@@ -115,7 +115,7 @@ public class CompareModels {
 				System.out.println("Security missing");
 			}
 		}
-		
+
 		String res = m1.portfolio.matches(m2.portfolio);
 		if (res != null) {
 			System.out.println("Portfolio:" + res);
