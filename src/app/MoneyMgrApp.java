@@ -38,11 +38,27 @@ public class MoneyMgrApp {
 	}
 
 	public static void main(String[] args) {
-		boolean loadwin = true;
 		boolean savejson = true;
-		boolean loadjson = true;
 		boolean comparejson = true;
-		boolean usejson = false;
+		boolean usejson = true;
+
+		boolean loadwin = false;
+		boolean loadjson = false;
+
+		if (usejson) {
+			loadjson = true;
+		} else {
+			loadwin = true;
+		}
+		
+		if (savejson) {
+			loadwin = true;
+		}
+
+		if (comparejson) {
+			loadwin = true;
+			loadjson = true;
+		}
 
 		boolean ENABLE_EXPERIMENTAL_CODE = false;
 
@@ -50,7 +66,7 @@ public class MoneyMgrApp {
 		startupTime = System.currentTimeMillis();
 		lapTime = startupTime;
 
-		if (loadwin || savejson || comparejson) {
+		if (loadwin) {
 			MoneyMgrModel.changeModel(WIN_QIF_MODEL_NAME);
 
 			Common.reportInfo("Loading QIF data");
@@ -90,7 +106,7 @@ public class MoneyMgrApp {
 			Common.reportInfo(String.format("JSON saved: %s", elapsedTime()));
 		}
 
-		if (loadjson || comparejson || usejson) {
+		if (loadjson) {
 			Common.reportInfo(String.format("Loading JSON"));
 			persistence.loadJSON(WIN_JSON_MODEL_NAME, jsonFilename);
 			Common.reportInfo(String.format("JSON loaded: %s", elapsedTime()));
