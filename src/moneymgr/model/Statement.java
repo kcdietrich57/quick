@@ -207,7 +207,8 @@ public class Statement {
 	/** Remove a transaction from the cleared list */
 	public void unclearTransaction(GenericTxn txn) {
 		if (this.transactions.remove(txn)) {
-			txn.setStatementDate(null);;
+			txn.setStatementDate(null);
+			;
 
 			this.holdings.removeTransaction(txn);
 			this.unclearedTransactions.add(txn);

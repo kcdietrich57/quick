@@ -2,6 +2,7 @@ package moneymgr.model;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -12,7 +13,7 @@ import java.util.List;
  */
 public class MultiSplitTxn extends SplitTxn {
 	/** Group of splits in this txn that connect to the other txn */
-	public List<SplitTxn> subsplits = new ArrayList<>();
+	private final List<SplitTxn> subsplits = new ArrayList<>();
 
 	public MultiSplitTxn(int txid, SimpleTxn parent) {
 		super(txid, parent);
@@ -34,6 +35,7 @@ public class MultiSplitTxn extends SplitTxn {
 				return;
 			}
 		}
+
 		this.subsplits.add(txn);
 		txn.setParent(this);
 
@@ -45,7 +47,7 @@ public class MultiSplitTxn extends SplitTxn {
 	}
 
 	public List<SplitTxn> getSplits() {
-		return this.subsplits;
+		return Collections.unmodifiableList(this.subsplits);
 	}
 
 	public String formatValue() {

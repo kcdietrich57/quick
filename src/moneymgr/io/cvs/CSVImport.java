@@ -575,7 +575,8 @@ public class CSVImport {
 				if (this.lasttxn != null) {
 					if (!this.lasttxn.getDate().equals(tuple.getDate()) //
 							|| !this.lasttxn.hasSplits() //
-							|| this.lasttxn.chkNumber != tuple.value(TransactionInfo.CHECKNUM_IDX)) {
+							|| !this.lasttxn.getCheckNumberString().equals( //
+									tuple.value(TransactionInfo.CHECKNUM_IDX))) {
 						// TODO at some point, validate splits
 						this.lasttxn = null;
 					}
@@ -620,7 +621,7 @@ public class CSVImport {
 
 			if (txn instanceof NonInvestmentTxn) {
 				NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
-				nitxn.chkNumber = cknum;
+				nitxn.setCheckNumber(cknum);
 			}
 // TODO payee, acctForTransfer, amountTransferred, 
 // TODO lots

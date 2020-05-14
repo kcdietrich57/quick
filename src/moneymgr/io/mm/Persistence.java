@@ -580,7 +580,7 @@ public class Persistence {
 						splits += String.format("[%d,[", split.txid);
 
 						String sep2 = "";
-						for (SplitTxn ssplit : ((MultiSplitTxn) split).subsplits) {
+						for (SplitTxn ssplit : ((MultiSplitTxn) split).getSplits()) {
 							splits += sep2;
 							splits += String.format("%d", ssplit.txid);
 							sep2 = ",";

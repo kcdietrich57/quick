@@ -37,12 +37,6 @@ public class Lot {
 	private InvestmentTxn disposingTransaction;
 
 	/**
-	 * TODO unused addshares is always true<br>
-	 * True if this represents adding shares to the associated account
-	 */
-	public boolean addshares = true;
-
-	/**
 	 * Common constructor for a lot that is not yet disposed of or transferred.<br>
 	 * From purchase, transfer, split, etc.
 	 *
@@ -389,7 +383,6 @@ public class Lot {
 		}
 
 		if (!(this.acctid == other.acctid //
-				&& this.addshares == other.addshares //
 				&& this.secid == other.secid //
 				&& Common.isEffectivelyEqual(this.shares, other.shares) //
 				&& Common.isEffectivelyEqual(this.basisPrice, other.basisPrice) //

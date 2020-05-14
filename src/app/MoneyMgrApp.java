@@ -50,7 +50,7 @@ public class MoneyMgrApp {
 		} else {
 			loadwin = true;
 		}
-		
+
 		if (savejson) {
 			loadwin = true;
 		}

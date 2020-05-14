@@ -52,7 +52,7 @@ public class NonInvestmentTxn extends GenericTxn {
 				: String.format("%s %s %5s %s %s", //
 						((getStatementDate() != null) ? "*" : " "), //
 						getDate().toString(), //
-						this.chkNumber, //
+						this.getCheckNumberString(), //
 						Common.formatAmount(getAmount()), //
 						getPayee());
 	}
@@ -61,22 +61,30 @@ public class NonInvestmentTxn extends GenericTxn {
 		String s = "";
 
 		s += ((getStatementDate() != null) ? "*" : " ");
+
 		QDate d = getDate();
 		s += ((d != null) ? d.toString() : "null");
+
 		s += " Tx" + this.txid + ":   ";
+
 		Account a = MoneyMgrModel.currModel.getAccountByID(getAccountID());
 		s += ((a != null) ? a.name : "null");
-		if (this.chkNumber != null && !this.chkNumber.isEmpty()) {
-			s += " num=" + this.chkNumber;
+
+		String cknum = getCheckNumberString();
+		if ((cknum != null) && !cknum.isEmpty()) {
+			s += " num=" + cknum;
 		}
+
 		s += " " + Common.formatAmount(getAmount()).trim();
 		s += " " + getPayee();
 		s += " xfer/cat=" + getCategory();
+
 		if (getCashTransferAcctid() > 0) {
 			s += "(";
 			s += "" + ((getCashTransferTxn() != null) ? getCashTransferTxn().txid : "-");
 			s += ")";
 		}
+
 		s += " memo=" + getMemo();
 		s += " bal=" + this.getRunningTotal();
 

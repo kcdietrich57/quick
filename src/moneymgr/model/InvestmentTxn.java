@@ -55,7 +55,7 @@ public class InvestmentTxn extends GenericTxn {
 	/** TODO TxAction not for non-investment txns? Action taken by transaction */
 	private TxAction action;
 
-	public Security security;
+	private Security security;
 	public StockOption option;
 	public BigDecimal price;
 	private BigDecimal quantity;

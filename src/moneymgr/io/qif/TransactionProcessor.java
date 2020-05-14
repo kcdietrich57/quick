@@ -233,7 +233,7 @@ public class TransactionProcessor {
 				// Ignore
 				break;
 			case TxnNumber:
-				txn.chkNumber = qline.value;
+				txn.setCheckNumber(qline.value);
 				tinfo.setValue(TransactionInfo.CHECKNUM_IDX, qline.value);
 				break;
 			case TxnPayee:

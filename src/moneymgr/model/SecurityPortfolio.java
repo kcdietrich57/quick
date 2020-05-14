@@ -23,7 +23,7 @@ public class SecurityPortfolio {
 	public final SecurityPortfolio prevPortfolio;
 
 	/** Position history for each security tracked in this portfolio */
-	public List<SecurityPosition> positions;
+	public final List<SecurityPosition> positions;
 
 	/** Create a statement holdings object connected to previous statement */
 	public SecurityPortfolio(SecurityPortfolio prev) {

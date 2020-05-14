@@ -54,7 +54,7 @@ public class Security {
 	public final int secid;
 
 	/** Names the security is known by (first is default) */
-	public List<String> names;
+	public final List<String> names;
 
 	/** Ticker symbol of security */
 	public final String symbol;

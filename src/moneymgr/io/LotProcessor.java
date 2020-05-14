@@ -276,7 +276,7 @@ public class LotProcessor {
 			bal = bal.add(lot.shares);
 
 			if (curdate == null || //
-					!(addshares == lot.addshares //
+					!(addshares //
 							&& curdate.equals(lot.createDate) //
 							&& curaction.equals(lot.createTransaction.getAction()))) {
 				s += String.format("\n%s %s %s", //
@@ -288,7 +288,7 @@ public class LotProcessor {
 						Common.formatAmount(lot.shares));
 			}
 
-			addshares = lot.addshares;
+			addshares = true;
 			curdate = lot.createDate;
 			curaction = lot.createTransaction.getAction();
 		}

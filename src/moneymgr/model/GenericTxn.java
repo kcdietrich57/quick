@@ -16,7 +16,7 @@ public abstract class GenericTxn //
 	// TODO make txn properties immutable
 	private QDate date;
 	private String payee;
-	public String chkNumber;
+	private String chkNumber;
 
 	// TODO move splits to SimpleTxn/GenericTxn?//
 	// Why shouldn't an investment txn have splits?
@@ -61,6 +61,10 @@ public abstract class GenericTxn //
 
 	public void setCheckNumber(String cknum) {
 		this.chkNumber = cknum;
+	}
+
+	public String getCheckNumberString() {
+		return this.chkNumber;
 	}
 
 	public int getCheckNumber() {
