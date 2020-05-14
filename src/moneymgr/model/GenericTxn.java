@@ -1,6 +1,8 @@
 package moneymgr.model;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 import moneymgr.io.TransactionInfo;
 import moneymgr.util.Common;
@@ -16,7 +18,11 @@ public abstract class GenericTxn //
 	private String payee;
 	public String chkNumber;
 
-	public QDate stmtdate;
+	// TODO move splits to SimpleTxn/GenericTxn?//
+	// Why shouldn't an investment txn have splits?
+	private final List<SplitTxn> splits;
+
+	private QDate stmtdate;
 
 	/** Keeps track of account balance - depends on order of transactions */
 	private BigDecimal runningTotal;
@@ -36,6 +42,9 @@ public abstract class GenericTxn //
 		this.payee = "";
 		this.stmtdate = null;
 		this.runningTotal = null;
+		this.chkNumber = "";
+
+		this.splits = new ArrayList<>();
 
 		if (this.txid > 0 && getAccountID() > 0) {
 			MoneyMgrModel.currModel.addTransaction(this);
@@ -54,21 +63,50 @@ public abstract class GenericTxn //
 		this.chkNumber = cknum;
 	}
 
-	public int compareWith(TransactionInfo tuple, SimpleTxn othersimp) {
-		int diff;
-
-		diff = super.compareWith(tuple, othersimp);
-		if (diff != 0) {
-			return diff;
+	public int getCheckNumber() {
+		if ((this.chkNumber == null) || (this.chkNumber.length() == 0)) {
+			return 0;
 		}
 
-//		if (!(othersimp instanceof GenericTxn)) {
-//			return -1;
-//		}
-//
-//		GenericTxn other = (GenericTxn) othersimp;
+		// Quicken puts other info (e.g. 'DEP') in this field as well
+		if (!Character.isDigit(this.chkNumber.charAt(0))) {
+			return 0;
+		}
 
-		return 0;
+		try {
+			return Integer.parseInt(this.chkNumber);
+		} catch (Exception e) {
+			return 0;
+		}
+	}
+
+	public boolean hasSplits() {
+		return (this.splits != null) && !this.splits.isEmpty();
+	}
+
+	public List<SplitTxn> getSplits() {
+		return this.splits;
+	}
+
+	public void addSplit(SplitTxn txn) {
+		this.splits.add(txn);
+	}
+
+	/** Do sanity check of splits */
+	public void verifySplit() {
+		if (this.splits.isEmpty()) {
+			return;
+		}
+
+		BigDecimal dec = BigDecimal.ZERO;
+
+		for (SimpleTxn txn : this.splits) {
+			dec = dec.add(txn.getAmount());
+		}
+
+		if (!dec.equals(getAmount())) {
+			Common.reportError("Total(" + getAmount() + ") does not match split total (" + dec + ")");
+		}
 	}
 
 	/** TODO relocate? Correct missing/bad information from input data */

@@ -104,7 +104,6 @@ public class InvestmentTxn extends GenericTxn {
 		setAmount(txn.getAmount());
 
 		setRunningTotal(BigDecimal.ZERO);
-		this.stmtdate = null;
 
 		this.action = txn.action;
 		this.security = txn.security;
@@ -609,7 +608,7 @@ public class InvestmentTxn extends GenericTxn {
 
 	public String toStringShort(boolean veryshort) {
 		String s = String.format("%s %s %s:%s", //
-				((this.stmtdate != null) ? "*" : " "), //
+				((getStatementDate() != null) ? "*" : " "), //
 				getDate().toString(), //
 				getAccount().name, //
 				this.action.toString());
@@ -634,7 +633,7 @@ public class InvestmentTxn extends GenericTxn {
 	}
 
 	public String toStringLong() {
-		String s = ((this.stmtdate != null) ? "*" : " ");
+		String s = ((getStatementDate() != null) ? "*" : " ");
 		QDate d = getDate();
 		s += ((d != null) ? d.toString() : "null");
 		s += " Tx" + this.txid + ": I ";

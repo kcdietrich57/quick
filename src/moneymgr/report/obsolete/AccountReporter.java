@@ -47,7 +47,7 @@ public class AccountReporter {
 			int unclearedCount = 0;
 
 			for (GenericTxn t : acct.getTransactions()) {
-				if (t.stmtdate == null) {
+				if (t.getStatementDate() == null) {
 					++unclearedCount;
 				}
 			}

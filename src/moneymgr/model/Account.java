@@ -584,7 +584,7 @@ public class Account {
 		for (int ii = 0; ii < this.transactions.size(); ++ii) {
 			GenericTxn t = this.transactions.get(ii);
 
-			if ((t != null) && (t.stmtdate == null)) {
+			if ((t != null) && (t.getStatementDate() == null)) {
 				return ii;
 			}
 		}
@@ -597,7 +597,7 @@ public class Account {
 		int count = 0;
 
 		for (GenericTxn t : this.transactions) {
-			if ((t != null) && (t.stmtdate == null)) {
+			if ((t != null) && (t.getStatementDate() == null)) {
 				++count;
 			}
 		}
@@ -615,7 +615,7 @@ public class Account {
 				++txidx) {
 			GenericTxn t = this.transactions.get(txidx);
 
-			if ((t != null) && (t.stmtdate == null)) {
+			if ((t != null) && (t.getStatementDate() == null)) {
 				txns.add(t);
 			}
 		}

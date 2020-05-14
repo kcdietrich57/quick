@@ -144,7 +144,7 @@ public class Reconciler {
 				if (info.date.compareTo(t.getDate()) == 0) {
 					if ((info.cknum == t.getCheckNumber()) //
 							&& (info.cashAmount.compareTo(t.getCashAmount()) == 0)) {
-						if (t.stmtdate != null) {
+						if (t.getStatementDate() != null) {
 							Common.reportError("Reconciling transaction twice:\n" //
 									+ t.toString());
 						}
@@ -175,7 +175,7 @@ public class Reconciler {
 		}
 
 		for (GenericTxn t : s.transactions) {
-			t.stmtdate = s.date;
+			t.setStatementDate(s.date);
 		}
 
 		s.isBalanced = true;

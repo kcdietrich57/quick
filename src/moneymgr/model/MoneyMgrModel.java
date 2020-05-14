@@ -18,10 +18,17 @@ import moneymgr.util.QDate;
 
 /** Class comprising the complete MoneyManager data model */
 public class MoneyMgrModel {
+	/** Maintain multiple models so we can switch between them and compare */
 	private static final Map<String, MoneyMgrModel> models = new HashMap<String, MoneyMgrModel>();
+
 	public static MoneyMgrModel currModel;
 
-	/** Change the current model for load/save. This does not affect the UI. */
+	/** Dummy transaction for binary search */
+	private static GenericTxn SEARCH_TX;
+
+	// -------------------------------------
+
+	/** Change the current model */
 	public static MoneyMgrModel changeModel(String name) {
 		MoneyMgrModel.currModel = MoneyMgrModel.models.get(name);
 
@@ -37,11 +44,54 @@ public class MoneyMgrModel {
 		CompareModels.compareModels(models.get(m1), models.get(m2));
 	}
 
+	// -------------------------------------
+
+	public final String name;
+
 	private int nextTxid = 1;
 
-	public int createTxid() {
-		return this.nextTxid++;
+	private final List<Category> categories = new ArrayList<>();
+
+	/** The global history of all securities */
+	public SecurityPortfolio portfolio = new SecurityPortfolio(null);
+
+	/** Securities indexed by ID */
+	private final List<Security> securitiesByID = new ArrayList<>();
+
+	/** Map symbol to security */
+	private final Map<String, Security> securities = new HashMap<>();
+
+	/** Account list ordered by first/last txn dates (no gaps/nulls) */
+	private final List<Account> accounts = new ArrayList<>();
+
+	/** Account list indexed by acctid (size > numAccounts, may have gaps/nulls) */
+	private final List<Account> accountsByID = new ArrayList<>();
+
+	/** Tracks current context as we are loading */
+	public Account currAccountBeingLoaded = null;
+
+	/**
+	 * Indicator for which transaction index to return from get by date.
+	 *
+	 * @value INSERT The index at which to insert a new transaction
+	 * @value FIRST The first transaction on the date (-1 if not found)
+	 * @value LAST The last transaction on the date (-1 if not found)
+	 */
+	private enum TxIndexType {
+		INSERT, FIRST, LAST
 	}
+
+	/** All transactions indexed by ID. May contain gaps/null values */
+	private final List<SimpleTxn> allTransactionsByID = new ArrayList<>();
+
+	/** All transactions sorted by date. Will not contain null values */
+	private final List<GenericTxn> allTransactionsByDate = new ArrayList<>();
+
+	private List<Lot> lots = new ArrayList<Lot>();
+
+	private final List<StockOption> stockOptions = new ArrayList<>();
+
+	// -------------------------------------
 
 	public MoneyMgrModel(String name) {
 		int nn = 0;
@@ -54,9 +104,7 @@ public class MoneyMgrModel {
 		MoneyMgrModel.models.put(thename, this);
 	}
 
-	public final String name;
-
-	private final List<Category> categories = new ArrayList<>();
+	// -------------------------------------
 
 	public List<Category> getCategories() {
 		return Collections.unmodifiableList(this.categories);
@@ -96,20 +144,9 @@ public class MoneyMgrModel {
 
 	// -------------------------------------
 
-	/** The global history of all securities */
-	public SecurityPortfolio portfolio = new SecurityPortfolio(null);
-
-	// -------------------------------------
-
-	/** Map symbol to security */
-	private final Map<String, Security> securities = new HashMap<>();
-
 	public int nextSecurityId() {
 		return securities.size() + 1;
 	}
-
-	/** Securities indexed by ID */
-	private final List<Security> securitiesByID = new ArrayList<>();
 
 	public Collection<Security> getSecurities() {
 		return Collections.unmodifiableCollection(securities.values());
@@ -178,15 +215,6 @@ public class MoneyMgrModel {
 	}
 
 	// -------------------------------------
-
-	/** Account list ordered by first/last txn dates (no gaps/nulls) */
-	private final List<Account> accounts = new ArrayList<>();
-
-	/** Account list indexed by acctid (size > numAccounts, may have gaps/nulls) */
-	private final List<Account> accountsByID = new ArrayList<>();
-
-	/** Tracks current context as we are loading */
-	public Account currAccountBeingLoaded = null;
 
 	public Account makeAccount( //
 			String name, AccountType type, String desc, QDate closeDate, //
@@ -287,7 +315,7 @@ public class MoneyMgrModel {
 	}
 
 	/** Compare two accounts by date of first and last transaction, then name */
-	private int compareAccountsByTxnDateAndName(Account a1, Account a2) {
+	private static int compareAccountsByTxnDateAndName(Account a1, Account a2) {
 		if (a1 == null) {
 			return (a2 == null) ? 0 : 1;
 		} else if (a2 == null) {
@@ -325,7 +353,7 @@ public class MoneyMgrModel {
 	}
 
 	/** Compare two accounts by date of first and last transaction, then name */
-	private int compareAccountsByTypeAndName(Account a1, Account a2) {
+	private static int compareAccountsByTypeAndName(Account a1, Account a2) {
 		int diff;
 
 		if (a1.type != a2.type) {
@@ -463,22 +491,9 @@ public class MoneyMgrModel {
 
 	// -------------------------------------
 
-	/**
-	 * Indicator for which transaction index to return from get by date.
-	 *
-	 * @value INSERT The index at which to insert a new transaction
-	 * @value FIRST The first transaction on the date (-1 if not found)
-	 * @value LAST The last transaction on the date (-1 if not found)
-	 */
-	private enum TxIndexType {
-		INSERT, FIRST, LAST
+	public int createTxid() {
+		return this.nextTxid++;
 	}
-
-	/** All transactions indexed by ID. May contain gaps/null values */
-	private final List<SimpleTxn> allTransactionsByID = new ArrayList<>();
-
-	/** All transactions sorted by date. Will not contain null values */
-	private final List<GenericTxn> allTransactionsByDate = new ArrayList<>();
 
 	/** Compare two transactions by date, ascending */
 	private static final Comparator<GenericTxn> compareByDate = new Comparator<GenericTxn>() {
@@ -486,9 +501,6 @@ public class MoneyMgrModel {
 			return o1.getDate().subtract(o2.getDate());
 		}
 	};
-
-	/** Dummy transaction for binary search */
-	private static GenericTxn SEARCH_TX;
 
 	public static GenericTxn SEARCH() {
 		if (SEARCH_TX == null) {
@@ -780,8 +792,6 @@ public class MoneyMgrModel {
 
 	// -------------------------------------
 
-	private List<Lot> lots = new ArrayList<Lot>();
-
 	public int nextLotId() {
 		return (this.lots.isEmpty()) ? 1 : this.lots.size();
 	}
@@ -807,8 +817,6 @@ public class MoneyMgrModel {
 	}
 
 	// -------------------------------------
-
-	private final List<StockOption> stockOptions = new ArrayList<>();
 
 	public int nextStockOptionId() {
 		return this.stockOptions.size();
