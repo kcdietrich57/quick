@@ -50,7 +50,7 @@ public class NonInvestmentTxn extends GenericTxn {
 						Common.formatAmount(getAmount()), //
 						getPayee()) //
 				: String.format("%s %s %5s %s %s", //
-						((getStatementDate() != null) ? "*" : " "), //
+						(isCleared() ? "*" : " "), //
 						getDate().toString(), //
 						this.getCheckNumberString(), //
 						Common.formatAmount(getAmount()), //
@@ -60,7 +60,7 @@ public class NonInvestmentTxn extends GenericTxn {
 	public String toStringLong() {
 		String s = "";
 
-		s += ((getStatementDate() != null) ? "*" : " ");
+		s += (isCleared() ? "*" : " ");
 
 		QDate d = getDate();
 		s += ((d != null) ? d.toString() : "null");

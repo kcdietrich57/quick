@@ -129,11 +129,6 @@ public abstract class GenericTxn //
 		this.payee = payee;
 	}
 
-	/** Whether this transaction belongs to a statement */
-	public boolean isCleared() {
-		return this.stmtdate != null;
-	}
-
 	/** Disassociate this transaction from its statement */
 	public void clear(Statement s) {
 		this.stmtdate = s.date;
@@ -149,6 +144,10 @@ public abstract class GenericTxn //
 		this.date = date;
 
 		MoneyMgrModel.currModel.changeTransactionDate(this, olddate);
+	}
+
+	public final void setStatementDate(QDate date) {
+		this.stmtdate = date;
 	}
 
 	/** TODO poorly named - Comparison by date and check number */

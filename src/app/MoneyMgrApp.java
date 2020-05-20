@@ -40,7 +40,7 @@ public class MoneyMgrApp {
 	public static void main(String[] args) {
 		boolean savejson = true;
 		boolean comparejson = true;
-		boolean usejson = true;
+		boolean usejson = false;
 
 		boolean loadwin = false;
 		boolean loadjson = false;

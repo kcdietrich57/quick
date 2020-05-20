@@ -604,7 +604,7 @@ public class Persistence {
 				// NonInvestmentTxn
 				// InvestmentTxn
 
-				int sdate = (tx.getStatementDate() != null) //
+				int sdate = (tx.isCleared()) //
 						? tx.getStatementDate().getRawValue() //
 						: 0;
 

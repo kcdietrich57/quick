@@ -27,7 +27,7 @@ public class QifReporter {
 
 			if (t == null) {
 				++nullt;
-			} else if (t.getStatementDate() != null) {
+			} else if (t.isCleared()) {
 				++reconciled;
 			} else {
 				++unreconciled;

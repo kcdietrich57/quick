@@ -608,7 +608,7 @@ public class InvestmentTxn extends GenericTxn {
 
 	public String toStringShort(boolean veryshort) {
 		String s = String.format("%s %s %s:%s", //
-				((getStatementDate() != null) ? "*" : " "), //
+				(isCleared() ? "*" : " "), //
 				getDate().toString(), //
 				getAccount().name, //
 				this.action.toString());
@@ -633,7 +633,7 @@ public class InvestmentTxn extends GenericTxn {
 	}
 
 	public String toStringLong() {
-		String s = ((getStatementDate() != null) ? "*" : " ");
+		String s = (isCleared() ? "*" : " ");
 		QDate d = getDate();
 		s += ((d != null) ? d.toString() : "null");
 		s += " Tx" + this.txid + ": I ";

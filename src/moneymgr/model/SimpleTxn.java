@@ -248,6 +248,11 @@ public abstract class SimpleTxn implements Txn {
 		return null;
 	}
 
+	/** Whether this transaction belongs to a statement */
+	public final boolean isCleared() {
+		return getStatementDate() != null;
+	}
+
 	public void setStatementDate(QDate date) {
 		// not applicable
 	}

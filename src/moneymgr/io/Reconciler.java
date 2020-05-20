@@ -144,7 +144,7 @@ public class Reconciler {
 				if (info.date.compareTo(t.getDate()) == 0) {
 					if ((info.cknum == t.getCheckNumber()) //
 							&& (info.cashAmount.compareTo(t.getCashAmount()) == 0)) {
-						if (t.getStatementDate() != null) {
+						if (t.isCleared()) {
 							Common.reportError("Reconciling transaction twice:\n" //
 									+ t.toString());
 						}
