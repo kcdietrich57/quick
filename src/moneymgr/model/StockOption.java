@@ -188,7 +188,8 @@ public class StockOption {
 	/** Match up an ESPP transaction with the option object */
 	public static void processEspp(InvestmentTxn txn) {
 		for (StockOption opt : MoneyMgrModel.currModel.getStockOptions()) {
-			if ((opt.srcOption == null) //
+			if ((opt != null) //
+					&& (opt.srcOption == null) //
 					&& opt.date.equals(txn.getDate()) //
 					&& (opt.secid == txn.getSecurityId()) //
 					&& (opt.acctid == txn.getAccountID())) {
@@ -218,7 +219,8 @@ public class StockOption {
 		for (StockOption opt : MoneyMgrModel.currModel.getStockOptions()) {
 // TODO match option name with transaction memo
 // TODO fix other actions similarly
-			if ((opt.srcOption == null) //
+			if ((opt != null) //
+					&& (opt.srcOption == null) //
 					&& opt.date.equals(txn.getDate()) //
 					&& (opt.secid == txn.getSecurityId()) //
 					&& (opt.acctid == txn.getAccountID())) {
@@ -248,7 +250,8 @@ public class StockOption {
 	/** Match up a vest transaction with the option object */
 	public static void processVest(InvestmentTxn txn) {
 		for (StockOption opt : MoneyMgrModel.currModel.getStockOptions()) {
-			if ((opt.srcOption != null) //
+			if ((opt != null) //
+					&& (opt.srcOption != null) //
 					&& (opt.secid == txn.getSecurityId()) //
 					&& opt.date.equals(txn.getDate()) //
 					&& (opt.vestCurrent != opt.srcOption.vestCurrent)) {
@@ -271,7 +274,8 @@ public class StockOption {
 		boolean found = false;
 
 		for (StockOption opt : MoneyMgrModel.currModel.getStockOptions()) {
-			if ((opt.srcOption != null) //
+			if ((opt != null) //
+					&& (opt.srcOption != null) //
 					&& opt.date.equals(txn.getDate()) //
 					&& (opt.vestCurrent == opt.srcOption.vestCurrent) //
 					&& (opt.grantShares.compareTo(opt.srcOption.grantShares) != 0) //
@@ -294,7 +298,8 @@ public class StockOption {
 	/** Match up an exercise transaction with the option object */
 	public static void processExercise(InvestmentTxn txn) {
 		for (StockOption opt : MoneyMgrModel.currModel.getStockOptions()) {
-			if ((opt.srcOption != null) //
+			if ((opt != null) //
+					&& (opt.srcOption != null) //
 					&& (opt.secid == txn.getSecurityId()) //
 					&& opt.date.equals(txn.getDate()) //
 					&& (opt.vestCurrent == opt.srcOption.vestCurrent) //
@@ -317,7 +322,8 @@ public class StockOption {
 	/** Match up an expire transaction with the option object */
 	public static void processExpire(InvestmentTxn txn) {
 		for (StockOption opt : MoneyMgrModel.currModel.getStockOptions()) {
-			if ((opt.secid == txn.getSecurityId()) //
+			if ((opt != null) //
+					&& (opt.secid == txn.getSecurityId()) //
 					&& opt.date.equals(txn.getDate()) //
 					&& (opt.srcOption != null) //
 					&& (opt.vestCurrent == opt.srcOption.vestCurrent) //
@@ -339,7 +345,7 @@ public class StockOption {
 	/** Return an open option with a given name */
 	public static StockOption getOpenOption(String name) {
 		for (StockOption opt : MoneyMgrModel.currModel.getStockOptions()) {
-			if ((opt.cancelDate == null) && (opt.name.equals(name))) {
+			if ((opt != null) && (opt.cancelDate == null) && (opt.name.equals(name))) {
 				return opt;
 			}
 		}
@@ -352,7 +358,7 @@ public class StockOption {
 		List<StockOption> openOptions = new ArrayList<>();
 
 		for (StockOption opt : MoneyMgrModel.currModel.getStockOptions()) {
-			if (opt.cancelDate == null) {
+			if ((opt != null) && (opt.cancelDate == null)) {
 				openOptions.add(opt);
 			}
 		}
@@ -367,7 +373,7 @@ public class StockOption {
 		for (StockOption opt : MoneyMgrModel.currModel.getStockOptions()) {
 			if ((opt != null) //
 					&& (opt.acctid == acct.acctid) //
-					&& (opt.getAvailableShares(true).signum() != 0) //
+					&& (opt.getAvailableShares(date, true).signum() != 0) //
 					&& opt.isLiveOn(date)) {
 				retOptions.add(opt);
 			}
@@ -592,13 +598,14 @@ public class StockOption {
 	}
 
 	public StockOption( //
-			int optid, String name, QDate date, int acctid, int secid, BigDecimal shares, //
+			StockOption srcopt, int optid, String name, QDate date, //
+			int acctid, int secid, BigDecimal shares, //
 			BigDecimal strikeprice, BigDecimal cost, //
 			BigDecimal marketprice, BigDecimal origmarketvalue, //
 			int lifetimeMonths, int vestFrequency, int vestCount) {
 		this.optid = optid;
 
-		this.srcOption = null;
+		this.srcOption = srcopt;
 		this.cancelDate = null;
 
 		this.name = name;
@@ -645,7 +652,7 @@ public class StockOption {
 			return BigDecimal.ZERO;
 		}
 
-		BigDecimal shares = getAvailableShares(true);
+		BigDecimal shares = getAvailableShares(date, true);
 		QPrice qprice = MoneyMgrModel.currModel.getSecurity(this.secid).getPriceForDate(date);
 		BigDecimal netPrice = qprice.getPrice().subtract(this.strikePrice);
 

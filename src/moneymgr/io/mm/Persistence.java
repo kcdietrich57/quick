@@ -1610,7 +1610,7 @@ public class Persistence {
 				}
 
 				StockOption opt = new StockOption( //
-						optid, name, date, acctid, secid, shares, //
+						srcopt, optid, name, date, acctid, secid, shares, //
 						strikeprice, cost, marketprice, origmarketvalue, //
 						lifetimemonths, vestfreq, vestcount);
 

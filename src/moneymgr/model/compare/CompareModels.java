@@ -1,5 +1,6 @@
 package moneymgr.model.compare;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import app.MoneyMgrApp;
@@ -10,6 +11,7 @@ import moneymgr.model.Security;
 import moneymgr.model.SimpleTxn;
 import moneymgr.model.Statement;
 import moneymgr.util.Common;
+import moneymgr.util.QDate;
 
 public class CompareModels {
 	public static void compareModels(MoneyMgrModel m1, MoneyMgrModel m2) {
@@ -37,6 +39,9 @@ public class CompareModels {
 
 		Common.reportInfo(String.format("Statements: %s", MoneyMgrApp.elapsedTime()));
 		compareStatements(m1, m2);
+
+		Common.reportInfo(String.format("Balances: %s", MoneyMgrApp.elapsedTime()));
+		compareBalances(m1, m2);
 
 		Common.reportInfo(String.format("Complete: %s", MoneyMgrApp.elapsedTime()));
 	}
@@ -179,5 +184,41 @@ public class CompareModels {
 				System.out.println("Statement missing");
 			}
 		}
+	}
+
+	private static void compareBalances(MoneyMgrModel m1, MoneyMgrModel m2) {
+		for (int ii = 1; ii <= m1.getNumAccounts() && ii <= m2.getNumAccounts(); ++ii) {
+			Account a1 = m1.getAccountByID(ii);
+			Account a2 = m2.getAccountByID(ii);
+
+			compareAccountBalances(m1, m2, a1, a2);
+		}
+	}
+
+	private static void compareAccountBalances( //
+			MoneyMgrModel m1, MoneyMgrModel m2, //
+			Account a1, Account a2) {
+		if (a1.getFirstTransactionDate() == null) {
+			return;
+		}
+
+		QDate dStart = a1.getFirstTransactionDate().getLastDayOfMonth();
+		QDate dEnd = a1.getCloseDate();
+		if (dEnd == null) {
+			dEnd = QDate.today();
+		}
+
+		do {
+			BigDecimal bal1 = a1.getValueForDate(dStart);
+			BigDecimal bal2 = a2.getValueForDate(dStart);
+
+			if (!Common.isEffectivelyEqual(bal1, bal2)) {
+				System.out.println(String.format("%s: %s %s vs %s", //
+						dStart.toString(), a1.name, //
+						bal1.toString(), bal2.toString()));
+			}
+
+			dStart = dStart.addDays(1).getLastDayOfMonth();
+		} while (dStart.compareTo(dEnd) <= 0);
 	}
 }

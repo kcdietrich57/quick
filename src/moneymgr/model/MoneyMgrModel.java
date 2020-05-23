@@ -28,6 +28,10 @@ public class MoneyMgrModel {
 
 	// -------------------------------------
 
+	public static MoneyMgrModel getModel(String name) {
+		return MoneyMgrModel.models.get(name);
+	}
+
 	/** Change the current model */
 	public static MoneyMgrModel changeModel(String name) {
 		MoneyMgrModel.currModel = MoneyMgrModel.models.get(name);
@@ -819,7 +823,7 @@ public class MoneyMgrModel {
 	// -------------------------------------
 
 	public int nextStockOptionId() {
-		return this.stockOptions.size();
+		return (this.stockOptions.isEmpty()) ? 1 : this.stockOptions.size();
 	}
 
 	public void addStockOption(StockOption opt) {

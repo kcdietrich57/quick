@@ -643,12 +643,24 @@ public class Account {
 	public BigDecimal getValueForDate(QDate d) {
 		BigDecimal cashBal = getCashValueForDate(d);
 		BigDecimal secBal = this.securities.getPortfolioValueForDate(d);
+		BigDecimal optBal = getOptionsValueForDate(d);
 
-		BigDecimal acctValue = cashBal.add(secBal);
+		BigDecimal acctValue = cashBal.add(secBal).add(optBal);
 
 		acctValue = acctValue.setScale(2, RoundingMode.HALF_UP);
 
 		return acctValue;
+	}
+
+	public BigDecimal getOptionsValueForDate(QDate d) {
+		BigDecimal bal = BigDecimal.ZERO;
+
+		List<StockOption> opts = StockOption.getOpenOptions(this, d);
+		for (StockOption opt : opts) {
+			bal = bal.add(opt.getValueForDate(d));
+		}
+
+		return bal;
 	}
 
 	/** Get account cash value for a specified date */

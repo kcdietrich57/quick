@@ -20,7 +20,6 @@ import org.jfree.data.general.DatasetUtilities;
 
 import moneymgr.model.Account;
 import moneymgr.model.MoneyMgrModel;
-import moneymgr.model.StockOption;
 import moneymgr.ui.MainWindow;
 import moneymgr.ui.MainWindow.IntervalUnit;
 import moneymgr.util.QDate;
@@ -58,13 +57,7 @@ class ISIOptionsChartData {
 			this.dates[ii] = optionsData.get(ii).date;
 			QDate curDate = this.dates[ii];
 
-			BigDecimal bal = BigDecimal.ZERO;
-
-			List<StockOption> opts = StockOption.getOpenOptions(optionsAccount, curDate);
-			for (StockOption opt : opts) {
-				bal = bal.add(opt.getValueForDate(curDate));
-			}
-
+			BigDecimal bal = optionsAccount.getOptionsValueForDate(curDate);
 			this.optionsValues[0][ii] = bal.doubleValue();
 		}
 	}
