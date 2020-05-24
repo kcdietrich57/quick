@@ -23,25 +23,23 @@ import moneymgr.model.TxAction;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
+/**
+ * The imported data does not connect transfers, so we need to do it. These keep
+ * track of successful and unsuccessful attempts to connect transfers.
+ */
 public class TransactionCleaner {
-	/**
-	 * Housekeeping info for processing related transfer transactions.<br>
-	 * The imported data does not connect transfers, so we need to do it. These keep
-	 * track of successful and unsuccessful attempts to connect transfers.
-	 */
-	private final List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
-	private int totalXfers = 0;
-	private int failedXfers = 0;
+	private TransactionCleaner() {
+	}
 
-	public void cleanUpTransactionsFromQIF() {
+	public static void cleanUpTransactionsFromQIF() {
 		cleanUpSplits();
-		calculateRunningTotals();
+		// calculateRunningTotals();
 		connectTransfers();
 		connectSecurityTransfers();
 		LotProcessor.setupSecurityLots();
 	}
 
-	public void cleanUpTransactionsFromJSON() {
+	public static void cleanUpTransactionsFromJSON() {
 		cleanUpSplits();
 		calculateRunningTotals();
 		connectTransfers();
@@ -49,8 +47,36 @@ public class TransactionCleaner {
 //		LotProcessor.setupSecurityLots();
 	}
 
+	/**
+	 * Go through acct txns and plug in running balance values.<br>
+	 * Also update account current and cleared balance values.
+	 */
+	public static void calculateRunningTotals() {
+		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
+			BigDecimal bal = BigDecimal.ZERO;
+			BigDecimal cleared = BigDecimal.ZERO;
+
+			for (GenericTxn t : a.getTransactions()) {
+				BigDecimal amt = t.getCashAmount();
+
+				if (!Common.isEffectivelyZero(amt)) {
+					bal = bal.add(amt);
+
+					if (t.isCleared()) {
+						cleared = cleared.add(amt);
+					}
+				}
+
+				t.setRunningTotal(bal);
+			}
+
+			a.setBalance(bal);
+			a.setClearedBalance(cleared);
+		}
+	}
+
 	/** Correct any issues with split transactions */
-	private void cleanUpSplits() {
+	private static void cleanUpSplits() {
 		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			for (GenericTxn txn : a.getTransactions()) {
 				massageSplits(txn);
@@ -59,7 +85,7 @@ public class TransactionCleaner {
 	}
 
 	/** A txn may have multiple splits transferring to/from another account. */
-	private void massageSplits(GenericTxn txn) {
+	private static void massageSplits(GenericTxn txn) {
 		if (!txn.hasSplits()) {
 			return;
 		}
@@ -99,36 +125,8 @@ public class TransactionCleaner {
 		}
 	}
 
-	/**
-	 * Go through acct txns and plug in running balance values.<br>
-	 * Also update account current and cleared balance values.
-	 */
-	private void calculateRunningTotals() {
-		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
-			BigDecimal bal = BigDecimal.ZERO;
-			BigDecimal cleared = BigDecimal.ZERO;
-
-			for (GenericTxn t : a.getTransactions()) {
-				BigDecimal amt = t.getCashAmount();
-
-				if (!Common.isEffectivelyZero(amt)) {
-					bal = bal.add(amt);
-
-					if (t.isCleared()) {
-						cleared = cleared.add(amt);
-					}
-				}
-
-				t.setRunningTotal(bal);
-			}
-
-			a.setBalance(bal);
-			a.setClearedBalance(cleared);
-		}
-	}
-
 	/** Connect transfer transactions between accounts */
-	private void connectTransfers() {
+	private static void connectTransfers() {
 		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
 			for (GenericTxn txn : a.getTransactions()) {
 				connectTransfers(txn);
@@ -139,7 +137,7 @@ public class TransactionCleaner {
 	static int[] counts = { 0, 0 };
 
 	/** Connect transfers for a transaction */
-	private void connectTransfers(GenericTxn txn) {
+	private static void connectTransfers(GenericTxn txn) {
 		if (txn.hasSplits()) {
 			for (SimpleTxn stxn : ((NonInvestmentTxn) txn).getSplits()) {
 				// TODO verify we don't connect subsplits, just multisplit
@@ -167,7 +165,12 @@ public class TransactionCleaner {
 	 * Given a transaction that is a transfer, search the associated account's
 	 * transactions for a suitable mate for this transaction.
 	 */
-	private void connectTransfers(SimpleTxn txn, QDate date) {
+	private static void connectTransfers(SimpleTxn txn, QDate date) {
+		List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
+
+		int totalXfers = 0;
+		int failedXfers = 0;
+
 		if ((txn.getCatid() >= 0)) {
 			return;
 		}
@@ -179,12 +182,13 @@ public class TransactionCleaner {
 
 		Account a = MoneyMgrModel.currModel.getAccountByID(-txn.getCatid());
 
-		findMatchesForTransfer(a, txn, date, true);
+		findMatchesForTransfer(a, matchingTxns, txn, date, true);
 
 		++totalXfers;
 
 		if (matchingTxns.isEmpty()) {
-			findMatchesForTransfer(a, txn, date, false); // SellX openingBal void
+			findMatchesForTransfer(a, matchingTxns, txn, date, false);
+			// SellX openingBal void
 		}
 
 		if (matchingTxns.isEmpty()) {
@@ -216,7 +220,9 @@ public class TransactionCleaner {
 	}
 
 	/** Look for transfer candidates in an account */
-	private void findMatchesForTransfer(Account acct, SimpleTxn txn, QDate date, boolean strict) {
+	private static void findMatchesForTransfer(//
+			Account acct, List<SimpleTxn> matchingTxns, //
+			SimpleTxn txn, QDate date, boolean strict) {
 		matchingTxns.clear();
 
 		List<GenericTxn> txns = acct.getTransactions();
@@ -267,7 +273,7 @@ public class TransactionCleaner {
 	 * Locate a match for txn in gtxn (either gtxn itself, or a split)<br>
 	 * Account/amount must match and not already associated with the xfer.
 	 */
-	private SimpleTxn checkMatchForTransfer(SimpleTxn txn, GenericTxn gtxn, boolean strict) {
+	private static SimpleTxn checkMatchForTransfer(SimpleTxn txn, GenericTxn gtxn, boolean strict) {
 		assert -txn.getCatid() == gtxn.getAccountID();
 
 		if (!gtxn.hasSplits()) {
@@ -290,7 +296,7 @@ public class TransactionCleaner {
 	}
 
 	/** Process transfers of securities between accounts */
-	private void connectSecurityTransfers() {
+	private static void connectSecurityTransfers() {
 		List<InvestmentTxn> xins = new ArrayList<InvestmentTxn>();
 		List<InvestmentTxn> xouts = new ArrayList<InvestmentTxn>();
 
@@ -310,7 +316,7 @@ public class TransactionCleaner {
 	}
 
 	/** Go through security transfers and connect in/out transactions */
-	private void connectSecurityTransfers(List<InvestmentTxn> xins, List<InvestmentTxn> xouts) {
+	private static void connectSecurityTransfers(List<InvestmentTxn> xins, List<InvestmentTxn> xouts) {
 		Comparator<InvestmentTxn> cpr = (o1, o2) -> {
 			int diff;
 
@@ -405,7 +411,7 @@ public class TransactionCleaner {
 	}
 
 	/** Collect transactions for a security transfer on a given date */
-	private BigDecimal gatherTransactionsForSecurityTransfer( //
+	private static BigDecimal gatherTransactionsForSecurityTransfer( //
 			List<InvestmentTxn> rettxns, // OUT txs for xfer
 			List<InvestmentTxn> srctxns, // IN all remaining txs
 			List<InvestmentTxn> unmatched, // OUT earlier txs that don't match

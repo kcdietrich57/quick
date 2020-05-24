@@ -62,7 +62,7 @@ public class QifDomReader {
 		processFile();
 
 		if (doCleanup) {
-			new TransactionCleaner().cleanUpTransactionsFromQIF();
+			TransactionCleaner.cleanUpTransactionsFromQIF();
 		}
 	}
 
@@ -90,6 +90,8 @@ public class QifDomReader {
 
 		// Update share balances in all positions
 		PortfolioProcessor.fixPortfolios();
+
+		TransactionCleaner.calculateRunningTotals();
 
 		// Update statement reconciliation file if format has changed
 		if (QifDom.loadedStatementsVersion != StatementDetails.CURRENT_VERSION) {

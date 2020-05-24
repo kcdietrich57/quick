@@ -263,8 +263,14 @@ public class Account {
 	}
 
 	public void addTransaction(GenericTxn txn) {
-		int idx = // getTransactionIndexForDate(txn);
-				MoneyMgrModel.currModel.getTransactionInsertIndexByDate(this.transactions, txn);
+		if (txn.getAction() == TxAction.STOCKSPLIT) {
+			Common.reportWarning(String.format(//
+					"Adding stocksplit tx to %s", this.name));
+//			return;
+		}
+
+		int idx = MoneyMgrModel.currModel.getTransactionInsertIndexByDate(//
+				this.transactions, txn);
 
 		this.transactions.add(idx, txn);
 	}
@@ -799,18 +805,48 @@ public class Account {
 			return "generalInfo";
 		}
 
-		if (getNumTransactions() != other.getNumTransactions()) {
-			return "numtxn";
+		int num1 = getNumTransactions();
+		int num2 = other.getNumTransactions();
+
+		if (num1 != num2) {
+			Common.reportWarning(String.format(//
+					"Warning: %s transaction count %d vs %d", //
+					this.name, num1, num2));
+//			return "numtxn";
 		}
 
-		for (int idx = 0; idx < getNumTransactions(); ++idx) {
-			GenericTxn tx1 = this.transactions.get(idx);
-			GenericTxn tx2 = other.transactions.get(idx);
+		int idx1 = 0;
+		int idx2 = 0;
+		while (idx1 < num1 && idx2 < num2) {
+			GenericTxn tx1 = this.transactions.get(idx1);
+			GenericTxn tx2 = other.transactions.get(idx2);
+
+			if (tx1.getAction() == TxAction.STOCKSPLIT) {
+				++idx1;
+				continue;
+			}
+
+			if (tx2.getAction() == TxAction.STOCKSPLIT) {
+				++idx2;
+				continue;
+			}
 
 			String ret = tx1.matches(tx2);
 			if (ret != null) {
-				return String.format("Tx%d:%s", idx, ret);
+				return String.format("Tx%d:%s", idx1, ret);
 			}
+
+			++idx1;
+			++idx2;
+		}
+
+		while ((idx2 < num2) //
+				&& (other.transactions.get(idx2).getAction() == TxAction.STOCKSPLIT)) {
+			++idx2;
+		}
+
+		if (idx1 < num1 || idx2 < num2) {
+			return "unmatchedTx";
 		}
 
 		String res = this.securities.matches(other.securities);

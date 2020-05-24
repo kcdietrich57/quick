@@ -46,14 +46,16 @@ public class CompareModels {
 		Common.reportInfo(String.format("Complete: %s", MoneyMgrApp.elapsedTime()));
 	}
 
-	static int txct = 0;
+	private static void reportError(String msg) {
+		System.out.println(msg);
+	}
 
 	private static void compareTransactions(MoneyMgrModel m1, MoneyMgrModel m2) {
 		List<SimpleTxn> txns1 = m1.getAllTransactions();
 		List<SimpleTxn> txns2 = m2.getAllTransactions();
 
 		if (txns1.size() != txns2.size()) {
-			System.out.println("Transaction count different");
+			reportError("Transaction count different");
 		}
 
 		for (int ii = 0; ii < txns1.size() && ii < txns2.size(); ++ii) {
@@ -63,13 +65,10 @@ public class CompareModels {
 			if (t1 != null && t2 != null) {
 				String res = t1.matches(t2);
 				if (res != null) {
-					++txct;
-					t1.matches(t2);
-					System.out.println(t1.toString());
-					System.out.println("Tx:" + res + ":" + txct);
+					reportError("Tx:" + res + ":" + t1.toString());
 				}
 			} else if ((t1 == null) != (t2 == null)) {
-				System.out.println("Transaction missing");
+				reportError("Transaction missing");
 			}
 		}
 	}
@@ -79,7 +78,8 @@ public class CompareModels {
 		List<Account> accts2 = m2.getAccountsById();
 
 		if (accts1.size() != accts2.size()) {
-			System.out.println("Account count different");
+			reportError(String.format("Account count %d vs %d", //
+					accts1.size(), accts2.size()));
 		}
 
 		for (int ii = 0; ii < accts1.size() && ii < accts2.size(); ++ii) {
@@ -89,10 +89,11 @@ public class CompareModels {
 			if (a1 != null && a2 != null) {
 				String res = a1.matches(a2);
 				if (res != null) {
-					System.out.println("Account mismatch: " + res);
+					reportError("Account mismatch: " + res);
+					a1.matches(a2);
 				}
 			} else if ((a1 == null) != (a2 == null)) {
-				System.out.println("Account missing");
+				reportError("Account missing");
 			}
 		}
 	}
@@ -102,7 +103,8 @@ public class CompareModels {
 		List<Security> secs2 = m2.getSecuritiesById();
 
 		if (secs1.size() != secs2.size()) {
-			System.out.println("Security count different");
+			reportError(String.format("Security count %d vs %d", //
+					secs1.size(), secs2.size()));
 		}
 
 		for (int ii = 0; ii < secs1.size() && ii < secs2.size(); ++ii) {
@@ -113,17 +115,17 @@ public class CompareModels {
 				String res = s1.matches(s2);
 
 				if (res != null) {
-					System.out.println("Security mismatch: " + res);
+					reportError("Security mismatch: " + res);
 					s1.matches(s2);
 				}
 			} else if ((s1 == null) != (s2 == null)) {
-				System.out.println("Security missing");
+				reportError("Security missing");
 			}
 		}
 
 		String res = m1.portfolio.matches(m2.portfolio);
 		if (res != null) {
-			System.out.println("Portfolio:" + res);
+			reportError("Portfolio:" + res);
 			m1.portfolio.matches(m2.portfolio);
 		}
 	}
@@ -133,7 +135,8 @@ public class CompareModels {
 		List<Category> cats2 = m2.getCategories();
 
 		if (cats1.size() != cats2.size()) {
-			System.out.println("Category count different");
+			reportError(String.format("Category count %d vs %d", //
+					cats1.size() != cats2.size()));
 		}
 
 		for (int ii = 0; ii < cats1.size() && ii < cats2.size(); ++ii) {
@@ -142,10 +145,10 @@ public class CompareModels {
 
 			if (c1 != null && c2 != null) {
 				if (!c1.matches(c2)) {
-					System.out.println("Category mismatch");
+					reportError("Category mismatch");
 				}
 			} else if ((c1 == null) != (c2 == null)) {
-				System.out.println("Category missing");
+				reportError("Category missing");
 			}
 		}
 	}
@@ -157,7 +160,7 @@ public class CompareModels {
 			if (a2 != null) {
 				compareStatements(m1, m2, a1, a2);
 			} else {
-				System.out.println("Account missing for statements");
+				reportError("Account missing for statements");
 			}
 		}
 	}
@@ -168,7 +171,8 @@ public class CompareModels {
 		List<Statement> stats2 = a2.getStatements();
 
 		if (stats1.size() != stats2.size()) {
-			System.out.println("Statement count different");
+			reportError(String.format("Statement count %d vs %d", //
+					stats1.size(), stats2.size()));
 		}
 
 		for (int ii = 0; ii < stats1.size() && ii < stats2.size(); ++ii) {
@@ -178,10 +182,10 @@ public class CompareModels {
 			if (s1 != null && s2 != null) {
 				String res = s1.matches(s2);
 				if (res != null) {
-					System.out.println("Statement mismatch:" + res);
+					reportError("Statement mismatch:" + res);
 				}
 			} else if ((s1 == null) != (s2 == null)) {
-				System.out.println("Statement missing");
+				reportError("Statement missing");
 			}
 		}
 	}
@@ -213,7 +217,7 @@ public class CompareModels {
 			BigDecimal bal2 = a2.getValueForDate(dStart);
 
 			if (!Common.isEffectivelyEqual(bal1, bal2)) {
-				System.out.println(String.format("%s: %s %s vs %s", //
+				reportError(String.format("%s: %s %s vs %s", //
 						dStart.toString(), a1.name, //
 						bal1.toString(), bal2.toString()));
 			}

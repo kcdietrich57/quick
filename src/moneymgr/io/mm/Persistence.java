@@ -884,7 +884,7 @@ public class Persistence {
 		 * TODO process security transactions/holdings
 		 */
 
-		new TransactionCleaner().cleanUpTransactionsFromJSON();
+		TransactionCleaner.cleanUpTransactionsFromJSON();
 
 		return this.model;
 	}
