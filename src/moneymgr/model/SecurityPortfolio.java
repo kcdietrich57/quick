@@ -19,22 +19,34 @@ import moneymgr.util.QDate;
  * statement
  */
 public class SecurityPortfolio {
+	public final Object owner;
+
 	/** For statements, this references the prev stmt's ending holdings */
 	public final SecurityPortfolio prevPortfolio;
 
 	/** Position history for each security tracked in this portfolio */
-	public final List<SecurityPosition> positions;
+	private final List<SecurityPosition> positions;
+
+	private int getacctid(Object owner) {
+		if (owner instanceof Statement) {
+			return ((Statement) owner).acctid;
+		}
+
+		return 0;
+	}
 
 	/** Create a statement holdings object connected to previous statement */
-	public SecurityPortfolio(SecurityPortfolio prev) {
+	public SecurityPortfolio(Object owner, SecurityPortfolio prev) {
+		this.owner = owner;
 		this.positions = new ArrayList<>();
 
 		this.prevPortfolio = prev;
 
 		if (prev != null) {
-			for (SecurityPosition ppos : prev.positions) {
-				if (!ppos.isEmpty() //
-						|| !Common.isEffectivelyZeroOrNull(ppos.getExpectedEndingShares())) {
+			for (SecurityPosition ppos : prev.getPositions()) {
+				boolean iszero = Common.isEffectivelyZeroOrNull(ppos.getExpectedEndingShares());
+
+				if (!ppos.isEmpty() || !iszero) {
 					SecurityPosition pos = new SecurityPosition(this, ppos.security);
 					this.positions.add(pos);
 				}
@@ -44,7 +56,7 @@ public class SecurityPortfolio {
 
 	/** Reset transaction information for positions in this portfolio */
 	public void initializeTransactions() {
-		for (SecurityPosition pos : this.positions) {
+		for (SecurityPosition pos : getPositions()) {
 			pos.initializeTransactions();
 		}
 	}
@@ -69,7 +81,7 @@ public class SecurityPortfolio {
 
 	/** Find a position for a security, if it exists */
 	public SecurityPosition findPosition(Security sec) {
-		for (SecurityPosition pos : this.positions) {
+		for (SecurityPosition pos : getPositions()) {
 			if (pos.security == sec) {
 				return pos;
 			}
@@ -81,6 +93,10 @@ public class SecurityPortfolio {
 	/** Create a position for a statement, starting with the prev stmt pos */
 	public void createPosition(int secid) {
 		getPosition(secid);
+	}
+
+	public final List<SecurityPosition> getPositions() {
+		return Collections.unmodifiableList(this.positions);
 	}
 
 	/** Find a position for a security id. Create it if it does not exist. */
@@ -107,7 +123,7 @@ public class SecurityPortfolio {
 		while (iter.hasNext()) {
 			SecurityPosition p = iter.next();
 
-			if (Common.isEffectivelyZero(p.getEndingShares())) {
+			if (p.isEmpty()) {
 				iter.remove();
 			}
 		}
@@ -121,7 +137,7 @@ public class SecurityPortfolio {
 	public Map<Security, PositionInfo> getOpenPositionsForDate(QDate d) {
 		Map<Security, PositionInfo> ret = new HashMap<>();
 
-		for (SecurityPosition pos : this.positions) {
+		for (SecurityPosition pos : getPositions()) {
 			PositionInfo values = pos.getPositionForDate(d);
 
 			if (values != null) {
@@ -155,7 +171,7 @@ public class SecurityPortfolio {
 	public BigDecimal getPortfolioValueForDate(QDate d) {
 		BigDecimal portValue = BigDecimal.ZERO;
 
-		for (SecurityPosition pos : this.positions) {
+		for (SecurityPosition pos : getPositions()) {
 			BigDecimal posval = pos.getValueForDate(d);
 			portValue = portValue.add(posval);
 		}
@@ -193,7 +209,7 @@ public class SecurityPortfolio {
 	public HoldingsComparison comparisonTo(SecurityPortfolio other) {
 		HoldingsComparison comp = new HoldingsComparison();
 
-		for (SecurityPosition pos : this.positions) {
+		for (SecurityPosition pos : this.getPositions()) {
 			comp.addPosition(pos);
 		}
 
@@ -208,9 +224,15 @@ public class SecurityPortfolio {
 		return comp;
 	}
 
+	/** Return the number of security positions in this portfolio */
+	public final int size() {
+		// TODO isEmpty() ignores empty positions
+		return this.positions.size();
+	}
+
 	/** Check if this portfolio has no data at all */
 	public boolean isEmpty() {
-		for (SecurityPosition p : this.positions) {
+		for (SecurityPosition p : this.getPositions()) {
 			if (!p.isEmpty()) {
 				return false;
 			}
@@ -221,7 +243,7 @@ public class SecurityPortfolio {
 
 	/** Check whether this portfolio has any holdings on a given date */
 	public boolean isEmptyForDate(QDate d) {
-		for (SecurityPosition p : this.positions) {
+		for (SecurityPosition p : getPositions()) {
 			if (!p.isEmptyForDate(d)) {
 				return false;
 			}
@@ -234,7 +256,7 @@ public class SecurityPortfolio {
 		String s = "Securities Held:\n";
 
 		int nn = 0;
-		for (final SecurityPosition p : this.positions) {
+		for (final SecurityPosition p : getPositions()) {
 			if (!p.isEmpty()) {
 				s += "  " + ++nn + ": " + p.toString() + "\n";
 			}
@@ -246,7 +268,7 @@ public class SecurityPortfolio {
 	public QDate getFirstTransactionDate() {
 		QDate ret = null;
 
-		for (SecurityPosition pos : this.positions) {
+		for (SecurityPosition pos : getPositions()) {
 			QDate date = pos.getFirstTransactionDate();
 
 			if ((date != null) && ((ret == null) || (date.compareTo(ret) < 0))) {
@@ -259,7 +281,7 @@ public class SecurityPortfolio {
 
 	private List<QDate> getAllTransactionDates() {
 		Set<QDate> dateset = new HashSet<QDate>();
-		for (SecurityPosition pos : this.positions) {
+		for (SecurityPosition pos : getPositions()) {
 			for (InvestmentTxn tx : pos.getTransactions()) {
 				dateset.add(tx.getDate());
 			}
@@ -277,8 +299,11 @@ public class SecurityPortfolio {
 		List<QDate> dates1 = getAllTransactionDates();
 		List<QDate> dates2 = other.getAllTransactionDates();
 
-		if ((this.positions.size() != other.positions.size()) //
-				|| !((d1 == d2) || d1.equals(d2)) //
+//		purgeEmptyPositions();
+//		other.purgeEmptyPositions();
+
+		if ((size() != other.size()) //
+				|| !((d1 == d2) || ((d1 != null) && d1.equals(d2))) //
 				|| (dates1.size() != dates2.size()) //
 		) {
 			return "basicInfo";

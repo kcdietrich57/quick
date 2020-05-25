@@ -19,6 +19,7 @@ import moneymgr.model.NonInvestmentTxn;
 import moneymgr.model.Security;
 import moneymgr.model.SimpleTxn;
 import moneymgr.model.SplitTxn;
+import moneymgr.model.Statement;
 import moneymgr.model.TxAction;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
@@ -33,10 +34,12 @@ public class TransactionCleaner {
 
 	public static void cleanUpTransactionsFromQIF() {
 		cleanUpSplits();
-		// calculateRunningTotals();
+//		calculateRunningTotals();
 		connectTransfers();
 		connectSecurityTransfers();
 		LotProcessor.setupSecurityLots();
+
+//		cleanStatementHoldings();
 	}
 
 	public static void cleanUpTransactionsFromJSON() {
@@ -45,6 +48,16 @@ public class TransactionCleaner {
 		connectTransfers();
 		connectSecurityTransfers();
 //		LotProcessor.setupSecurityLots();
+
+		cleanStatementHoldings();
+	}
+
+	public static void cleanStatementHoldings() {
+		for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
+			for (Statement stat : acct.getStatements()) {
+				stat.holdings.purgeEmptyPositions();
+			}
+		}
 	}
 
 	/**

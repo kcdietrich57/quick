@@ -47,13 +47,13 @@ public class StatementDetails {
 				stmt.closingBalance, //
 				stmt.getCashBalance(), //
 				stmt.transactions.size(), //
-				stmt.holdings.positions.size());
+				stmt.holdings.size());
 
 		for (GenericTxn t : stmt.transactions) {
 			s += ";" + formatTransactionForSave(t);
 		}
 
-		for (SecurityPosition p : stmt.holdings.positions) {
+		for (SecurityPosition p : stmt.holdings.getPositions()) {
 			s += ";" + formatPositionForSave(stmt, p);
 		}
 

@@ -115,7 +115,7 @@ public class StatementTableModel //
 		case 3:
 			return Common.stringValue(s.getCashBalance());
 		case 4:
-			return (s.holdings != null && !s.holdings.positions.isEmpty()) //
+			return (s.holdings != null && !s.holdings.isEmpty()) //
 					? Common.formatAmount(s.holdings.getPortfolioValueForDate(s.date)) //
 					: "";
 		case 5:

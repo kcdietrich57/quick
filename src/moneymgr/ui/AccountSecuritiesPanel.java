@@ -42,7 +42,7 @@ public class AccountSecuritiesPanel //
 		if (acct.isInvestmentAccount()) {
 			boolean hasSecurity = false;
 
-			for (SecurityPosition pos : acct.securities.positions) {
+			for (SecurityPosition pos : acct.securities.getPositions()) {
 				if (!Common.isEffectivelyZero(pos.getValueForDate(curdate))) {
 					txt.append(String.format("%2d: %-40s %12s %12s\n", //
 							idx, //

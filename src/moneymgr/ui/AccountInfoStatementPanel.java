@@ -305,7 +305,7 @@ class StatementHoldingsTableModel extends AbstractTableModel {
 
 	public int getRowCount() {
 		return ((this.stmt != null) && (this.stmt.holdings != null)) //
-				? this.stmt.holdings.positions.size() //
+				? this.stmt.holdings.size() //
 				: 0;
 	}
 
@@ -318,7 +318,7 @@ class StatementHoldingsTableModel extends AbstractTableModel {
 	}
 
 	public Object getValueAt(int row, int col) {
-		SecurityPosition pos = this.stmt.holdings.positions.get(row);
+		SecurityPosition pos = this.stmt.holdings.getPositions().get(row);
 
 		BigDecimal shares;
 		QDate open = stmt.getOpeningDate();

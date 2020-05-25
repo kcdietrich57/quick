@@ -57,7 +57,7 @@ public class MoneyMgrModel {
 	private final List<Category> categories = new ArrayList<>();
 
 	/** The global history of all securities */
-	public SecurityPortfolio portfolio = new SecurityPortfolio(null);
+	public SecurityPortfolio portfolio = new SecurityPortfolio(this, null);
 
 	/** Securities indexed by ID */
 	private final List<Security> securitiesByID = new ArrayList<>();

@@ -133,7 +133,7 @@ public class Account {
 
 		this.transactions = new ArrayList<>();
 		this.statements = new ArrayList<>();
-		this.securities = new SecurityPortfolio(null);
+		this.securities = new SecurityPortfolio(this, null);
 	}
 
 	public Account(String name, AccountType type, String desc, QDate closeDate, //
@@ -264,8 +264,10 @@ public class Account {
 
 	public void addTransaction(GenericTxn txn) {
 		if (txn.getAction() == TxAction.STOCKSPLIT) {
-			Common.reportWarning(String.format(//
-					"Adding stocksplit tx to %s", this.name));
+			// TODO I don't like having stock split transactions in accounts
+			// But if we don't the share balances are incorrect
+//			Common.reportWarning(String.format(//
+//					"Adding stocksplit tx to %s", this.name));
 //			return;
 		}
 
@@ -688,7 +690,7 @@ public class Account {
 	public BigDecimal getSecuritiesValueForDate(QDate d) {
 		BigDecimal portValue = BigDecimal.ZERO;
 
-		for (final SecurityPosition pos : this.securities.positions) {
+		for (final SecurityPosition pos : this.securities.getPositions()) {
 			BigDecimal posamt = pos.getValueForDate(d);
 
 			portValue = portValue.add(posamt);
@@ -809,9 +811,9 @@ public class Account {
 		int num2 = other.getNumTransactions();
 
 		if (num1 != num2) {
-			Common.reportWarning(String.format(//
-					"Warning: %s transaction count %d vs %d", //
-					this.name, num1, num2));
+//			Common.reportWarning(String.format(//
+//					"Warning: %s transaction count %d vs %d", //
+//					this.name, num1, num2));
 //			return "numtxn";
 		}
 

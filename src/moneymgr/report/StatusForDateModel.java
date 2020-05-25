@@ -138,7 +138,7 @@ public class StatusForDateModel {
 				if (!Common.isEffectivelyZero(portValue)) {
 					asummary.cashBalance = amt.subtract(portValue);
 
-					for (SecurityPosition pos : acct.securities.positions) {
+					for (SecurityPosition pos : acct.securities.getPositions()) {
 						BigDecimal posval = pos.getValueForDate(this.date);
 
 						if (!Common.isEffectivelyZero(posval)) {

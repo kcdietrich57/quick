@@ -774,7 +774,7 @@ public class Persistence {
 
 				String holdings = "[";
 				sep2 = "";
-				for (SecurityPosition p : h.positions) {
+				for (SecurityPosition p : h.getPositions()) {
 					holdings += sep2 + String.format("[%d,%s,%s]", //
 							p.security.secid, //
 							encodeAmount3(p.getEndingShares()), //

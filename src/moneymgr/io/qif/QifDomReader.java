@@ -92,6 +92,7 @@ public class QifDomReader {
 		PortfolioProcessor.fixPortfolios();
 
 		TransactionCleaner.calculateRunningTotals();
+		TransactionCleaner.cleanStatementHoldings();
 
 		// Update statement reconciliation file if format has changed
 		if (QifDom.loadedStatementsVersion != StatementDetails.CURRENT_VERSION) {

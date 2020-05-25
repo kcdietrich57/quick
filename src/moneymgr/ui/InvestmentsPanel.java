@@ -83,7 +83,7 @@ public class InvestmentsPanel extends JPanel {
 				"Name", "Shares", "Price", "Value"));
 
 		int num = 1;
-		for (SecurityPosition pos : MoneyMgrModel.currModel.portfolio.positions) {
+		for (SecurityPosition pos : MoneyMgrModel.currModel.portfolio.getPositions()) {
 			BigDecimal shr = pos.getSharesForDate(curdate);
 			BigDecimal value = pos.getValueForDate(curdate);
 
@@ -141,7 +141,7 @@ public class InvestmentsPanel extends JPanel {
 					"", //
 					""));
 
-			for (SecurityPosition pos : acct.securities.positions) {
+			for (SecurityPosition pos : acct.securities.getPositions()) {
 				BigDecimal shr = pos.getSharesForDate(curdate);
 				BigDecimal svalue = pos.getValueForDate(curdate);
 

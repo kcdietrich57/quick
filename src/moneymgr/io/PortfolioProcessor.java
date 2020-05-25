@@ -25,7 +25,7 @@ public class PortfolioProcessor {
 
 	/** Update positions in a portfolio */
 	private static void fixPortfolio(SecurityPortfolio port) {
-		for (SecurityPosition pos : port.positions) {
+		for (SecurityPosition pos : port.getPositions()) {
 			pos.updateShareBalances();
 		}
 	}

@@ -440,7 +440,7 @@ public class InvestmentPerformanceModel {
 
 		Map<Security, SecuritySummary> ssums = new HashMap<Security, SecuritySummary>();
 
-		for (SecurityPosition pos : MoneyMgrModel.currModel.portfolio.positions) {
+		for (SecurityPosition pos : MoneyMgrModel.currModel.portfolio.getPositions()) {
 			SecuritySummary sum = ssums.get(pos.security);
 			if (sum == null) {
 				sum = new SecuritySummary(pos, startDate(), endDate());

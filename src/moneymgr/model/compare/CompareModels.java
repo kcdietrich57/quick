@@ -183,6 +183,7 @@ public class CompareModels {
 				String res = s1.matches(s2);
 				if (res != null) {
 					reportError("Statement mismatch:" + res);
+					s1.matches(s2);
 				}
 			} else if ((s1 == null) != (s2 == null)) {
 				reportError("Statement missing");

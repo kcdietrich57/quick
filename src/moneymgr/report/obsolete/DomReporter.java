@@ -140,7 +140,7 @@ public class DomReporter {
 	}
 
 	private static void reportPortfolio(SecurityPortfolio port) {
-		for (SecurityPosition p : port.positions) {
+		for (SecurityPosition p : port.getPositions()) {
 			System.out.println("Sec: " + p.security.getName());
 
 			System.out.println(String.format( //
@@ -172,7 +172,7 @@ public class DomReporter {
 	}
 
 	private static void reportGlobalPortfolio() {
-		for (SecurityPosition p : MoneyMgrModel.currModel.portfolio.positions) {
+		for (SecurityPosition p : MoneyMgrModel.currModel.portfolio.getPositions()) {
 			System.out.println("Sec: " + p.security.getName());
 
 			System.out.println(String.format( //

@@ -49,7 +49,7 @@ public class Statement {
 		this.transactions = new ArrayList<>();
 		this.unclearedTransactions = new ArrayList<>();
 
-		this.holdings = new SecurityPortfolio( //
+		this.holdings = new SecurityPortfolio(this, //
 				(prevstat != null) ? prevstat.holdings : null);
 
 		this.prevStatement = prevstat;
@@ -276,20 +276,20 @@ public class Statement {
 
 	/** Check result of cleared transactions against expected security holdings */
 	public boolean holdingsMatch() {
-		if (this.holdings.positions.isEmpty()) {
+		if (this.holdings.isEmpty()) {
 			return true;
 		}
 
 		SecurityPortfolio delta = getPortfolioDelta();
 
-		for (SecurityPosition p : this.holdings.positions) {
+		for (SecurityPosition p : this.holdings.getPositions()) {
 			SecurityPosition op = delta.getPosition(p.security);
 
 			return Common.isEffectivelyEqual(p.getEndingShares(), //
 					(op != null) ? op.getEndingShares() : BigDecimal.ZERO);
 		}
 
-		for (SecurityPosition p : delta.positions) {
+		for (SecurityPosition p : delta.getPositions()) {
 			SecurityPosition op = this.holdings.getPosition(p.security);
 
 			return (op != null) //
@@ -312,8 +312,8 @@ public class Statement {
 	 */
 	public SecurityPortfolio getPortfolioDelta(List<GenericTxn> txns) {
 		SecurityPortfolio clearedPositions = (this.prevStatement != null) //
-				? new SecurityPortfolio(this.prevStatement.holdings) //
-				: new SecurityPortfolio(null);
+				? new SecurityPortfolio(this, this.prevStatement.holdings) //
+				: new SecurityPortfolio(this, null);
 
 		for (GenericTxn t : txns) {
 			if (t instanceof InvestmentTxn) {
@@ -328,7 +328,7 @@ public class Statement {
 		List<String> sname = new ArrayList<String>();
 		List<List<String>> sbal = new ArrayList<List<String>>();
 
-		for (SecurityPosition pos : this.holdings.positions) {
+		for (SecurityPosition pos : this.holdings.getPositions()) {
 			BigDecimal pbal = BigDecimal.ZERO;
 			if (this.prevStatement != null) {
 				pbal = this.prevStatement.holdings.getPosition(pos.security).getEndingShares();
