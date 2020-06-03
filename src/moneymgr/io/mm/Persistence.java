@@ -82,6 +82,11 @@ public class Persistence {
 			case ']':
 				sub = "&)";
 				break;
+			default:
+				if ((ch < (char) 32) || (ch > (char) 127)) {
+					sub = String.format("&%x;", (int) ch);
+				}
+				break;
 			}
 
 			if (sub != null) {
@@ -139,6 +144,15 @@ public class Persistence {
 				case ')':
 					sub = "]";
 					break;
+				default: {
+					int endidx = idx;
+					while ((endidx < sb.length()) && (sb.charAt(endidx) != ';')) {
+						++endidx;
+					}
+					String v = sb.substring(idx, endidx);
+					sb.replace(idx, endidx, "");
+					sub = String.format("%c", Integer.parseInt(v, 16));
+				}
 				}
 			}
 
@@ -254,7 +268,7 @@ public class Persistence {
 		}
 
 		wtr.println();
-		wtr.println("],");
+		wtr.println("]");
 	}
 
 	private void saveBasicInfo() {
@@ -312,7 +326,7 @@ public class Persistence {
 		}
 
 		wtr.println();
-		wtr.println("],");
+		wtr.println("]");
 	}
 
 	private void saveAccounts() {
@@ -356,7 +370,7 @@ public class Persistence {
 		}
 
 		wtr.println();
-		wtr.println("],");
+		wtr.println("]");
 	}
 
 	void saveSecurities() {
@@ -447,7 +461,7 @@ public class Persistence {
 		}
 
 		wtr.println();
-		wtr.println("],");
+		wtr.println("]");
 	}
 
 	void saveLots() {
@@ -558,7 +572,7 @@ public class Persistence {
 		wtr.print("  [\"id\",\"date\",\"statdate\",\"acctid\",\"xtxid\",\"action\"," //
 				+ "\"payee\",\"cknum\",\"memo\",\"amt\",\"cat\"," //
 				+ "\"secid\",\"secaction\",\"shares\",\"shareprice\",\"splitratio\"," //
-				+ "\"optid\",\"[split]\",\"[secxfer]\",\"[lot]\"" //
+				+ "\"optid\",\"[split]\",\"[secxfer]\",\"[lot]\"," //
 				+ "\"xacct\",\"xfercash\",\"commission\"" //
 				+ "]");
 
@@ -645,29 +659,23 @@ public class Persistence {
 
 					lots = "[";
 
-					String sep3 = "";
-					lots += sep3 + "[";
-					sep3 = ",";
+					lots += "[";
 					sep2 = "";
 					for (Lot lot : itx.getLots()) {
 						lots += sep2 + lot.lotid;
 						sep2 = ",";
 					}
-					lots += "]";
 
-					sep3 = "";
-					lots += sep3 + "[";
-					sep3 = ",";
+					lots += "],[";
+
 					sep2 = "";
 					for (Lot lot : itx.getCreatedLots()) {
 						lots += sep2 + lot.lotid;
 						sep2 = ",";
 					}
-					lots += "]";
 
-					sep3 = "";
-					lots += sep3 + "[";
-					sep3 = ",";
+					lots += "],[";
+
 					sep2 = "";
 					for (Lot lot : itx.getDisposedLots()) {
 						lots += sep2 + lot.lotid;
@@ -736,7 +744,7 @@ public class Persistence {
 		}
 
 		wtr.println();
-		wtr.println("],");
+		wtr.println("]");
 	}
 
 	void saveStatements() {
@@ -814,12 +822,19 @@ public class Persistence {
 
 		wtr.println("{");
 		saveCategories();
+		wtr.println(",");
 		saveBasicInfo();
+		wtr.println(",");
 		saveAccounts();
+		wtr.println(",");
 		saveSecurities();
+		wtr.println(",");
 		saveLots();
+		wtr.println(",");
 		saveOptions();
+		wtr.println(",");
 		saveTransactions();
+		wtr.println(",");
 		saveStatements();
 		wtr.println("}");
 
