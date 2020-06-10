@@ -378,7 +378,7 @@ public class Lot {
 		}
 
 		if ((this.disposingTransaction != null) //
-				&& (this.disposingTransaction.txid != other.disposingTransaction.txid)) {
+				&& (this.disposingTransaction.getTxid() != other.disposingTransaction.getTxid())) {
 			return "disptxn:txid";
 		}
 
@@ -386,7 +386,7 @@ public class Lot {
 				&& this.secid == other.secid //
 				&& Common.isEffectivelyEqual(this.shares, other.shares) //
 				&& Common.isEffectivelyEqual(this.basisPrice, other.basisPrice) //
-				&& this.createTransaction.txid == other.createTransaction.txid)) {
+				&& this.createTransaction.getTxid() == other.createTransaction.getTxid())) {
 			return "geninfo";
 		}
 

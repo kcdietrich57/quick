@@ -46,7 +46,7 @@ public abstract class GenericTxn //
 
 		this.splits = new ArrayList<>();
 
-		if (this.txid > 0 && getAccountID() > 0) {
+		if (getTxid() > 0 && getAccountID() > 0) {
 			MoneyMgrModel.currModel.addTransaction(this);
 		}
 	}

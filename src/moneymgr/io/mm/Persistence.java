@@ -16,6 +16,9 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
+
 import moneymgr.io.qif.TransactionCleaner;
 import moneymgr.model.Account;
 import moneymgr.model.AccountCategory;
@@ -403,7 +406,7 @@ public class Persistence {
 				sep2 = "";
 				for (InvestmentTxn txn : sec.getTransactions()) {
 					txns += sep2;
-					txns += String.format("%d", txn.txid);
+					txns += String.format("%d", txn.getTxid());
 					sep2 = ",";
 				}
 				txns += "]";
@@ -498,8 +501,8 @@ public class Persistence {
 						lot.secid, //
 						encodeAmount3(lot.shares), //
 						encodeAmount3(lot.basisPrice), //
-						lot.createTransaction.txid, //
-						((lot.getDisposingTransaction() != null) ? lot.getDisposingTransaction().txid : 0), //
+						lot.createTransaction.getTxid(), //
+						((lot.getDisposingTransaction() != null) ? lot.getDisposingTransaction().getTxid() : 0), //
 						((lot.getSourceLot() != null) ? lot.getSourceLot().lotid : 0), //
 						childlots);
 			}
@@ -547,7 +550,7 @@ public class Persistence {
 						opt.vestCount, //
 						// opt.vestCurrent, //
 						// opt.sharesRemaining, //
-						((opt.transaction != null) ? opt.transaction.txid : 0), //
+						((opt.transaction != null) ? opt.transaction.getTxid() : 0), //
 						((opt.cancelDate != null) ? opt.cancelDate.getRawValue() : 0), //
 						((opt.srcOption != null) ? opt.srcOption.optid : 0));
 			}
@@ -591,18 +594,18 @@ public class Persistence {
 					splits += sep1;
 
 					if (split instanceof MultiSplitTxn) {
-						splits += String.format("[%d,[", split.txid);
+						splits += String.format("[%d,[", split.getTxid());
 
 						String sep2 = "";
 						for (SplitTxn ssplit : ((MultiSplitTxn) split).getSplits()) {
 							splits += sep2;
-							splits += String.format("%d", ssplit.txid);
+							splits += String.format("%d", ssplit.getTxid());
 							sep2 = ",";
 						}
 
 						splits += "]]";
 					} else {
-						splits += String.format("%d", split.txid);
+						splits += String.format("%d", split.getTxid());
 					}
 
 					sep1 = ",";
@@ -652,7 +655,7 @@ public class Persistence {
 					securityTransferTxns = "[";
 					String sep2 = "";
 					for (InvestmentTxn xtx : itx.getSecurityTransferTxns()) {
-						securityTransferTxns += sep2 + xtx.txid;
+						securityTransferTxns += sep2 + xtx.getTxid();
 						sep2 = ",";
 					}
 					securityTransferTxns += "]";
@@ -692,11 +695,11 @@ public class Persistence {
 				}
 
 				line = String.format("  [%d,%d,%d,%d,%d,%s,%s,%d,%s,%s,%d,%d,%s,%s,%s,%s,%d", //
-						tx.txid, //
+						tx.getTxid(), //
 						tx.getDate().getRawValue(), //
 						sdate, //
 						tx.getAccountID(), //
-						((tx.getCashTransferTxn() != null) ? tx.getCashTransferTxn().txid : 0), //
+						((tx.getCashTransferTxn() != null) ? tx.getCashTransferTxn().getTxid() : 0), //
 						encodeString(tx.getAction().key), //
 						encodeString(tx.getPayee()), //
 						tx.getCheckNumber(), //
@@ -769,7 +772,7 @@ public class Persistence {
 				String txns = "[";
 				String sep2 = "";
 				for (GenericTxn tx : stmt.transactions) {
-					txns += sep2 + tx.txid;
+					txns += sep2 + tx.getTxid();
 					sep2 = ",";
 				}
 				txns += "]";
@@ -867,7 +870,23 @@ public class Persistence {
 		return obj;
 	}
 
+	public void loadMulti(String filename) {
+		try {
+			Object o = loadMultiJSON("/tmp/multi.json");
+
+			JSONObject jobj = load(filename);
+			if (jobj != null) {
+				System.out.println("Multi object file:");
+				System.out.println(jobj.toString());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	public MoneyMgrModel loadJSON(String modelName, String filename) {
+		loadMulti("/tmp/multi.json");
+
 		this.model = MoneyMgrModel.changeModel(modelName);
 
 		this.jsonModel = load(filename);
@@ -1511,7 +1530,7 @@ public class Persistence {
 
 			InvestmentTxn itxn = (InvestmentTxn) txn;
 
-			int[][] txlotids = getTransactionLotids(this.jsonModel, txn.txid);
+			int[][] txlotids = getTransactionLotids(this.jsonModel, txn.getTxid());
 
 			for (int idx = 0; idx < txlotids.length; ++idx) {
 				int[] lotids = txlotids[idx];
@@ -1719,5 +1738,78 @@ public class Persistence {
 				}
 			}
 		}
+	}
+
+	static class ANOTHERPOJO {
+		int id;
+		String name;
+	}
+
+	static class YOURPOJO {
+		String id;
+		List<ANOTHERPOJO> children;
+
+		public void setId(String id) {
+			this.id = id;
+		}
+
+		public void setChildren(List<ANOTHERPOJO> children) {
+			this.children = children;
+		}
+	}
+
+	private List<YOURPOJO> loadMultiJSON(String filename) throws IOException {
+		Gson gson = new Gson();
+		JsonReader jsonReader = null;
+		try {
+			jsonReader = new JsonReader(new FileReader(filename));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+
+		// Handle formatting, e.g. extra spaces
+		jsonReader.setLenient(true);
+
+		boolean start = true;
+		jsonReader.beginObject();
+
+		List<YOURPOJO> completeList = new ArrayList<YOURPOJO>();
+
+		while (jsonReader.hasNext()) {
+			if (!start) {
+				if (jsonReader.peek().toString().matches("END_DOCUMENT")) {
+					break;
+				}
+
+				jsonReader.beginObject();
+			}
+
+			start = false;
+
+			YOURPOJO pojo = new YOURPOJO();
+
+			String id = jsonReader.nextName();
+			pojo.setId(id);
+
+			List<ANOTHERPOJO> tempList = new ArrayList<ANOTHERPOJO>();
+
+			jsonReader.beginArray();
+			while (jsonReader.hasNext()) {
+				ANOTHERPOJO t = gson.fromJson(jsonReader, ANOTHERPOJO.class);
+				tempList.add(t);
+			}
+
+			jsonReader.endArray();
+
+			pojo.setChildren(tempList);
+
+			completeList.add(pojo);
+
+			jsonReader.endObject();
+		}
+
+		jsonReader.close();
+		return completeList;
 	}
 }

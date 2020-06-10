@@ -580,8 +580,9 @@ public class InvestmentTxn extends GenericTxn {
 		if (!Common.isEffectivelyZero(diff)) {
 			BigDecimal newprice = tot.divide(this.quantity).abs();
 
+			int acctid = getAccountID();
 			String s = "Inconsistent " + this.action + " transaction:" + //
-					" acct=" + MoneyMgrModel.currModel.getAccountByID(getAccountID()).name + //
+					" acct=" + MoneyMgrModel.currModel.getAccountByID(acctid).name + //
 					" " + getDate().toString() + "\n" + //
 					"  sec=" + this.getSecurityName() + //
 					" qty=" + this.quantity + //
@@ -636,7 +637,7 @@ public class InvestmentTxn extends GenericTxn {
 		String s = (isCleared() ? "*" : " ");
 		QDate d = getDate();
 		s += ((d != null) ? d.toString() : "null");
-		s += " Tx" + this.txid + ": I ";
+		s += " Tx" + getTxid() + ": I ";
 		Account a = MoneyMgrModel.currModel.getAccountByID(getAccountID());
 		s += ((a != null) ? a.name : "null");
 		s += " " + Common.formatAmount(getAmount()).trim();

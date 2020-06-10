@@ -65,7 +65,7 @@ public class NonInvestmentTxn extends GenericTxn {
 		QDate d = getDate();
 		s += ((d != null) ? d.toString() : "null");
 
-		s += " Tx" + this.txid + ":   ";
+		s += " Tx" + getTxid() + ":   ";
 
 		Account a = MoneyMgrModel.currModel.getAccountByID(getAccountID());
 		s += ((a != null) ? a.name : "null");
@@ -81,7 +81,7 @@ public class NonInvestmentTxn extends GenericTxn {
 
 		if (getCashTransferAcctid() > 0) {
 			s += "(";
-			s += "" + ((getCashTransferTxn() != null) ? getCashTransferTxn().txid : "-");
+			s += "" + ((getCashTransferTxn() != null) ? getCashTransferTxn().getTxid() : "-");
 			s += ")";
 		}
 

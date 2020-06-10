@@ -540,21 +540,23 @@ public class MoneyMgrModel {
 
 	/** Add a new transaction to the appropriate collection(s) */
 	public void addTransaction(SimpleTxn txn) {
-		if (txn.txid <= 0 || txn.getAccountID() <= 0) {
+		int txid = txn.getTxid();
+		
+		if (txid <= 0 || txn.getAccountID() <= 0) {
 			return;
 		}
 
-		while (this.allTransactionsByID.size() < (txn.txid + 1)) {
+		while (this.allTransactionsByID.size() <= txid) {
 			this.allTransactionsByID.add(null);
 		}
 
-		if (this.allTransactionsByID.get(txn.txid) != null) {
-			Common.reportWarning(String.format("Replacing transaction %d", txn.txid));
-			Common.reportInfo(this.allTransactionsByID.get(txn.txid).toString());
+		if (this.allTransactionsByID.get(txid) != null) {
+			Common.reportWarning(String.format("Replacing transaction %d", txid));
+			Common.reportInfo(this.allTransactionsByID.get(txid).toString());
 			Common.reportInfo(txn.toString());
 		}
 
-		this.allTransactionsByID.set(txn.txid, txn);
+		this.allTransactionsByID.set(txid, txn);
 
 		if ((txn instanceof GenericTxn) && (txn.getDate() != null)) {
 			addTransactionDate((GenericTxn) txn);

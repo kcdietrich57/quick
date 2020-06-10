@@ -30,10 +30,8 @@ public class MultiSplitTxn extends SplitTxn {
 	}
 
 	public void addSplit(SplitTxn txn) {
-		if (this.subsplits.contains(txn) || txn.txid == 2381) {
-			if (this.subsplits.contains(txn)) {
-				return;
-			}
+		if (this.subsplits.contains(txn)) {
+			return;
 		}
 
 		this.subsplits.add(txn);

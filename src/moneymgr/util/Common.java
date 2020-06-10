@@ -53,7 +53,7 @@ public class Common {
 		return sign * (int) ((Math.abs(ms) + MS_PER_DAY / 2) / MS_PER_DAY);
 	}
 
-	/** Sort transactions list by date and id */
+	/** TODO move this to tx: Sort transactions list by date and id */
 	public static void sortTransactionsByDate(List<GenericTxn> txns) {
 		final Comparator<GenericTxn> cmptor = (t1, t2) -> {
 			final int diff = t1.getDate().compareTo(t2.getDate());
@@ -62,7 +62,7 @@ public class Common {
 				return diff;
 			}
 
-			return t1.txid - t2.txid;
+			return t1.getTxid() - t2.getTxid();
 		};
 
 		Collections.sort(txns, cmptor);

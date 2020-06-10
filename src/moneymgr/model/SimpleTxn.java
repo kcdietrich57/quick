@@ -19,6 +19,8 @@ interface Txn {
 	void setDate(QDate date);
 
 	int getAccountID();
+
+	int getTxid();
 }
 
 /**
@@ -35,8 +37,9 @@ public abstract class SimpleTxn implements Txn {
 	private static int cashok = 0;
 	private static int cashbad = 0;
 
+	private final long xid;
 	private final int acctid;
-	public final int txid;
+	private final int txid;
 
 	/** Dollar (cash) amount of the transaction */
 	private BigDecimal amount;
@@ -49,9 +52,10 @@ public abstract class SimpleTxn implements Txn {
 	private SimpleTxn xtxn_cash;
 
 	public SimpleTxn(int txid, int acctid) {
+		this.xid = (((long) acctid) << 32) + txid;
+		this.acctid = acctid;
 		this.txid = txid;
 
-		this.acctid = acctid;
 		this.amount = null;
 		this.memo = null;
 
@@ -61,6 +65,14 @@ public abstract class SimpleTxn implements Txn {
 
 	public SimpleTxn(int acctid) {
 		this(MoneyMgrModel.currModel.createTxid(), acctid);
+	}
+
+	public int getTxid() {
+		return (int) this.xid;
+	}
+
+	public int getAccountID() {
+		return (int) (this.xid >> 32);
 	}
 
 	/**
@@ -211,12 +223,8 @@ public abstract class SimpleTxn implements Txn {
 		return 0;
 	}
 
-	public int getAccountID() {
-		return this.acctid;
-	}
-
 	public Account getAccount() {
-		return MoneyMgrModel.currModel.getAccountByID(this.acctid);
+		return MoneyMgrModel.currModel.getAccountByID(getAccountID());
 	}
 
 	public final boolean isCredit() {
@@ -527,7 +535,7 @@ public abstract class SimpleTxn implements Txn {
 			InvestmentTxn t1 = getSecurityTransferTxns().get(idx);
 			InvestmentTxn t2 = other.getSecurityTransferTxns().get(idx);
 
-			if (t1.txid != t2.txid) {
+			if (t1.getTxid() != t2.getTxid()) {
 				return "xtxn:mismatch";
 			}
 		}
