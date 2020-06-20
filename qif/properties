@@ -1,8 +1,8 @@
 #QIF properties
-#Thu Dec 12 09:30:06 CST 2019
+#Sun Jun 14 06:21:19 CDT 2020
 reconcileTransactionTable.Category=4,4,100,y
 reconcileTransactionTable.Date=0,0,60,y
-transactionTable.Type=1,1,62,y
+transactionTable.Type=1,1,118,y
 reconcileTransactionTable.Cash\ Balance=7,7,100,y
 transactionTable.Payee=2,2,204,y
 transactionTable.Category=4,4,138,y
