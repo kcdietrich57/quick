@@ -2,6 +2,7 @@ package moneymgr.io.mm;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Reader;
@@ -18,6 +19,7 @@ import org.json.simple.parser.ParseException;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 import moneymgr.io.qif.TransactionCleaner;
 import moneymgr.model.Account;
@@ -238,7 +240,35 @@ public class Persistence {
 	public Persistence() {
 	}
 
+	private void saveCategories_gson() {
+		try {
+			JsonWriter writer = new JsonWriter(new FileWriter("/tmp/cat.json"));
+			writer.beginObject();
+			writer.name("Categories");
+			writer.beginArray();
+
+			for (int catid = 1; catid < this.model.nextCategoryID(); ++catid) {
+				Category cat = this.model.getCategory(catid);
+
+				writer.beginObject();
+				writer.name("id").value(cat.catid);
+				writer.name("name").value(cat.name);
+				writer.name("desc").value(cat.description);
+				writer.name("isexpense").value(cat.isExpense);
+				writer.endObject();
+			}
+
+			writer.endArray();
+			writer.endObject();
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	private void saveCategories() {
+		saveCategories_gson();
+
 		// ------------------------------------------------
 		wtr.println("");
 		wtr.println("\"Categories\": [");
