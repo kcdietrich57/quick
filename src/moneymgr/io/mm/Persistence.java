@@ -1,5 +1,6 @@
 package moneymgr.io.mm;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -884,13 +885,15 @@ public class Persistence {
 		}
 	}
 
-	private JSONObject load(String filename) {
+	private JSONObject load(File file) {
 		JSONObject obj = null;
 		FileReader rdr = null;
 
 		try {
-			rdr = new FileReader(filename);
-			obj = (JSONObject) new JSONParser().parse(rdr);
+			if (file.canRead()) {
+				rdr = new FileReader(file);
+				obj = (JSONObject) new JSONParser().parse(rdr);
+			}
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
 		} finally {
@@ -900,11 +903,11 @@ public class Persistence {
 		return obj;
 	}
 
-	public void loadMulti(String filename) {
+	public void loadMulti(File file) {
 		try {
-			Object o = loadMultiJSON("/tmp/multi.json");
+			Object o = loadMultiJSON(file);
 
-			JSONObject jobj = load(filename);
+			JSONObject jobj = load(file);
 			if (jobj != null) {
 				System.out.println("Multi object file:");
 				System.out.println(jobj.toString());
@@ -914,12 +917,20 @@ public class Persistence {
 		}
 	}
 
+	public void loadMulti(String filename) {
+	}
+
 	public MoneyMgrModel loadJSON(String modelName, String filename) {
-		loadMulti("/tmp/multi.json");
+		File multi = new File("/tmp/multi.json");
+		if (multi.canRead()) {
+			loadMulti(multi);
+		}
 
 		this.model = MoneyMgrModel.changeModel(modelName);
 
-		this.jsonModel = load(filename);
+		File file = new File(filename);
+
+		this.jsonModel = load(file);
 		if (this.jsonModel == null) {
 			return null;
 		}
@@ -1788,11 +1799,11 @@ public class Persistence {
 		}
 	}
 
-	private List<YOURPOJO> loadMultiJSON(String filename) throws IOException {
+	private List<YOURPOJO> loadMultiJSON(File file) throws IOException {
 		Gson gson = new Gson();
 		JsonReader jsonReader = null;
 		try {
-			jsonReader = new JsonReader(new FileReader(filename));
+			jsonReader = new JsonReader(new FileReader(file));
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
