@@ -19,21 +19,10 @@ public class AccountSecuritiesPanel //
 		setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
 	}
 
-	public void accountSelected(Account acct, boolean update) {
-		if (acct == null) {
-			setText("");
-			return;
-		}
-
-		StringBuffer txt = new StringBuffer();
-
-		txt.append("\n");
-
-		QDate curdate = MainWindow.instance.asOfDate();
-
-		BigDecimal acctvalue = acct.getValueForDate(curdate);
+	private void addInfoForDate(StringBuffer txt, Account acct, QDate date) {
+		BigDecimal acctvalue = acct.getValueForDate(date);
 		BigDecimal secvalue = (acct.isInvestmentAccount()) //
-				? acct.securities.getPortfolioValueForDate(curdate) //
+				? acct.securities.getPortfolioValueForDate(date) //
 				: BigDecimal.ZERO;
 		BigDecimal cashvalue = acctvalue.subtract(secvalue);
 
@@ -43,12 +32,12 @@ public class AccountSecuritiesPanel //
 			boolean hasSecurity = false;
 
 			for (SecurityPosition pos : acct.securities.getPositions()) {
-				if (!Common.isEffectivelyZero(pos.getValueForDate(curdate))) {
+				if (!Common.isEffectivelyZero(pos.getValueForDate(date))) {
 					txt.append(String.format("%2d: %-40s %12s %12s\n", //
 							idx, //
 							Common.formatString(pos.security.getName(), -40), //
-							Common.formatAmount3(pos.getSharesForDate(curdate)), //
-							Common.formatAmount(pos.getValueForDate(curdate)) //
+							Common.formatAmount3(pos.getSharesForDate(date)), //
+							Common.formatAmount(pos.getValueForDate(date)) //
 					));
 
 					hasSecurity = true;
@@ -91,6 +80,27 @@ public class AccountSecuritiesPanel //
 		txt.append(String.format("    %50s    %12s\n", //
 				Common.formatString("Account Total", 50), //
 				Common.formatAmount(acctvalue)));
+	}
+
+	public void accountSelected(Account acct, boolean update) {
+		if (acct == null) {
+			setText("");
+			return;
+		}
+
+		StringBuffer txt = new StringBuffer();
+
+		txt.append("\n");
+
+		QDate curdate = MainWindow.instance.asOfDate();
+
+		addInfoForDate(txt, acct, curdate);
+
+		if (curdate != QDate.today()) {
+			txt.append("\n======= TODAY =======\n");
+
+			addInfoForDate(txt, acct, QDate.today());
+		}
 
 		setText(txt.toString());
 	}
