@@ -60,6 +60,8 @@ public class AccountNavigationControlsPanel //
 		gbc.gridx = 2;
 		add(this.todayButton, gbc);
 
+		this.todayButton.setSelected(true);
+
 		addListeners(anp);
 	}
 
