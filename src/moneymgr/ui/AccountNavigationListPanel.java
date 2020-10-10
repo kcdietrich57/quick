@@ -51,7 +51,7 @@ public class AccountNavigationListPanel extends JScrollPane {
 
 		this.includeClosedAccounts = showOpenAccounts;
 		this.includeZeroBalanceAccounts = showZeroBalanceAccounts;
-		this.showTodayBalance = false;
+		this.showTodayBalance = true;
 
 		this.acctSelListeners = new ArrayList<>();
 
@@ -129,6 +129,10 @@ public class AccountNavigationListPanel extends JScrollPane {
 				this.includeClosedAccounts, //
 				this.includeZeroBalanceAccounts, //
 				this.showTodayBalance);
+	}
+
+	public boolean getShowTodayBalance() {
+		return this.showTodayBalance;
 	}
 
 	public void setShowTodayBalance(boolean yesno) {
