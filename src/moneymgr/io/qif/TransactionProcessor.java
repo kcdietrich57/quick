@@ -211,11 +211,11 @@ public class TransactionProcessor {
 
 				if (txn.getAmount() != null) {
 					if (!txn.getAmount().equals(amt)) {
-						Common.reportError("Inconsistent amount: " + qline.value);
+						Common.reportWarning("Inconsistent amount: " + qline.value);
 					}
-				} else {
-					txn.setAmount(amt);
 				}
+
+				txn.setAmount(amt);
 				tinfo.setValue(TransactionInfo.AMOUNT_IDX, qline.value);
 
 				break;

@@ -92,7 +92,7 @@ public class AccountSecuritiesPanel //
 
 		txt.append("\n");
 
-		QDate curdate = MainWindow.instance.asOfDate();
+		QDate curdate = MainWindow.instance.getAsOfDate();
 
 		addInfoForDate(txt, acct, curdate);
 

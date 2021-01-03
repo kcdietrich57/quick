@@ -52,7 +52,7 @@ public class AccountTableModel //
 	/** Return whether an account is open in the date period being shown */
 	private boolean accountIsVisible(Account acct) {
 		QDate start = MainWindow.instance.startAsOfDate;
-		QDate end = MainWindow.instance.asOfDate();
+		QDate end = MainWindow.instance.getAsOfDate();
 
 		if (this.showTodayBalance) {
 			QDate today = QDate.today();
@@ -113,7 +113,7 @@ public class AccountTableModel //
 		case 2: {
 			QDate thedate = (this.showTodayBalance) //
 					? QDate.today() //
-					: MainWindow.instance.asOfDate();
+					: MainWindow.instance.getAsOfDate();
 			return Common.formatAmount0(a.getValueForDate(thedate));
 		}
 		}

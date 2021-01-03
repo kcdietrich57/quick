@@ -44,7 +44,7 @@ public class TimeSliderPanel extends JPanel {
 	public TimeSliderPanel() {
 		super(new BorderLayout());
 
-		this.sliderDate = MainWindow.instance.asOfDate();
+		this.sliderDate = MainWindow.instance.getAsOfDate();
 
 		createDateSlider();
 		JPanel datePanel = createDatePanel();
@@ -110,7 +110,7 @@ public class TimeSliderPanel extends JPanel {
 			public void stateChanged(ChangeEvent e) {
 				int day = ((Integer) ((JSpinner) e.getSource()).getValue()).intValue();
 
-				QDate curdate = MainWindow.instance.asOfDate();
+				QDate curdate = MainWindow.instance.getAsOfDate();
 
 				if (curdate.getDay() != day) {
 					if (day < 1) {
@@ -213,7 +213,7 @@ public class TimeSliderPanel extends JPanel {
 
 		this.sliderDate = convertMonthsToDate(smonths);
 
-		if (!MainWindow.instance.asOfDate().equals(this.sliderDate)) {
+		if (!MainWindow.instance.getAsOfDate().equals(this.sliderDate)) {
 			MainWindow.instance.setAsOfDate(this.sliderDate);
 			this.daySpinner.setValue(new Integer(this.sliderDate.getDay()));
 

@@ -69,13 +69,13 @@ public class InvestmentsPanel extends JPanel {
 	private String buildSecuritiesModel() {
 		StringBuffer ret = new StringBuffer();
 
-		QDate curdate = MainWindow.instance.asOfDate();
+		QDate curdate = MainWindow.instance.getAsOfDate();
 
 		BigDecimal totalValue = BigDecimal.ZERO;
 
 		ret.append("=====================================\n");
 		ret.append("Securities Holdings/Value for ");
-		ret.append(Common.formatDate(MainWindow.instance.asOfDate()));
+		ret.append(Common.formatDate(curdate));
 		ret.append("\n");
 		ret.append("=====================================\n");
 		ret.append("\n");
@@ -116,7 +116,7 @@ public class InvestmentsPanel extends JPanel {
 	private String buildAccountsModel() {
 		StringBuffer ret = new StringBuffer();
 
-		QDate curdate = MainWindow.instance.asOfDate();
+		QDate curdate = MainWindow.instance.getAsOfDate();
 
 		ret.append("=====================================\n");
 		ret.append("Securities Holdings/Value by Account for ");

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import moneymgr.model.SecurityPosition.PositionInfo;
-import moneymgr.ui.MainWindow;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -229,6 +228,16 @@ public class Account {
 							this.name, this.closeDate.toString(), date.toString()));
 		}
 
+		if (date != null && //
+				!this.transactions.isEmpty() && //
+				getOpenDate().compareTo(date) > 0) {
+			Common.reportWarning( //
+					String.format("Close date %s is before open date {}", //
+							date, getOpenDate()));
+
+			date = getOpenDate();
+		}
+
 		this.closeDate = date;
 	}
 
@@ -252,14 +261,12 @@ public class Account {
 
 	/** Was the account opened on or before a date */
 	public boolean isOpenAsOf(QDate d) {
-		QDate openDate = getOpenDate();
-
-		return (openDate != null) && (openDate.compareTo(d) <= 0);
+		return getOpenDate().compareTo(d) <= 0;
 	}
 
 	/** Was the account closed on or before date */
-	private boolean isClosedAsOf(QDate d) {
-		return (this.closeDate != null) && (this.closeDate.compareTo(d) <= 0);
+	public boolean isClosedAsOf(QDate d) {
+		return (this.closeDate != null) && (this.closeDate.compareTo(d) < 0);
 	}
 
 	public void addTransaction(GenericTxn txn) {
@@ -510,13 +517,14 @@ public class Account {
 		getNextStatementToReconcile();
 
 		Statement stat = null;
+		QDate aod = MoneyMgrModel.currModel.getAsOfDate();
 
-		if (MainWindow.instance.asOfDate().compareTo(QDate.today()) < 0) {
+		if (aod.compareTo(QDate.today()) < 0) {
 			// TODO I don't get this - when slider is before today - what if it is
 			// reconciled?
-			stat = getFirstStatementAfter(MainWindow.instance.asOfDate());
+			stat = getFirstStatementAfter(aod);
 			if (stat == null) {
-				stat = new Statement(this.acctid, MainWindow.instance.asOfDate(), getLastStatement());
+				stat = new Statement(this.acctid, aod, getLastStatement());
 			}
 		} else {
 			List<GenericTxn> txns = getUnclearedTransactions();
@@ -554,7 +562,8 @@ public class Account {
 			addTransactionsToAsOfDate(txns, this.transactions);
 		}
 
-		Statement stmt = new Statement(this.acctid, MainWindow.instance.asOfDate(), getLastStatement());
+		Statement stmt = new Statement( //
+				this.acctid, MoneyMgrModel.currModel.getAsOfDate(), getLastStatement());
 		Common.sortTransactionsByDate(txns);
 		stmt.addTransactions(txns);
 
@@ -564,7 +573,7 @@ public class Account {
 	/** Add txns from one list to another if date <= current date */
 	private void addTransactionsToAsOfDate(List<GenericTxn> txns, List<GenericTxn> srctxns) {
 		for (GenericTxn txn : srctxns) {
-			if ((txn.getDate().compareTo(MainWindow.instance.asOfDate()) <= 0) //
+			if ((txn.getDate().compareTo(MoneyMgrModel.currModel.getAsOfDate()) <= 0) //
 					&& !txns.contains(txn)) {
 				txns.add(txn);
 			}

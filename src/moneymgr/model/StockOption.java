@@ -64,7 +64,7 @@ public class StockOption {
 	 * @param secid          Security being granted
 	 * @param shares         Number of shares granted
 	 * @param price          The share price the grantee pays on exercise
-	 * @param vestPeriod     How long until options are fully granted
+	 * @param vestPeriod     How long (months) until options are fully granted
 	 * @param vestCount      How many increments for vesting
 	 * @param lifetimeMonths How long from the grant date until expiration
 	 *

@@ -336,10 +336,17 @@ public abstract class SimpleTxn implements Txn {
 	}
 
 	public void setAmount(BigDecimal amount) {
-		this.amount = amount;
+		if (amount != null && //
+				(this.amount == null || amount.compareTo(this.amount) != 0)) {
+			this.amount = amount;
+		}
 	}
 
 	public final BigDecimal getAmount() {
+		if (this.amount == null) {
+			//return BigDecimal.ZERO;
+		}
+
 		return this.amount;
 	}
 
@@ -370,7 +377,7 @@ public abstract class SimpleTxn implements Txn {
 			for (SimpleTxn split : this.getSplits()) {
 				cash = cash.add(split.getCashAmount());
 			}
-		} else {
+		} else if (this.amount != null) {
 			cash = this.amount;
 		}
 

@@ -13,6 +13,7 @@ import moneymgr.report.NetWorthReporter;
 import moneymgr.report.ReconcileStatusReporter;
 import moneymgr.report.ReconcileStatusReporter.ReconcileStatusModel;
 import moneymgr.report.StatusForDateModel;
+import moneymgr.util.QDate;
 
 /**
  * This panel displays overall information<br>
@@ -53,10 +54,12 @@ public class Dashboard extends JPanel {
 
 		add(tabs, BorderLayout.CENTER);
 
-		StatusForDateModel balancesModel = new StatusForDateModel(MainWindow.instance.asOfDate());
+		QDate aod = MainWindow.instance.getAsOfDate();
+		
+		StatusForDateModel balancesModel = new StatusForDateModel(aod);
 		this.balancesText.setText(NetWorthReporter.generateReportStatusForDate(balancesModel));
 
-		CashFlowModel cashFlowModel = new CashFlowModel(MainWindow.instance.asOfDate());
+		CashFlowModel cashFlowModel = new CashFlowModel(aod);
 		this.cashFlowText.setText(NetWorthReporter.generateReportStatusForDate(cashFlowModel));
 
 		ReconcileStatusModel reconcileStatusModel = ReconcileStatusReporter.buildReportStatusModel();
@@ -64,11 +67,13 @@ public class Dashboard extends JPanel {
 	}
 
 	public void changeDate() {
-		StatusForDateModel balancesModel = new StatusForDateModel(MainWindow.instance.asOfDate());
+		QDate aod = MainWindow.instance.getAsOfDate();
+
+		StatusForDateModel balancesModel = new StatusForDateModel(aod);
 		this.balancesText.setText(NetWorthReporter.generateReportStatusForDate(balancesModel));
 		this.balancesText.setCaretPosition(0);
 
-		CashFlowModel cashFlowModel = new CashFlowModel(MainWindow.instance.asOfDate());
+		CashFlowModel cashFlowModel = new CashFlowModel(aod);
 		this.cashFlowText.setText(NetWorthReporter.generateReportStatusForDate(cashFlowModel));
 		this.cashFlowText.setCaretPosition(0);
 

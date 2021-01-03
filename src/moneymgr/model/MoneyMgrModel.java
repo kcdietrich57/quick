@@ -12,7 +12,6 @@ import java.util.Map;
 
 import moneymgr.io.AccountDetailsFixer;
 import moneymgr.model.compare.CompareModels;
-import moneymgr.ui.MainWindow;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -27,6 +26,14 @@ public class MoneyMgrModel {
 	private static GenericTxn SEARCH_TX;
 
 	// -------------------------------------
+
+	public static void deleteModel(String name) {
+		if (MoneyMgrModel.currModel == MoneyMgrModel.getModel(name)) {
+			MoneyMgrModel.currModel = null;
+		}
+
+		MoneyMgrModel.models.remove(name);
+	}
 
 	public static MoneyMgrModel getModel(String name) {
 		return MoneyMgrModel.models.get(name);
@@ -94,6 +101,25 @@ public class MoneyMgrModel {
 	private List<Lot> lots = new ArrayList<Lot>();
 
 	private final List<StockOption> stockOptions = new ArrayList<>();
+
+	private QDate _currentDate;
+	private QDate _asOfDate;
+
+	public QDate getCurrentDate() {
+		return this._currentDate;
+	}
+
+	public void setCurrentDate(QDate date) {
+		this._currentDate = date;
+	}
+
+	public QDate getAsOfDate() {
+		return this._asOfDate;
+	}
+
+	public void setAsOfDate(QDate date) {
+		this._asOfDate = date;
+	}
 
 	// -------------------------------------
 
@@ -262,7 +288,7 @@ public class MoneyMgrModel {
 	/** Get Account list sorted on isOpen|type|name */
 	public List<Account> getSortedAccounts(boolean showToday) {
 		List<Account> accts = new ArrayList<>();
-		QDate thedate = (showToday) ? QDate.today() : MainWindow.instance.asOfDate();
+		QDate thedate = (showToday) ? QDate.today() : currModel.getAsOfDate();
 
 		for (Account acct : getAccounts()) {
 			if (acct.isOpenAsOf(thedate)) {
@@ -372,8 +398,10 @@ public class MoneyMgrModel {
 			return a1.type.compareTo(a2.type);
 		}
 
-		BigDecimal cv1 = a1.getValueForDate(MainWindow.instance.asOfDate()).abs();
-		BigDecimal cv2 = a2.getValueForDate(MainWindow.instance.asOfDate()).abs();
+		QDate aod = currModel.getAsOfDate();
+		
+		BigDecimal cv1 = a1.getValueForDate(aod).abs();
+		BigDecimal cv2 = a2.getValueForDate(aod).abs();
 
 		diff = cv2.subtract(cv1).signum();
 		return (diff != 0) //
@@ -541,7 +569,7 @@ public class MoneyMgrModel {
 	/** Add a new transaction to the appropriate collection(s) */
 	public void addTransaction(SimpleTxn txn) {
 		int txid = txn.getTxid();
-		
+
 		if (txid <= 0 || txn.getAccountID() <= 0) {
 			return;
 		}

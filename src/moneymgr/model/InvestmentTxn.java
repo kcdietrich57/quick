@@ -5,10 +5,8 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import app.QifDom;
 import moneymgr.io.TransactionInfo;
@@ -22,29 +20,10 @@ public class InvestmentTxn extends GenericTxn {
 		NO_ACTION("None"), NEW_SHARES("New"), DISPOSE_SHARES("Dispose"), TRANSFER_OUT("Xout"), TRANSFER_IN("Xin"),
 		SPLIT("Split");
 
-		private static Map<String, ShareAction> byname = new HashMap<String, InvestmentTxn.ShareAction>();
-
 		private String name;
 
 		private ShareAction(String name) {
 			this.name = name;
-		}
-
-		private static void addAction(ShareAction act) {
-			ShareAction.byname.put(act.name, act);
-		}
-
-		public static ShareAction parseAction(String name) {
-			if (ShareAction.byname.isEmpty()) {
-				addAction(NO_ACTION);
-				addAction(NEW_SHARES);
-				addAction(DISPOSE_SHARES);
-				addAction(TRANSFER_IN);
-				addAction(TRANSFER_OUT);
-				addAction(SPLIT);
-			}
-
-			return ShareAction.byname.get(name);
 		}
 
 		public String toString() {

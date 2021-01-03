@@ -44,11 +44,13 @@ public class StatementTableModel //
 		Statement unclearedStmt = null;
 
 		if (acct != null) {
-			if (MainWindow.instance.asOfDate().compareTo(QDate.today()) < 0) {
+			QDate aod = MainWindow.instance.getAsOfDate();
+			
+			if (aod.compareTo(QDate.today()) < 0) {
 				Statement laststmt = null;
 
 				for (Statement stmt : acct.getStatements()) {
-					if (MainWindow.instance.asOfDate().compareTo(stmt.date) >= 0) {
+					if (aod.compareTo(stmt.date) >= 0) {
 						this.statements.add(stmt);
 						laststmt = stmt;
 					}

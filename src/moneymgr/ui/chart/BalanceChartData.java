@@ -67,7 +67,7 @@ public class BalanceChartData {
 
 	/** Construct a skeleton list of values to be filled in later */
 	public static List<StatusForDateModel> getNetWorthData() {
-		return getNetWorthData(null, MainWindow.instance.asOfDate(), //
+		return getNetWorthData(null, MainWindow.instance.getAsOfDate(), //
 				MainWindow.instance.reportUnit);
 	}
 

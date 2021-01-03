@@ -56,7 +56,7 @@ public class AccountNavigationSummaryPanel extends JPanel {
 	public void updateValues() {
 		Balances bals = NetWorthReporter.getBalancesForDate(QDate.today());
 		Balances bals2 = NetWorthReporter.getBalancesForDate( //
-				MainWindow.instance.asOfDate());
+				MainWindow.instance.getAsOfDate());
 
 		this.nowTitle.setText("Today");
 		this.asofTitle.setText("As Of");

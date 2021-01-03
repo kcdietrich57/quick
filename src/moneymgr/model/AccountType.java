@@ -29,6 +29,13 @@ public enum AccountType { //
 	private static final Map<String, AccountType> quickenAccountType = new HashMap<String, AccountType>();
 	private static final List<AccountType> accountTypes = new ArrayList<AccountType>(9);
 
+	public static final AccountType[] getAccountTypes() {
+		return new AccountType[] { //
+				Bank, CCard, Cash, Asset, Liability, //
+				Invest, InvPort, Inv401k, InvMutual //
+		};
+	}
+
 	static {
 		for (AccountType at : AccountType.values()) {
 			AccountType.quickenAccountType.put(at.qname, at);
