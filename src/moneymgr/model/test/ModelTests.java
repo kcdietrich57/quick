@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 	AccountTypeTest.class,
 	CategoryTest.class,
 	ITxTest.class,
+	LotTest.class,
 	SecurityTest.class,
 	StatementTest.class,
 	StockOptionTest.class,

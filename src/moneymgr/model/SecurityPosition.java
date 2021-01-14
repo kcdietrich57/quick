@@ -251,7 +251,7 @@ public class SecurityPosition {
 	}
 
 	public BigDecimal getEndingValue() {
-		return this.endingValue;
+		return this.endingValue != null ? this.endingValue : BigDecimal.ZERO;
 	}
 
 	public void setEndingValue(BigDecimal value) {
@@ -300,15 +300,9 @@ public class SecurityPosition {
 	}
 
 	public BigDecimal getExpectedEndingShares() {
-		if (this.expectedEndingShares == null) {
-			if (QifDom.verbose) {
-				Common.reportWarning("Position expected ending shares not set");
-			}
-
-			this.expectedEndingShares = BigDecimal.ZERO;
-		}
-
-		return this.expectedEndingShares;
+		return (this.expectedEndingShares != null) //
+				? this.expectedEndingShares
+				: BigDecimal.ZERO;
 	}
 
 	public void setExpectedEndingShares(BigDecimal shares) {

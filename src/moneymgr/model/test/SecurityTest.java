@@ -51,9 +51,8 @@ class SecurityTest {
 		this.model.setAsOfDate(this.today);
 
 		this.foo = new Security("FOO", "Foo, Inc");
-		this.bar = new Security("BAR", "Bar, Inc");
-		
 		MoneyMgrModel.currModel.addSecurity(foo);
+		this.bar = new Security("BAR", "Bar, Inc");
 		MoneyMgrModel.currModel.addSecurity(bar);
 	}
 

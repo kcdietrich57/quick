@@ -190,10 +190,6 @@ public class StatementProcessor {
 				// price on the day of the statement.
 				// If we know two of the values, we can calculate the third.
 				if (endingShares == null) {
-					if (pos.getEndingValue() == null) {
-						Common.reportError("Missing security info in stmt");
-					}
-
 					if (price == null) {
 						price = price4date;
 					}

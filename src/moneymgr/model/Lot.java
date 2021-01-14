@@ -125,6 +125,19 @@ public class Lot {
 		createTxn.addDisposedLot(srcLot);
 	}
 
+	/**
+	 * Constructor for lot being created from persistent storage
+	 * 
+	 * @param lotid      The lot id
+	 * @param date       Date the lot object was created (i.e. date of acquisition)
+	 * @param acctid     The acct holding the lot
+	 * @param secid      The security involved
+	 * @param shares     The number of shares in the lot
+	 * @param basisPrice The cost basis per share of the lot
+	 * @param createTxn  The transaction that created this lot
+	 * @param dispTxn    Transaction disposing of the lot
+	 * @param srcLot     The lot this is derived from if not a brand new lot
+	 */
 	public Lot(int lotid, QDate date, int acctid, int secid, BigDecimal shares, BigDecimal basisprice,
 			InvestmentTxn createTxn, InvestmentTxn dispTxn, Lot srcLot) {
 		this(lotid, acctid, date, secid, shares, basisprice, createTxn, dispTxn, srcLot);
@@ -360,6 +373,10 @@ public class Lot {
 	}
 
 	public String matches(Lot other) {
+		if (other == null) {
+			return "nulllot";
+		}
+
 		if (this.childLots.size() != other.childLots.size()) {
 			return "numchildren";
 		}

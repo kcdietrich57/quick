@@ -19,6 +19,7 @@ import moneymgr.util.QDate;
  * statement
  */
 public class SecurityPortfolio {
+	/** May belong to the model, an account or a statement */
 	public final Object owner;
 
 	/** For statements, this references the prev stmt's ending holdings */
