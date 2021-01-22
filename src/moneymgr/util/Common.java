@@ -368,6 +368,10 @@ public class Common {
 		return totaltx;
 	}
 
+	public static String safeToString(Object o) {
+		return (o != null) ? o.toString() : "null";
+	}
+
 	public static boolean safeEquals(String s1, String s2) {
 		if (s1 == null) {
 			s1 = "";

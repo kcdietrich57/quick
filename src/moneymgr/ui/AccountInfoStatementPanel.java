@@ -257,9 +257,10 @@ class StatementTableCellRenderer extends DefaultTableCellRenderer {
 		StatementTableModel model = (StatementTableModel) table.getModel();
 		Statement stmt = model.getStatementAt(row);
 
-		boolean future = !stmt.isBalanced && (stmt.date.compareTo(QDate.today()) > 0);
+		boolean future = !stmt.isBalanced() && //
+				(stmt.date.compareTo(QDate.today()) > 0);
 
-		if (stmt.isBalanced) {
+		if (stmt.isBalanced()) {
 			c.setFont(regularFont);
 			c.setForeground(regularColor);
 			c.setBackground(regularBackground);

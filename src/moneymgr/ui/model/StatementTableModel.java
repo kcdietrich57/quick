@@ -109,7 +109,7 @@ public class StatementTableModel //
 
 		switch (col) {
 		case 0:
-			return (s.isBalanced) ? "yes" : "no";
+			return (s.isBalanced()) ? "yes" : "no";
 		case 1:
 			return s.date.toString();
 		case 2:

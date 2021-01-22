@@ -215,7 +215,9 @@ public class MoneyMgrModel {
 	}
 
 	public Security getSecurity(int secid) {
-		return securitiesByID.get(secid);
+		return (secid >= 0 && this.securitiesByID.size() > secid) //
+				? securitiesByID.get(secid) //
+				: null;
 	}
 
 	/** Look up a security whose name or symbol matches an input string. */
@@ -282,7 +284,9 @@ public class MoneyMgrModel {
 	}
 
 	public Account getAccountByID(int acctid) {
-		return accountsByID.get(acctid);
+		return (acctid > 0 && acctid < this.accountsByID.size()) //
+				? this.accountsByID.get(acctid) //
+				: null;
 	}
 
 	/** Get Account list sorted on isOpen|type|name */
@@ -399,7 +403,7 @@ public class MoneyMgrModel {
 		}
 
 		QDate aod = currModel.getAsOfDate();
-		
+
 		BigDecimal cv1 = a1.getValueForDate(aod).abs();
 		BigDecimal cv2 = a2.getValueForDate(aod).abs();
 

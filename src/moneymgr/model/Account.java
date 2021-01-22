@@ -352,7 +352,7 @@ public class Account {
 		for (int ii = this.statements.size() - 1; ii >= 0; --ii) {
 			Statement stmt = this.statements.get(ii);
 
-			if (stmt.isBalanced) {
+			if (stmt.isBalanced()) {
 				return stmt.date;
 			}
 		}
@@ -365,7 +365,7 @@ public class Account {
 		for (int ii = 0; ii < this.statements.size(); ++ii) {
 			Statement stmt = this.statements.get(ii);
 
-			if (!stmt.isBalanced) {
+			if (!stmt.isBalanced()) {
 				return stmt;
 			}
 		}
@@ -641,7 +641,7 @@ public class Account {
 		for (int statidx = this.statements.size() - 1; statidx >= 0; --statidx) {
 			Statement stmt = this.statements.get(statidx);
 
-			if (stmt.isBalanced) {
+			if (stmt.isBalanced()) {
 				break;
 			}
 

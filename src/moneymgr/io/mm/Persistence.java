@@ -828,7 +828,7 @@ public class Persistence {
 				line = String.format("  [%d,%d,%s,%s,%s,%s,\n    %s,\n    %s]", //
 						stmt.acctid, //
 						stmt.date.getRawValue(), //
-						stmt.isBalanced, //
+						stmt.isBalanced(), //
 						prevdate, //
 						encodeAmount(stmt.closingBalance), //
 						encodeAmount(stmt.getCashBalance()), //
@@ -1755,7 +1755,7 @@ public class Persistence {
 				Statement stmt = new Statement(acctid, date, totbal, cashbal, prevstmt);
 				acct.addStatement(stmt);
 
-				stmt.isBalanced = isbal;
+				stmt.setIsBalanced(isbal);
 
 				JSONArray txnids = (JSONArray) tuple.get(TXNS);
 				for (Object txnidobj : txnids) {

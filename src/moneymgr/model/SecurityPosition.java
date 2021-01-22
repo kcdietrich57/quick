@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import app.QifDom;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 

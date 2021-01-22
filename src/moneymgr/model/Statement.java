@@ -20,7 +20,7 @@ public class Statement {
 
 	public final Statement prevStatement;
 
-	public boolean isBalanced;
+	private boolean isBalanced;
 
 	/** Total closing balance, including cash and securities */
 	public final BigDecimal closingBalance;
@@ -61,6 +61,14 @@ public class Statement {
 		this(acctid, date, BigDecimal.ZERO, BigDecimal.ZERO, prevstat);
 	}
 
+	public boolean isBalanced() {
+		return this.isBalanced;
+	}
+
+	public void setIsBalanced(boolean yesno) {
+		this.isBalanced = yesno;
+	}
+
 	/** Add transactions to this statement's cleared list */
 	public void addTransactions(Collection<GenericTxn> txns) {
 		addTransactions(txns, false);
@@ -81,12 +89,9 @@ public class Statement {
 	}
 
 	public BigDecimal getCashBalance() {
-		if (this.cashBalance == null) {
-			// Common.reportWarning("Statement cash balance is not set");
-			this.cashBalance = this.closingBalance;
-		}
-
-		return this.cashBalance;
+		return (this.cashBalance != null) //
+				? this.cashBalance //
+				: this.closingBalance;
 	}
 
 	public void setCashBalance(BigDecimal val) {
@@ -390,14 +395,36 @@ public class Statement {
 	}
 
 	public String matches(Statement other, boolean deep) {
-		if ((this.acctid != other.acctid) //
-				|| !this.date.equals(other.date) //
-				|| !Common.isEffectivelyEqual(this.closingBalance, other.closingBalance) //
-				|| !Common.isEffectivelyEqual(this.cashBalance, other.cashBalance) //
-				|| (this.isBalanced != other.isBalanced) //
-				|| (this.transactions.size() != other.transactions.size()) //
-				|| ((this.prevStatement == null) != (other.prevStatement == null))) {
-			return "genInfo";
+		if ((this.acctid != other.acctid)) {
+			return String.format("acctid(%d/%d)", this.acctid, other.acctid);
+		}
+		if (!this.date.equals(other.date)) {
+			return String.format("date(%s/%s)", //
+					this.date.toString(), other.date.toString());
+		}
+		if (!Common.isEffectivelyEqual(this.closingBalance, other.closingBalance)) {
+			return String.format("bal(%s/%s)", //
+					this.closingBalance.toString(), //
+					other.closingBalance.toString());
+		}
+		if (!Common.isEffectivelyEqual(getCashBalance(), other.getCashBalance())) {
+			return String.format("cash(%s/%s)", //
+					getCashBalance().toString(), //
+					other.getCashBalance().toString());
+		}
+		if ((this.isBalanced != other.isBalanced)) {
+			return String.format("isbal(%s/%s)", //
+					new Boolean(this.isBalanced).toString(), //
+					new Boolean(other.isBalanced).toString());
+		}
+		if ((this.transactions.size() != other.transactions.size())) {
+			return String.format("numtx(%d/%d)", //
+					this.transactions.size(), other.transactions.size());
+		}
+		if (((this.prevStatement == null) != (other.prevStatement == null))) {
+			return String.format("prevstat(%d/%d)", //
+					new Boolean(this.prevStatement == null).toString(), //
+					new Boolean(other.prevStatement == null).toString());
 		}
 
 		for (int ii = 0; ii < this.transactions.size(); ++ii) {

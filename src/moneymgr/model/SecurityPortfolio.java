@@ -192,7 +192,10 @@ public class SecurityPortfolio {
 		/** Compare desired/actual holdings for each security position */
 		public boolean holdingsMatch() {
 			for (SecurityPosition pos : this.actualPositions) {
-				if (!Common.isEffectivelyEqual(pos.getEndingShares(), pos.getExpectedEndingShares())) {
+				BigDecimal expected = pos.getExpectedEndingShares();
+				BigDecimal actual = pos.getEndingShares();
+				
+				if (!Common.isEffectivelyEqual(actual, expected)) {
 					return false;
 				}
 			}

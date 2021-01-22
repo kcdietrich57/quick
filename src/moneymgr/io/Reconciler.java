@@ -113,7 +113,7 @@ public class Reconciler {
 
 			getTransactionsFromDetails(a, s, d);
 
-			if (!s.isBalanced) {
+			if (!s.isBalanced()) {
 				getTransactionsFromDetails(a, s, d);
 				Common.reportError("Can't reconcile statement from log.\n" //
 						+ " a=" + a.name //
@@ -124,7 +124,7 @@ public class Reconciler {
 
 	/** Match up statement and its transactions using statement details. */
 	private static void getTransactionsFromDetails(Account a, Statement s, StatementDetails d) {
-		if (s.isBalanced) {
+		if (s.isBalanced()) {
 			return;
 		}
 
@@ -178,7 +178,7 @@ public class Reconciler {
 			t.setStatementDate(s.date);
 		}
 
-		s.isBalanced = true;
+		s.setIsBalanced(true);
 	}
 
 	/** Add a reconciled statement's info to the statement log file */

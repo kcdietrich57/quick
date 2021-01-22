@@ -8,9 +8,7 @@ import java.util.Map;
 
 import moneymgr.model.Account;
 import moneymgr.model.Category;
-import moneymgr.model.InvestmentTxn;
 import moneymgr.model.MoneyMgrModel;
-import moneymgr.model.NonInvestmentTxn;
 import moneymgr.model.Security;
 import moneymgr.model.SimpleTxn;
 import moneymgr.model.TxAction;
@@ -285,34 +283,34 @@ public class TransactionInfo {
 	public SimpleTxn createTransaction(Account acct) {
 //		processValues();
 
-		SimpleTxn txn;
-
-		if (this.isInvestmentTransaction) {
-			NonInvestmentTxn nitxn = new NonInvestmentTxn(acct.acctid);
-			txn = nitxn;
-		} else {
-			InvestmentTxn itxn = new InvestmentTxn(acct.acctid);
-			txn = itxn;
-
-			itxn.setQuantity(this.shares);
-			itxn.price = this.price;
-			itxn.accountForTransfer = this.xaccount.name;
-			itxn.cashTransferred = this.xamount;
-			itxn.commission = this.commission;
-			itxn.setSecurity(this.security);
-		}
-
-		txn.setDate(this.date);
-		txn.setAction(this.action);
-		txn.setAmount(this.amount);
-		txn.setCheckNumber(this.cknum);
-		txn.setMemo(this.memo);
-		if (this.xaccount != null) {
-			txn.setCatid(-this.xaccount.acctid);
-			txn.setCashTransferAcctid(this.xaccount.acctid);
-		} else {
-			txn.setCatid(this.category.catid);
-		}
+		SimpleTxn txn = null;
+//
+//		if (!this.isInvestmentTransaction) {
+//			NonInvestmentTxn nitxn = new NonInvestmentTxn(acct.acctid);
+//			txn = nitxn;
+//		} else {
+//			InvestmentTxn itxn = new InvestmentTxn(acct.acctid);
+//			txn = itxn;
+//
+//			itxn.setQuantity(this.shares);
+//			itxn.price = this.price;
+//			itxn.accountForTransfer = this.xaccount.name;
+//			itxn.cashTransferred = this.xamount;
+//			itxn.commission = this.commission;
+//			itxn.setSecurity(this.security);
+//		}
+//
+//		txn.setDate(this.date);
+//		txn.setAction(this.action);
+//		txn.setAmount(this.amount);
+//		txn.setCheckNumber(this.cknum);
+//		txn.setMemo(this.memo);
+//		if (this.xaccount != null) {
+//			txn.setCatid(-this.xaccount.acctid);
+//			txn.setCashTransferAcctid(this.xaccount.acctid);
+//		} else {
+//			txn.setCatid(this.category.catid);
+//		}
 
 		return txn;
 	}

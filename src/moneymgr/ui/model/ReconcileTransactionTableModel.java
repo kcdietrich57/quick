@@ -97,7 +97,7 @@ public class ReconcileTransactionTableModel //
 
 			if ((clearedbal != null) //
 					&& Common.isEffectivelyEqual(clearedbal, this.curStatement.getCashBalance())) {
-				this.curStatement.isBalanced = true;
+				this.curStatement.setIsBalanced(true);
 
 				this.curAccount.addStatement(this.curStatement);
 
