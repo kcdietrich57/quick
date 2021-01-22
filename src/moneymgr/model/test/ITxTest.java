@@ -17,6 +17,7 @@ import moneymgr.model.AccountType;
 import moneymgr.model.InvestmentTxn;
 import moneymgr.model.Lot;
 import moneymgr.model.MoneyMgrModel;
+import moneymgr.model.NonInvestmentTxn;
 import moneymgr.model.QPrice;
 import moneymgr.model.Security;
 import moneymgr.model.TxAction;
@@ -27,9 +28,12 @@ import moneymgr.util.QDate;
 class ITxTest {
 
 	MoneyMgrModel model;
+	Account bank;
 	Account invest;
 	QDate today;
-	InvestmentTxn tx;
+	InvestmentTxn itx;
+	InvestmentTxn itx2;
+	NonInvestmentTxn ntx;
 	Security stock;
 
 	@BeforeAll
@@ -45,6 +49,9 @@ class ITxTest {
 		new MoneyMgrModel("test-model");
 		this.model = MoneyMgrModel.changeModel("test-model");
 
+		this.bank = new Account("bank", AccountType.Bank);
+		this.model.addAccount(this.bank);
+
 		this.invest = new Account("invest", AccountType.Invest);
 		this.model.addAccount(this.invest);
 
@@ -55,13 +62,29 @@ class ITxTest {
 		stock = new Security("FOO", "Foo, Inc");
 		stock.addPrice(new QPrice(today, stock.secid, new BigDecimal("1.23")));
 
-		this.tx = new InvestmentTxn(this.invest.acctid);
-		this.tx.setAction(TxAction.BUY);
-		this.tx.setDate(today);
-		this.tx.setSecurity(stock);
-		this.tx.setQuantity(new BigDecimal("1.0"));
+		this.ntx = new NonInvestmentTxn(this.bank.acctid);
+		this.ntx.setDate(today);
+		this.ntx.setAmount(new BigDecimal("1.23"));
 
-		invest.addTransaction(this.tx);
+		this.itx = new InvestmentTxn(this.invest.acctid);
+		this.itx.setAction(TxAction.BUYX);
+		this.itx.setDate(today);
+		this.itx.setSecurity(stock);
+		this.itx.setQuantity(new BigDecimal("1.0"));
+		// TODO why do we need to do both of these? Setting tx should be sufficient
+		this.itx.setCashTransferAcctid(this.bank.acctid);
+		this.itx.cashTransferred = this.ntx.getAmount();
+		this.itx.setCashTransferTxn(this.ntx);
+
+		invest.addTransaction(this.itx);
+
+		this.itx2 = new InvestmentTxn(this.invest.acctid);
+		this.itx2.setAction(TxAction.BUY);
+		this.itx2.setDate(today);
+		this.itx2.setSecurity(stock);
+		this.itx2.setQuantity(new BigDecimal("1.0"));
+
+		invest.addTransaction(this.itx2);
 	}
 
 	@AfterEach
@@ -78,32 +101,32 @@ class ITxTest {
 
 	@Test
 	void testRemovesShares() {
-		Assert.assertFalse(this.tx.removesShares());
-		Assert.assertFalse(this.tx.addsShares());
+		Assert.assertFalse(this.itx.removesShares());
+		Assert.assertFalse(this.itx.addsShares());
 
 		// TODO fail("Not yet implemented");
 	}
 
 	@Test
 	void testGetAction() {
-		Assert.assertEquals(TxAction.BUY, this.tx.getAction());
+		Assert.assertEquals(TxAction.BUYX, this.itx.getAction());
 
 		// TODO fail("Not yet implemented");
 	}
 
 	@Test
 	void testSetAction() {
-		Assert.assertEquals(TxAction.BUY, this.tx.getAction());
+		Assert.assertEquals(TxAction.BUYX, this.itx.getAction());
 
-		this.tx.setAction(TxAction.SELL);
-		Assert.assertEquals(TxAction.SELL, this.tx.getAction());
+		this.itx.setAction(TxAction.SELL);
+		Assert.assertEquals(TxAction.SELL, this.itx.getAction());
 
 		// TODO fail("Not yet implemented");
 	}
 
 	@Test
 	void testGetSecurityTransferTxns() {
-		List<InvestmentTxn> txns = this.tx.getSecurityTransferTxns();
+		List<InvestmentTxn> txns = this.itx.getSecurityTransferTxns();
 		Assert.assertNotNull(txns);
 		Assert.assertTrue(txns.isEmpty());
 
@@ -112,7 +135,13 @@ class ITxTest {
 
 	@Test
 	void testGetCashTransferAmount() {
-		BigDecimal amt = this.tx.getCashTransferAmount();
+		BigDecimal amt;
+
+		amt = this.itx.getCashTransferAmount();
+		Assert.assertNotNull(amt);
+		Assert.assertTrue(Common.isEffectivelyEqual(this.ntx.getAmount(), amt));
+
+		amt = this.itx2.getCashTransferAmount();
 		Assert.assertNotNull(amt);
 		Assert.assertTrue(Common.isEffectivelyZero(amt));
 
@@ -121,17 +150,22 @@ class ITxTest {
 
 	@Test
 	void testGetCashAmount() {
-		BigDecimal amt = this.tx.getCashAmount();
+		BigDecimal amt;
+
+		amt = this.itx.getCashAmount();
 		Assert.assertNotNull(amt);
 		Assert.assertTrue(Common.isEffectivelyZero(amt));
-		Assert.assertTrue(Common.isEffectivelyEqual(new BigDecimal("-1.23"), amt));
+
+		amt = this.itx2.getCashAmount();
+		Assert.assertNotNull(amt);
+		Assert.assertFalse(Common.isEffectivelyZero(amt));
 
 		// TODO fail("Not yet implemented");
 	}
 
 	@Test
 	void testGetSecurity() {
-		Security sec = this.tx.getSecurity();
+		Security sec = this.itx.getSecurity();
 		Assert.assertEquals(this.stock, sec);
 
 		// TODO fail("Not yet implemented");
@@ -139,7 +173,8 @@ class ITxTest {
 
 	@Test
 	void testFormatValue() {
-		String s = this.tx.formatValue();
+		this.itx.setCashTransferTxn(this.ntx);
+		String s = this.itx.formatValue();
 		Assert.assertNotNull(s);
 
 		// TODO fail("Not yet implemented");
@@ -147,10 +182,10 @@ class ITxTest {
 
 	@Test
 	void testToStringShort() {
-		String s = this.tx.toStringShort(false);
+		String s = this.itx.toStringShort(false);
 		Assert.assertNotNull(s);
 
-		s = this.tx.toStringShort(true);
+		s = this.itx.toStringShort(true);
 		Assert.assertNotNull(s);
 
 		// TODO fail("Not yet implemented");
@@ -158,7 +193,7 @@ class ITxTest {
 
 	@Test
 	void testToStringLong() {
-		String s = this.tx.toStringLong();
+		String s = this.itx.toStringLong();
 		Assert.assertNotNull(s);
 
 		// TODO fail("Not yet implemented");
@@ -189,7 +224,7 @@ class ITxTest {
 
 	@Test
 	void testInvestmentTxnIntInvestmentTxn() {
-		InvestmentTxn txcopy = new InvestmentTxn(this.invest.acctid, this.tx);
+		InvestmentTxn txcopy = new InvestmentTxn(this.invest.acctid, this.itx);
 		Assert.assertNotNull(txcopy);
 
 		// TODO fail("Not yet implemented");
@@ -209,14 +244,14 @@ class ITxTest {
 
 	@Test
 	void testSetSecurityTransferTxns() {
-		List<InvestmentTxn> txns = this.tx.getSecurityTransferTxns();
+		List<InvestmentTxn> txns = this.itx.getSecurityTransferTxns();
 		Assert.assertNotNull(txns);
 		Assert.assertTrue(txns.isEmpty());
 
-		txns.add(this.tx);
-		this.tx.setSecurityTransferTxns(txns);
+		txns.add(this.itx);
+		this.itx.setSecurityTransferTxns(txns);
 
-		txns = this.tx.getSecurityTransferTxns();
+		txns = this.itx.getSecurityTransferTxns();
 		Assert.assertNotNull(txns);
 		Assert.assertFalse(txns.isEmpty());
 
@@ -225,13 +260,13 @@ class ITxTest {
 
 	@Test
 	void testAddSecurityTransferTxn() {
-		List<InvestmentTxn> txns = this.tx.getSecurityTransferTxns();
+		List<InvestmentTxn> txns = this.itx.getSecurityTransferTxns();
 		Assert.assertNotNull(txns);
 		Assert.assertTrue(txns.isEmpty());
 
-		this.tx.addSecurityTransferTxn(this.tx);
+		this.itx.addSecurityTransferTxn(this.itx);
 
-		txns = this.tx.getSecurityTransferTxns();
+		txns = this.itx.getSecurityTransferTxns();
 		Assert.assertNotNull(txns);
 		Assert.assertFalse(txns.isEmpty());
 
@@ -241,21 +276,21 @@ class ITxTest {
 	@Test
 	void testGetSetQuantity() {
 		Assert.assertFalse(Common.isEffectivelyEqual( //
-				new BigDecimal("2.0"), this.tx.getQuantity()));
+				new BigDecimal("2.0"), this.itx.getQuantity()));
 
-		this.tx.setQuantity(new BigDecimal("2.0"));
+		this.itx.setQuantity(new BigDecimal("2.0"));
 		Assert.assertTrue(Common.isEffectivelyEqual( //
-				new BigDecimal("2.0"), this.tx.getQuantity()));
+				new BigDecimal("2.0"), this.itx.getQuantity()));
 
 		// TODO fail("Not yet implemented");
 	}
 
 	@Test
 	void testGetShares() {
-		this.tx.setQuantity(new BigDecimal("2.0"));
+		this.itx.setQuantity(new BigDecimal("2.0"));
 
-		BigDecimal q = this.tx.getShares();
-		BigDecimal q2 = this.tx.getQuantity();
+		BigDecimal q = this.itx.getShares();
+		BigDecimal q2 = this.itx.getQuantity();
 		Assert.assertTrue(Common.isEffectivelyEqual(q, q2));
 
 		// TODO fail("Not yet implemented");
@@ -263,14 +298,14 @@ class ITxTest {
 
 	@Test
 	void testIsStockOptionTxn() {
-		Assert.assertFalse(this.tx.isStockOptionTxn());
+		Assert.assertFalse(this.itx.isStockOptionTxn());
 
 		// TODO fail("Not yet implemented");
 	}
 
 	@Test
 	void testGetShareAction() {
-		ShareAction act = this.tx.getShareAction();
+		ShareAction act = this.itx.getShareAction();
 		Assert.assertEquals(ShareAction.NEW_SHARES, act);
 
 		// TODO fail("Not yet implemented");
@@ -278,7 +313,7 @@ class ITxTest {
 
 	@Test
 	void testGetShareCost() {
-		BigDecimal cost = this.tx.getShareCost();
+		BigDecimal cost = this.itx.getShareCost();
 		Assert.assertTrue(Common.isEffectivelyEqual(new BigDecimal("1.23"), cost));
 
 		// TODO fail("Not yet implemented");
@@ -286,7 +321,7 @@ class ITxTest {
 
 	@Test
 	void testGetSplitRatio() {
-		BigDecimal r = this.tx.getSplitRatio();
+		BigDecimal r = this.itx.getSplitRatio();
 		Assert.assertNotNull(r);
 		Assert.assertTrue(Common.isEffectivelyEqual(new BigDecimal("1.0"), r));
 
@@ -295,7 +330,7 @@ class ITxTest {
 
 	@Test
 	void testGetLots() {
-		List<Lot> lots = this.tx.getLots();
+		List<Lot> lots = this.itx.getLots();
 		Assert.assertNotNull(lots);
 		Assert.assertTrue(lots.isEmpty());
 
@@ -304,7 +339,7 @@ class ITxTest {
 
 	@Test
 	void testGetCreatedLots() {
-		List<Lot> lots = this.tx.getCreatedLots();
+		List<Lot> lots = this.itx.getCreatedLots();
 		Assert.assertNotNull(lots);
 		Assert.assertTrue(lots.isEmpty());
 
@@ -313,7 +348,7 @@ class ITxTest {
 
 	@Test
 	void testGetDisposedLots() {
-		List<Lot> lots = this.tx.getDisposedLots();
+		List<Lot> lots = this.itx.getDisposedLots();
 		Assert.assertNotNull(lots);
 		Assert.assertTrue(lots.isEmpty());
 
@@ -342,7 +377,7 @@ class ITxTest {
 
 	@Test
 	void testGetBuySellAmount() {
-		BigDecimal amt = this.tx.getBuySellAmount();
+		BigDecimal amt = this.itx.getBuySellAmount();
 		Assert.assertNotNull(amt);
 		Assert.assertTrue(Common.isEffectivelyEqual(BigDecimal.ONE, amt));
 
@@ -351,7 +386,7 @@ class ITxTest {
 
 	@Test
 	void testMatchesInvestmentTxn() {
-		Assert.assertNull(this.tx.matches(this.tx));
+		Assert.assertNull(this.itx.matches(this.itx));
 
 		// TODO fail("Not yet implemented");
 	}

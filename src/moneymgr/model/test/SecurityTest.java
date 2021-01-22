@@ -19,6 +19,7 @@ import moneymgr.model.Lot;
 import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.QPrice;
 import moneymgr.model.Security;
+import moneymgr.model.TxAction;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -29,6 +30,7 @@ class SecurityTest {
 	QDate today;
 	Security foo;
 	Security bar;
+	InvestmentTxn itx;
 
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception {
@@ -54,6 +56,12 @@ class SecurityTest {
 		MoneyMgrModel.currModel.addSecurity(foo);
 		this.bar = new Security("BAR", "Bar, Inc");
 		MoneyMgrModel.currModel.addSecurity(bar);
+
+		this.itx = new InvestmentTxn(this.invest.acctid);
+		this.itx.setAction(TxAction.BUY);
+		this.itx.setDate(today);
+		this.itx.setSecurity(this.foo);
+		this.itx.setQuantity(new BigDecimal("1.0"));
 	}
 
 	@AfterEach
@@ -64,16 +72,16 @@ class SecurityTest {
 	@Test
 	void testModelFunctions() {
 		Security sec;
-		
+
 		sec = MoneyMgrModel.currModel.findSecurity("FOO");
 		Assert.assertNotNull(sec);
-		
+
 		sec = MoneyMgrModel.currModel.findSecurityByName("Foo, Inc");
 		Assert.assertNotNull(sec);
-		
+
 		sec = MoneyMgrModel.currModel.findSecurityBySymbol("FOO");
 		Assert.assertNotNull(sec);
-		
+
 		sec = MoneyMgrModel.currModel.findSecurity("bogus");
 		Assert.assertNull(sec);
 	}
@@ -151,7 +159,14 @@ class SecurityTest {
 
 	@Test
 	void testAddLot() {
-		fail("Not yet implemented");
+		Assert.assertTrue(this.foo.getLots().isEmpty());
+
+		Lot lot = new Lot( //
+				null, this.invest.acctid, new BigDecimal("1.0"), this.itx);
+		
+		this.foo.addLot(lot);
+
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -171,7 +186,11 @@ class SecurityTest {
 
 	@Test
 	void testAddTransaction() {
-		fail("Not yet implemented");
+		Assert.assertTrue(this.foo.getTransactions().isEmpty());
+		this.foo.addTransaction(this.itx);
+		Assert.assertFalse(this.foo.getTransactions().isEmpty());
+
+		// fail("Not yet implemented");
 	}
 
 	@Test

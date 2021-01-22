@@ -16,6 +16,8 @@ import org.junit.runner.RunWith;
 	ITxTest.class,
 	LotTest.class,
 	SecurityTest.class,
+	SecurityPositionTest.class,
+	SecurityPortfolioTest.class,
 	StatementTest.class,
 	StockOptionTest.class,
 	TxTest.class

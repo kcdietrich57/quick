@@ -129,8 +129,16 @@ class StatementTest {
 	void testAddTransactionsCollectionOfGenericTxnBoolean() {
 		List<GenericTxn> txns = new ArrayList<>();
 		GenericTxn tx = new NonInvestmentTxn(bank.acctid);
+		tx.setDate(this.today.addDays(1));
 		txns.add(tx);
+
+		Assert.assertTrue(this.tmpstat.getTransactionsForReconcile().isEmpty());
 		this.tmpstat.addTransactions(txns, true);
+		Assert.assertTrue(this.tmpstat.getTransactionsForReconcile().isEmpty());
+
+		tx.setDate(this.today);
+		this.tmpstat.addTransactions(txns, true);
+		Assert.assertTrue(this.tmpstat.getTransactionsForReconcile().contains(tx));
 
 		// TODO fail("Not yet implemented");
 	}
@@ -145,11 +153,20 @@ class StatementTest {
 
 	@Test
 	void testGetSetCashBalance() {
-		this.nstat.setCashBalance(new BigDecimal("1.23"));
+		Statement stat;
+		
+		stat = new Statement(this.bank.acctid, this.today, null, null, null);
+		Assert.assertNotNull(stat);
+		Assert.assertNull(stat.getCashBalance());
 
-		BigDecimal bal = this.nstat.getCashBalance();
-		Assert.assertNotNull(bal);
-		Assert.assertTrue(Common.isEffectivelyEqual(bal, new BigDecimal("1.23")));
+		BigDecimal val = new BigDecimal("1.23");
+		stat.setCashBalance(val);
+
+		Assert.assertTrue(Common.isEffectivelyEqual(val, stat.getCashBalance()));
+		
+		stat = new Statement(this.bank.acctid, this.today, val, null, null);
+		Assert.assertNotNull(stat);
+		Assert.assertTrue(Common.isEffectivelyEqual(val, stat.getCashBalance()));
 
 		// TODO fail("Not yet implemented");
 	}
@@ -319,7 +336,7 @@ class StatementTest {
 		BigDecimal amt = this.nstat.getCashDifference();
 		Assert.assertNotNull(amt);
 		Assert.assertTrue(Common.isEffectivelyZero(amt));
-		
+
 		// TODO fail("Not yet implemented");
 	}
 

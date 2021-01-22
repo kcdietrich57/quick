@@ -213,7 +213,7 @@ class LotTest {
 		assertEquals(srctx3, lot3.getDisposingTransaction());
 		assertFalse(lot3.isOpen());
 
-		fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test

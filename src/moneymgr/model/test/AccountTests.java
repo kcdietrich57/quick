@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import moneymgr.model.Account;
 import moneymgr.model.AccountType;
 import moneymgr.model.GenericTxn;
+import moneymgr.model.InvestmentTxn;
 import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.NonInvestmentTxn;
 import moneymgr.model.Security;
@@ -39,6 +40,10 @@ class AccountTests {
 	Account liability;
 
 	Security stock;
+	Statement nstat;
+	Statement istat;
+	NonInvestmentTxn ntx;
+	InvestmentTxn itx;
 
 	@BeforeAll
 	static void setUpBeforeClass() throws Exception {
@@ -84,14 +89,23 @@ class AccountTests {
 		this.model.setCurrentDate(this.today);
 		this.model.setAsOfDate(this.today);
 
-		NonInvestmentTxn tx = new NonInvestmentTxn(this.bank.acctid);
-		tx.setDate(this.today);
-		tx.setAmount(new BigDecimal("9.99"));
-		System.out.println("setup tx is " + tx.toString());
-		System.out.println("setup tx.amt is " + tx.getAmount());
-		this.bank.addTransaction(tx);
+		this.ntx = new NonInvestmentTxn(this.bank.acctid);
+		this.ntx.setDate(this.today);
+		this.ntx.setAmount(new BigDecimal("9.99"));
+		// System.out.println("setup tx is " + this.ntx.toString());
+		// System.out.println("setup tx.amt is " + this.ntx.getAmount());
+		this.bank.addTransaction(this.ntx);
 
 		this.stock = new Security("FOO", "Foo, Inc");
+
+		this.nstat = new Statement(this.bank.acctid, today, //
+				new BigDecimal("1.23"), new BigDecimal("1.23"), null);
+		this.nstat.addTransaction(this.ntx);
+		this.bank.addStatement(this.nstat);
+
+		this.istat = new Statement(this.invest.acctid, today, null);
+		// TODO this.istat.addTransaction(this.itx);
+		this.invest.addStatement(this.istat);
 	}
 
 	@AfterEach
@@ -393,7 +407,8 @@ class AccountTests {
 	@Test
 	void testGetLastStatement() {
 		Statement s = bank.getLastStatement();
-		Assert.assertNull(s);
+		Assert.assertNotNull(s);
+		Assert.assertEquals(this.nstat, s);
 
 		// TODO fail("Not yet implemented");
 	}
@@ -409,7 +424,8 @@ class AccountTests {
 	@Test
 	void testGetFirstUnbalancedStatement() {
 		Statement s = bank.getFirstUnbalancedStatement();
-		Assert.assertNull(s);
+		Assert.assertNotNull(s);
+		Assert.assertEquals(this.nstat, s);
 
 		// TODO fail("Not yet implemented");
 	}
@@ -439,7 +455,7 @@ class AccountTests {
 	@Test
 	void testGetNumStatements() {
 		int n = bank.getNumStatements();
-		Assert.assertTrue(n == 0);
+		Assert.assertEquals(1, n);
 
 		// TODO fail("Not yet implemented");
 	}
@@ -448,7 +464,8 @@ class AccountTests {
 	void testGetStatements() {
 		List<Statement> ss = bank.getStatements();
 		Assert.assertNotNull(ss);
-		Assert.assertTrue(ss.isEmpty());
+		Assert.assertFalse(ss.isEmpty());
+		Assert.assertEquals(1, ss.size());
 
 		// TODO fail("Not yet implemented");
 	}
@@ -462,16 +479,22 @@ class AccountTests {
 
 	@Test
 	void testGetStatementQDate() {
-		Statement s = bank.getStatement(today);
+		List<Statement> stmts = this.bank.getStatements();
+		Assert.assertNotNull(stmts);
+		System.out.println("Statements: " + stmts.toString());
+
+		Statement s = this.bank.getStatement(today);
 		Assert.assertNotNull(s);
+		Assert.assertTrue(s == this.nstat);
 
 		// TODO fail("Not yet implemented");
 	}
 
 	@Test
 	void testGetStatementQDateBigDecimal() {
-		Statement s = bank.getStatement(today, BigDecimal.ZERO);
-		Assert.assertNull(s);
+		Statement s = bank.getStatement(this.nstat.date, this.nstat.closingBalance);
+		Assert.assertNotNull(s);
+		Assert.assertEquals(this.nstat, s);
 
 		// TODO fail("Not yet implemented");
 	}
@@ -479,8 +502,9 @@ class AccountTests {
 	@Test
 	void testGetNextStatementDate() {
 		QDate d = bank.getNextStatementDate();
+		// System.out.println("Next statement date is " + d.toString());
 		Assert.assertNotNull(d);
-		Assert.assertTrue(today.compareTo(d) > 0);
+		Assert.assertTrue(today.compareTo(d) < 0);
 
 		// TODO fail("Not yet implemented");
 	}
@@ -496,7 +520,12 @@ class AccountTests {
 	@Test
 	void testGetUnclearedStatement() {
 		Statement s = bank.getUnclearedStatement();
-		Assert.assertNotNull(s);
+		Assert.assertNull(s);
+
+		s = bank.createUnclearedStatement(null);
+		this.bank.addStatement(s);
+		s = bank.getUnclearedStatement();
+		//Assert.assertNotNull(s);
 
 		// TODO fail("Not yet implemented");
 	}
