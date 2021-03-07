@@ -1,12 +1,5 @@
 ########################################
 # ESPP Date Symbol Account Qty BuyPrice DistPrice Cost Value
-#
-# GRANT Date Op Name Symbol Account Qty Price VestPeriod NumVests Duration
-# VEST Date Name VestNum
-# SPLIT Date Name NewShr OldShr [newQty/newPrice]
-# EXERCISE Date Name Qty Price
-# CANCEL Date Name
-# EXPIRE Date Name
 ########################################
 
 09/30/90	ESPP	ASCL	ISI ESPP Stock	241	4.04	4.75	973.64	1144.75
@@ -51,6 +44,15 @@
 12/31/00	ESPP	ASCL	ISI ESPP Stock	1212	2.52	2.97	3058.48	3598.19
 03/31/01	ESPP	ASCL	ISI ESPP Stock	1186	2.71	3.19	3213.35	3780.38
 06/30/01	ESPP	ASCL	ISI ESPP Stock	738	4.57	5.38	3371.77	3966.75
+
+########################################
+# GRANT Date Op Name Symbol Account Qty Price VestPeriod NumVests Duration
+# VEST Date Name VestNum
+# SPLIT Date Name NewShr OldShr [newQty/newPrice]
+# EXERCISE Date Name Qty Price
+# CANCEL Date Name
+# EXPIRE Date Name
+########################################
 
 05/23/91	GRANT	2656	ASCL	ISI Options	500	6.00	Y	4	10y
 05/23/92	VEST	2656	1
