@@ -783,7 +783,7 @@ public class CSVImport {
 			}
 
 			if (record.contains("Account") && record.contains("Date")) {
-				TransactionInfo.setFieldNames(record.toArray(new String[0]));
+				TransactionInfo.setFieldOrder(record.toArray(new String[0]));
 
 				return true;
 			}

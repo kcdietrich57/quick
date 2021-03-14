@@ -8,6 +8,7 @@ import moneymgr.io.PortfolioProcessor;
 import moneymgr.io.Reconciler;
 import moneymgr.io.StatementDetails;
 import moneymgr.io.qif.QFileReader.SectionType;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Security;
 import moneymgr.util.Common;
 
@@ -18,14 +19,22 @@ public class QifDomReader {
 		QifDom.qifDir = new File(qifFiles[0]).getParentFile();
 
 		QifDomReader rdr = new QifDomReader(QifDom.qifDir);
+		//QifDomReader rdr2 = new QifDomReader(QifDom.qifDir);
 
 		// Process all the QIF files
 		for (String fn : qifFiles) {
+			//rdr2.load2(fn);
+			//System.exit(1);
+
 			rdr.load(fn, true);
+			
+			// TODO compare models loaded by both methods
 		}
 
 		// Additional processing once the data is loaded (quotes, stmts, etc)
-		rdr.postLoad();
+		if (MoneyMgrModel.currModel != null) {
+			rdr.postLoad();
+		}
 	}
 
 	/** Where data files live */
@@ -45,23 +54,42 @@ public class QifDomReader {
 		return this.filerdr;
 	}
 
+	public void load2(String fileName) {
+		if (!new File(fileName).exists()) {
+			if (!new File("c:" + fileName).exists()) {
+				Common.reportError("Input file '" + fileName + "' does not exist");
+				return;
+			}
+
+			fileName = "c:" + fileName;
+		}
+
+		init(fileName);
+
+		processFile2();
+	}
+	
+	private void processFile2() {
+		Object fileContents = this.filerdr.ingestFile();
+	}
+
 	/** Load a single input file */
 	public void load(String fileName, boolean doCleanup) {
 		// Check windows and unix paths
 		if (!new File(fileName).exists()) {
-			if (new File("c:" + fileName).exists()) {
-				fileName = "c:" + fileName;
-			} else {
+			if (!new File("c:" + fileName).exists()) {
 				Common.reportError("Input file '" + fileName + "' does not exist");
 				return;
 			}
+
+			fileName = "c:" + fileName;
 		}
 
 		init(fileName);
 
 		processFile();
 
-		if (doCleanup) {
+		if (doCleanup && MoneyMgrModel.currModel != null) {
 			TransactionCleaner.cleanUpTransactionsFromQIF();
 		}
 	}

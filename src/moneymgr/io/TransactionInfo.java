@@ -27,8 +27,9 @@ import moneymgr.util.QDate;
  */
 public class TransactionInfo {
 	/**
-	 * The csv file specifies the names of the values at each position. We parse
-	 * that to determine the column index of each field, stored in these variables.
+	 * The csv file specifies the names of the values at each position.<br>
+	 * We parse that to determine the column index of each field, stored in these
+	 * variables.<br>
 	 * TODO Using a map would probably be more straightforward.
 	 */
 	public static int SPLIT_IDX = -1;
@@ -110,11 +111,11 @@ public class TransactionInfo {
 	};
 
 	static {
-		setFieldNames(dfltFieldNames);
+		setFieldOrder(dfltFieldNames);
 	}
 
 	/** Assign the indexes of each field based on the field names array */
-	public static void setFieldNames(String[] fieldnames) {
+	public static void setFieldOrder(String[] fieldnames) {
 		fieldNames = (fieldnames != null) ? fieldnames : dfltFieldNames;
 
 		SPLIT_IDX = getFieldIndex("Split");

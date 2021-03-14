@@ -33,7 +33,9 @@ public class OptionsProcessor {
 
 		try {
 			File optfile = new File(QifDom.qifDir, OPTIONS_DATA_FILENAME);
-			assert optfile.isFile() && optfile.canRead();
+			if (!(optfile.isFile() && optfile.canRead())) {
+				return;
+			}
 
 			rdr = new LineNumberReader(new FileReader(optfile));
 

@@ -391,4 +391,9 @@ class ITxTest {
 		// TODO fail("Not yet implemented");
 	}
 
+	@Test
+	void testShareAction() {
+		ShareAction act = ShareAction.DISPOSE_SHARES;
+		Assert.assertEquals("Dispose", act.toString());
+	}
 }
