@@ -13,7 +13,8 @@ public class AccountDetailsFixer {
 		if (name.endsWith("Checking")) {
 			type = AccountType.Bank;
 		} else if (name.equals("UnionNationalCD") //
-				|| name.equals("Waddell & Reed")) {
+				|| name.equals("Waddell & Reed") //
+				|| name.equals("IBM Future Health")) {
 			type = AccountType.Invest;
 		} else if (name.equals("Deferred 401k Match")) {
 			type = AccountType.Inv401k;
@@ -30,6 +31,8 @@ public class AccountDetailsFixer {
 				|| name.equals("TD IRA (Scottrade)") //
 				|| name.equals("GD IRA Ameritrade") //
 				|| name.equals("TD IRA Ameritrade") //
+				|| name.equals("GD IRA Schwab") //
+				|| name.equals("TD IRA Schwab") //
 				|| name.equals("IBM Pension")) {
 			type = AccountType.Inv401k;
 		} else if (name.equals("CapCheck")) {

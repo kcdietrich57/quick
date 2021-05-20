@@ -34,12 +34,25 @@ public class QDate implements Comparable<QDate> {
 			31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 //
 	};
 
+	public static boolean isLeapYear(int y) {
+		if (y % 4 != 0) {
+			return false;
+		}
+		
+		return (y % 400 == 0) || (y % 100 != 0);
+	}
+	
+	public static int lastDayOfMonth(int y, int m) {
+		if (m == 2) {
+			return isLeapYear(y) ? 29 : 28;
+		}
+		
+		return MONTH_DAYS[m - 1];
+	}
+
 	/** Return the correct date for the last day in a given year/month */
 	public static QDate getDateForEndOfMonth(int year, int month) {
-		// TODO can I just do Year/Month+1/1 minus one day?
-		return (month == 2) //
-				? new QDate(year, 3, 1).addDays(-1) //
-				: new QDate(year, month, MONTH_DAYS[(month + 11) % 12]);
+		return new QDate(year, month, lastDayOfMonth(year, month));
 	}
 
 	/** Construct a date y/m/d */
@@ -48,12 +61,16 @@ public class QDate implements Comparable<QDate> {
 			m -= 12;
 			++y;
 		}
-		// TODO we could have trouble with (y,2,29), but should be avoiding that
 
 		y = adjustYear(y);
 
-		if (m == 2 && d > 28) {
-			QDate qd = new QDate(y, m, 28).addDays(d - 28);
+		int lastday = lastDayOfMonth(y, m);
+		
+		if (d > lastday) {
+			Common.reportWarning(String.format( //
+					"Adjusting days for QDate: %d/%d/%d", m, d));
+			
+			QDate qd = new QDate(y, m, lastday).addDays(d - lastday);
 
 			y = qd.getYear();
 			m = qd.getMonth();

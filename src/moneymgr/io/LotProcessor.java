@@ -202,7 +202,8 @@ public class LotProcessor {
 			Lot lot = lots.remove(0);
 			ret.add(lot);
 
-			if (lot.shares.compareTo(sharesRemaining) >= 0) {
+			if (lot.shares.compareTo(sharesRemaining) >= 0 || //
+					Common.isEffectivelyEqual(lot.shares, sharesRemaining)) {
 				return ret;
 			}
 
