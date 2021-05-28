@@ -83,6 +83,10 @@ public class TransactionProcessor {
 				txn.setAction(TxAction.parseAction(qline.value));
 				tinfo.setValue(TransactionInfo.ACTION_IDX, qline.value);
 				break;
+				
+			case InvPayee:
+				txn.setPayee(qline.value);
+				tinfo.setValue(TransactionInfo.PAYEE_IDX, qline.value);
 
 			case InvClearedStatus:
 				// Ignore

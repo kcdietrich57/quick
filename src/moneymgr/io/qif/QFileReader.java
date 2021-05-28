@@ -33,6 +33,7 @@ import static moneymgr.io.qif.Headers.HdrStatements;
 import static moneymgr.io.qif.Headers.HdrTag;
 import static moneymgr.io.qif.Headers.INV_AccountForTransfer;
 import static moneymgr.io.qif.Headers.INV_Action;
+import static moneymgr.io.qif.Headers.INV_Payee;
 import static moneymgr.io.qif.Headers.INV_AmountTransferred;
 import static moneymgr.io.qif.Headers.INV_ClearedStatus;
 import static moneymgr.io.qif.Headers.INV_Commission;
@@ -891,6 +892,8 @@ public class QFileReader {
 			return FieldType.InvDate;
 		case INV_Action:
 			return FieldType.InvAction;
+		case INV_Payee:
+			return FieldType.InvPayee;
 		case INV_Security:
 			return FieldType.InvSecurity;
 		case INV_Price:

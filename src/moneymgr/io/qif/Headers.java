@@ -65,13 +65,14 @@ public interface Headers {
 
 	public static final char INV_Date = 'D';
 	public static final char INV_Action = 'N';
+	public static final char INV_Payee = 'P';
 	public static final char INV_Security = 'Y';
 	public static final char INV_Price = 'I';
 	public static final char INV_Quantity = 'Q';
 	public static final char INV_TransactionAmount = 'T';
 	public static final char INV_TransactionAmount2 = 'U';
 	public static final char INV_ClearedStatus = 'C';
-	public static final char INV_TextFirstLine = 'P';
+	public static final char INV_TextFirstLine = '?'; // TODO unknown
 	public static final char INV_Memo = 'M';
 	public static final char INV_Commission = 'O';
 	public static final char INV_AccountForTransfer = 'L';

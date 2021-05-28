@@ -71,7 +71,7 @@ public class TransactionInfo {
 	 * to save it.<br>
 	 */
 	public static void addWinInfo(TransactionInfo info, SimpleTxn txn) {
-		info.processValues();
+		info.processValues(null);
 
 		Account acct = info.account;
 
@@ -147,8 +147,6 @@ public class TransactionInfo {
 	public String[] values;
 	public List<TransactionInfo> splits = new ArrayList<>();
 
-	public boolean isSplit;
-
 	public Account account;
 	public Account xaccount;
 	public QDate date;
@@ -157,6 +155,7 @@ public class TransactionInfo {
 	public BigDecimal amount;
 	public BigDecimal xamount;
 	public String payee;
+	public boolean isSplit;
 	public Category category;
 	public String memo;
 	public String description;
@@ -236,29 +235,86 @@ public class TransactionInfo {
 		return null;
 	}
 
+	private Account cloneAccount(MoneyMgrModel sourceModel, String acctName) {
+		Account a = sourceModel.findAccount(acctName);
+		if (a == null) {
+			Common.reportError("Account '" + acctName + "' not found");
+		}
+
+		Common.debugInfo( //
+				"Cloning source account '" + acctName + "'" + //
+						"(" + a.acctid + ")");
+
+		return new Account( //
+				a.acctid, acctName, a.description, a.type, //
+				a.getStatementFrequency(), a.getStatementDay());
+	}
+
 	/** Extract values from raw info and set member variables accordingly */
-	public void processValues() {
+	public void processValues(MoneyMgrModel sourceModel) {
 		try {
-			this.account = MoneyMgrModel.currModel.findAccount(value(ACCOUNT_IDX));
+			MoneyMgrModel model = MoneyMgrModel.currModel;
+
+			String acctName = value(ACCOUNT_IDX);
+			this.account = model.findAccount(acctName);
 			if (this.account == null) {
-				Common.reportWarning("Can't find account '" + value(ACCOUNT_IDX) + "'");
+				Common.reportWarning("No account '" + acctName + "'");
 			}
-			this.date = Common.parseQDate(value(DATE_IDX));
+
+			this.date = getDate();
 			this.cknum = value(CHECKNUM_IDX);
 			this.payee = value(PAYEE_IDX);
-			int catid = Common.parseCategory(value(CATEGORY_IDX));
-			if (catid > 0) {
-				this.category = MoneyMgrModel.currModel.getCategory(catid);
-				this.xaccount = null;
-			} else {
-				this.category = null;
-				this.xaccount = MoneyMgrModel.currModel.getAccountByID(-catid);
+
+			// QIF IntInc CSV "Investments:Interest Income"
+			String catstring = value(CATEGORY_IDX);
+			if (catstring == null || catstring.isEmpty() //
+					|| "Uncategorized".equals(catstring) //
+					|| "Investments:Interest Income".equals(catstring) //
+					|| "Investments:Dividend Income".equals(catstring) //
+					|| "Investments:Dividend Income Tax-Free".equals(catstring) //
+					|| "Investments:Reinvest Long-term Capital Gain".equals(catstring) //
+					|| "Investments:Reinvest Short-term Capital Gain".equals(catstring) //
+					|| "Investments:Add Shares".equals(catstring) //
+					|| "Investments:Remove Shares".equals(catstring) //
+					|| "Investments:Buy".equals(catstring) //
+					|| "Investments:Sell".equals(catstring) //
+					|| "Investments:Stock Split".equals(catstring) //
+					) {
+				this.values[CATEGORY_IDX] = "";
+				catstring = "";
 			}
+
+			this.isSplit = "S".equals(value(SPLIT_IDX));
+
+			if (catstring != null && !catstring.isEmpty() //
+					&& !catstring.equals("Uncategorized")) {
+				int catid = Common.parseCategory(catstring);
+				if (catid > 0) {
+					this.category = model.getCategory(catid);
+					this.xaccount = null;
+				} else if (catid < 0) {
+					this.category = null;
+					this.xaccount = model.getAccountByID(-catid);
+				} else {
+					Common.reportWarning("Can't find category from '" + value(CATEGORY_IDX) + "'");
+					Common.parseCategory(catstring);
+				}
+			}
+
 			this.amount = decimalValue(AMOUNT_IDX);
 			this.memo = value(MEMO_IDX);
 			this.description = value(DESCRIPTION_IDX);
 			this.type = value(TYPE_IDX);
-			this.security = MoneyMgrModel.currModel.findSecurity(value(SECURITY_IDX));
+
+			String sname = value(SECURITY_IDX);
+			if (sname != null && !sname.isEmpty()) {
+				this.security = model.findSecurity(sname);
+
+				if (this.security == null) {
+					Common.reportWarning("No security '" + sname + "'");
+				}
+			}
+
 			this.fees = decimalValue(FEES_IDX);
 			this.shares = decimalValue(SHARES_IDX);
 			this.action = TxAction.parseAction(value(ACTION_IDX));
@@ -266,9 +322,36 @@ public class TransactionInfo {
 			this.sharesOut = decimalValue(SHARESOUT_IDX);
 			this.inflow = decimalValue(INFLOW_IDX);
 			this.outflow = decimalValue(OUTFLOW_IDX);
-			if (this.xaccount == null) {
-				this.xaccount = MoneyMgrModel.currModel.findAccount(value(XACCOUNT_IDX));
+
+			// TODO work out the kinks in whether amount is positive or negative
+			if (this.outflow != null && this.outflow.signum() > 0 //
+					&& ( //
+							this.type.equals("Buy") //
+							|| this.type.equals("WithdrawX") //
+							) //
+					&& this.amount.signum() < 0) {
+				this.amount = this.amount.negate();
 			}
+
+			String catOrXfer = value(XACCOUNT_IDX);
+			if (catOrXfer != null && !catOrXfer.isEmpty()) {
+				if (catOrXfer.startsWith("[")) {
+					acctName = catOrXfer.substring(1, catOrXfer.length() - 1);
+
+					this.xaccount = model.findAccount(acctName);
+
+					if (this.xaccount == null) {
+						Common.reportWarning("No xfer account from '" + catOrXfer + "'");
+					}
+				} else {
+					this.category = model.findCategory(catOrXfer);
+
+					if (this.category == null) {
+						Common.reportWarning("No category from '" + catOrXfer + "'");
+					}
+				}
+			}
+
 			this.xamount = decimalValue(XAMOUNT_IDX);
 			this.price = Common.parsePrice(value(PRICE_IDX));
 			this.commission = decimalValue(COMMISSION_IDX);
@@ -278,7 +361,7 @@ public class TransactionInfo {
 	}
 
 	/**
-	 * TODO UNUSED see CVSImport.createTransaction(TransactionInfo)<br>
+	 * TODO UNUSED see CSVImport.createTransaction(TransactionInfo)<br>
 	 * Create a transaction object in a given account using the contained info
 	 */
 	public SimpleTxn createTransaction(Account acct) {
@@ -366,7 +449,7 @@ public class TransactionInfo {
 	}
 
 	/** Get the transaction date */
-	public QDate getDate() {
+	private QDate getDate() {
 		if (this.date == null) {
 			try {
 				this.date = Common.parseQDate(value(DATE_IDX));

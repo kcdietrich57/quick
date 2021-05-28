@@ -1,4 +1,4 @@
-package moneymgr.io.cvs;
+package moneymgr.io.csv;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import app.MoneyMgrApp;
 import app.QifDom;
 import moneymgr.io.TransactionInfo;
 import moneymgr.model.Account;
@@ -52,15 +53,100 @@ public class CSVImport {
 	/** When assembling splits, this holds the current main transaction */
 	public GenericTxn lasttxn = null;
 
+	private MoneyMgrModel sourceModel;
+
 	/**
 	 * Matches come in several forms<br>
 	 * Simple - no splits on either side Split - tx exists as split in both versions
 	 * PseudoSplit - non-split matches split in other version
 	 */
 
-	/** Process a CVS file exported from MacOs */
-	public static void importCSV(String filename) {
-		CSVImport csvimp = new CSVImport(filename);
+	private static Account cloneAccount(MoneyMgrModel sourceModel, Account acct) {
+		MoneyMgrModel model = MoneyMgrModel.currModel;
+
+		Account a = model.findAccount(acct.name);
+		if (a != null) {
+			return a;
+		}
+
+		Common.debugInfo( //
+				"Cloning source account '" + acct.name + "'" + //
+						"(" + acct.acctid + ")");
+
+		a = new Account( //
+				acct.acctid, acct.name, acct.description, acct.type, //
+				acct.getStatementFrequency(), acct.getStatementDay());
+
+		model.addAccount(a);
+
+		return a;
+	}
+
+	private static Category cloneCategory(MoneyMgrModel sourceModel, Category cat) {
+		if (cat == null) {
+			return null;
+		}
+
+		MoneyMgrModel model = MoneyMgrModel.currModel;
+
+		Category c = model.findCategory(cat.name);
+		if (c != null) {
+			return c;
+		}
+
+		Common.debugInfo( //
+				"Cloning source category '" + cat.name + "'" + //
+						"(" + cat.catid + ")");
+
+		c = new Category( //
+				cat.catid, cat.name, cat.description, cat.isExpense);
+
+		model.addCategory(c);
+
+		return c;
+	}
+
+	private static Security cloneSecurity(MoneyMgrModel sourceModel, Security sec) {
+		MoneyMgrModel model = MoneyMgrModel.currModel;
+
+		Security s = model.findSecurityBySymbol(sec.symbol);
+		if (s != null) {
+			return s;
+		}
+
+		Common.debugInfo( //
+				"Cloning source security '" + sec.symbol + "'" + //
+						"(" + sec.secid + ")");
+
+		s = new Security( //
+				sec.secid, sec.symbol, sec.getName(), sec.type, sec.goal);
+		s.names.clear();
+		s.names.addAll(sec.names);
+
+		model.addSecurity(s);
+
+		return s;
+	}
+
+	private static void cloneSourceModelInfo(MoneyMgrModel sourceModel) {
+		for (Account acct : sourceModel.getAccounts()) {
+			cloneAccount(sourceModel, acct);
+		}
+
+		for (Category cat : sourceModel.getCategories()) {
+			cloneCategory(sourceModel, cat);
+		}
+
+		for (Security sec : sourceModel.getSecurities()) {
+			cloneSecurity(sourceModel, sec);
+		}
+	}
+
+	/** Process a CSV file exported from MacOs */
+	public static void importCSV(String filename, MoneyMgrModel sourceModel) {
+		cloneSourceModelInfo(sourceModel);
+
+		CSVImport csvimp = new CSVImport(filename, sourceModel);
 		csvimp.importFile();
 
 		Comparator<TransactionInfo> comp = new Comparator<TransactionInfo>() {
@@ -131,19 +217,19 @@ public class CSVImport {
 	}
 
 	/** TESTING: Import CSV file and compare to QIF version */
-	public static void testMacImport() {
+	public static void testCsvImport(MoneyMgrModel sourceModel) {
 		String importDir = "/Users/greg/qif/";
 
 		System.out.println("Processing csv file");
 
-		// TODO import into separate MoneyManagerModel instead
-		System.out.println(String.format("There are %d transactions from DIETRICH.QIF", //
+		System.out.println(String.format("Source model has %d transactions", //
+				sourceModel.getAllTransactions().size()));
+
+		importCSV(importDir + "DIETRICH.csv", sourceModel);
+
+		System.out.println(String.format("Imported %d transactions", //
 				MoneyMgrModel.currModel.getAllTransactions().size()));
 
-		CSVImport.importCSV(importDir + "DIETRICH.csv");
-
-		System.out.println(String.format("After import, there are now %d transactions from DIETRICH.QIF", //
-				MoneyMgrModel.currModel.getAllTransactions().size()));
 //		Collections.sort(MoneyMgrModel.currModel.alternateTransactions, new Comparator<GenericTxn>() {
 //			public int compare(GenericTxn o1, GenericTxn o2) {
 //				return o1.getDate().compareTo(o2.getDate());
@@ -161,8 +247,10 @@ public class CSVImport {
 	public List<TransactionInfo> nomatchZero = new ArrayList<>();
 	public int totaltx = 0;
 
-	private CSVImport(String filename) {
+	private CSVImport(String filename, MoneyMgrModel sourceModel) {
 		try {
+			this.sourceModel = sourceModel;
+
 			this.rdr = new LineNumberReader(new FileReader(filename));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -183,6 +271,24 @@ public class CSVImport {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+		for (List<TransactionInfo> txns : transactionsMap.values()) {
+			for (TransactionInfo txinfo : txns) {
+				// processTuple(txinfo);
+				txinfo.processValues(this.sourceModel);
+
+				SimpleTxn txn = createTransaction(txinfo);
+
+				if (txn != null) {
+					++this.totaltx;
+					txinfo.macTxn = txn;
+
+					matchTransaction(this.sourceModel, txinfo);
+				}
+			}
+		}
+
+		System.exit(1);
 
 		try {
 			PrintStream out = new PrintStream("/Users/greg/qif/tupleinfo.out");
@@ -292,7 +398,10 @@ public class CSVImport {
 			for (TransactionInfo tinfo : tinfos) {
 				String cat = tinfo.value(TransactionInfo.CATEGORY_IDX);
 
-				if (!cat.isEmpty() && !cat.startsWith("Transfer:[")) {
+				if (!cat.isEmpty() //
+						&& !cat.startsWith("Transfer:[") //
+						&& !cat.startsWith("[") //
+				) {
 					categoryNameSet.add(cat);
 				}
 			}
@@ -419,20 +528,42 @@ public class CSVImport {
 
 				accttxns.add(tuple);
 
-				processTuple(tuple);
+				// TODO not here processTuple(tuple);
 			}
 		}
-	}
 
-	private void processTuple(TransactionInfo tuple) {
-		SimpleTxn txn = createTransaction(tuple);
-		if (txn != null) {
-			++this.totaltx;
-			tuple.macTxn = txn;
+		MoneyMgrModel.changeModel(MoneyMgrApp.WIN_QIF_MODEL_NAME);
 
-			matchTransaction(tuple);
+		System.out.println("Transactions loaded:");
+
+		int total = 0;
+
+		for (Map.Entry<String, List<TransactionInfo>> entry : transactionsMap.entrySet()) {
+			String acctName = entry.getKey();
+			List<TransactionInfo> infos = entry.getValue();
+
+			System.out.println("  " + acctName + ": " + infos.size());
+
+			total += infos.size();
+
+//			for (TransactionInfo info : infos) {
+//				// TODO not yet matchTransaction(info);
+//			}
 		}
+
+		System.out.println("Total: " + total + " transactions");
 	}
+
+//	private void processTuple(TransactionInfo tuple) {
+//		SimpleTxn txn = createTransaction(tuple);
+//
+//		if (txn != null) {
+//			++this.totaltx;
+//			tuple.macTxn = txn;
+//
+//			// TODO matchTransaction(tuple);
+//		}
+//	}
 
 	private boolean isMatched(SimpleTxn txn) {
 		if (txn == null || txn.getAccount() == null || txn.getAccount().name == null) {
@@ -454,16 +585,16 @@ public class CSVImport {
 	/**
 	 * @param tuple Tupleinfo for the txn
 	 */
-	private void matchTransaction(TransactionInfo tuple) {
+	private void matchTransaction(MoneyMgrModel model, TransactionInfo tuple) {
 		SimpleTxn mactxn = tuple.macTxn;
 
 		infoMessage(mactxn.toString());
 
-		Account acct = MoneyMgrModel.currModel.getAccountByID(mactxn.getAccountID());
-		List<SimpleTxn> txns = MoneyMgrModel.currModel.findMatchingTransactions(acct, mactxn);
+		Account acct = model.getAccountByID(mactxn.getAccountID());
+		List<SimpleTxn> txns = model.findMatchingTransactions(acct, mactxn);
 
 		if (txns.isEmpty()) {
-			txns = MoneyMgrModel.currModel.findMatchingTransactions(acct, mactxn);
+			txns = model.findMatchingTransactions(acct, mactxn);
 		}
 		for (Iterator<SimpleTxn> iter = txns.iterator(); iter.hasNext();) {
 			if (isMatched(iter.next())) {
@@ -519,6 +650,8 @@ public class CSVImport {
 
 		if (!iszero && (lastdiff != 0)) {
 			tuple.addInexactMessage("   WIN " + wintxn.toString());
+
+			mactxn.compareWith(tuple, wintxn);
 		}
 	}
 
@@ -526,57 +659,38 @@ public class CSVImport {
 		SimpleTxn txn = null;
 
 		try {
-			tuple.processValues();
-
 			Account acct = tuple.account;
 			if (acct == null) {
 				Common.reportError("Account not found");
 				return null;
 			}
 
-			String payee = tuple.value(TransactionInfo.PAYEE_IDX);
-			BigDecimal amount = Common.getDecimal(tuple.value(TransactionInfo.AMOUNT_IDX));
+			//String payee = tuple.payee; // value(TransactionInfo.PAYEE_IDX);
+			//BigDecimal amount = tuple.amount; // .getDecimal(tuple.value(TransactionInfo.AMOUNT_IDX));
 
-			String split = tuple.value(TransactionInfo.SPLIT_IDX);
-			String memo = tuple.value(TransactionInfo.MEMO_IDX);
-			String cknum = tuple.value(TransactionInfo.CHECKNUM_IDX);
-			String cat = tuple.value(TransactionInfo.CATEGORY_IDX);
-			String desc = tuple.value(TransactionInfo.DESCRIPTION_IDX);
-			String type = tuple.value(TransactionInfo.TYPE_IDX);
-			String sec = tuple.value(TransactionInfo.SECURITY_IDX);
-			String fees = tuple.value(TransactionInfo.FEES_IDX);
-			String shares = tuple.value(TransactionInfo.SHARES_IDX);
-			String action = tuple.value(TransactionInfo.ACTION_IDX);
-			String sharesIn = tuple.value(TransactionInfo.SHARESIN_IDX);
-			String sharesOut = tuple.value(TransactionInfo.SHARESOUT_IDX);
-			String inflow = tuple.value(TransactionInfo.INFLOW_IDX);
-			String outflow = tuple.value(TransactionInfo.OUTFLOW_IDX);
+			//String split = tuple.value(TransactionInfo.SPLIT_IDX);
+			//String memo = tuple.memo; // value(TransactionInfo.MEMO_IDX);
+			//String cknum = tuple.cknum; // value(TransactionInfo.CHECKNUM_IDX);
+			//Category cat = tuple.category; // value(TransactionInfo.CATEGORY_IDX);
+			//String desc = tuple.description; // value(TransactionInfo.DESCRIPTION_IDX);
+			//String type = tuple.type; // value(TransactionInfo.TYPE_IDX);
+			//Security sec = tuple.security; // value(TransactionInfo.SECURITY_IDX);
+			//BigDecimal fees = tuple.fees; // value(TransactionInfo.FEES_IDX);
+			//BigDecimal shares = tuple.shares; // value(TransactionInfo.SHARES_IDX);
+			//TxAction action = tuple.action; // value(TransactionInfo.ACTION_IDX);
+			//BigDecimal sharesIn = tuple.sharesIn; // value(TransactionInfo.SHARESIN_IDX);
+			//BigDecimal sharesOut = tuple.sharesOut; // value(TransactionInfo.SHARESOUT_IDX);
+			//BigDecimal inflow = tuple.inflow; // value(TransactionInfo.INFLOW_IDX);
+			//BigDecimal outflow = tuple.outflow; // value(TransactionInfo.OUTFLOW_IDX);
 
-			Account xferAcct = null;
-			Category c = null;
-			int catid;
+			//Account xferAcct = tuple.xaccount; // null
+			//Category c = tuple.category; // null;
 
-			if (cat.startsWith("Transfer:[")) {
-				// TODO account names different in mac file
-				cat = cat.substring(10, cat.length() - 1);
-				if (cat.contentEquals("Tesla Model 3")) {
-					cat = "Tesla";
-				} else if (cat.contentEquals("Tesla Loan")) {
-					cat = "TeslaLoan";
-				}
-				xferAcct = MoneyMgrModel.currModel.findAccount(cat);
-				catid = (xferAcct != null) ? -xferAcct.acctid : 0;
-			} else {
-				c = (!cat.isEmpty()) ? MoneyMgrModel.currModel.findCategory(cat) : null;
-				catid = (c != null) ? c.catid : 0;
-			}
-
-			if (split.equals("S")) {
+			if (tuple.isSplit) {
 				if (this.lasttxn != null) {
-					if (!this.lasttxn.getDate().equals(tuple.getDate()) //
+					if (!this.lasttxn.getDate().equals(tuple.date) //
 							|| !this.lasttxn.hasSplits() //
-							|| !this.lasttxn.getCheckNumberString().equals( //
-									tuple.value(TransactionInfo.CHECKNUM_IDX))) {
+							|| !this.lasttxn.getCheckNumberString().equals(tuple.cknum)) {
 						// TODO at some point, validate splits
 						this.lasttxn = null;
 					}
@@ -586,13 +700,13 @@ public class CSVImport {
 					this.lasttxn = (acct.isInvestmentAccount()) //
 							? new InvestmentTxn(acct.acctid) //
 							: new NonInvestmentTxn(acct.acctid);
-					if (!cknum.isEmpty()) {
-						this.lasttxn.setCheckNumber(cknum);
+					if (tuple.cknum != null && !tuple.cknum.isEmpty()) {
+						this.lasttxn.setCheckNumber(tuple.cknum);
 					}
 				}
 
 				if (this.lasttxn instanceof InvestmentTxn) {
-					Common.reportWarning("Can't add split to investment txn");
+					Common.reportWarning("Adding split to investment txn");
 				}
 				txn = new SplitTxn(this.lasttxn);
 				MoneyMgrModel.currModel.addTransaction(txn);
@@ -603,25 +717,29 @@ public class CSVImport {
 				txn = new InvestmentTxn(acct.acctid);
 			}
 
-			if (!split.equals("S")) {
-				txn.setDate(tuple.getDate());
+			if (!tuple.isSplit) {
+				txn.setDate(tuple.date);
 			} else if (this.lasttxn.getDate() == null) {
-				this.lasttxn.setDate(tuple.getDate());
+				this.lasttxn.setDate(tuple.date);
 			}
 
-			txn.setAmount(amount);
-			txn.setMemo(memo);
+			txn.setAmount(tuple.amount);
+			txn.setMemo(tuple.memo);
 			txn.setCashTransferTxn(null);
-			txn.setCatid(catid);
+			txn.setCatid((tuple.category != null) ? tuple.category.catid : 0);
+
+			if (tuple.xaccount != null) {
+				txn.setCashTransferAcctid(tuple.xaccount.acctid);
+			}
 
 			if (txn instanceof GenericTxn) {
 				GenericTxn gtxn = (GenericTxn) txn;
-				gtxn.setPayee(payee);
+				gtxn.setPayee(tuple.payee);
 			}
 
 			if (txn instanceof NonInvestmentTxn) {
 				NonInvestmentTxn nitxn = (NonInvestmentTxn) txn;
-				nitxn.setCheckNumber(cknum);
+				nitxn.setCheckNumber(tuple.cknum);
 			}
 // TODO payee, acctForTransfer, amountTransferred, 
 // TODO lots
@@ -634,29 +752,31 @@ public class CSVImport {
 
 				if (itxn.getCashTransferAcctid() > 0) {
 					itxn.accountForTransfer = MoneyMgrModel.currModel.getAccountByID(itxn.getCashTransferAcctid()).name;
-					itxn.setAction((inflow.isEmpty()) ? TxAction.XOUT : TxAction.XIN);
-					itxn.cashTransferred = amount;
+					itxn.setAction((tuple.inflow != null && tuple.inflow.signum() > 0) //
+							? TxAction.XIN //
+							: TxAction.XOUT);
+					itxn.cashTransferred = tuple.amount;
 				} else {
 					itxn.setAction(TxAction.OTHER);
 					itxn.cashTransferred = BigDecimal.ZERO;
 					itxn.accountForTransfer = null;
 				}
-				itxn.commission = (fees.isEmpty()) //
-						? BigDecimal.ZERO //
-						: Common.getDecimal(fees);
-				itxn.price = BigDecimal.ZERO;
-				if (!sec.isEmpty()) {
-					itxn.setSecurity(MoneyMgrModel.currModel.findSecurity(sec));
+				
+				itxn.commission = (tuple.fees != null) ? tuple.fees : BigDecimal.ZERO;
+				itxn.setQuantity(tuple.shares);
+				itxn.price = tuple.price; //BigDecimal.ZERO;
+				if (tuple.security != null) {
+					itxn.setSecurity(tuple.security);
 				}
 
 				// 0.42 shares @ 1.00
-				if (!desc.isEmpty()) {
-					int sharesidx = desc.indexOf(' ');
-					int priceidx = desc.indexOf('@');
+				if (!tuple.description.isEmpty()) {
+					int sharesidx = tuple.description.indexOf(' ');
+					int priceidx = tuple.description.indexOf('@');
 					if (priceidx >= 0) {
 						try {
-							String pricestr = desc.substring(priceidx + 1).trim();
-							String quantitystr = desc.substring(0, sharesidx).trim();
+							String pricestr = tuple.description.substring(priceidx + 1).trim();
+							String quantitystr = tuple.description.substring(0, sharesidx).trim();
 
 							itxn.setQuantity(Common.getDecimal(quantitystr));
 							itxn.price = Common.getDecimal(pricestr);

@@ -18,8 +18,6 @@ public abstract class GenericTxn //
 	private String payee;
 	private String chkNumber;
 
-	// TODO move splits to SimpleTxn/GenericTxn?//
-	// Why shouldn't an investment txn have splits?
 	private final List<SplitTxn> splits;
 
 	private QDate stmtdate;

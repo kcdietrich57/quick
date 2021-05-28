@@ -17,7 +17,7 @@ public enum FieldType {
 	TxnAddress, TxnSplitCategory, TxnSplitMemo, TxnSplitAmount,
 
 	// Investment Txn
-	InvDate, InvAction, InvSecurity, InvPrice, InvQuantity, InvTransactionAmt, //
+	InvDate, InvAction, InvPayee, InvSecurity, InvPrice, InvQuantity, InvTransactionAmt, //
 	InvClearedStatus, InvFirstLine, InvMemo, InvCommission, InvXferAcct, InvXferAmt,
 
 	// Statements

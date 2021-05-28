@@ -69,8 +69,8 @@ public class Common {
 	}
 
 	public static int parseCategory(String s) {
-		if (s.startsWith("[")) {
-			s = s.substring(1, s.length() - 1).trim();
+		if (s.startsWith("[") || s.startsWith("Transfer:[")) {
+			s = s.substring(s.indexOf("[") + 1, s.length() - 1).trim();
 
 			Account acct = MoneyMgrModel.currModel.findAccount(s);
 

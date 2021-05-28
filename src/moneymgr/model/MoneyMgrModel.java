@@ -201,10 +201,11 @@ public class MoneyMgrModel {
 			Common.reportError("Adding duplicate security symbol '" + sec.symbol + "'");
 		}
 
-		if (sec.secid != (securities.size() + 1)) {
-			Common.reportError("Bad security id '" + sec.secid + "'" //
-					+ " should be " + (securities.size() + 1));
-		}
+// TODO	seems like a bad test
+		// if (sec.secid != (securities.size() + 1)) {
+//			Common.reportError("Bad security id '" + sec.secid + "'" //
+//					+ " should be " + (securities.size() + 1));
+//		}
 
 		while (securitiesByID.size() <= sec.secid) {
 			securitiesByID.add(null);

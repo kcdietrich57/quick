@@ -2,7 +2,7 @@ package app;
 
 import java.util.Scanner;
 
-import moneymgr.io.cvs.CSVImport;
+import moneymgr.io.csv.CSVImport;
 import moneymgr.io.mm.Persistence;
 import moneymgr.io.qif.QifDomReader;
 import moneymgr.model.MoneyMgrModel;
@@ -18,6 +18,7 @@ import moneymgr.util.QDate;
 public class MoneyMgrApp {
 	public static final String WIN_QIF_MODEL_NAME = "Windows QIF";
 	public static final String WIN_JSON_MODEL_NAME = "Windows JSON";
+	public static final String MAC_CSV_MODEL_NAME = "Mac CSV";
 	public static Scanner scn;
 
 	private static long startupTime;
@@ -38,6 +39,9 @@ public class MoneyMgrApp {
 	}
 
 	public static void main(String[] args) {
+		boolean ENABLE_EXPERIMENTAL_CODE = false;
+		boolean ENABLE_QIF_IMPORT = false;
+
 		boolean savejson = true;
 		boolean comparejson = true;
 		boolean usejson = false;
@@ -59,8 +63,6 @@ public class MoneyMgrApp {
 			loadwin = true;
 			loadjson = true;
 		}
-
-		boolean ENABLE_EXPERIMENTAL_CODE = false;
 
 		Common.reportInfo("Starting MoneyManager");
 		startupTime = System.currentTimeMillis();
@@ -118,6 +120,19 @@ public class MoneyMgrApp {
 			Common.reportInfo(String.format("Compare complete: %s", elapsedTime()));
 		}
 
+		if (ENABLE_QIF_IMPORT) {
+			MoneyMgrModel.changeModel(WIN_QIF_MODEL_NAME);
+			MoneyMgrModel sourceModel = MoneyMgrModel.currModel;
+
+			MoneyMgrModel.changeModel(MAC_CSV_MODEL_NAME);
+
+			testCsvImport(sourceModel);
+
+			Common.reportInfo(String.format("Comparing QIF/CSV models"));
+			MoneyMgrModel.compareModels(WIN_QIF_MODEL_NAME, MAC_CSV_MODEL_NAME);
+			Common.reportInfo(String.format("Compare complete: %s", elapsedTime()));
+		}
+
 		MoneyMgrModel.changeModel((usejson) ? WIN_JSON_MODEL_NAME : WIN_QIF_MODEL_NAME);
 
 		Common.reportInfo(String.format("Building UI"));
@@ -129,7 +144,9 @@ public class MoneyMgrApp {
 	/** This function will run experimental code for the current data */
 	private static void runExperimentalCode() {
 		CashFlow.reportCashFlowForTrailingYear();
+	}
 
-		CSVImport.testMacImport();
+	private static void testCsvImport(MoneyMgrModel sourceModel) {
+		CSVImport.testCsvImport(sourceModel);
 	}
 }

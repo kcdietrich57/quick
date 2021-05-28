@@ -96,7 +96,7 @@ public abstract class SimpleTxn implements Txn {
 	}
 
 	/**
-	 * Compares two transactions for testing CVS import matching up with QIF<br>
+	 * Compares two transactions for testing CSV import matching up with QIF<br>
 	 * (date/action/type/amount/.......)
 	 */
 	public int compareWith(TransactionInfo tuple, SimpleTxn other) {
