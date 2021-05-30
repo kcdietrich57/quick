@@ -37,6 +37,21 @@ public abstract class SimpleTxn implements Txn {
 	private static int cashok = 0;
 	private static int cashbad = 0;
 
+	public static enum ShareAction {
+		NO_ACTION("None"), NEW_SHARES("New"), DISPOSE_SHARES("Dispose"), //
+		TRANSFER_OUT("Xout"), TRANSFER_IN("Xin"), SPLIT("Split");
+
+		private String name;
+
+		private ShareAction(String name) {
+			this.name = name;
+		}
+
+		public String toString() {
+			return this.name;
+		}
+	}
+
 	private final long xid;
 	private final int acctid;
 	private final int txid;

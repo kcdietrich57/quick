@@ -17,6 +17,7 @@ import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
 import moneymgr.model.Security;
 import moneymgr.model.Statement;
+import moneymgr.model.StockOption;
 import moneymgr.model.TxAction;
 import moneymgr.ui.model.TableProperties.ColumnProperties;
 import moneymgr.util.Common;
@@ -143,13 +144,14 @@ public abstract class GenericTransactionTableModel //
 				String sym = itx.getSecuritySymbol();
 
 				if (itx.isStockOptionTxn()) {
-					if (itx.option == null) {
+					StockOption opt = itx.getOption();
+					if (opt == null) {
 						return "";
 					}
 
-					BigDecimal shrs = itx.option.grantShares;
-					if (itx.option.srcOption != null) {
-						shrs = shrs.subtract(itx.option.srcOption.grantShares);
+					BigDecimal shrs = opt.grantShares;
+					if (opt.srcOption != null) {
+						shrs = shrs.subtract(opt.srcOption.grantShares);
 					}
 
 					switch (itx.getAction()) {
@@ -157,8 +159,8 @@ public abstract class GenericTransactionTableModel //
 						return sym + " " + shrs.toString();
 					case VEST: {
 						try {
-							BigDecimal gshrs = itx.option.grantShares;
-							BigDecimal cnt = new BigDecimal(itx.option.vestCount);
+							BigDecimal gshrs = opt.grantShares;
+							BigDecimal cnt = new BigDecimal(opt.vestCount);
 							BigDecimal vshrs = gshrs.divide(cnt, RoundingMode.DOWN);
 							return sym + " " + vshrs.toString() //
 									+ "/" + gshrs.toString();
@@ -170,7 +172,7 @@ public abstract class GenericTransactionTableModel //
 					case EXERCISE:
 					case EXERCISEX:
 					case EXPIRE:
-						return sym + " " + itx.option.grantShares.toString();
+						return sym + " " + opt.grantShares.toString();
 
 					default:
 						return "";

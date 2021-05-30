@@ -203,7 +203,7 @@ public class StockOption {
 				}
 				if (opt.transaction == null) {
 					opt.transaction = txn;
-					txn.option = opt;
+					txn.setOption(opt);
 					return;
 				}
 			}
@@ -234,7 +234,7 @@ public class StockOption {
 
 				if (opt.transaction == null) {
 					opt.transaction = txn;
-					txn.option = opt;
+					txn.setOption(opt);
 					return;
 				}
 			}
@@ -257,7 +257,7 @@ public class StockOption {
 					&& (opt.vestCurrent != opt.srcOption.vestCurrent)) {
 				if (opt.transaction == null) {
 					opt.transaction = txn;
-					txn.option = opt;
+					txn.setOption(opt);
 					return;
 				}
 			}
@@ -282,7 +282,7 @@ public class StockOption {
 					&& (opt.strikePrice.compareTo(opt.srcOption.strikePrice) != 0)) {
 				if (opt.transaction == null) {
 					opt.transaction = txn;
-					txn.option = opt;
+					txn.setOption(opt);
 					found = true;
 				}
 			}
@@ -307,7 +307,7 @@ public class StockOption {
 							opt.srcOption.getAvailableShares(true)) < 0)) {
 				if (opt.transaction == null) {
 					opt.transaction = txn;
-					txn.option = opt;
+					txn.setOption(opt);
 					return;
 				}
 			}
@@ -330,7 +330,7 @@ public class StockOption {
 					&& (opt.getAvailableShares(false).signum() == 0)) {
 				if (opt.transaction == null) {
 					opt.transaction = txn;
-					txn.option = opt;
+					txn.setOption(opt);
 					return;
 				}
 			}

@@ -39,7 +39,7 @@ public class TransactionProcessor {
 				continue;
 			}
 
-			if ((txn.getSecurity() != null) && (txn.price != null)) {
+			if ((txn.getSecurity() != null) && (txn.getPrice() != null)) {
 				txn.getSecurity().addTransaction(txn);
 			}
 
@@ -93,7 +93,7 @@ public class TransactionProcessor {
 				break;
 
 			case InvCommission:
-				txn.commission = Common.getDecimal(qline.value);
+				txn.setCommission(Common.getDecimal(qline.value));
 				tinfo.setValue(TransactionInfo.COMMISSION_IDX, qline.value);
 				break;
 
@@ -108,7 +108,7 @@ public class TransactionProcessor {
 				break;
 
 			case InvPrice:
-				txn.price = Common.getDecimal(qline.value);
+				txn.setPrice(Common.getDecimal(qline.value));
 				tinfo.setValue(TransactionInfo.PRICE_IDX, qline.value);
 				break;
 
@@ -133,14 +133,14 @@ public class TransactionProcessor {
 				break;
 
 			case InvXferAmt:
-				txn.cashTransferred = Common.getDecimal(qline.value);
+				txn.setCashTransferred(Common.getDecimal(qline.value));
 				tinfo.setValue(TransactionInfo.XAMOUNT_IDX, qline.value);
 				break;
 
 			case InvXferAcct: {
 				int catid = Common.parseCategory(qline.value);
 				if (catid < 0) {
-					txn.accountForTransfer = qline.value;
+					txn.setAccountForTransfer(qline.value);
 				}
 
 				txn.setCatid(catid);

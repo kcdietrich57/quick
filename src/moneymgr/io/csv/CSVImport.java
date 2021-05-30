@@ -751,20 +751,20 @@ public class CSVImport {
 				}
 
 				if (itxn.getCashTransferAcctid() > 0) {
-					itxn.accountForTransfer = MoneyMgrModel.currModel.getAccountByID(itxn.getCashTransferAcctid()).name;
+					itxn.setAccountForTransfer(MoneyMgrModel.currModel.getAccountByID(itxn.getCashTransferAcctid()).name);
 					itxn.setAction((tuple.inflow != null && tuple.inflow.signum() > 0) //
 							? TxAction.XIN //
 							: TxAction.XOUT);
-					itxn.cashTransferred = tuple.amount;
+					itxn.setCashTransferred(tuple.amount);
 				} else {
 					itxn.setAction(TxAction.OTHER);
-					itxn.cashTransferred = BigDecimal.ZERO;
-					itxn.accountForTransfer = null;
+					itxn.setCashTransferred(BigDecimal.ZERO);
+					itxn.setAccountForTransfer(null);
 				}
 				
-				itxn.commission = (tuple.fees != null) ? tuple.fees : BigDecimal.ZERO;
+				itxn.setCommission((tuple.fees != null) ? tuple.fees : BigDecimal.ZERO);
 				itxn.setQuantity(tuple.shares);
-				itxn.price = tuple.price; //BigDecimal.ZERO;
+				itxn.setPrice(tuple.price); //BigDecimal.ZERO;
 				if (tuple.security != null) {
 					itxn.setSecurity(tuple.security);
 				}
@@ -779,7 +779,7 @@ public class CSVImport {
 							String quantitystr = tuple.description.substring(0, sharesidx).trim();
 
 							itxn.setQuantity(Common.getDecimal(quantitystr));
-							itxn.price = Common.getDecimal(pricestr);
+							itxn.setPrice(Common.getDecimal(pricestr));
 						} catch (Exception e) {
 							e.printStackTrace();
 						}

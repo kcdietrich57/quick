@@ -20,8 +20,8 @@ import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.NonInvestmentTxn;
 import moneymgr.model.QPrice;
 import moneymgr.model.Security;
+import moneymgr.model.SimpleTxn.ShareAction;
 import moneymgr.model.TxAction;
-import moneymgr.model.InvestmentTxn.ShareAction;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -73,7 +73,7 @@ class ITxTest {
 		this.itx.setQuantity(new BigDecimal("1.0"));
 		// TODO why do we need to do both of these? Setting tx should be sufficient
 		this.itx.setCashTransferAcctid(this.bank.acctid);
-		this.itx.cashTransferred = this.ntx.getAmount();
+		this.itx.setCashTransferred(this.ntx.getAmount());
 		this.itx.setCashTransferTxn(this.ntx);
 
 		invest.addTransaction(this.itx);

@@ -182,8 +182,8 @@ public class Security {
 		}
 		this.transactions.add(idx, txn);
 
-		if ((txn.price != null) && //
-				(txn.price.compareTo(BigDecimal.ZERO) != 0)) {
+		if ((txn.getPrice() != null) && //
+				(txn.getPrice().compareTo(BigDecimal.ZERO) != 0)) {
 
 			// The price for a transaction doesn't replace the price in the
 			// history. It is intra-day, and in the case of ESPP/options,

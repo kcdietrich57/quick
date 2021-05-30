@@ -18,6 +18,9 @@ public abstract class GenericTxn //
 	private String payee;
 	private String chkNumber;
 
+	/** Action taken by transaction */
+	private TxAction action;
+
 	private final List<SplitTxn> splits;
 
 	private QDate stmtdate;
@@ -41,6 +44,7 @@ public abstract class GenericTxn //
 		this.stmtdate = null;
 		this.runningTotal = null;
 		this.chkNumber = "";
+		this.action = TxAction.OTHER;
 
 		this.splits = new ArrayList<>();
 
@@ -48,9 +52,22 @@ public abstract class GenericTxn //
 			MoneyMgrModel.currModel.addTransaction(this);
 		}
 	}
+	
+	// TODO clone transaction
+//	public GenericTxn(GenericTxn other) {
+//		this.action = other.action;
+//	}
 
 	public GenericTxn(int acctid) {
 		this(MoneyMgrModel.currModel.createTxid(), acctid);
+	}
+
+	public void setAction(TxAction action) {
+		this.action = action;
+	}
+
+	public TxAction getAction() {
+		return this.action;
 	}
 
 	public QDate getStatementDate() {

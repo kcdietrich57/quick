@@ -674,14 +674,14 @@ public class Persistence {
 				if (tx instanceof InvestmentTxn) {
 					InvestmentTxn itx = (InvestmentTxn) tx;
 
-					xacctName = itx.accountForTransfer;
+					xacctName = itx.getAccountForTransfer();
 					// TODO encode share action
 					shareaction = itx.getShareAction().toString();
 					shares = itx.getQuantity();
-					shareprice = itx.price;
+					shareprice = itx.getPrice();
 					splitratio = itx.getSplitRatio();
-					xfercash = itx.cashTransferred;
-					commission = itx.commission;
+					xfercash = itx.getCashTransferred();
+					commission = itx.getCommission();
 
 					securityTransferTxns = "[";
 					String sep2 = "";
@@ -719,9 +719,8 @@ public class Persistence {
 
 					lots += "]";
 
-					if (itx.isStockOptionTxn() && (itx.option != null)) {
-						// TODO why would option be null
-						optid = itx.option.optid;
+					if (itx.isStockOptionTxn() && (itx.getOption() != null)) {
+						optid = itx.getOption().optid;
 					}
 				}
 
@@ -1450,14 +1449,14 @@ public class Persistence {
 		BigDecimal shareprice = new BigDecimal((String) tuple.get(SHAREPRICE));
 		BigDecimal splitratio = new BigDecimal((String) tuple.get(SPLITRATIO));
 
-		itx.accountForTransfer = decodeString((String) tuple.get(XACCT));
-		itx.cashTransferred = new BigDecimal((String) tuple.get(XFERCASH));
-		itx.commission = new BigDecimal((String) tuple.get(COMMISSION));
+		itx.setAccountForTransfer(decodeString((String) tuple.get(XACCT)));
+		itx.setCashTransferred(new BigDecimal((String) tuple.get(XFERCASH)));
+		itx.setCommission(new BigDecimal((String) tuple.get(COMMISSION)));
 
 		// TODO option doesn't exist yet?
 		int optid = ((Long) tuple.get(OPTID)).intValue();
 
-		itx.price = shareprice;
+		itx.setPrice(shareprice);
 
 		if (itx.getAction() == TxAction.STOCKSPLIT) {
 			itx.setQuantity(splitratio.multiply(BigDecimal.TEN));
@@ -1693,7 +1692,7 @@ public class Persistence {
 
 				if (txid > 0) {
 					opt.transaction = (InvestmentTxn) this.model.getTransaction(txid);
-					opt.transaction.option = opt;
+					opt.transaction.setOption(opt);
 				}
 
 				this.model.addStockOption(opt);

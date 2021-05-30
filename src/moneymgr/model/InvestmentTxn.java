@@ -16,33 +16,18 @@ import moneymgr.util.QDate;
 /** Transaction for investment account (may involve a security) */
 public class InvestmentTxn extends GenericTxn {
 
-	public enum ShareAction {
-		NO_ACTION("None"), NEW_SHARES("New"), DISPOSE_SHARES("Dispose"), TRANSFER_OUT("Xout"), TRANSFER_IN("Xin"),
-		SPLIT("Split");
-
-		private String name;
-
-		private ShareAction(String name) {
-			this.name = name;
-		}
-
-		public String toString() {
-			return this.name;
-		}
-	}
-
 	/** TODO TxAction not for non-investment txns? Action taken by transaction */
 	private TxAction action;
 
 	private Security security;
-	public StockOption option;
-	public BigDecimal price;
+	private StockOption option;
+	private BigDecimal price;
 	private BigDecimal quantity;
-	public BigDecimal commission;
+	private BigDecimal commission;
 
-	public String accountForTransfer;
+	private String accountForTransfer;
 	/** amountTransferred is cash only */
-	public BigDecimal cashTransferred;
+	private BigDecimal cashTransferred;
 	private List<InvestmentTxn> xferTxns;
 
 	/** These break down security activity by lots */
@@ -99,6 +84,62 @@ public class InvestmentTxn extends GenericTxn {
 		this.lotsDisposed = new ArrayList<>();
 	}
 
+	public Security getSecurity() {
+		return this.security;
+	}
+
+	public void setSecurity(Security sec) {
+		this.security = sec;
+	}
+
+	public StockOption getOption() {
+		return this.option;
+	}
+	
+	public void setOption(StockOption opt) {
+		this.option = opt;
+	}
+
+	public BigDecimal getQuantity() {
+		return this.quantity;
+	}
+
+	public void setQuantity(BigDecimal qty) {
+		this.quantity = qty;
+	}
+
+	public BigDecimal getPrice() {
+		return this.price;
+	}
+
+	public void setPrice(BigDecimal price) {
+		this.price = price;
+	}
+	
+	public BigDecimal getCommission() {
+		return this.commission;
+	}
+	
+	public void setCommission(BigDecimal commission) {
+		this.commission = commission;
+	}
+	
+	public BigDecimal getCashTransferred() {
+		return this.cashTransferred;
+	}
+	
+	public void setCashTransferred(BigDecimal cash) {
+		this.cashTransferred = cash;
+	}
+	
+	public String getAccountForTransfer() {
+		return this.accountForTransfer;
+	}
+	
+	public void setAccountForTransfer(String acctName) {
+		this.accountForTransfer = acctName;
+	}
+
 	public int compareWith(TransactionInfo tuple, SimpleTxn othersimp) {
 		int diff;
 
@@ -139,14 +180,6 @@ public class InvestmentTxn extends GenericTxn {
 		return this.action;
 	}
 
-	public Security getSecurity() {
-		return this.security;
-	}
-
-	public void setSecurity(Security sec) {
-		this.security = sec;
-	}
-
 	public List<InvestmentTxn> getSecurityTransferTxns() {
 		return (this.xferTxns.isEmpty()) //
 				? this.xferTxns //
@@ -167,10 +200,6 @@ public class InvestmentTxn extends GenericTxn {
 			this.xferTxns.add(txn);
 			txn.addSecurityTransferTxn(this);
 		}
-	}
-
-	public void setQuantity(BigDecimal qty) {
-		this.quantity = qty;
 	}
 
 	public boolean isStockOptionTxn() {
@@ -196,10 +225,6 @@ public class InvestmentTxn extends GenericTxn {
 		default:
 			return false;
 		}
-	}
-
-	public BigDecimal getQuantity() {
-		return this.quantity;
 	}
 
 	public BigDecimal getShares() {
