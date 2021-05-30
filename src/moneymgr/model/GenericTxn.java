@@ -19,7 +19,7 @@ public abstract class GenericTxn //
 	private String chkNumber;
 
 	/** Action taken by transaction */
-	private TxAction action;
+	protected TxAction action;
 
 	private final List<SplitTxn> splits;
 
@@ -52,15 +52,23 @@ public abstract class GenericTxn //
 			MoneyMgrModel.currModel.addTransaction(this);
 		}
 	}
-	
-	// TODO clone transaction
-//	public GenericTxn(GenericTxn other) {
-//		this.action = other.action;
-//	}
 
 	public GenericTxn(int acctid) {
 		this(MoneyMgrModel.currModel.createTxid(), acctid);
 	}
+	
+	// TODO clone transaction
+//	public GenericTxn(GenericTxn other) {
+//		this(other.getAccountID());
+//		
+//		this.action = other.action;
+//		this.date = other.date;
+//		this.payee = other.payee;
+//		
+////		setStatementDate(other.getStatementDate());
+////		setRunningTotal(other.getRunningTotal());
+////		setCheckNumber(other.getCheckNumberString());
+//	}
 
 	public void setAction(TxAction action) {
 		this.action = action;

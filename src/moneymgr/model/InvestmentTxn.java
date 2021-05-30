@@ -17,7 +17,7 @@ import moneymgr.util.QDate;
 public class InvestmentTxn extends GenericTxn {
 
 	/** TODO TxAction not for non-investment txns? Action taken by transaction */
-	private TxAction action;
+	protected TxAction invTxAction;
 
 	private Security security;
 	private StockOption option;
@@ -40,7 +40,7 @@ public class InvestmentTxn extends GenericTxn {
 	public InvestmentTxn(int txid, int acctid) {
 		super(txid, acctid);
 
-		this.action = TxAction.OTHER;
+		this.invTxAction = TxAction.OTHER;
 		this.security = null;
 		this.option = null;
 		this.price = BigDecimal.ZERO;
@@ -69,7 +69,8 @@ public class InvestmentTxn extends GenericTxn {
 
 		setRunningTotal(BigDecimal.ZERO);
 
-		this.action = txn.action;
+		this.invTxAction = txn.invTxAction;
+		super.action = txn.action; // TODO fix this
 		this.security = txn.security;
 		this.option = txn.option;
 		this.price = txn.price;
@@ -95,7 +96,7 @@ public class InvestmentTxn extends GenericTxn {
 	public StockOption getOption() {
 		return this.option;
 	}
-	
+
 	public void setOption(StockOption opt) {
 		this.option = opt;
 	}
@@ -115,27 +116,27 @@ public class InvestmentTxn extends GenericTxn {
 	public void setPrice(BigDecimal price) {
 		this.price = price;
 	}
-	
+
 	public BigDecimal getCommission() {
 		return this.commission;
 	}
-	
+
 	public void setCommission(BigDecimal commission) {
 		this.commission = commission;
 	}
-	
+
 	public BigDecimal getCashTransferred() {
 		return this.cashTransferred;
 	}
-	
+
 	public void setCashTransferred(BigDecimal cash) {
 		this.cashTransferred = cash;
 	}
-	
+
 	public String getAccountForTransfer() {
 		return this.accountForTransfer;
 	}
-	
+
 	public void setAccountForTransfer(String acctName) {
 		this.accountForTransfer = acctName;
 	}
@@ -173,11 +174,12 @@ public class InvestmentTxn extends GenericTxn {
 	}
 
 	public void setAction(TxAction action) {
-		this.action = action;
+		super.action = action;
+		this.invTxAction = action;
 	}
 
 	public TxAction getAction() {
-		return this.action;
+		return this.invTxAction;
 	}
 
 	public List<InvestmentTxn> getSecurityTransferTxns() {
@@ -472,12 +474,12 @@ public class InvestmentTxn extends GenericTxn {
 			}
 
 			if (getCatid() < 0) {
-				this.action = (isCredit()) ? TxAction.XIN : TxAction.XOUT;
+				setAction((isCredit()) ? TxAction.XIN : TxAction.XOUT);
 				tinfo.setValue(TransactionInfo.ACTION_IDX, (isCredit()) //
 						? TxAction.XIN.toString() //
 						: TxAction.XOUT.toString());
 			} else {
-				this.action = TxAction.CASH;
+				setAction(TxAction.CASH);
 				tinfo.setValue(TransactionInfo.ACTION_IDX, TxAction.CASH.toString());
 			}
 		}
@@ -585,7 +587,7 @@ public class InvestmentTxn extends GenericTxn {
 			BigDecimal newprice = tot.divide(this.quantity).abs();
 
 			int acctid = getAccountID();
-			String s = "Inconsistent " + this.action + " transaction:" + //
+			String s = "Inconsistent " + getAction() + " transaction:" + //
 					" acct=" + MoneyMgrModel.currModel.getAccountByID(acctid).name + //
 					" " + getDate().toString() + "\n" + //
 					"  sec=" + this.getSecurityName() + //
@@ -616,9 +618,9 @@ public class InvestmentTxn extends GenericTxn {
 				(isCleared() ? "*" : " "), //
 				getDate().toString(), //
 				getAccount().name, //
-				this.action.toString());
+				getAction().toString());
 
-		if (this.action == TxAction.STOCKSPLIT) {
+		if (getAction() == TxAction.STOCKSPLIT) {
 			s += String.format(" %5.2f", //
 					getSplitRatio());
 		} else {
@@ -645,7 +647,7 @@ public class InvestmentTxn extends GenericTxn {
 		Account a = MoneyMgrModel.currModel.getAccountByID(getAccountID());
 		s += ((a != null) ? a.name : "null");
 		s += " " + Common.formatAmount(getAmount()).trim();
-		s += " " + this.action;
+		s += " " + getAction();
 		if (this.security != null) {
 			s += " " + this.getSecurityName();
 			s += " price=" + this.price;
