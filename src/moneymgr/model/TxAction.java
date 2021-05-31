@@ -67,4 +67,31 @@ public enum TxAction {
 	private TxAction(String key) {
 		this(key, false);
 	}
+
+	/** Define equivalent actions when comparing win/mac */
+	public boolean isEquivalentTo(TxAction other) {
+		if (this.equals(other)) {
+			return true;
+		}
+
+		switch (this) {
+		case CASH:
+			return other == WITHDRAWX || other == XIN || other == XOUT;
+
+		case XIN:
+			return other == CONTRIBX || other == CASH;
+
+		case XOUT:
+			return other == WITHDRAWX || other == CASH;
+
+		case CONTRIBX:
+			return other == XIN || other == CASH;
+
+		case WITHDRAWX:
+			return other == XOUT || other == CASH;
+
+		default:
+			return false;
+		}
+	}
 }

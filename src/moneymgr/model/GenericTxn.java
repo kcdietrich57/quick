@@ -119,23 +119,6 @@ public abstract class GenericTxn //
 		this.splits.add(txn);
 	}
 
-	/** Do sanity check of splits */
-	public void verifySplit() {
-		if (this.splits.isEmpty()) {
-			return;
-		}
-
-		BigDecimal dec = BigDecimal.ZERO;
-
-		for (SimpleTxn txn : this.splits) {
-			dec = dec.add(txn.getAmount());
-		}
-
-		if (!dec.equals(getAmount())) {
-			Common.reportError("Total(" + getAmount() + ") does not match split total (" + dec + ")");
-		}
-	}
-
 	/** TODO relocate? Correct missing/bad information from input data */
 	public void repair(TransactionInfo tinfo) {
 		if (getAmount() == null) {

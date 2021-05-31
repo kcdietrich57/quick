@@ -82,6 +82,42 @@ public abstract class SimpleTxn implements Txn {
 		this(MoneyMgrModel.currModel.createTxid(), acctid);
 	}
 
+	/** Do sanity check of splits belonging to this txn */
+	public void verifySplit() {
+		if (!hasSplits()) {
+			return;
+		}
+
+		BigDecimal dec = BigDecimal.ZERO;
+
+		for (SimpleTxn txn : getSplits()) {
+			if (txn.hasSplits()) {
+				txn.verifySplit();
+			}
+
+			dec = dec.add(txn.getAmount());
+		}
+
+		if (!dec.equals(getAmount())) {
+			Common.reportError("Total(" + getAmount() + ") does not match split total (" + dec + ")");
+		}
+	}
+
+	/** Do sanity check of splits for the root transaction containing this one */
+	public void verifyAllSplit() {
+		SimpleTxn root = this;
+		while (root instanceof SplitTxn) {
+			SplitTxn sroot = (SplitTxn) root;
+			if (sroot.getParent() == null) {
+				break;
+			}
+
+			root = sroot.getParent();
+		}
+
+		root.verifySplit();
+	}
+
 	public int getTxid() {
 		return (int) this.xid;
 	}
@@ -134,7 +170,7 @@ public abstract class SimpleTxn implements Txn {
 //					+ getDate().toString() + " vs " + other.getDate().toString());
 		}
 
-		diff = getAction().compareTo(other.getAction());
+		diff = (getAction().isEquivalentTo(other.getAction())) ? 0 : 1;
 		if (diff != 0) {
 			if (!Common.isEffectivelyZero(getAmount()) && (getAction() != TxAction.OTHER)) {
 				tuple.addActionMessage("Can't replace " + getAction().toString() //
@@ -260,7 +296,7 @@ public abstract class SimpleTxn implements Txn {
 	}
 
 	public TxAction getAction() {
-		return TxAction.CASH;
+		return TxAction.OTHER;
 	}
 
 	public void setAction(TxAction action) {
@@ -359,7 +395,7 @@ public abstract class SimpleTxn implements Txn {
 
 	public final BigDecimal getAmount() {
 		if (this.amount == null) {
-			//return BigDecimal.ZERO;
+			// return BigDecimal.ZERO;
 		}
 
 		return this.amount;

@@ -258,7 +258,7 @@ public class TransactionInfo {
 			String acctName = value(ACCOUNT_IDX);
 			this.account = model.findAccount(acctName);
 			if (this.account == null) {
-				Common.reportWarning("No account '" + acctName + "'");
+				Common.reportWarning("No account '" + acctName + "'"); // TODO xyzzy
 			}
 
 			this.date = getDate();
@@ -296,8 +296,9 @@ public class TransactionInfo {
 					this.category = null;
 					this.xaccount = model.getAccountByID(-catid);
 				} else {
-					Common.reportWarning("Can't find category from '" + value(CATEGORY_IDX) + "'");
+					Common.reportWarning("Creating category from '" + value(CATEGORY_IDX) + "'");
 					Common.parseCategory(catstring);
+					model.addCategory(new Category(catstring, "mac category", true));
 				}
 			}
 
@@ -311,7 +312,8 @@ public class TransactionInfo {
 				this.security = model.findSecurity(sname);
 
 				if (this.security == null) {
-					Common.reportWarning("No security '" + sname + "'");
+					Common.reportWarning("Creating dummy security for '" + sname + "'");
+					model.addSecurity(new Security(sname, sname));
 				}
 			}
 

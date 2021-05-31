@@ -55,21 +55,29 @@ public class Account {
 			if (Common.isEffectivelyEqual(t.getAmount().abs(), amt.abs())) {
 				// Match win txn directly
 				txns.add(t);
-			} else if (t.hasSplits()) {
+			}
+
+			if (t.hasSplits()) {
 				// Match split in win txn
 				for (SplitTxn st : t.getSplits()) {
 					if (Common.isEffectivelyEqual(st.getAmount().abs(), amt.abs())) {
 						txns.add(st);
+					} else if (st.hasSplits()) {
+						for (SplitTxn sst : st.getSplits()) {
+							if (Common.isEffectivelyEqual(sst.getAmount().abs(), amt.abs())) {
+								txns.add(sst);
+							}
+						}
 					}
 				}
-			} else {
-				// Match split in win xfer txn
-				SimpleTxn xt = t.getCashTransferTxn();
-				if (xt != null) {
-					for (SplitTxn st : xt.getSplits()) {
-						if (Common.isEffectivelyEqual(st.getAmount().abs(), amt.abs())) {
-							txns.add(t);
-						}
+			}
+
+			// Match split in win xfer txn
+			SimpleTxn xt = t.getCashTransferTxn();
+			if (xt != null) {
+				for (SplitTxn st : xt.getSplits()) {
+					if (Common.isEffectivelyEqual(st.getAmount().abs(), amt.abs())) {
+						txns.add(t);
 					}
 				}
 			}

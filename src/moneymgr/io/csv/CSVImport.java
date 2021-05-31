@@ -272,13 +272,13 @@ public class CSVImport {
 			e.printStackTrace();
 		}
 
+		int count = 0;
 		for (List<TransactionInfo> txns : transactionsMap.values()) {
 			for (TransactionInfo txinfo : txns) {
 				// processTuple(txinfo);
 				txinfo.processValues(this.sourceModel);
 
 				SimpleTxn txn = createTransaction(txinfo);
-
 				if (txn != null) {
 					++this.totaltx;
 					txinfo.macTxn = txn;
@@ -518,7 +518,6 @@ public class CSVImport {
 
 			if (f0.trim().isEmpty()) {
 				String acctname = tuple.value(TransactionInfo.ACCOUNT_IDX);
-
 				List<TransactionInfo> accttxns = this.transactionsMap.get(acctname);
 
 				if (accttxns == null) {
@@ -614,10 +613,6 @@ public class CSVImport {
 		} else {
 			this.nomatch.add(tuple);
 		}
-
-		if (tuple.winTxn == null) {
-			// TODO System.out.println("xyzzy NO WIN TXN");
-		}
 	}
 
 	private void processMatchesFound(TransactionInfo tuple, List<SimpleTxn> txns) {
@@ -649,7 +644,13 @@ public class CSVImport {
 		tuple.winTxn = wintxn;
 
 		if (!iszero && (lastdiff != 0)) {
+			wintxn.verifyAllSplit();
+
 			tuple.addInexactMessage("   WIN " + wintxn.toString());
+
+			System.out.println( // TODO xyzzy
+					"\ninexact match for:\n  " + mactxn.toString() //
+							+ "\n  " + wintxn.toString());
 
 			mactxn.compareWith(tuple, wintxn);
 		}
@@ -664,27 +665,6 @@ public class CSVImport {
 				Common.reportError("Account not found");
 				return null;
 			}
-
-			//String payee = tuple.payee; // value(TransactionInfo.PAYEE_IDX);
-			//BigDecimal amount = tuple.amount; // .getDecimal(tuple.value(TransactionInfo.AMOUNT_IDX));
-
-			//String split = tuple.value(TransactionInfo.SPLIT_IDX);
-			//String memo = tuple.memo; // value(TransactionInfo.MEMO_IDX);
-			//String cknum = tuple.cknum; // value(TransactionInfo.CHECKNUM_IDX);
-			//Category cat = tuple.category; // value(TransactionInfo.CATEGORY_IDX);
-			//String desc = tuple.description; // value(TransactionInfo.DESCRIPTION_IDX);
-			//String type = tuple.type; // value(TransactionInfo.TYPE_IDX);
-			//Security sec = tuple.security; // value(TransactionInfo.SECURITY_IDX);
-			//BigDecimal fees = tuple.fees; // value(TransactionInfo.FEES_IDX);
-			//BigDecimal shares = tuple.shares; // value(TransactionInfo.SHARES_IDX);
-			//TxAction action = tuple.action; // value(TransactionInfo.ACTION_IDX);
-			//BigDecimal sharesIn = tuple.sharesIn; // value(TransactionInfo.SHARESIN_IDX);
-			//BigDecimal sharesOut = tuple.sharesOut; // value(TransactionInfo.SHARESOUT_IDX);
-			//BigDecimal inflow = tuple.inflow; // value(TransactionInfo.INFLOW_IDX);
-			//BigDecimal outflow = tuple.outflow; // value(TransactionInfo.OUTFLOW_IDX);
-
-			//Account xferAcct = tuple.xaccount; // null
-			//Category c = tuple.category; // null;
 
 			if (tuple.isSplit) {
 				if (this.lasttxn != null) {
@@ -706,7 +686,7 @@ public class CSVImport {
 				}
 
 				if (this.lasttxn instanceof InvestmentTxn) {
-					Common.reportWarning("Adding split to investment txn");
+					// TODO xyzzy Common.reportWarning("Adding split to investment txn");
 				}
 				txn = new SplitTxn(this.lasttxn);
 				MoneyMgrModel.currModel.addTransaction(txn);
@@ -751,7 +731,8 @@ public class CSVImport {
 				}
 
 				if (itxn.getCashTransferAcctid() > 0) {
-					itxn.setAccountForTransfer(MoneyMgrModel.currModel.getAccountByID(itxn.getCashTransferAcctid()).name);
+					itxn.setAccountForTransfer(
+							MoneyMgrModel.currModel.getAccountByID(itxn.getCashTransferAcctid()).name);
 					itxn.setAction((tuple.inflow != null && tuple.inflow.signum() > 0) //
 							? TxAction.XIN //
 							: TxAction.XOUT);
@@ -761,10 +742,10 @@ public class CSVImport {
 					itxn.setCashTransferred(BigDecimal.ZERO);
 					itxn.setAccountForTransfer(null);
 				}
-				
+
 				itxn.setCommission((tuple.fees != null) ? tuple.fees : BigDecimal.ZERO);
 				itxn.setQuantity(tuple.shares);
-				itxn.setPrice(tuple.price); //BigDecimal.ZERO;
+				itxn.setPrice(tuple.price); // BigDecimal.ZERO;
 				if (tuple.security != null) {
 					itxn.setSecurity(tuple.security);
 				}
