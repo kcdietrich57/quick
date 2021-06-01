@@ -16,9 +16,6 @@ import moneymgr.util.QDate;
  * App for working with Quicken data (Windows QIF export, MacOS CSV export)
  */
 public class MoneyMgrApp {
-	public static final String WIN_QIF_MODEL_NAME = "Windows QIF";
-	public static final String WIN_JSON_MODEL_NAME = "Windows JSON";
-	public static final String MAC_CSV_MODEL_NAME = "Mac CSV";
 	public static Scanner scn;
 
 	private static long startupTime;
@@ -69,7 +66,7 @@ public class MoneyMgrApp {
 		lapTime = startupTime;
 
 		if (loadwin) {
-			MoneyMgrModel.changeModel(WIN_QIF_MODEL_NAME);
+			MoneyMgrModel.changeModel(MoneyMgrModel.WIN_QIF_MODEL_NAME);
 
 			Common.reportInfo("Loading QIF data");
 			MoneyMgrApp.scn = new Scanner(System.in);
@@ -110,30 +107,29 @@ public class MoneyMgrApp {
 
 		if (loadjson) {
 			Common.reportInfo(String.format("Loading JSON"));
-			persistence.loadJSON(WIN_JSON_MODEL_NAME, jsonFilename);
+			persistence.loadJSON(MoneyMgrModel.WIN_JSON_MODEL_NAME, jsonFilename);
 			Common.reportInfo(String.format("JSON loaded: %s", elapsedTime()));
 		}
 
 		if (comparejson) {
 			Common.reportInfo(String.format("Comparing QIF/JSON models"));
-			MoneyMgrModel.compareModels(WIN_QIF_MODEL_NAME, WIN_JSON_MODEL_NAME);
+			MoneyMgrModel.compareModels(MoneyMgrModel.WIN_QIF_MODEL_NAME, //
+					MoneyMgrModel.WIN_JSON_MODEL_NAME);
 			Common.reportInfo(String.format("Compare complete: %s", elapsedTime()));
 		}
 
 		if (ENABLE_QIF_IMPORT) {
-			MoneyMgrModel.changeModel(WIN_QIF_MODEL_NAME);
-			MoneyMgrModel sourceModel = MoneyMgrModel.currModel;
-
-			MoneyMgrModel.changeModel(MAC_CSV_MODEL_NAME);
-
-			testCsvImport(sourceModel);
+			testCsvImport();
 
 			Common.reportInfo(String.format("Comparing QIF/CSV models"));
-			MoneyMgrModel.compareModels(WIN_QIF_MODEL_NAME, MAC_CSV_MODEL_NAME);
+			MoneyMgrModel.compareModels(MoneyMgrModel.WIN_QIF_MODEL_NAME, //
+					MoneyMgrModel.MAC_CSV_MODEL_NAME);
 			Common.reportInfo(String.format("Compare complete: %s", elapsedTime()));
 		}
 
-		MoneyMgrModel.changeModel((usejson) ? WIN_JSON_MODEL_NAME : WIN_QIF_MODEL_NAME);
+		MoneyMgrModel.changeModel((usejson) //
+				? MoneyMgrModel.WIN_JSON_MODEL_NAME //
+				: MoneyMgrModel.WIN_QIF_MODEL_NAME);
 
 		Common.reportInfo(String.format("Building UI"));
 		MainFrame.createUI(MoneyMgrModel.currModel);
@@ -146,7 +142,7 @@ public class MoneyMgrApp {
 		CashFlow.reportCashFlowForTrailingYear();
 	}
 
-	private static void testCsvImport(MoneyMgrModel sourceModel) {
-		CSVImport.testCsvImport(sourceModel);
+	private static void testCsvImport() {
+		CSVImport.testCsvImport();
 	}
 }

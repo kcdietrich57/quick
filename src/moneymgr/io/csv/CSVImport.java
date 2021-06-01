@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import app.MoneyMgrApp;
 import app.QifDom;
 import moneymgr.io.TransactionInfo;
 import moneymgr.model.Account;
@@ -45,6 +44,31 @@ public class CSVImport {
 		}
 	}
 
+	/** TESTING: Import CSV file and compare to QIF version */
+	public static void testCsvImport() {
+		MoneyMgrModel sourceModel = MoneyMgrModel.getModel(MoneyMgrModel.WIN_QIF_MODEL_NAME);
+
+		String importDir = "/Users/greg/qif/";
+
+		System.out.println("Processing csv file");
+
+		System.out.println(String.format("Source model has %d transactions", //
+				sourceModel.getAllTransactions().size()));
+
+		importCSV(importDir + "DIETRICH.csv");
+
+		System.out.println(String.format("Imported %d transactions", //
+				MoneyMgrModel.currModel.getAllTransactions().size()));
+	}
+
+	/** Process a CSV file exported from MacOs */
+	public static void importCSV(String filename) {
+		CSVImport csvimp = new CSVImport(filename);
+
+		csvimp.cloneSourceModelInfo();
+		csvimp.importFile();
+	}
+
 	private LineNumberReader rdr;
 
 	/** Map account name to transaction tuples */
@@ -54,192 +78,7 @@ public class CSVImport {
 	public GenericTxn lasttxn = null;
 
 	private MoneyMgrModel sourceModel;
-
-	/**
-	 * Matches come in several forms<br>
-	 * Simple - no splits on either side Split - tx exists as split in both versions
-	 * PseudoSplit - non-split matches split in other version
-	 */
-
-	private static Account cloneAccount(MoneyMgrModel sourceModel, Account acct) {
-		MoneyMgrModel model = MoneyMgrModel.currModel;
-
-		Account a = model.findAccount(acct.name);
-		if (a != null) {
-			return a;
-		}
-
-		Common.debugInfo( //
-				"Cloning source account '" + acct.name + "'" + //
-						"(" + acct.acctid + ")");
-
-		a = new Account( //
-				acct.acctid, acct.name, acct.description, acct.type, //
-				acct.getStatementFrequency(), acct.getStatementDay());
-
-		model.addAccount(a);
-
-		return a;
-	}
-
-	private static Category cloneCategory(MoneyMgrModel sourceModel, Category cat) {
-		if (cat == null) {
-			return null;
-		}
-
-		MoneyMgrModel model = MoneyMgrModel.currModel;
-
-		Category c = model.findCategory(cat.name);
-		if (c != null) {
-			return c;
-		}
-
-		Common.debugInfo( //
-				"Cloning source category '" + cat.name + "'" + //
-						"(" + cat.catid + ")");
-
-		c = new Category( //
-				cat.catid, cat.name, cat.description, cat.isExpense);
-
-		model.addCategory(c);
-
-		return c;
-	}
-
-	private static Security cloneSecurity(MoneyMgrModel sourceModel, Security sec) {
-		MoneyMgrModel model = MoneyMgrModel.currModel;
-
-		Security s = model.findSecurityBySymbol(sec.symbol);
-		if (s != null) {
-			return s;
-		}
-
-		Common.debugInfo( //
-				"Cloning source security '" + sec.symbol + "'" + //
-						"(" + sec.secid + ")");
-
-		s = new Security( //
-				sec.secid, sec.symbol, sec.getName(), sec.type, sec.goal);
-		s.names.clear();
-		s.names.addAll(sec.names);
-
-		model.addSecurity(s);
-
-		return s;
-	}
-
-	private static void cloneSourceModelInfo(MoneyMgrModel sourceModel) {
-		for (Account acct : sourceModel.getAccounts()) {
-			cloneAccount(sourceModel, acct);
-		}
-
-		for (Category cat : sourceModel.getCategories()) {
-			cloneCategory(sourceModel, cat);
-		}
-
-		for (Security sec : sourceModel.getSecurities()) {
-			cloneSecurity(sourceModel, sec);
-		}
-	}
-
-	/** Process a CSV file exported from MacOs */
-	public static void importCSV(String filename, MoneyMgrModel sourceModel) {
-		cloneSourceModelInfo(sourceModel);
-
-		CSVImport csvimp = new CSVImport(filename, sourceModel);
-		csvimp.importFile();
-
-		Comparator<TransactionInfo> comp = new Comparator<TransactionInfo>() {
-			public int compare(TransactionInfo tx1, TransactionInfo tx2) {
-				return tx1.date.compareTo(tx2.date);
-			}
-		};
-		Collections.sort(csvimp.nomatch, comp);
-
-//		int mac_nomatch = csvimp.nomatch.size() + csvimp.nomatchZero.size();
-//		int mac_total = csvimp.totaltx;
-//		int win_unmatch = 0;
-//		int win_total = 0;
-//
-//		// int nn = 1;
-////		PrintStream out = null;
-////		try {
-////			out = new PrintStream("/Users/greg/qif/output.txt");
-////
-////			int totalmac = 0;
-////			int totalwin = 0;
-////			int nomatchmac = 0;
-////			int nomatchwin = 0;
-////
-////			for (List<TupleInfo> tuples : csvimp.transactionsMap.values()) {
-////				for (TupleInfo tuple : tuples) {
-////					++totalmac;
-////					if (tuple.winTxnMatches.isEmpty()) {
-////						SimpleTxn mactxn = tuple.macTxn;
-////						out.print("No match for mactxn:\n    " + mactxn);
-////
-////						out.println();
-////
-////						++nomatchmac;
-////
-////						if (mactxn.getAmount().signum() != 0) {
-////							Account acct = mactxn.getAccount();
-////							acct.findMatchingTransactions(mactxn);
-////						}
-////					}
-////				}
-////			}
-//
-//			for (GenericTxn wintxn : GenericTxn.getAllTransactions()) {
-//				++totalwin;
-////				if (wintxn != null && !csvimp.matchInfoForWinTxn.containsKey(wintxn)) {
-////					out.println("No match for wintxn:\n    " + wintxn);
-////					++nomatchwin;
-////				}
-//			}
-//
-//			out.println("Total unmatched mac=" + nomatchmac + "/" + totalmac //
-//					+ " win=" + nomatchwin + "/" + totalwin);
-//
-//			out.println("\nSummary for : " + filename);
-//			out.println("MAC tot=" + mac_total + " match=" + mac_nomatch);
-//			out.println("WIN tot=" + win_total + " match=" + (win_total - win_unmatch));
-//
-//			out.println(" Unmatched:     " + csvimp.nomatch.size());
-//			out.println(" Unmatched zero:" + csvimp.nomatchZero.size());
-//			out.println(" All zero:" + csvimp.allzero.size());
-//			out.println(" Total:         " + csvimp.totaltx);
-//
-//			out.close();
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//		}
-	}
-
-	/** TESTING: Import CSV file and compare to QIF version */
-	public static void testCsvImport(MoneyMgrModel sourceModel) {
-		String importDir = "/Users/greg/qif/";
-
-		System.out.println("Processing csv file");
-
-		System.out.println(String.format("Source model has %d transactions", //
-				sourceModel.getAllTransactions().size()));
-
-		importCSV(importDir + "DIETRICH.csv", sourceModel);
-
-		System.out.println(String.format("Imported %d transactions", //
-				MoneyMgrModel.currModel.getAllTransactions().size()));
-
-//		Collections.sort(MoneyMgrModel.currModel.alternateTransactions, new Comparator<GenericTxn>() {
-//			public int compare(GenericTxn o1, GenericTxn o2) {
-//				return o1.getDate().compareTo(o2.getDate());
-//			}
-//		});
-//
-//		List<GenericTxn> txns = MoneyMgrModel.currModel.alternateTransactions;
-//		System.out.println(String.format("There are %d transactions from MAC export", //
-//				MoneyMgrModel.currModel.alternateTransactions.size()));
-	}
+	private MoneyMgrModel csvModel;
 
 	/** Map MAC tx to WIN tx */
 	public List<TransactionInfo> nomatch = new ArrayList<>();
@@ -247,9 +86,10 @@ public class CSVImport {
 	public List<TransactionInfo> nomatchZero = new ArrayList<>();
 	public int totaltx = 0;
 
-	private CSVImport(String filename, MoneyMgrModel sourceModel) {
+	private CSVImport(String filename) {
 		try {
-			this.sourceModel = sourceModel;
+			this.sourceModel = MoneyMgrModel.getModel(MoneyMgrModel.WIN_QIF_MODEL_NAME);
+			this.csvModel = MoneyMgrModel.changeModel(MoneyMgrModel.MAC_CSV_MODEL_NAME);
 
 			this.rdr = new LineNumberReader(new FileReader(filename));
 		} catch (Exception e) {
@@ -262,8 +102,6 @@ public class CSVImport {
 			return;
 		}
 
-		String[] msgs = { "Multiple Matches", "Inexact Matches", "Action Mismatches" };
-
 		importCSVRecords();
 
 		try {
@@ -272,10 +110,18 @@ public class CSVImport {
 			e.printStackTrace();
 		}
 
-		int count = 0;
-		for (List<TransactionInfo> txns : transactionsMap.values()) {
-			for (TransactionInfo txinfo : txns) {
-				// processTuple(txinfo);
+		createTransactions();
+
+		analyzeResults();
+
+		System.exit(1);
+
+		analyzeResults2();
+	}
+
+	private void createTransactions() {
+		for (List<TransactionInfo> txinfos : transactionsMap.values()) {
+			for (TransactionInfo txinfo : txinfos) {
 				txinfo.processValues(this.sourceModel);
 
 				SimpleTxn txn = createTransaction(txinfo);
@@ -283,12 +129,59 @@ public class CSVImport {
 					++this.totaltx;
 					txinfo.macTxn = txn;
 
-					matchTransaction(this.sourceModel, txinfo);
+					matchTransaction(txinfo);
+				}
+			}
+		}
+	}
+
+	private void analyzeResults() {
+		SimpleTxn mac2win[] = new SimpleTxn[this.csvModel.getLastTransactionId() + 1];
+		SimpleTxn win2mac[] = new SimpleTxn[this.sourceModel.getLastTransactionId() + 1];
+
+		for (List<TransactionInfo> txinfos : transactionsMap.values()) {
+			for (TransactionInfo txinfo : txinfos) {
+				if (txinfo.macTxn != null && txinfo.winTxn != null) {
+					SimpleTxn mactx = txinfo.macTxn;
+					int macid = mactx.getTxid();
+					SimpleTxn wintx = txinfo.winTxn;
+					int winid = wintx.getTxid();
+
+					if (macid >= mac2win.length || winid >= win2mac.length) {
+						Common.reportWarning("Bad txid - should be impossible");
+					} else if (mac2win[macid] != null) {
+						Common.reportWarning("mac tx matched twice!");
+					} else if (win2mac[winid] != null) {
+						Common.reportWarning("win tx matched twice!");
+					} else {
+						mac2win[macid] = wintx;
+						win2mac[winid] = mactx;
+					}
 				}
 			}
 		}
 
-		System.exit(1);
+		System.out.println("Unmatched transactions in source model:");
+		for (int winid = 1; winid < win2mac.length; ++winid) {
+			if (win2mac[winid] == null //
+					&& sourceModel.getTransaction(winid) != null) {
+				GenericTxn tx = sourceModel.getTransaction(winid);
+				System.out.println("  " + tx.toString());
+			}
+		}
+
+		System.out.println("Unmatched transactions in new model:");
+		for (int macid = 1; macid < win2mac.length; ++macid) {
+			if (mac2win[macid] == null //
+					&& this.csvModel.getTransaction(macid) != null) {
+				GenericTxn tx = this.csvModel.getTransaction(macid);
+				System.out.println("  " + tx.toString());
+			}
+		}
+	}
+
+	private void analyzeResults2() {
+		String[] msgs = { "Multiple Matches", "Inexact Matches", "Action Mismatches" };
 
 		try {
 			PrintStream out = new PrintStream("/Users/greg/qif/tupleinfo.out");
@@ -388,7 +281,96 @@ public class CSVImport {
 			e.printStackTrace();
 		}
 
+		Comparator<TransactionInfo> comp = new Comparator<TransactionInfo>() {
+			public int compare(TransactionInfo tx1, TransactionInfo tx2) {
+				return tx1.date.compareTo(tx2.date);
+			}
+		};
+		Collections.sort(this.nomatch, comp);
+
 		System.out.println("Done importing CSV file");
+	}
+
+	/**
+	 * Matches come in several forms<br>
+	 * Simple - no splits on either side<br>
+	 * Split - tx exists as split in both versions<br>
+	 * PseudoSplit - non-split matches split in other version
+	 */
+
+	private Account cloneAccount(Account acct) {
+		Account a = csvModel.findAccount(acct.name);
+		if (a != null) {
+			return a;
+		}
+
+		Common.debugInfo( //
+				"Cloning source account '" + acct.name + "'" + //
+						"(" + acct.acctid + ")");
+
+		a = new Account( //
+				acct.acctid, acct.name, acct.description, acct.type, //
+				acct.getStatementFrequency(), acct.getStatementDay());
+
+		csvModel.addAccount(a);
+
+		return a;
+	}
+
+	private Category cloneCategory(Category cat) {
+		if (cat == null) {
+			return null;
+		}
+
+		Category c = csvModel.findCategory(cat.name);
+		if (c != null) {
+			return c;
+		}
+
+		Common.debugInfo( //
+				"Cloning source category '" + cat.name + "'" + //
+						"(" + cat.catid + ")");
+
+		c = new Category( //
+				cat.catid, cat.name, cat.description, cat.isExpense);
+
+		csvModel.addCategory(c);
+
+		return c;
+	}
+
+	private Security cloneSecurity(Security sec) {
+		Security s = csvModel.findSecurityBySymbol(sec.symbol);
+		if (s != null) {
+			return s;
+		}
+
+		Common.debugInfo( //
+				"Cloning source security '" + sec.symbol + "'" + //
+						"(" + sec.secid + ")");
+
+		s = new Security( //
+				sec.secid, sec.symbol, sec.getName(), sec.type, sec.goal);
+		s.names.clear();
+		s.names.addAll(sec.names);
+
+		csvModel.addSecurity(s);
+
+		return s;
+	}
+
+	private void cloneSourceModelInfo() {
+		for (Account acct : sourceModel.getAccounts()) {
+			cloneAccount(acct);
+		}
+
+		for (Category cat : sourceModel.getCategories()) {
+			cloneCategory(cat);
+		}
+
+		for (Security sec : sourceModel.getSecurities()) {
+			cloneSecurity(sec);
+		}
 	}
 
 	private void processCategories(PrintStream out) {
@@ -531,8 +513,6 @@ public class CSVImport {
 			}
 		}
 
-		MoneyMgrModel.changeModel(MoneyMgrApp.WIN_QIF_MODEL_NAME);
-
 		System.out.println("Transactions loaded:");
 
 		int total = 0;
@@ -584,16 +564,16 @@ public class CSVImport {
 	/**
 	 * @param tuple Tupleinfo for the txn
 	 */
-	private void matchTransaction(MoneyMgrModel model, TransactionInfo tuple) {
+	private void matchTransaction(TransactionInfo tuple) {
 		SimpleTxn mactxn = tuple.macTxn;
 
 		infoMessage(mactxn.toString());
 
-		Account acct = model.getAccountByID(mactxn.getAccountID());
-		List<SimpleTxn> txns = model.findMatchingTransactions(acct, mactxn);
+		Account acct = this.sourceModel.getAccountByID(mactxn.getAccountID());
+		List<SimpleTxn> txns = this.sourceModel.findMatchingTransactions(acct, mactxn);
 
 		if (txns.isEmpty()) {
-			txns = model.findMatchingTransactions(acct, mactxn);
+			txns = this.sourceModel.findMatchingTransactions(acct, mactxn);
 		}
 		for (Iterator<SimpleTxn> iter = txns.iterator(); iter.hasNext();) {
 			if (isMatched(iter.next())) {
@@ -893,3 +873,62 @@ public class CSVImport {
 		return false;
 	}
 }
+
+//int mac_nomatch = csvimp.nomatch.size() + csvimp.nomatchZero.size();
+//int mac_total = csvimp.totaltx;
+//int win_unmatch = 0;
+//int win_total = 0;
+//
+//// int nn = 1;
+////PrintStream out = null;
+////try {
+////	out = new PrintStream("/Users/greg/qif/output.txt");
+////
+////	int totalmac = 0;
+////	int totalwin = 0;
+////	int nomatchmac = 0;
+////	int nomatchwin = 0;
+////
+////	for (List<TupleInfo> tuples : csvimp.transactionsMap.values()) {
+////		for (TupleInfo tuple : tuples) {
+////			++totalmac;
+////			if (tuple.winTxnMatches.isEmpty()) {
+////				SimpleTxn mactxn = tuple.macTxn;
+////				out.print("No match for mactxn:\n    " + mactxn);
+////
+////				out.println();
+////
+////				++nomatchmac;
+////
+////				if (mactxn.getAmount().signum() != 0) {
+////					Account acct = mactxn.getAccount();
+////					acct.findMatchingTransactions(mactxn);
+////				}
+////			}
+////		}
+////	}
+//
+//	for (GenericTxn wintxn : GenericTxn.getAllTransactions()) {
+//		++totalwin;
+////		if (wintxn != null && !csvimp.matchInfoForWinTxn.containsKey(wintxn)) {
+////			out.println("No match for wintxn:\n    " + wintxn);
+////			++nomatchwin;
+////		}
+//	}
+//
+//	out.println("Total unmatched mac=" + nomatchmac + "/" + totalmac //
+//			+ " win=" + nomatchwin + "/" + totalwin);
+//
+//	out.println("\nSummary for : " + filename);
+//	out.println("MAC tot=" + mac_total + " match=" + mac_nomatch);
+//	out.println("WIN tot=" + win_total + " match=" + (win_total - win_unmatch));
+//
+//	out.println(" Unmatched:     " + csvimp.nomatch.size());
+//	out.println(" Unmatched zero:" + csvimp.nomatchZero.size());
+//	out.println(" All zero:" + csvimp.allzero.size());
+//	out.println(" Total:         " + csvimp.totaltx);
+//
+//	out.close();
+//} catch (Exception e) {
+//	e.printStackTrace();
+//}
