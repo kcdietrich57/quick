@@ -17,6 +17,7 @@ import moneymgr.util.QDate;
  * 4. Disposal date (determines short/long term gains, from disposing txn)
  */
 public class Lot {
+	public final MoneyMgrModel model;
 	public final int lotid;
 	public final int acctid;
 	public final int secid;
@@ -54,7 +55,9 @@ public class Lot {
 			BigDecimal shares, BigDecimal basisPrice, //
 			InvestmentTxn createTxn, InvestmentTxn disposingTxn, //
 			Lot srcLot) {
-		this.lotid = lotid;
+		this.model = MoneyMgrModel.currModel;
+		
+		this.lotid = (lotid > 0) ? lotid : this.model.nextLotId();
 		this.acctid = acctid;
 		this.createDate = date;
 		this.secid = secid;
@@ -102,7 +105,7 @@ public class Lot {
 	public Lot(int acctid, QDate date, int secid, //
 			BigDecimal shares, BigDecimal basisPrice, //
 			InvestmentTxn createTxn) {
-		this(MoneyMgrModel.currModel.nextLotId(), acctid, date, secid, shares, basisPrice, createTxn);
+		this(0, acctid, date, secid, shares, basisPrice, createTxn);
 	}
 
 	/**
@@ -118,6 +121,7 @@ public class Lot {
 	public Lot(int lotid, Lot srcLot, int acctid, BigDecimal shares, InvestmentTxn createTxn) {
 		this(lotid, acctid, srcLot.createDate, srcLot.secid, shares, //
 				srcLot.getPriceBasis(), createTxn, null, srcLot);
+
 		checkSufficientSrcLotShares(srcLot, shares);
 
 		this.sourceLot.childLots.add(this);
@@ -172,7 +176,7 @@ public class Lot {
 	 * @param txn    The transaction that created the partial lot
 	 */
 	public Lot(Lot srcLot, int acctid, BigDecimal shares, InvestmentTxn txn) {
-		this(MoneyMgrModel.currModel.nextLotId(), srcLot, acctid, shares, txn);
+		this(0, srcLot, acctid, shares, txn);
 	}
 
 	/**
@@ -219,7 +223,7 @@ public class Lot {
 	 * @param disposeTxn The transaction disposing of the lot
 	 */
 	public Lot(Lot srcLot, int acctid, InvestmentTxn createTxn, InvestmentTxn disposeTxn) {
-		this(MoneyMgrModel.currModel.nextLotId(), srcLot.shares, srcLot, acctid, createTxn, disposeTxn);
+		this(0, srcLot.shares, srcLot, acctid, createTxn, disposeTxn);
 	}
 
 	public Lot getSourceLot() {
@@ -320,7 +324,7 @@ public class Lot {
 				"] " + //
 				this.acctid + " " + //
 				getAcquisitionDate().toString() + " " + //
-				MoneyMgrModel.currModel.getSecurity(this.secid).getSymbol() + " " + //
+				this.model.getSecurity(this.secid).getSymbol() + " " + //
 				Common.formatAmount3(this.shares) + " " + //
 				Common.formatAmount(getCostBasis());
 

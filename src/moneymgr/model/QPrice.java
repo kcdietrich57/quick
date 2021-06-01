@@ -9,8 +9,10 @@ import moneymgr.util.QDate;
 
 /** Price for a security on a given date */
 public class QPrice implements Comparable<QPrice> {
-	public final QDate date;
+	public final MoneyMgrModel model;
 	public final int secid;
+
+	public final QDate date;
 
 	/** price is the price on the date of the quote */
 	private final BigDecimal price;
@@ -18,8 +20,10 @@ public class QPrice implements Comparable<QPrice> {
 	private BigDecimal splitAdjustedPrice;
 
 	public QPrice(QDate date, int secid, BigDecimal price, BigDecimal splitAdjPrice) {
-		this.date = date;
+		this.model = MoneyMgrModel.currModel;
+		
 		this.secid = secid;
+		this.date = date;
 		this.price = price;
 		this.splitAdjustedPrice = splitAdjPrice;
 	}
@@ -36,7 +40,7 @@ public class QPrice implements Comparable<QPrice> {
 		if (this.splitAdjustedPrice == null) {
 			this.splitAdjustedPrice = this.price;
 
-			for (StockSplitInfo split : MoneyMgrModel.currModel.getSecurity(this.secid).splits) {
+			for (StockSplitInfo split : this.model.getSecurity(this.secid).splits) {
 				if (split.splitDate.compareTo(this.date) > 0) {
 					this.splitAdjustedPrice = this.splitAdjustedPrice.divide(split.splitRatio);
 				}
