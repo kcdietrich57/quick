@@ -22,7 +22,7 @@ public class MultiSplitTxn extends SplitTxn {
 	}
 
 	public MultiSplitTxn(SimpleTxn parent) {
-		this(MoneyMgrModel.currModel.createTxid(), parent);
+		this(0, parent);
 	}
 
 	public boolean hasSplits() {

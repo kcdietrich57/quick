@@ -51,6 +51,7 @@ public class Security {
 		}
 	}
 
+	public final MoneyMgrModel model;
 	public final int secid;
 
 	/** Names the security is known by (first is default) */
@@ -81,7 +82,8 @@ public class Security {
 	public final List<StockSplitInfo> splits = new ArrayList<>();
 
 	public Security(int secid, String symbol, String name, String type, String goal) {
-		this.secid = secid;
+		this.model = MoneyMgrModel.currModel;
+		this.secid = (secid > 0) ? secid : this.model.nextSecurityId();
 		this.symbol = (symbol != null) ? symbol : name;
 		this.type = type;
 		this.goal = (goal != null) ? goal : "";
@@ -92,7 +94,7 @@ public class Security {
 
 	/** Constructor - quicken-style info */
 	public Security(String symbol, String name, String type, String goal) {
-		this(MoneyMgrModel.currModel.nextSecurityId(), symbol, name, type, goal);
+		this(0, symbol, name, type, goal);
 	}
 
 	public Security(String symbol, String name) {

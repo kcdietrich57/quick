@@ -109,6 +109,7 @@ public class Account {
 		return txns;
 	}
 
+	public final MoneyMgrModel model;
 	public final int acctid;
 
 	public final String name;
@@ -128,7 +129,8 @@ public class Account {
 	public final SecurityPortfolio securities;
 
 	public Account(int acctid, String name, String desc, AccountType type, int statFreq, int statDayOfMonth) {
-		this.acctid = acctid;
+		this.model = MoneyMgrModel.currModel;
+		this.acctid = (acctid > 0) ? acctid : this.model.nextAccountID();
 		this.name = name;
 		this.description = (desc != null) ? desc : "";
 		this.type = type;
@@ -145,7 +147,7 @@ public class Account {
 
 	public Account(String name, AccountType type, String desc, QDate closeDate, //
 			int statFreq, int statDayOfMonth) {
-		this(MoneyMgrModel.currModel.nextAccountID(), name, desc, type, statFreq, statDayOfMonth);
+		this(0, name, desc, type, statFreq, statDayOfMonth);
 
 		this.closeDate = closeDate;
 	}
@@ -286,7 +288,7 @@ public class Account {
 //			return;
 		}
 
-		int idx = MoneyMgrModel.currModel.getTransactionInsertIndexByDate(//
+		int idx = this.model.getTransactionInsertIndexByDate(//
 				this.transactions, txn);
 
 		this.transactions.add(idx, txn);
@@ -525,7 +527,7 @@ public class Account {
 		getNextStatementToReconcile();
 
 		Statement stat = null;
-		QDate aod = MoneyMgrModel.currModel.getAsOfDate();
+		QDate aod = this.model.getAsOfDate();
 
 		if (aod.compareTo(QDate.today()) < 0) {
 			// TODO I don't get this - when slider is before today - what if it is
@@ -571,7 +573,7 @@ public class Account {
 		}
 
 		Statement stmt = new Statement( //
-				this.acctid, MoneyMgrModel.currModel.getAsOfDate(), getLastStatement());
+				this.acctid, this.model.getAsOfDate(), getLastStatement());
 		Common.sortTransactionsByDate(txns);
 		stmt.addTransactions(txns);
 
@@ -581,7 +583,7 @@ public class Account {
 	/** Add txns from one list to another if date <= current date */
 	private void addTransactionsToAsOfDate(List<GenericTxn> txns, List<GenericTxn> srctxns) {
 		for (GenericTxn txn : srctxns) {
-			if ((txn.getDate().compareTo(MoneyMgrModel.currModel.getAsOfDate()) <= 0) //
+			if ((txn.getDate().compareTo(this.model.getAsOfDate()) <= 0) //
 					&& !txns.contains(txn)) {
 				txns.add(txn);
 			}
@@ -692,7 +694,7 @@ public class Account {
 	private BigDecimal getCashValueForDate(QDate d) {
 		BigDecimal cashBal = null; // BigDecimal.ZERO;
 
-		int idx = MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate(this.transactions, d);
+		int idx = this.model.getLastTransactionIndexOnOrBeforeDate(this.transactions, d);
 
 		while ((idx >= 0) && (cashBal == null)) {
 			GenericTxn tx = this.transactions.get(idx--);

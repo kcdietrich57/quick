@@ -19,7 +19,7 @@ public class SplitTxn extends SimpleTxn {
 	}
 
 	public SplitTxn(SimpleTxn parent) {
-		this(MoneyMgrModel.currModel.createTxid(), parent);
+		this(0, parent);
 	}
 
 	public SimpleTxn getParent() {

@@ -52,6 +52,7 @@ public abstract class SimpleTxn implements Txn {
 		}
 	}
 
+	public final MoneyMgrModel model;
 	private final long xid;
 	private final int acctid;
 	private final int txid;
@@ -67,9 +68,11 @@ public abstract class SimpleTxn implements Txn {
 	private SimpleTxn xtxn_cash;
 
 	public SimpleTxn(int txid, int acctid) {
-		this.xid = (((long) acctid) << 32) + txid;
+		this.model = MoneyMgrModel.currModel;
+		
 		this.acctid = acctid;
-		this.txid = txid;
+		this.txid = (txid > 0) ? txid : this.model.createTxid();
+		this.xid = (((long) acctid) << 32) + this.txid;
 
 		this.amount = null;
 		this.memo = null;
@@ -79,7 +82,7 @@ public abstract class SimpleTxn implements Txn {
 	}
 
 	public SimpleTxn(int acctid) {
-		this(MoneyMgrModel.currModel.createTxid(), acctid);
+		this(0, acctid);
 	}
 
 	/** Do sanity check of splits belonging to this txn */
@@ -275,7 +278,7 @@ public abstract class SimpleTxn implements Txn {
 	}
 
 	public Account getAccount() {
-		return MoneyMgrModel.currModel.getAccountByID(getAccountID());
+		return this.model.getAccountByID(getAccountID());
 	}
 
 	public final boolean isCredit() {
@@ -370,9 +373,9 @@ public abstract class SimpleTxn implements Txn {
 
 		switch (intSign(this.catid)) {
 		case 1:
-			return MoneyMgrModel.currModel.getCategory(this.catid).name;
+			return this.model.getCategory(this.catid).name;
 		case -1:
-			return "[" + MoneyMgrModel.currModel.getAccountByID(-this.catid).name + "]";
+			return "[" + this.model.getAccountByID(-this.catid).name + "]";
 		default:
 			return "N/A";
 		}
@@ -550,7 +553,7 @@ public abstract class SimpleTxn implements Txn {
 		s += ((d != null) ? d.toString() : "null");
 		s += " Tx" + this.txid + ": ";
 		s += (this instanceof GenericTxn) ? "  " : "S ";
-		Account a = MoneyMgrModel.currModel.getAccountByID(this.acctid);
+		Account a = getAccount();
 		s += ((a != null) ? a.name : "null");
 		s += " " + Common.formatAmount(this.amount).trim();
 		s += " " + getCategory();

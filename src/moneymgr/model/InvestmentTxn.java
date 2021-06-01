@@ -57,7 +57,7 @@ public class InvestmentTxn extends GenericTxn {
 	}
 
 	public InvestmentTxn(int acctid) {
-		this(MoneyMgrModel.currModel.createTxid(), acctid);
+		this(0, acctid);
 	}
 
 	/** Construct a dummy transaction for a split (see LotProcessor) */
@@ -468,8 +468,8 @@ public class InvestmentTxn extends GenericTxn {
 
 		if (action == TxAction.OTHER) {
 			if (this.security != null) {
-				Common.reportError("Transaction has unknown type: " + //
-						MoneyMgrModel.currModel.getAccountByID(getAccountID()).name);
+				Common.reportError("Transaction has unexpected security: " + //
+						this.security.getName());
 				return;
 			}
 
@@ -586,9 +586,8 @@ public class InvestmentTxn extends GenericTxn {
 		if (!Common.isEffectivelyZero(diff)) {
 			BigDecimal newprice = tot.divide(this.quantity).abs();
 
-			int acctid = getAccountID();
 			String s = "Inconsistent " + getAction() + " transaction:" + //
-					" acct=" + MoneyMgrModel.currModel.getAccountByID(acctid).name + //
+					" acct=" + getAccount().name + //
 					" " + getDate().toString() + "\n" + //
 					"  sec=" + this.getSecurityName() + //
 					" qty=" + this.quantity + //
@@ -644,7 +643,7 @@ public class InvestmentTxn extends GenericTxn {
 		QDate d = getDate();
 		s += ((d != null) ? d.toString() : "null");
 		s += " Tx" + getTxid() + ": I ";
-		Account a = MoneyMgrModel.currModel.getAccountByID(getAccountID());
+		Account a = getAccount();
 		s += ((a != null) ? a.name : "null");
 		s += " " + Common.formatAmount(getAmount()).trim();
 		s += " " + getAction();
@@ -712,7 +711,7 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 		if (this.cashTransferred != null) {
-			Account xacct = MoneyMgrModel.currModel.getAccountByID(getCashTransferAcctid());
+			Account xacct = this.model.getAccountByID(getCashTransferAcctid());
 			String xacctname = (xacct != null) ? xacct.name : null;
 
 			ret += "\n";

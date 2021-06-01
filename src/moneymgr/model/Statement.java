@@ -15,6 +15,7 @@ public class Statement {
 	/** Info about reconciled statements goes into this file. */
 	public static File stmtLogFile = new File(QifDom.qifDir, "statementLog.dat");
 
+	public final MoneyMgrModel model;
 	public final int acctid;
 	public final QDate date;
 
@@ -42,6 +43,8 @@ public class Statement {
 
 	public Statement(int acctid, QDate date, //
 			BigDecimal closebal, BigDecimal cashbal, Statement prevstat) {
+		this.model = MoneyMgrModel.currModel;
+		
 		this.isBalanced = false;
 		this.acctid = acctid;
 		this.date = date;
@@ -59,6 +62,10 @@ public class Statement {
 
 	public Statement(int acctid, QDate date, Statement prevstat) {
 		this(acctid, date, BigDecimal.ZERO, BigDecimal.ZERO, prevstat);
+	}
+	
+	public Account getAccount() {
+		return this.model.getAccountByID(this.acctid);
 	}
 
 	public boolean isBalanced() {
@@ -128,7 +135,7 @@ public class Statement {
 	public QDate getOpeningDate() {
 		return (this.prevStatement != null) //
 				? this.prevStatement.date //
-				: MoneyMgrModel.currModel.getAccountByID(this.acctid).getFirstTransactionDate();
+				: getAccount().getFirstTransactionDate();
 	}
 
 	public BigDecimal getOpeningBalance() {
@@ -383,7 +390,7 @@ public class Statement {
 
 		String s = ((this.isBalanced) ? "*" : " ") //
 				+ this.date.toString() //
-				+ "  " + MoneyMgrModel.currModel.getAccountByID(this.acctid).name //
+				+ "  " + getAccount().name //
 				+ "  " + this.closingBalance //
 				+ " tran=" + ((this.transactions != null) ? this.transactions.size() : null);
 

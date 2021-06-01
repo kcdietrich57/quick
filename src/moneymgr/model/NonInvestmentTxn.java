@@ -12,7 +12,7 @@ public class NonInvestmentTxn extends GenericTxn {
 	}
 
 	public NonInvestmentTxn(int acctid) {
-		this(MoneyMgrModel.currModel.createTxid(), acctid);
+		this(0, acctid);
 	}
 
 	public String formatValue() {
@@ -67,7 +67,7 @@ public class NonInvestmentTxn extends GenericTxn {
 
 		s += " Tx" + getTxid() + ":   ";
 
-		Account a = MoneyMgrModel.currModel.getAccountByID(getAccountID());
+		Account a = getAccount();
 		s += ((a != null) ? a.name : "null");
 
 		String cknum = getCheckNumberString();

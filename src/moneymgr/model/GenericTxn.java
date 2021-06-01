@@ -49,12 +49,12 @@ public abstract class GenericTxn //
 		this.splits = new ArrayList<>();
 
 		if (getTxid() > 0 && getAccountID() > 0) {
-			MoneyMgrModel.currModel.addTransaction(this);
+			this.model.addTransaction(this);
 		}
 	}
 
 	public GenericTxn(int acctid) {
-		this(MoneyMgrModel.currModel.createTxid(), acctid);
+		this(0, acctid);
 	}
 	
 	// TODO clone transaction
@@ -149,7 +149,7 @@ public abstract class GenericTxn //
 		QDate olddate = this.date;
 		this.date = date;
 
-		MoneyMgrModel.currModel.changeTransactionDate(this, olddate);
+		this.model.changeTransactionDate(this, olddate);
 	}
 
 	public final void setStatementDate(QDate date) {
