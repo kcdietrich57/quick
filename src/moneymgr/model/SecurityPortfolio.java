@@ -19,6 +19,8 @@ import moneymgr.util.QDate;
  * statement
  */
 public class SecurityPortfolio {
+	public final MoneyMgrModel model;
+
 	/** May belong to the model, an account or a statement */
 	public final Object owner;
 
@@ -39,6 +41,18 @@ public class SecurityPortfolio {
 	/** Create a statement holdings object connected to previous statement */
 	public SecurityPortfolio(Object owner, SecurityPortfolio prev) {
 		this.owner = owner;
+
+		if (owner instanceof MoneyMgrModel) {
+			this.model = (MoneyMgrModel) owner;
+		} else if (owner instanceof Account) {
+			this.model = ((Account) owner).model;
+		} else if (owner instanceof Statement) {
+			this.model = ((Statement) owner).model;
+		} else {
+			this.model = null;
+			Common.reportError("Portfolio: No model found");
+		}
+
 		this.positions = new ArrayList<>();
 
 		this.prevPortfolio = prev;
@@ -102,7 +116,7 @@ public class SecurityPortfolio {
 
 	/** Find a position for a security id. Create it if it does not exist. */
 	public SecurityPosition getPosition(int secid) {
-		return getPosition(MoneyMgrModel.currModel.getSecurity(secid));
+		return getPosition(this.model.getSecurity(secid));
 	}
 
 	/** Find a position for a security. Create it if it does not exist. */
@@ -157,7 +171,12 @@ public class SecurityPortfolio {
 	public Map<Account, PositionInfo> getOpenPositionsForDateByAccount(Security sec, QDate d) {
 		Map<Account, PositionInfo> ret = new HashMap<>();
 
-		for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
+		// TODO is this check necessary?
+		if (this.model != sec.model) {
+			Common.reportError("Current model does not match security");
+		}
+
+		for (Account acct : sec.model.getAccounts()) {
 			PositionInfo values = acct.getSecurityValueForDate(sec, d);
 
 			if (values != null) {
@@ -194,7 +213,7 @@ public class SecurityPortfolio {
 			for (SecurityPosition pos : this.actualPositions) {
 				BigDecimal expected = pos.getExpectedEndingShares();
 				BigDecimal actual = pos.getEndingShares();
-				
+
 				if (!Common.isEffectivelyEqual(actual, expected)) {
 					return false;
 				}

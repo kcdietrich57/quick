@@ -326,6 +326,9 @@ public class MoneyMgrModel {
 
 		for (Account acct : getAccounts()) {
 			if (acct.name.toLowerCase().startsWith(name)) {
+				Common.reportWarning(String.format( //
+						"Returning inexact account '%s' for '%s'", //
+						acct.name, name));
 				return acct;
 			}
 		}
@@ -424,7 +427,7 @@ public class MoneyMgrModel {
 	 * Date is close, amount matches (or the amount of a split).
 	 */
 	public List<SimpleTxn> findMatchingTransactions(Account acct, SimpleTxn tx) {
-		List<SimpleTxn> ret = Account.findMatchingTransactions(acct, tx, false);
+		List<SimpleTxn> ret = acct.findMatchingTransactions(tx, false);
 
 		if (ret.size() > 1) {
 			List<SimpleTxn> newret = new ArrayList<>(ret);
@@ -691,7 +694,7 @@ public class MoneyMgrModel {
 
 		return allTransactionsByDate.subList(idx1, idx2);
 	}
-	
+
 	/** Return the largest current transaction ID */
 	public int getLastTransactionId() {
 		return this.allTransactionsByID.size() + 1;
@@ -886,5 +889,9 @@ public class MoneyMgrModel {
 
 	public List<StockOption> getStockOptions() {
 		return Collections.unmodifiableList(this.stockOptions);
+	}
+	
+	public String toString() {
+		return String.format("Model[%s]", this.name);
 	}
 }

@@ -66,6 +66,8 @@ public abstract class SimpleTxn implements Txn {
 
 	/** In the case of a cash transfer, the other transaction involved */
 	private SimpleTxn xtxn_cash;
+	
+	public TransactionInfo info = null;
 
 	public SimpleTxn(int txid, int acctid) {
 		this.model = MoneyMgrModel.currModel;
@@ -332,7 +334,11 @@ public abstract class SimpleTxn implements Txn {
 	}
 
 	public int getCashTransferAcctid() {
-		return (this.catid < 0) ? -this.catid : 0;
+		// TODO should not have splits and catid both
+		if (hasSplits() && this.catid != 0) {
+			//Common.reportWarning("Split tx has category value!");
+		}
+		return (!hasSplits() && this.catid < 0) ? -this.catid : 0;
 	}
 
 	public void setCashTransferAcctid(int acctid) {

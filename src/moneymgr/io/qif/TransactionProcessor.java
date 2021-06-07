@@ -61,7 +61,7 @@ public class TransactionProcessor {
 			switch (qline.type) {
 			case EndOfSection:
 				txn.repair(tinfo);
-				TransactionInfo.addWinInfo(tinfo, txn);
+				// TODO later TransactionInfo.addWinInfo(tinfo, txn);
 				return txn;
 
 			case InvTransactionAmt: {
@@ -195,7 +195,7 @@ public class TransactionProcessor {
 
 			switch (qline.type) {
 			case EndOfSection:
-				TransactionInfo.addWinInfo(tinfo, txn);
+				// TODO later TransactionInfo.addWinInfo(tinfo, txn);
 				return txn;
 
 			case TxnCategory: {

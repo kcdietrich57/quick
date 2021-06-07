@@ -18,34 +18,42 @@ public enum TxAction {
 
 	private static Map<String, TxAction> actionMap = new HashMap<>();
 
-	private static void addAction(TxAction action) {
+	private static void addAction(TxAction action, String[] names) {
 		actionMap.put(action.key, action);
+		for (String name : names) {
+			actionMap.put(name, action);
+		}
 	}
 
+	private static void addAction(TxAction action) {
+		addAction(action, new String[0]);
+	}
+
+	// Miscellaneous Expense,
 	static {
-		addAction(STOCKSPLIT);
-		addAction(CASH);
+		addAction(STOCKSPLIT, new String[] { "Stock Split" });
+		addAction(CASH, new String[] { "Payment/Deposit" });
 		addAction(XIN);
 		addAction(XOUT);
-		addAction(BUY);
+		addAction(BUY, new String[] { "Buy", "Buy Bonds" });
 		addAction(BUYX);
-		addAction(SELL);
+		addAction(SELL, new String[] { "Sell", "Sell Bonds" });
 		addAction(SELLX);
-		addAction(SHRS_IN);
-		addAction(SHRS_OUT);
+		addAction(SHRS_IN, new String[] { "Add Shares" });
+		addAction(SHRS_OUT, new String[] { "Remove Shares" });
 		addAction(GRANT);
 		addAction(VEST);
 		addAction(EXERCISE);
 		addAction(EXERCISEX);
 		addAction(EXPIRE);
 		addAction(WITHDRAWX);
-		addAction(INT_INC);
-		addAction(MISC_INCX);
-		addAction(DIV);
-		addAction(REINV_DIV);
-		addAction(REINV_LG);
-		addAction(REINV_SH);
-		addAction(REINV_INT);
+		addAction(INT_INC, new String[] { "Interest Income" });
+		addAction(MISC_INCX, new String[] { "Miscellaneous Income" });
+		addAction(DIV, new String[] { "Dividend Income" });
+		addAction(REINV_DIV, new String[] { "Reinvest Dividend" });
+		addAction(REINV_LG, new String[] { "Reinvest Long-term Capital Gain" });
+		addAction(REINV_SH, new String[] { "Reinvest Short-term Capital Gain" });
+		addAction(REINV_INT, new String[] { "Reinvest Interest" });
 		addAction(CONTRIBX);
 		addAction(REMINDER);
 	}
@@ -76,7 +84,7 @@ public enum TxAction {
 
 		switch (this) {
 		case CASH:
-			return other == WITHDRAWX || other == XIN || other == XOUT;
+			return other == OTHER || other == WITHDRAWX || other == XIN || other == XOUT;
 
 		case XIN:
 			return other == CONTRIBX || other == CASH;
@@ -89,6 +97,9 @@ public enum TxAction {
 
 		case WITHDRAWX:
 			return other == XOUT || other == CASH;
+
+		case OTHER:
+			return other == CASH;
 
 		default:
 			return false;

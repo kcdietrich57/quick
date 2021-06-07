@@ -152,7 +152,7 @@ class AccountTests {
 		System.out.println("Txn: " + tx.toString());
 		System.out.println("amt: " + tx.getAmount());
 
-		List<SimpleTxn> txns = Account.findMatchingTransactions(bank, tx, false);
+		List<SimpleTxn> txns = bank.findMatchingTransactions(tx, false);
 		Assert.assertNotNull(txns);
 		Assert.assertFalse(txns.isEmpty());
 	}

@@ -5,7 +5,6 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -20,95 +19,6 @@ import moneymgr.util.QDate;
  * and daily balances
  */
 public class Account {
-	/**
-	 * TODO This duplicates TransactionCleaner findMatchesForTransfer()<br>
-	 * Find existing transaction(s) that match a transaction being loaded.<br>
-	 * Date is close, amount matches (or the amount of a split).
-	 */
-	public static List<SimpleTxn> findMatchingTransactions(Account acct, SimpleTxn tx, boolean dummy) {
-		List<SimpleTxn> txns = new ArrayList<>();
-		int TOLERANCE = 5; // days
-
-		BigDecimal amt = tx.getAmount().abs();
-
-		int idx = acct.getTransactionIndexForDate(tx.getDate());
-		for (; idx > 0; --idx) {
-			if (tx.getDate().subtract(acct.transactions.get(idx - 1).getDate()) > TOLERANCE) {
-				break;
-			}
-		}
-
-		for (; idx < acct.transactions.size(); ++idx) {
-			GenericTxn t = acct.transactions.get(idx);
-			int diff = t.getDate().subtract(tx.getDate());
-			if (diff > TOLERANCE) {
-				break;
-			}
-			if (-diff > TOLERANCE) {
-				continue;
-			}
-
-			// Match scenarios:
-			// Amount matches win txn
-			// Amount matches split in win txn
-			// Amount matches split in xfer with win txn
-			if (Common.isEffectivelyEqual(t.getAmount().abs(), amt.abs())) {
-				// Match win txn directly
-				txns.add(t);
-			}
-
-			if (t.hasSplits()) {
-				// Match split in win txn
-				for (SplitTxn st : t.getSplits()) {
-					if (Common.isEffectivelyEqual(st.getAmount().abs(), amt.abs())) {
-						txns.add(st);
-					} else if (st.hasSplits()) {
-						for (SplitTxn sst : st.getSplits()) {
-							if (Common.isEffectivelyEqual(sst.getAmount().abs(), amt.abs())) {
-								txns.add(sst);
-							}
-						}
-					}
-				}
-			}
-
-			// Match split in win xfer txn
-			SimpleTxn xt = t.getCashTransferTxn();
-			if (xt != null) {
-				for (SplitTxn st : xt.getSplits()) {
-					if (Common.isEffectivelyEqual(st.getAmount().abs(), amt.abs())) {
-						txns.add(t);
-					}
-				}
-			}
-		}
-
-		for (Iterator<SimpleTxn> iter = txns.iterator(); iter.hasNext();) {
-			SimpleTxn txn = iter.next();
-			if (txn.isCredit() != tx.isCredit()) {
-				iter.remove();
-			} else if (txn instanceof InvestmentTxn) {
-				InvestmentTxn itxn = (InvestmentTxn) txn;
-				InvestmentTxn itx = (InvestmentTxn) tx;
-
-				if (!itxn.getSecurityName().equals(itx.getSecurityName())) {
-					iter.remove();
-				}
-			}
-		}
-
-		txns.sort(new Comparator<SimpleTxn>() {
-			public int compare(SimpleTxn o1, SimpleTxn o2) {
-				int diff1 = Math.abs(o1.getDate().subtract(tx.getDate()));
-				int diff2 = Math.abs(o2.getDate().subtract(tx.getDate()));
-
-				return diff1 - diff2;
-			}
-		});
-
-		return txns;
-	}
-
 	public final MoneyMgrModel model;
 	public final int acctid;
 
@@ -482,9 +392,13 @@ public class Account {
 
 		if (laststat == null) {
 			QDate today = QDate.today();
-			return new QDate(today.getYear(), //
-					today.getMonth(), //
-					(this.statementDayOfMonth > 0) ? this.statementDayOfMonth : 31);
+			int lastday = QDate.lastDayOfMonth(today.getYear(), today.getMonth());
+
+			if (this.statementDayOfMonth > 0 && this.statementDayOfMonth < lastday) {
+				lastday = this.statementDayOfMonth;
+			}
+
+			return new QDate(today.getYear(), today.getMonth(), lastday);
 		}
 
 		QDate nextstmt = laststat.addDays( //
@@ -876,5 +790,124 @@ public class Account {
 		}
 
 		return null;
+	}
+
+	private boolean datesAreClose(SimpleTxn t1, SimpleTxn t2) {
+		int TOLERANCE = 5; // days
+		QDate d1 = t1.getDate();
+		QDate d2 = t2.getDate();
+		int diff = Math.abs(d1.subtract(d2));
+		return (Math.abs(t1.getDate().subtract(t2.getDate())) <= TOLERANCE);
+	}
+
+	public boolean isApproximateMatch(SimpleTxn tx1, SimpleTxn tx2) {
+		if (!datesAreClose(tx1, tx2)) {
+			return false;
+		}
+
+		if (!tx1.getAction().isEquivalentTo(tx2.getAction())) {
+			return false;
+		}
+
+		if (!Common.isEffectivelyEqual( //
+				tx1.getAmount().abs(), //
+				tx2.getAmount().abs())) {
+			return false;
+		}
+
+		if (tx1.isCredit() != tx2.isCredit()) {
+			return false;
+		}
+
+		if (tx1 instanceof InvestmentTxn) {
+			if (!(tx2 instanceof InvestmentTxn)) {
+				return false;
+			}
+
+			InvestmentTxn itx1 = (InvestmentTxn) tx1;
+			InvestmentTxn itx2 = (InvestmentTxn) tx2;
+
+			if (!itx1.getSecurityName().equals(itx2.getSecurityName())) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * TODO This duplicates TransactionCleaner findMatchesForTransfer()<br>
+	 * Find existing transaction(s) that match a transaction being loaded.<br>
+	 * Date is close, amount matches (or the amount of a split).
+	 */
+	public List<SimpleTxn> findMatchingTransactions(SimpleTxn tx, boolean dummy) {
+		List<SimpleTxn> txns = new ArrayList<>();
+
+		BigDecimal amt = tx.getAmount().abs();
+
+		int idx = getTransactionIndexForDate(tx.getDate());
+		for (; idx > 0; --idx) {
+			if (!datesAreClose(tx, this.transactions.get(idx - 1))) {
+				break;
+			}
+		}
+
+		for (; idx < this.transactions.size(); ++idx) {
+			GenericTxn t = this.transactions.get(idx);
+			if (!datesAreClose(tx, t)) {
+				break;
+			}
+
+			// Match scenarios:
+			// Amount matches win txn
+			// Amount matches split in win txn
+			// Amount matches split in xfer with win txn
+
+			if (isApproximateMatch(tx, t)) {
+				txns.add(t);
+			}
+
+			if (t.hasSplits()) {
+				for (SplitTxn st : t.getSplits()) {
+					if (isApproximateMatch(tx, st)) {
+						txns.add(st);
+					} else if (st.hasSplits()) {
+						for (SplitTxn sst : st.getSplits()) {
+							if (isApproximateMatch(tx, sst)) {
+								txns.add(sst);
+							}
+						}
+					}
+				}
+			}
+
+			// TODO wtf? Match split in win xfer txn
+			SimpleTxn xt = t.getCashTransferTxn();
+			if (xt != null) {
+				if (isApproximateMatch(tx, xt)) {
+					// txns.add(xt);
+				} else if (xt.hasSplits()) {
+					for (SplitTxn st : xt.getSplits()) {
+						if (isApproximateMatch(tx, st)) {
+							// txns.add(st);
+						}
+					}
+				}
+			}
+		}
+
+		if (txns.isEmpty()) {
+			// System.out.println("No matches for " + tx.toString()); // TODO xyzzy
+		}
+		txns.sort(new Comparator<SimpleTxn>() {
+			public int compare(SimpleTxn o1, SimpleTxn o2) {
+				int diff1 = Math.abs(o1.getDate().subtract(tx.getDate()));
+				int diff2 = Math.abs(o2.getDate().subtract(tx.getDate()));
+
+				return diff1 - diff2;
+			}
+		});
+
+		return txns;
 	}
 }

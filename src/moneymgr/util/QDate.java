@@ -68,7 +68,7 @@ public class QDate implements Comparable<QDate> {
 		
 		if (d > lastday) {
 			Common.reportWarning(String.format( //
-					"Adjusting days for QDate: %d/%d/%d", m, d));
+					"Adjusting days for QDate: %d/%d/%d", m, d, y));
 			
 			QDate qd = new QDate(y, m, lastday).addDays(d - lastday);
 

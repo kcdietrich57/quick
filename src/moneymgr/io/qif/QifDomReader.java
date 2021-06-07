@@ -19,16 +19,10 @@ public class QifDomReader {
 		QifDom.qifDir = new File(qifFiles[0]).getParentFile();
 
 		QifDomReader rdr = new QifDomReader(QifDom.qifDir);
-		//QifDomReader rdr2 = new QifDomReader(QifDom.qifDir);
 
 		// Process all the QIF files
 		for (String fn : qifFiles) {
-			//rdr2.load2(fn);
-			//System.exit(1);
-
 			rdr.load(fn, true);
-			
-			// TODO compare models loaded by both methods
 		}
 
 		// Additional processing once the data is loaded (quotes, stmts, etc)
@@ -95,7 +89,7 @@ public class QifDomReader {
 	}
 
 	/** Process security info, statements, etc after all basic data is loaded */
-	private void postLoad() {
+	public void postLoad() {
 		File d = new File(this.qifDir, "quotes");
 		SecurityProcessor.loadSecurityPriceHistory(d);
 		Security.fixSplits();

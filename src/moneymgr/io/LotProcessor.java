@@ -231,6 +231,11 @@ public class LotProcessor {
 			}
 		}
 
+		if (lots.isEmpty()) {
+			Common.reportWarning("Attempting to get lot from empty lots");
+			return null;
+		}
+
 		return lots.remove(0);
 	}
 

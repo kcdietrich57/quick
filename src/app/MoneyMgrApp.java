@@ -39,11 +39,11 @@ public class MoneyMgrApp {
 		boolean ENABLE_EXPERIMENTAL_CODE = false;
 		boolean ENABLE_QIF_IMPORT = false;
 
-		boolean savejson = true;
-		boolean comparejson = true;
+		boolean savejson = false;
+		boolean comparejson = false;
 		boolean usejson = false;
 
-		boolean loadwin = false;
+		boolean loadwin = true;
 		boolean loadjson = false;
 
 		if (usejson) {
@@ -119,17 +119,21 @@ public class MoneyMgrApp {
 		}
 
 		if (ENABLE_QIF_IMPORT) {
-			testCsvImport();
+			CSVImport.testCsvImport();
 
-			Common.reportInfo(String.format("Comparing QIF/CSV models"));
-			MoneyMgrModel.compareModels(MoneyMgrModel.WIN_QIF_MODEL_NAME, //
-					MoneyMgrModel.MAC_CSV_MODEL_NAME);
-			Common.reportInfo(String.format("Compare complete: %s", elapsedTime()));
+//			Common.reportInfo(String.format("Comparing QIF/CSV models"));
+//			MoneyMgrModel.compareModels(MoneyMgrModel.WIN_QIF_MODEL_NAME, //
+//					MoneyMgrModel.MAC_CSV_MODEL_NAME);
+//			Common.reportInfo(String.format("Compare complete: %s", elapsedTime()));
 		}
-
+		
 		MoneyMgrModel.changeModel((usejson) //
 				? MoneyMgrModel.WIN_JSON_MODEL_NAME //
 				: MoneyMgrModel.WIN_QIF_MODEL_NAME);
+
+		if (ENABLE_QIF_IMPORT) {
+			MoneyMgrModel.changeModel(MoneyMgrModel.MAC_CSV_MODEL_NAME);
+		}
 
 		Common.reportInfo(String.format("Building UI"));
 		MainFrame.createUI(MoneyMgrModel.currModel);
@@ -140,9 +144,5 @@ public class MoneyMgrApp {
 	/** This function will run experimental code for the current data */
 	private static void runExperimentalCode() {
 		CashFlow.reportCashFlowForTrailingYear();
-	}
-
-	private static void testCsvImport() {
-		CSVImport.testCsvImport();
 	}
 }

@@ -136,7 +136,7 @@ public class CompareModels {
 
 		if (cats1.size() != cats2.size()) {
 			reportError(String.format("Category count %d vs %d", //
-					cats1.size() != cats2.size()));
+					cats1.size(), cats2.size()));
 		}
 
 		for (int ii = 0; ii < cats1.size() && ii < cats2.size(); ++ii) {

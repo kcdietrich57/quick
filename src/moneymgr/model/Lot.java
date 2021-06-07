@@ -240,7 +240,7 @@ public class Lot {
 
 	public void setDisposingTransaction(InvestmentTxn txn) {
 		if (txn != null && txn.getAccountID() != this.acctid) {
-			System.out.println();
+			Common.reportWarning("Lot - Mismatched acct for disposing tx");
 		}
 
 		this.disposingTransaction = txn;

@@ -89,7 +89,7 @@ public class NonInvestmentTxn extends GenericTxn {
 		s += " bal=" + this.getRunningTotal();
 
 		if (hasSplits()) {
-			s += "\n  splits \n";
+			s += "\n";
 
 			for (SimpleTxn txn : getSplits()) {
 				s += "  " + getCategory();

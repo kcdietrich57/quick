@@ -15,7 +15,6 @@ import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
 import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.MultiSplitTxn;
-import moneymgr.model.NonInvestmentTxn;
 import moneymgr.model.Security;
 import moneymgr.model.SimpleTxn;
 import moneymgr.model.SplitTxn;
@@ -50,6 +49,16 @@ public class TransactionCleaner {
 //		LotProcessor.setupSecurityLots();
 
 		cleanStatementHoldings();
+	}
+
+	public static void cleanUpTransactionsFromCsv() {
+		cleanUpSplits();
+		calculateRunningTotals();
+		connectTransfers();
+		connectSecurityTransfers();
+		LotProcessor.setupSecurityLots();
+
+//		cleanStatementHoldings();
 	}
 
 	public static void cleanStatementHoldings() {
@@ -152,7 +161,7 @@ public class TransactionCleaner {
 	/** Connect transfers for a transaction */
 	private static void connectTransfers(GenericTxn txn) {
 		if (txn.hasSplits()) {
-			for (SimpleTxn stxn : ((NonInvestmentTxn) txn).getSplits()) {
+			for (SimpleTxn stxn : txn.getSplits()) {
 				// TODO verify we don't connect subsplits, just multisplit
 //				if (false && stxn instanceof MultiSplitTxn) {
 //					for (SimpleTxn sstxn : stxn.getSplits()) {

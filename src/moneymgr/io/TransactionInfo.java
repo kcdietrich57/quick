@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 import moneymgr.model.Account;
 import moneymgr.model.Category;
@@ -36,6 +37,7 @@ public class TransactionInfo {
 	public static int ACCOUNT_IDX = -1;
 	public static int DATE_IDX = -1;
 	public static int CHECKNUM_IDX = -1;
+	public static int REFERENCE_IDX = -1; // TODO bad mac data
 	public static int PAYEE_IDX = -1;
 	public static int CATEGORY_IDX; // >0: CategoryID; <0 AccountID
 	public static int AMOUNT_IDX;
@@ -125,10 +127,12 @@ public class TransactionInfo {
 		AMOUNT_IDX = getFieldIndex("Amount");
 		ACCOUNT_IDX = getFieldIndex("Account");
 		CHECKNUM_IDX = getFieldIndex("Check #");
+		REFERENCE_IDX = getFieldIndex("Reference");
 		MEMO_IDX = getFieldIndex("Memo/Notes");
 		DESCRIPTION_IDX = getFieldIndex("Description/Category");
 		TYPE_IDX = getFieldIndex("Type");
 		SECURITY_IDX = getFieldIndex("Security");
+		COMMISSION_IDX = getFieldIndex("Comm/Fee");
 		FEES_IDX = getFieldIndex("Comm/Fee");
 		SHARES_IDX = getFieldIndex("Shares");
 		ACTION_IDX = getFieldIndex("Action");
@@ -139,12 +143,13 @@ public class TransactionInfo {
 		XACCOUNT_IDX = getFieldIndex("Transfer Account");
 		XAMOUNT_IDX = getFieldIndex("Transfer Amount");
 		PRICE_IDX = getFieldIndex("Price");
-		COMMISSION_IDX = getFieldIndex("Commission");
 	}
 
 	public boolean isInvestmentTransaction;
 
 	public String[] values;
+
+	public TransactionInfo parent = null;
 	public List<TransactionInfo> splits = new ArrayList<>();
 
 	public Account account;
@@ -170,9 +175,38 @@ public class TransactionInfo {
 	public BigDecimal inflow;
 	public BigDecimal outflow;
 
-	// TODO do we have both of these for comparison purposes when testing import?
-	public SimpleTxn macTxn = null;
-	public SimpleTxn winTxn = null;
+	private SimpleTxn macTxn = null;
+	private SimpleTxn winTxn = null;
+
+	public SimpleTxn macTxn() {
+		return this.macTxn;
+	}
+
+	public SimpleTxn winTxn() {
+		return this.winTxn;
+	}
+
+	public void setMacTransaction(SimpleTxn tx) {
+		if (tx != null && this.macTxn != null && this.macTxn != tx) {
+			Common.reportWarning("Replacing macTxn in info");
+		}
+
+		this.macTxn = tx;
+		if (tx != null) {
+			tx.info = this;
+		}
+	}
+
+	public void setWinTransaction(SimpleTxn tx) {
+		if (tx != null && this.winTxn != null && this.winTxn != tx) {
+			Common.reportWarning("Replacing winTxn in info");
+		}
+
+		this.winTxn = tx;
+		if (tx != null) {
+			tx.info = this;
+		}
+	}
 
 	public final List<SimpleTxn> winTxnMatches = new ArrayList<>();
 	public String inexactMessages = "";
@@ -262,7 +296,46 @@ public class TransactionInfo {
 			}
 
 			this.date = getDate();
+
+			if (hasSplits()) {
+				BigDecimal totAmount = BigDecimal.ZERO;
+				BigDecimal totInflow = BigDecimal.ZERO;
+				BigDecimal totOutflow = BigDecimal.ZERO;
+
+				for (TransactionInfo split : this.splits) {
+					split.processValues(sourceModel);
+
+					if (split.amount != null) {
+						totAmount = totAmount.add(split.amount);
+					}
+					if (split.inflow != null) {
+						totInflow = totInflow.add(split.inflow);
+					}
+					if (split.outflow != null) {
+						totOutflow = totOutflow.add(split.outflow);
+					}
+				}
+
+				if (this.amount == null) {
+					this.amount = totAmount;
+				}
+
+				if (this.inflow == null) {
+					this.inflow = totInflow;
+				}
+
+				if (this.outflow == null) {
+					this.outflow = totOutflow;
+				}
+
+				return;
+			}
+
 			this.cknum = value(CHECKNUM_IDX);
+			if (this.cknum == "" && this.account.name.equals("UnionNationalChecking")) {
+				// TODO I don't know why the data is different in this case
+				this.cknum = value(REFERENCE_IDX);
+			}
 			this.payee = value(PAYEE_IDX);
 
 			// QIF IntInc CSV "Investments:Interest Income"
@@ -279,7 +352,7 @@ public class TransactionInfo {
 					|| "Investments:Buy".equals(catstring) //
 					|| "Investments:Sell".equals(catstring) //
 					|| "Investments:Stock Split".equals(catstring) //
-					) {
+			) {
 				this.values[CATEGORY_IDX] = "";
 				catstring = "";
 			}
@@ -309,17 +382,24 @@ public class TransactionInfo {
 
 			String sname = value(SECURITY_IDX);
 			if (sname != null && !sname.isEmpty()) {
+				if (sname.equals("Total Bond Market 1")) {
+					sname = "Total Bond Market  1";
+					setValue(SECURITY_IDX, sname);
+				}
+
 				this.security = model.findSecurity(sname);
 
 				if (this.security == null) {
 					Common.reportWarning("Creating dummy security for '" + sname + "'");
-					model.addSecurity(new Security(sname, sname));
+					this.security = new Security(sname, sname);
+					model.addSecurity(this.security);
 				}
 			}
 
 			this.fees = decimalValue(FEES_IDX);
 			this.shares = decimalValue(SHARES_IDX);
-			this.action = TxAction.parseAction(value(ACTION_IDX));
+			// TODO is this the correct field?
+			this.action = TxAction.parseAction(value(TYPE_IDX));
 			this.sharesIn = decimalValue(SHARESIN_IDX);
 			this.sharesOut = decimalValue(SHARESOUT_IDX);
 			this.inflow = decimalValue(INFLOW_IDX);
@@ -328,9 +408,9 @@ public class TransactionInfo {
 			// TODO work out the kinks in whether amount is positive or negative
 			if (this.outflow != null && this.outflow.signum() > 0 //
 					&& ( //
-							this.type.equals("Buy") //
+					this.type.equals("Buy") //
 							|| this.type.equals("WithdrawX") //
-							) //
+					) //
 					&& this.amount.signum() < 0) {
 				this.amount = this.amount.negate();
 			}
@@ -357,48 +437,42 @@ public class TransactionInfo {
 			this.xamount = decimalValue(XAMOUNT_IDX);
 			this.price = Common.parsePrice(value(PRICE_IDX));
 			this.commission = decimalValue(COMMISSION_IDX);
+
+			// Fix amount for CSV with certain TxAction
+			if ((this.action == TxAction.REINV_DIV //
+					|| this.action == TxAction.REINV_INT //
+					|| this.action == TxAction.REINV_LG //
+					|| this.action == TxAction.REINV_SH //
+					|| this.action == TxAction.SHRS_IN //
+			// TODO || this.action == TxAction.SHRS_OUT //
+			) //
+					&& (this.amount == null || Common.isEffectivelyZero(this.amount))) {
+				StringTokenizer toker = new StringTokenizer(this.description, " shares @ ");
+				BigDecimal q = (toker.hasMoreTokens()) //
+						? Common.getDecimal(toker.nextToken()) //
+						: null;
+				BigDecimal p = (toker.hasMoreTokens()) //
+						? Common.getDecimal(toker.nextToken()) //
+						: null;
+
+				if (q != null && p != null) {
+					this.amount = q.multiply(p);
+				} else if (this.price != null && this.shares != null) {
+					this.amount = this.price.multiply(this.shares);
+				}
+
+				if (p != null //
+						&& (this.price == null || Common.isEffectivelyZero(this.price))) {
+					this.price = p;
+				}
+			}
+
+			if (this.commission != null && !Common.isEffectivelyZero(this.commission)) {
+				this.amount = this.amount.add(this.commission);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	/**
-	 * TODO UNUSED see CSVImport.createTransaction(TransactionInfo)<br>
-	 * Create a transaction object in a given account using the contained info
-	 */
-	public SimpleTxn createTransaction(Account acct) {
-//		processValues();
-
-		SimpleTxn txn = null;
-//
-//		if (!this.isInvestmentTransaction) {
-//			NonInvestmentTxn nitxn = new NonInvestmentTxn(acct.acctid);
-//			txn = nitxn;
-//		} else {
-//			InvestmentTxn itxn = new InvestmentTxn(acct.acctid);
-//			txn = itxn;
-//
-//			itxn.setQuantity(this.shares);
-//			itxn.price = this.price;
-//			itxn.accountForTransfer = this.xaccount.name;
-//			itxn.cashTransferred = this.xamount;
-//			itxn.commission = this.commission;
-//			itxn.setSecurity(this.security);
-//		}
-//
-//		txn.setDate(this.date);
-//		txn.setAction(this.action);
-//		txn.setAmount(this.amount);
-//		txn.setCheckNumber(this.cknum);
-//		txn.setMemo(this.memo);
-//		if (this.xaccount != null) {
-//			txn.setCatid(-this.xaccount.acctid);
-//			txn.setCashTransferAcctid(this.xaccount.acctid);
-//		} else {
-//			txn.setCatid(this.category.catid);
-//		}
-
-		return txn;
 	}
 
 	/** Return the value of a field by index */
@@ -418,36 +492,71 @@ public class TransactionInfo {
 		}
 	}
 
-	/**
-	 * Create a new split line and set its category value. Note that this is the
-	 * only way to create split lines and must be done before setting other values
-	 * for the split line.
-	 */
-	public void addSplitCategory(String cat) {
-		TransactionInfo splitinfo = new TransactionInfo(MoneyMgrModel.currModel.findAccount(value(ACCOUNT_IDX)));
+	public boolean isSplit() {
+		return value(SPLIT_IDX).equals("S");
+	}
+
+	public boolean hasSplits() {
+		return this.splits != null && !this.splits.isEmpty();
+	}
+
+	public TransactionInfo addSplit() {
+		if (this.splits == null) {
+			this.splits = new ArrayList<>();
+		}
+
+		Account acct = MoneyMgrModel.currModel.findAccount(value(ACCOUNT_IDX));
+		TransactionInfo splitinfo = new TransactionInfo(acct);
+
 		splitinfo.setValue(TransactionInfo.SPLIT_IDX, "S");
-		splitinfo.setValue(TransactionInfo.CATEGORY_IDX, cat);
+
+		return addSplit(splitinfo);
+	}
+
+	public TransactionInfo addSplit(TransactionInfo splitinfo) {
+		// This can be more complicated:
+		// Tx1 <------------> Tx2
+		// somecat 1.23 <-+
+		// ...............+-> somecat 5.79
+		// somecat 4.56 <-+
+
+		splitinfo.parent = this;
 		this.splits.add(splitinfo);
+
+		// TODO adjust parent's amount, inflow, outflow ???
+
+		return splitinfo;
+	}
+
+	private TransactionInfo lastSplit() {
+		if (hasSplits()) {
+			TransactionInfo split = this.splits.get(this.splits.size() - 1);
+
+			if (value(DATE_IDX).equals(split.value(DATE_IDX))) {
+				return split;
+			}
+		}
+
+		return addSplit();
+	}
+
+	/** Create a split and set its category */
+	public void addSplitCategory(String cat) {
+		// NB in QIF files, split category comes first, so create the split here
+		// TODO what if the split is uncategorized?
+		addSplit();
+
+		lastSplit().setValue(TransactionInfo.CATEGORY_IDX, cat);
 	}
 
 	/** Set the amount in the last split line */
 	public void addSplitAmount(String amount) {
-		if (this.splits.isEmpty()) {
-			Common.reportError("Error adding split amount to TransactionInfo");
-		}
-
-		TransactionInfo splitinfo = this.splits.get(this.splits.size() - 1);
-		splitinfo.setValue(TransactionInfo.AMOUNT_IDX, amount);
+		lastSplit().setValue(TransactionInfo.AMOUNT_IDX, amount);
 	}
 
 	/** Set the memo in the last split line */
 	public void addSplitMemo(String memo) {
-		if (this.splits.isEmpty()) {
-			Common.reportError("Error adding split memo to TransactionInfo");
-		}
-
-		TransactionInfo splitinfo = this.splits.get(this.splits.size() - 1);
-		splitinfo.setValue(TransactionInfo.MEMO_IDX, memo);
+		lastSplit().setValue(TransactionInfo.MEMO_IDX, memo);
 	}
 
 	/** Get the transaction date */
@@ -520,26 +629,5 @@ public class TransactionInfo {
 		}
 
 		return ret;
-
-//		"" //
-//				+ value(DATE_IDX) //
-//				+ "\n   acct:" + value(ACCOUNT_IDX) + ":" //
-//				+ "\n   ty:" + value(TYPE_IDX) + ":" //
-//				+ "\n   actn:" + value(ACTION_IDX) + ":" //
-//				+ "\n   pay:" + value(PAYEE_IDX) + ":" //
-//				+ "\n   amt:" + value(AMOUNT_IDX) + ":" //
-//				+ "\n   spl:" + value(SPLIT_IDX) + ":" //
-//				+ "\n   cat:" + value(CATEGORY_IDX) + ":" //
-//				+ "\n   fee:" + value(FEES_IDX) + ":" //
-//				+ "\n   ck:" + value(CHECKNUM_IDX) + ":" //
-//				+ "\n   mem:" + value(MEMO_IDX) + ":" //
-//				+ "\n   dsc:" + value(DESCRIPTION_IDX) + ":" //
-//				+ "\n   infl:" + value(INFLOW_IDX) + ":" //
-//				+ "\n   outfl:" + value(OUTFLOW_IDX) + ":" //
-//				+ "\n   sec:" + value(SECURITY_IDX) + ":" //
-//				+ "\n   shr:" + value(SHARES_IDX) + ":" //
-//				+ "\n   shin:" + value(SHARESIN_IDX) + ":" //
-//				+ "\n   shout:" + value(SHARESOUT_IDX) + ":" //
-//		;
 	}
 }

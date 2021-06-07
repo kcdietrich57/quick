@@ -667,6 +667,9 @@ public class InvestmentTxn extends GenericTxn {
 		if (isStockOptionTxn() && (this.option != null)) {
 			s += "\n  Option info: " + this.option.toString();
 		}
+		if (hasSplits()) {
+			s += "\n  [splits]";
+		}
 
 		return s;
 	}
