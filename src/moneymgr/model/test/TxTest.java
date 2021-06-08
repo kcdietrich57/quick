@@ -383,14 +383,6 @@ class TxTest {
 	}
 
 	@Test
-	void testGetSetCashTransferAcctid() {
-		int id = this.tx.getCashTransferAcctid();
-		Assert.assertEquals(0, id);
-
-		// TODO fail("Not yet implemented");
-	}
-
-	@Test
 	void testGetSecurityTransferTxns() {
 		List<InvestmentTxn> txns = this.tx.getSecurityTransferTxns();
 		Assert.assertNotNull(txns);

@@ -159,26 +159,36 @@ public class TransactionCleaner {
 	static int[] counts = { 0, 0 };
 
 	/** Connect transfers for a transaction */
-	private static void connectTransfers(GenericTxn txn) {
+	private static void connectTransfers(SimpleTxn txn) {
 		if (txn.hasSplits()) {
-			for (SimpleTxn stxn : txn.getSplits()) {
-				// TODO verify we don't connect subsplits, just multisplit
-//				if (false && stxn instanceof MultiSplitTxn) {
-//					for (SimpleTxn sstxn : stxn.getSplits()) {
-//						connectTransfers(sstxn, txn.getDate());
-//					}
-//				} else
-				{
-					connectTransfers(stxn, txn.getDate());
-				}
+			List<SimpleTxn> transfers = txn.getCashTransfers();
+
+			for (SimpleTxn transfer : transfers) {
+				connectTransfersNonSplit(transfer);
 			}
-		} else if ((txn.getCatid() < 0) && //
-		// NB opening balance shows up as xfer to same acct
-				(-txn.getCatid() != txn.getAccountID())) {
-			connectTransfers(txn, txn.getDate());
+			
+			return;
 		}
 
-		Persistence.validateTransfers(txn, counts);
+//		if (txn.hasSplits()) {
+//			for (SimpleTxn stxn : txn.getSplits()) {
+//				// TODO verify we don't connect subsplits, just multisplit
+////				if (false && stxn instanceof MultiSplitTxn) {
+////					for (SimpleTxn sstxn : stxn.getSplits()) {
+////						connectTransfers(sstxn, txn.getDate());
+////					}
+////				} else
+//				{
+//					connectTransfers(stxn, txn.getDate());
+//				}
+//			}
+//		} else
+
+		if ((txn.getCatid() < 0) && //
+		// NB opening balance shows up as xfer to same acct
+				(-txn.getCatid() != txn.getAccountID())) {
+			connectTransfersNonSplit(txn);
+		}
 	}
 
 	private static int multWarnCount = 0;
@@ -187,29 +197,32 @@ public class TransactionCleaner {
 	 * Given a transaction that is a transfer, search the associated account's
 	 * transactions for a suitable mate for this transaction.
 	 */
-	private static void connectTransfers(SimpleTxn txn, QDate date) {
-		List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
-
-		int totalXfers = 0;
-		int failedXfers = 0;
-
+	private static void connectTransfersNonSplit(SimpleTxn txn) {
+		if (txn.hasSplits()) {
+			Common.reportWarning("Should not have splits");
+			return;
+		}
 		if ((txn.getCatid() >= 0)) {
 			return;
 		}
-
 		if ((txn.getCashTransferTxn() != null) //
 				&& (txn.getCashTransferTxn().getCashTransferTxn() == txn)) {
 			return;
 		}
 
+		List<SimpleTxn> matchingTxns = new ArrayList<SimpleTxn>();
+
+		int totalXfers = 0;
+		int failedXfers = 0;
+
 		Account a = MoneyMgrModel.currModel.getAccountByID(-txn.getCatid());
 
-		findMatchesForTransfer(a, matchingTxns, txn, date, true);
+		findMatchesForTransfer(a, matchingTxns, txn, true);
 
 		++totalXfers;
 
 		if (matchingTxns.isEmpty()) {
-			findMatchesForTransfer(a, matchingTxns, txn, date, false);
+			findMatchesForTransfer(a, matchingTxns, txn, false);
 			// SellX openingBal void
 		}
 
@@ -239,23 +252,38 @@ public class TransactionCleaner {
 
 		txn.setCashTransferTxn(xtxn);
 		xtxn.setCashTransferTxn(txn);
+
+		Persistence.validateTransfers(txn, counts);
 	}
 
-	/** Look for transfer candidates in an account */
+	/**
+	 * Look for transfer candidates in an account
+	 * 
+	 * @param acct         The account to search
+	 * @param matchingTxns OUT: List containing candidate matches
+	 * @param txn          The transfer for which we are looking for matches
+	 * @param strict       Whether to ignore sign of amount
+	 */
 	private static void findMatchesForTransfer(//
-			Account acct, List<SimpleTxn> matchingTxns, //
-			SimpleTxn txn, QDate date, boolean strict) {
+			Account acct, //
+			List<SimpleTxn> matchingTxns, //
+			SimpleTxn txn, //
+			boolean strict) {
 		matchingTxns.clear();
 
 		List<GenericTxn> txns = acct.getTransactions();
-		int ntran = acct.getNumTransactions();
 		int tolerance = 2;
 
-		int idx0 = MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate(txns, date.addDays(-tolerance));
+		QDate date = txn.getDate();
+		MoneyMgrModel model = MoneyMgrModel.currModel;
+
+		int idx0 = model.getLastTransactionIndexOnOrBeforeDate( //
+				txns, date.addDays(-tolerance));
 		if (idx0 < 0) {
 			idx0 = 0;
 		}
-		int idx1 = MoneyMgrModel.currModel.getLastTransactionIndexOnOrBeforeDate(txns, date.addDays(tolerance));
+		int idx1 = model.getLastTransactionIndexOnOrBeforeDate( //
+				txns, date.addDays(tolerance));
 		if (idx1 < 0) {
 			idx1 = 0;
 		}
@@ -269,23 +297,26 @@ public class TransactionCleaner {
 
 			// Check nearby dates only if we haven't found a match
 			if (dateeq || !exactDateMatch) {
-				int xid = txn.getCashTransferAcctid();
-				if ((xid <= 0) || (txn.getCashTransferAcctid() != gtxn.getAccountID())) {
-					continue;
-				}
+				List<SimpleTxn> transfers = gtxn.getCashTransfers(txn.getAccountID());
+				for (SimpleTxn transfer : transfers) {
+//					int xacctid = txn.getCashTransferAcctid();
+//					if ((xacctid <= 0) || (xacctid != gtxn.getAccountID())) {
+//						continue;
+//					}
 
-				SimpleTxn match = checkMatchForTransfer(txn, gtxn, strict);
-				if (match == null) {
+					SimpleTxn match = checkMatchForTransfer(txn, transfer, strict);
+					if (match == null) {
 //					System.out.println(txn.toString());
 //					System.out.println(gtxn.toString());
 //					System.out.println("no match");				
-				} else if (match.getCashTransferTxn() == null) {
-					if (dateeq && !exactDateMatch) {
-						matchingTxns.clear();
-					}
+					} else if (match.getCashTransferTxn() == null) {
+						if (dateeq && !exactDateMatch) {
+							matchingTxns.clear();
+						}
 
-					exactDateMatch |= dateeq;
-					matchingTxns.add(match);
+						exactDateMatch |= dateeq;
+						matchingTxns.add(match);
+					}
 				}
 			}
 		}
@@ -293,26 +324,38 @@ public class TransactionCleaner {
 
 	/**
 	 * Locate a match for txn in gtxn (either gtxn itself, or a split)<br>
-	 * Account/amount must match and not already associated with the xfer.
+	 * Account/amount must match and not already matched with an xfer.
 	 */
-	private static SimpleTxn checkMatchForTransfer(SimpleTxn txn, GenericTxn gtxn, boolean strict) {
+	private static SimpleTxn checkMatchForTransfer( //
+			SimpleTxn txn, //
+			SimpleTxn gtxn, //
+			boolean strict) {
 		assert -txn.getCatid() == gtxn.getAccountID();
 
-		if (!gtxn.hasSplits()) {
-			if ((gtxn.getCashTransferAcctid() == txn.getAccountID()) //
-					&& (gtxn.getCashTransferTxn() == null) //
-					&& gtxn.amountIsEqual(txn, strict)) {
-				return gtxn;
-			}
-		} else {
-			for (SimpleTxn splittTxn : gtxn.getSplits()) {
-				if ((splittTxn.getCashTransferAcctid() == txn.getAccountID()) //
-						&& (splittTxn.getCashTransferTxn() == null) //
-						&& splittTxn.amountIsEqual(txn, strict)) {
-					return splittTxn;
-				}
+		List<SimpleTxn> transfers = gtxn.getCashTransfers();
+		for (SimpleTxn transfer : transfers) {
+			if ((transfer.getCatid() == -txn.getAccountID()) //
+					&& (transfer.getCashTransferTxn() == null) //
+					&& transfer.amountIsEqual(txn, strict)) {
+				return transfer;
 			}
 		}
+
+//		if (!gtxn.hasSplits()) {
+//			if ((gtxn.getCashTransferAcctid() == txn.getAccountID()) //
+//					&& (gtxn.getCashTransferTxn() == null) //
+//					&& gtxn.amountIsEqual(txn, strict)) {
+//				return gtxn;
+//			}
+//		} else {
+//			for (SimpleTxn splittTxn : gtxn.getSplits()) {
+//				if ((splittTxn.getCashTransferAcctid() == txn.getAccountID()) //
+//						&& (splittTxn.getCashTransferTxn() == null) //
+//						&& splittTxn.amountIsEqual(txn, strict)) {
+//					return splittTxn;
+//				}
+//			}
+//		}
 
 		return null;
 	}

@@ -2,6 +2,7 @@ package moneymgr.model;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -66,12 +67,12 @@ public abstract class SimpleTxn implements Txn {
 
 	/** In the case of a cash transfer, the other transaction involved */
 	private SimpleTxn xtxn_cash;
-	
+
 	public TransactionInfo info = null;
 
 	public SimpleTxn(int txid, int acctid) {
 		this.model = MoneyMgrModel.currModel;
-		
+
 		this.acctid = acctid;
 		this.txid = (txid > 0) ? txid : this.model.createTxid();
 		this.xid = (((long) acctid) << 32) + this.txid;
@@ -240,10 +241,11 @@ public abstract class SimpleTxn implements Txn {
 			// return diff;
 		}
 
-		diff = getCashTransferAcctid() - other.getCashTransferAcctid();
-		if (diff != 0) {
-			return diff;
-		}
+		// TODO deal with multiple transfer splits
+//		diff = getCashTransferAcctid() - other.getCashTransferAcctid();
+//		if (diff != 0) {
+//			return diff;
+//		}
 
 		// TODO mac InvTxn transferring to subsplit fails this test
 		diff = getCashTransferAmount().compareTo(other.getCashTransferAmount());
@@ -333,13 +335,96 @@ public abstract class SimpleTxn implements Txn {
 		// not implemented
 	}
 
-	public int getCashTransferAcctid() {
-		// TODO should not have splits and catid both
-		if (hasSplits() && this.catid != 0) {
-			//Common.reportWarning("Split tx has category value!");
-		}
-		return (!hasSplits() && this.catid < 0) ? -this.catid : 0;
+	/** Return a list of contained txns that are cash transfers */
+	public List<SimpleTxn> getCashTransfers() {
+		return getCashTransfers(0);
 	}
+
+	/**
+	 * Return a list of contained txns that are cash transfers to/from a given
+	 * account
+	 */
+	public List<SimpleTxn> getCashTransfers(int xacctid) {
+		List<SimpleTxn> transfers = new ArrayList<>();
+		collectCashTransfers(this, transfers, xacctid);
+
+		return transfers;
+	}
+
+	/** Gather split transactions including this and contained splits */
+	private void collectCashTransfers(SimpleTxn tx, //
+			List<SimpleTxn> transfers, //
+			int xacctid) {
+		if (!tx.hasSplits() && tx.catid < 0) {
+			if (xacctid == 0 || tx.catid == -xacctid) {
+				transfers.add(tx);
+			}
+		}
+
+		for (SimpleTxn stx : tx.getSplits()) {
+			collectCashTransfers(stx, transfers, xacctid);
+		}
+	}
+
+//	/** TODO DEFUNCT return THE cash transfer acct (may be multiple) */
+//	public int getCashTransferAcctid() {
+//		Collection<SimpleTxn> transfers = getCashTransfers();
+//
+//		int xacctid = 0;
+//
+//		for (SimpleTxn transfer : transfers) {
+//			int transferAcctid = -transfer.catid;
+//
+//			if (xacctid == 0) {
+//				xacctid = transferAcctid;
+//			} else if (xacctid != transferAcctid) {
+//				Common.reportWarning("Multiple transfer accounts! Returning first one.");
+//			}
+//		}
+//
+//		return xacctid;
+//	}
+
+// TODO defunct
+//	public int getCashTransferAccounts() {
+//		int xacctid = 0;
+//
+//		for (SimpleTxn stx : getSplits()) {
+//			if (stx.getCatid() < 0) {
+//				if (xacctid != 0) {
+//					Common.reportWarning("getCashTransferAcctId: multiple values");
+//				} else {
+//					xacctid = -stx.getCatid();
+//				}
+//			}
+//		}
+//
+//		if (this.catid < 0 && this.catid != -xacctid) {
+//			if (hasSplits()) {
+//				Common.reportWarning("Malformed tx - xacct not in splits");
+//			}
+//
+//			xacctid = -this.catid;
+//		}
+//
+//		if (this.catid < 0 && xacctid != -this.catid) {
+//			Common.reportWarning("Ambiguous transfer accountid");
+//		}
+//		return xacctid;
+//
+////		// TODO should not have splits and catid both
+////		if (hasSplits() && this.catid < 0) {
+////			Common.reportWarning("Split tx has xfer acct!");
+////		} else if (hasSplits() && this.catid > 0) {
+////			if (this.catid != this.getSplits().get(0).getCatid()) {
+////				Common.reportWarning("Split tx has strange transfer value!");
+////			}
+////		} else if (hasSplits()) {
+////			Common.reportWarning("Split tx no category value!");
+////		}
+////		return (//!hasSplits() && 
+////				this.catid < 0) ? -this.catid : 0;
+//	}
 
 	public void setCashTransferAcctid(int acctid) {
 		this.catid = -acctid;
@@ -563,11 +648,18 @@ public abstract class SimpleTxn implements Txn {
 		s += ((a != null) ? a.name : "null");
 		s += " " + Common.formatAmount(this.amount).trim();
 		s += " " + getCategory();
-		if (getCashTransferAcctid() > 0) {
-			s += "(";
-			s += "" + ((this.xtxn_cash != null) ? this.xtxn_cash.txid : "-");
-			s += ")";
+
+		if (!Common.isEffectivelyZero(getCashTransferAmount())) {
+			s += " [";
+			List<SimpleTxn> transfers = getCashTransfers();
+			for (SimpleTxn transfer : transfers) {
+				s += String.format("%s(%s),", //
+						transfer.getAccount().name,
+						transfer.getAmount().toString());
+			}
+			s += "]";
 		}
+
 		s += " memo=" + getMemo();
 
 		return s;
@@ -583,7 +675,8 @@ public abstract class SimpleTxn implements Txn {
 				|| !Common.isEffectivelyEqual(getCashAmount(), other.getCashAmount()) //
 				|| !Common.isEffectivelyEqual(getGain(), other.getGain()) //
 				|| hasSplits() != other.hasSplits() //
-				|| getCashTransferAcctid() != other.getCashTransferAcctid() //
+				// TODO deal with multiple xfer splits
+				// || getCashTransferAcctid() != other.getCashTransferAcctid() //
 				|| getSecurityId() != other.getSecurityId() //
 				|| isCredit() != other.isCredit() //
 				|| addsShares() != other.addsShares() //

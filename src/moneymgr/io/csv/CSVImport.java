@@ -69,7 +69,7 @@ public class CSVImport {
 
 		csvimp.cloneSourceModelInfo();
 		csvimp.importFile();
-		
+
 		QifDomReader rdr = new QifDomReader(new File("/Users/greg/qif"));
 		rdr.postLoad();
 
@@ -420,7 +420,11 @@ public class CSVImport {
 
 		macbs.setAction(buysellx);
 		macbs.setCatid(macx.getCatid());
-		macbs.setCashTransferAcctid(macx.getCashTransferAcctid());
+		// TODO deal with multiple xfer splits
+		List<SimpleTxn> transfers = macx.getCashTransfers();
+		Account xacct = (transfers.isEmpty()) ? null : transfers.get(0).getAccount();
+		int xacctid = (xacct != null) ? xacct.acctid : 0;
+		macbs.setCashTransferAcctid(xacctid);
 		macbs.setAccountForTransfer(String.format("[%s]", macx.getAccountForTransfer()));
 		macbs.setCashTransferred(amount);
 
@@ -1031,8 +1035,10 @@ public class CSVImport {
 					itxn.setCashTransferAcctid(-itxn.getCatid());
 				}
 
-				if (itxn.getCashTransferAcctid() > 0) {
-					itxn.setAccountForTransfer(model.getAccountByID(itxn.getCashTransferAcctid()).name);
+				// TODO deal with multiple xfer splits
+				int xacctid = 0; // itxn.getCashTransferAcctid();
+				if (xacctid > 0) {
+					itxn.setAccountForTransfer(model.getAccountByID(xacctid).name);
 					itxn.setAction((tuple.inflow != null && tuple.inflow.signum() > 0) //
 							? TxAction.XIN //
 							: TxAction.XOUT);

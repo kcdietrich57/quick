@@ -175,10 +175,12 @@ public class Persistence {
 	}
 
 	public static void validateTransfers(SimpleTxn tx, int[] counts) {
-		boolean isTransfer = tx.getAction().isTransfer //
-				|| (tx.getCashTransferAcctid() > 0);
+		// TODO deal with multiple xfer splits
+		List<SimpleTxn> transfers = tx.getCashTransfers();
+		int xacctid = transfers.isEmpty() ? 0 : -transfers.get(0).getCatid();
 
-		int xacctid = tx.getCashTransferAcctid();
+		boolean isTransfer = (xacctid > 0) || tx.getAction().isTransfer;
+
 		if (xacctid == tx.getAccountID()) {
 			// TODO Should just get rid of self-transfers!
 			xacctid = 0;

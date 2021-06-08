@@ -1,6 +1,7 @@
 package moneymgr.model;
 
 import java.util.Iterator;
+import java.util.List;
 
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
@@ -79,10 +80,15 @@ public class NonInvestmentTxn extends GenericTxn {
 		s += " " + getPayee();
 		s += " xfer/cat=" + getCategory();
 
-		if (getCashTransferAcctid() > 0) {
-			s += "(";
-			s += "" + ((getCashTransferTxn() != null) ? getCashTransferTxn().getTxid() : "-");
-			s += ")";
+		if (!Common.isEffectivelyZero(getCashTransferAmount())) {
+			s += " [";
+			List<SimpleTxn> transfers = getCashTransfers();
+			for (SimpleTxn transfer : transfers) {
+				s += String.format("%s(%s),", //
+						transfer.getAccount().name,
+						transfer.getAmount().toString());
+			}
+			s += "]";
 		}
 
 		s += " memo=" + getMemo();

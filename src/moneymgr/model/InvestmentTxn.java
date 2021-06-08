@@ -662,8 +662,14 @@ public class InvestmentTxn extends GenericTxn {
 
 		s += " memo=" + getMemo();
 		s += " comm=" + this.commission;
-		s += " xactid=" + getCashTransferAcctid();
-		s += " xamt=" + getCashTransferAmount();
+		s += " transfers=[";
+		List<SimpleTxn> transfers = getCashTransfers();
+		for (SimpleTxn transfer : transfers) {
+			s += String.format("%s(%s),", //
+					transfer.getAccount().name,
+					transfer.getAmount().toString());
+		}
+		s += "]";
 		if (isStockOptionTxn() && (this.option != null)) {
 			s += "\n  Option info: " + this.option.toString();
 		}
@@ -714,13 +720,16 @@ public class InvestmentTxn extends GenericTxn {
 		}
 
 		if (this.cashTransferred != null) {
-			Account xacct = this.model.getAccountByID(getCashTransferAcctid());
-			String xacctname = (xacct != null) ? xacct.name : null;
+			List<SimpleTxn> transfers = getCashTransfers();
+			for (SimpleTxn transfer : transfers) {
+				Account xacct = transfer.getAccount();
+				String xacctname = (xacct != null) ? xacct.name : "n/a";
 
-			ret += "\n";
-			ret += String.format("  XFER: [%s]   %s", //
-					Common.formatString(xacctname, 20).trim(), //
-					Common.formatAmount(this.cashTransferred).trim());
+				ret += "\n";
+				ret += String.format("  XFER: [%s]   %s", //
+						Common.formatString(xacctname, 20).trim(), //
+						Common.formatAmount(transfer.getAmount()).trim());
+			}
 		}
 
 		if (isStockOptionTxn() && (this.option != null)) {

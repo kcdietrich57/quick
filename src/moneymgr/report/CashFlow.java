@@ -62,11 +62,16 @@ class CashFlowNode {
 	public void addTransaction(SimpleTxn txn) {
 		BigDecimal cash = txn.getCashAmount();
 		BigDecimal xfer = txn.getCashTransferAmount();
-		Account xacct = MoneyMgrModel.currModel.getAccountByID(txn.getCashTransferAcctid());
 
-		if (cash.signum() != 0 && xfer.signum() != 0) {
-			txn = null;
+		List<SimpleTxn> transfers = txn.getCashTransfers();
+		if (transfers.isEmpty()) {
+			return;
 		}
+
+		// TODO handle multiple transfer splits
+		int xacctid = -transfers.get(0).getCatid();
+
+		Account xacct = MoneyMgrModel.currModel.getAccountByID(xacctid);
 
 		// Save transfer info
 		if (xfer.signum() > 0) {
