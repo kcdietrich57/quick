@@ -160,7 +160,6 @@ public class TransactionInfo {
 	public BigDecimal amount;
 	public BigDecimal xamount;
 	public String payee;
-	public boolean isSplit;
 	public Category category;
 	public String memo;
 	public String description;
@@ -297,6 +296,13 @@ public class TransactionInfo {
 
 			this.date = getDate();
 
+			this.cknum = value(CHECKNUM_IDX);
+			if (this.cknum == "" && this.account.name.equals("UnionNationalChecking")) {
+				// TODO I don't know why the data is different in this case
+				this.cknum = value(REFERENCE_IDX);
+			}
+			this.payee = value(PAYEE_IDX);
+
 			if (hasSplits()) {
 				BigDecimal totAmount = BigDecimal.ZERO;
 				BigDecimal totInflow = BigDecimal.ZERO;
@@ -318,25 +324,19 @@ public class TransactionInfo {
 
 				if (this.amount == null) {
 					this.amount = totAmount;
+					this.setValue(AMOUNT_IDX, totAmount.toString());
 				}
 
 				if (this.inflow == null) {
 					this.inflow = totInflow;
+					this.setValue(INFLOW_IDX, totInflow.toString());
 				}
 
 				if (this.outflow == null) {
 					this.outflow = totOutflow;
+					this.setValue(OUTFLOW_IDX, totOutflow.toString());
 				}
-
-				return;
 			}
-
-			this.cknum = value(CHECKNUM_IDX);
-			if (this.cknum == "" && this.account.name.equals("UnionNationalChecking")) {
-				// TODO I don't know why the data is different in this case
-				this.cknum = value(REFERENCE_IDX);
-			}
-			this.payee = value(PAYEE_IDX);
 
 			// QIF IntInc CSV "Investments:Interest Income"
 			String catstring = value(CATEGORY_IDX);
@@ -356,8 +356,6 @@ public class TransactionInfo {
 				this.values[CATEGORY_IDX] = "";
 				catstring = "";
 			}
-
-			this.isSplit = "S".equals(value(SPLIT_IDX));
 
 			if (catstring != null && !catstring.isEmpty() //
 					&& !catstring.equals("Uncategorized")) {

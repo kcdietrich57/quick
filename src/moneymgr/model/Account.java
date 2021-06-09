@@ -843,8 +843,6 @@ public class Account {
 	public List<SimpleTxn> findMatchingTransactions(SimpleTxn tx, boolean dummy) {
 		List<SimpleTxn> txns = new ArrayList<>();
 
-		BigDecimal amt = tx.getAmount().abs();
-
 		int idx = getTransactionIndexForDate(tx.getDate());
 		for (; idx > 0; --idx) {
 			if (!datesAreClose(tx, this.transactions.get(idx - 1))) {

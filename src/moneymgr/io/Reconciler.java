@@ -13,6 +13,7 @@ import app.QifDom;
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.MoneyMgrModel;
+import moneymgr.model.SimpleTxn;
 import moneymgr.model.Statement;
 import moneymgr.util.Common;
 
@@ -122,6 +123,24 @@ public class Reconciler {
 		}
 	}
 
+	private static boolean isMatch(SimpleTxn tx, StatementTxInfo txinfo) {
+		if (!txinfo.date.equals(tx.getDate())) {
+			return false;
+		}
+
+		if ((txinfo.cknum != tx.getCheckNumber()) //
+				|| (txinfo.cashAmount.compareTo(tx.getCashAmount()) != 0)) {
+			return false;
+		}
+
+		if (tx.isCleared()) {
+			Common.reportError("Reconciling transaction twice:\n" //
+					+ tx.toString());
+		}
+
+		return true;
+	}
+
 	/** Match up statement and its transactions using statement details. */
 	private static void getTransactionsFromDetails(Account a, Statement s, StatementDetails d) {
 		if (s.isBalanced()) {
@@ -141,20 +160,12 @@ public class Reconciler {
 			for (int ii = 0; ii < txns.size(); ++ii) {
 				GenericTxn t = txns.get(ii);
 
-				if (info.date.compareTo(t.getDate()) == 0) {
-					if ((info.cknum == t.getCheckNumber()) //
-							&& (info.cashAmount.compareTo(t.getCashAmount()) == 0)) {
-						if (t.isCleared()) {
-							Common.reportError("Reconciling transaction twice:\n" //
-									+ t.toString());
-						}
+				if (isMatch(t, info)) {
+					s.addTransaction(t);
+					txns.remove(ii);
+					found = true;
 
-						s.addTransaction(t);
-						txns.remove(ii);
-						found = true;
-
-						break;
-					}
+					break;
 				}
 			}
 
