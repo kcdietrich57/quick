@@ -960,7 +960,8 @@ public class Persistence {
 		 * TODO process security transactions/holdings
 		 */
 
-		TransactionCleaner.cleanUpTransactionsFromJSON();
+		TransactionCleaner transactionCleaner = new TransactionCleaner(this.model);
+		transactionCleaner.cleanUpTransactionsFromJSON();
 
 		return this.model;
 	}
@@ -1062,7 +1063,8 @@ public class Persistence {
 
 				AccountType atype = AccountType.byId(typeid);
 
-				Account acct = new Account(acctid, name, desc, atype, statfreq, statday);
+				Account acct = new Account(this.model, acctid, //
+						name, desc, atype, statfreq, statday);
 				acct.setCloseDate(closedate);
 
 				this.model.addAccount(acct);
@@ -1186,7 +1188,7 @@ public class Persistence {
 					BigDecimal price = new BigDecimal((String) jpriceinfo.get(1));
 					BigDecimal saprice = new BigDecimal((String) jpriceinfo.get(2));
 
-					QPrice qprice = new QPrice(date, secid, price, saprice);
+					QPrice qprice = new QPrice(this.model, date, secid, price, saprice);
 					prices.add(qprice);
 					sec.addPrice(qprice);
 				}

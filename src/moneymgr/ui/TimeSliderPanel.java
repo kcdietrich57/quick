@@ -33,6 +33,7 @@ import moneymgr.util.QDate;
  */
 @SuppressWarnings("serial")
 public class TimeSliderPanel extends JPanel {
+	private final MoneyMgrModel model;
 	private JComboBox<MainWindow.IntervalLength> periodCombo;
 	private JComboBox<MainWindow.IntervalUnit> unitsCombo;
 	private JSpinner daySpinner;
@@ -43,6 +44,8 @@ public class TimeSliderPanel extends JPanel {
 
 	public TimeSliderPanel() {
 		super(new BorderLayout());
+
+		this.model = MainFrame.appFrame.model;
 
 		this.sliderDate = MainWindow.instance.getAsOfDate();
 
@@ -175,8 +178,8 @@ public class TimeSliderPanel extends JPanel {
 	}
 
 	private void createDateSlider() {
-		QDate start = MoneyMgrModel.currModel.getFirstTransactionDate();
-		QDate end = MoneyMgrModel.currModel.getLastTransactionDate();
+		QDate start = this.model.getFirstTransactionDate();
+		QDate end = this.model.getLastTransactionDate();
 		int years = (end.getYear() - start.getYear()) + 1;
 		int months = years * 12;
 
@@ -226,12 +229,12 @@ public class TimeSliderPanel extends JPanel {
 	}
 
 	public void setSliderPosition(QDate date) {
-		this.asOfDateSlider.setValue(TimeSliderPanel.convertDateToMonths(date));
+		this.asOfDateSlider.setValue(convertDateToMonths(date));
 	}
 
 	/** Convert months since start of history to the date */
 	private QDate convertMonthsToDate(int months) {
-		int startyear = MoneyMgrModel.currModel.getFirstTransactionDate().getYear();
+		int startyear = this.model.getFirstTransactionDate().getYear();
 		QDate date = new QDate(startyear, 1, 1);
 		QDate sdate = date.addMonths(months);
 
@@ -239,10 +242,10 @@ public class TimeSliderPanel extends JPanel {
 	}
 
 	/** Convert a date to months since the start of our history */
-	public static int convertDateToMonths(QDate date) {
+	private int convertDateToMonths(QDate date) {
 		int months = 0;
 
-		int year = MoneyMgrModel.currModel.getFirstTransactionDate().getYear();
+		int year = MainFrame.appFrame.model.getFirstTransactionDate().getYear();
 		int y = date.getYear();
 
 		while (year < y) {

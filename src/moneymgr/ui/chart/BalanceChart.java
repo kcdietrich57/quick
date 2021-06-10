@@ -18,12 +18,18 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DatasetUtilities;
 
 import moneymgr.model.AccountCategory;
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.ui.MainWindow;
 import moneymgr.ui.UIConstants;
 import moneymgr.util.QDate;
 
 public class BalanceChart {
+	public final MoneyMgrModel model;
 	JFreeChart chart = null;
+
+	public BalanceChart(MoneyMgrModel model) {
+		this.model = model;
+	}
 
 	public JPanel createChartPanel() {
 		this.chart = createChart();
@@ -38,7 +44,7 @@ public class BalanceChart {
 		QDate start = MainWindow.instance.getIntervalStart();
 		QDate end = MainWindow.instance.getIntervalEnd();
 
-		BalanceChartData balanceData = new BalanceChartData(start, end);
+		BalanceChartData balanceData = new BalanceChartData(this.model, start, end);
 
 		DefaultCategoryDataset catDataset = //
 				(DefaultCategoryDataset) DatasetUtilities.createCategoryDataset( //
@@ -90,7 +96,7 @@ public class BalanceChart {
 		QDate start = MainWindow.instance.getIntervalStart();
 		QDate end = MainWindow.instance.getIntervalEnd();
 
-		BalanceChartData balanceData = new BalanceChartData(start, end);
+		BalanceChartData balanceData = new BalanceChartData(this.model, start, end);
 
 		DefaultCategoryDataset catDataset = //
 				(DefaultCategoryDataset) DatasetUtilities.createCategoryDataset( //

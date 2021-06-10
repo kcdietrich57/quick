@@ -50,7 +50,7 @@ class StockOptionTest {
 		this.model.setAsOfDate(this.today);
 
 		stock = new Security("FOO", "Foo, Inc");
-		stock.addPrice(new QPrice(today, stock.secid, new BigDecimal("1.23")));
+		stock.addPrice(new QPrice(this.model, today, stock.secid, new BigDecimal("1.23")));
 
 		this.itx = new InvestmentTxn(this.invest.acctid);
 		this.itx.setAction(TxAction.BUY);
@@ -66,7 +66,7 @@ class StockOptionTest {
 				this.invest.acctid, this.stock.secid, //
 				v, v, v, v, v, //
 				120, 480, 4);
-		MoneyMgrModel.currModel.addStockOption(opt);
+		this.model.addStockOption(opt);
 	}
 
 	@AfterEach
@@ -76,7 +76,7 @@ class StockOptionTest {
 
 	@Test
 	void testEsppPurchase() {
-		StockOption o = StockOption.esppPurchase( //
+		StockOption o = StockOption.esppPurchase(this.model, //
 				today, this.invest.acctid, this.stock.secid, //
 				new BigDecimal("1.0"), new BigDecimal("1.23"), //
 				new BigDecimal("1.0"), new BigDecimal("2.0"), //
@@ -88,7 +88,7 @@ class StockOptionTest {
 
 	@Test
 	void testGrant() {
-		StockOption o = StockOption.grant( //
+		StockOption o = StockOption.grant(this.model, //
 				"the-option", today, this.invest.acctid, this.stock.secid, //
 				new BigDecimal("1.00"), new BigDecimal("2.0"), //
 				48, 4, 120);
@@ -99,7 +99,7 @@ class StockOptionTest {
 
 	@Test
 	void testVest() {
-		StockOption o = StockOption.vest("the-option", today, 1);
+		StockOption o = StockOption.vest(this.model, "the-option", today, 1);
 		Assert.assertNotNull(o);
 
 		// TODO fail("Not yet implemented");
@@ -107,7 +107,7 @@ class StockOptionTest {
 
 	@Test
 	void testSplit() {
-		StockOption o = StockOption.split("the-option", this.today, 2, 1);
+		StockOption o = StockOption.split(this.model, "the-option", this.today, 2, 1);
 		Assert.assertNotNull(o);
 
 		// TODO fail("Not yet implemented");
@@ -115,7 +115,7 @@ class StockOptionTest {
 
 	@Test
 	void testExpire() {
-		StockOption o = StockOption.expire("the-option", this.today);
+		StockOption o = StockOption.expire(this.model, "the-option", this.today);
 		Assert.assertNotNull(o);
 
 		// TODO fail("Not yet implemented");
@@ -123,7 +123,7 @@ class StockOptionTest {
 
 	@Test
 	void testCancel() {
-		StockOption o = StockOption.cancel("the-option", this.today);
+		StockOption o = StockOption.cancel(this.model, "the-option", this.today);
 		Assert.assertNotNull(o);
 
 		// TODO fail("Not yet implemented");
@@ -131,7 +131,8 @@ class StockOptionTest {
 
 	@Test
 	void testExercise() {
-		StockOption o = StockOption.exercise("the-option", today, new BigDecimal("0.23"));
+		StockOption o = StockOption.exercise(this.model, //
+				"the-option", today, new BigDecimal("0.23"));
 		Assert.assertNotNull(o);
 
 		// TODO fail("Not yet implemented");
@@ -181,7 +182,7 @@ class StockOptionTest {
 
 	@Test
 	void testGetOpenOption() {
-		StockOption o = StockOption.getOpenOption("the-option");
+		StockOption o = StockOption.getOpenOption(this.model, "the-option");
 		Assert.assertNotNull(o);
 
 		// TODO fail("Not yet implemented");
@@ -189,7 +190,7 @@ class StockOptionTest {
 
 	@Test
 	void testGetOpenOptions() {
-		List<StockOption> opts = StockOption.getOpenOptions();
+		List<StockOption> opts = StockOption.getOpenOptions(this.model);
 		Assert.assertNotNull(opts);
 		Assert.assertTrue(opts.isEmpty());
 

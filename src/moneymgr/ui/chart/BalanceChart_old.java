@@ -5,6 +5,7 @@ import org.knowm.xchart.CategoryChartBuilder;
 import org.knowm.xchart.style.CategoryStyler;
 import org.knowm.xchart.style.Styler.LegendPosition;
 
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.ui.MainWindow;
 import moneymgr.util.QDate;
 
@@ -47,8 +48,13 @@ public class BalanceChart_old {
 //		}
 //	}
 
+	public final MoneyMgrModel model;
 	private BalanceChartData balanceData = null;
 	public CategoryChart chart = null;
+
+	public BalanceChart_old(MoneyMgrModel model) {
+		this.model = model;
+	}
 
 	public void create() {
 		QDate start = MainWindow.instance.getIntervalStart();
@@ -65,7 +71,7 @@ public class BalanceChart_old {
 	}
 
 	public void create(QDate start, QDate end) {
-		this.balanceData = new BalanceChartData(start, end);
+		this.balanceData = new BalanceChartData(this.model, start, end);
 
 		this.chart = new CategoryChartBuilder().width(800).height(600) //
 				.title("Net Worth Chart") //
@@ -89,7 +95,7 @@ public class BalanceChart_old {
 	}
 
 	public void update(QDate start, QDate end) {
-		this.balanceData = new BalanceChartData(start, end);
+		this.balanceData = new BalanceChartData(this.model, start, end);
 
 //		for (int sectionNum = 0; sectionNum < balanceData.sectionInfo.length; ++sectionNum) {
 //			for (int catNum = 0; catNum < balanceData.sectionInfo.length; ++catNum) {

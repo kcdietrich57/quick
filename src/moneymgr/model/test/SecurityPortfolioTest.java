@@ -57,7 +57,7 @@ class SecurityPortfolioTest {
 		this.model.setAsOfDate(this.today);
 
 		stock = new Security("FOO", "Foo, Inc");
-		stock.addPrice(new QPrice(today, stock.secid, new BigDecimal("1.23")));
+		stock.addPrice(new QPrice(this.model, today, stock.secid, new BigDecimal("1.23")));
 
 		this.tx = new InvestmentTxn(this.invest.acctid);
 		this.tx.setAction(TxAction.BUY);
@@ -67,7 +67,7 @@ class SecurityPortfolioTest {
 
 		invest.addTransaction(this.tx);
 
-		this.portfolio = new SecurityPortfolio(MoneyMgrModel.currModel, null);
+		this.portfolio = new SecurityPortfolio(this.model, null);
 
 		this.position = new SecurityPosition(this.portfolio, this.stock);
 		this.position.addTransaction(this.tx);
@@ -82,7 +82,7 @@ class SecurityPortfolioTest {
 	void testSecurityPortfolio() {
 		assertNotNull(this.portfolio);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -91,7 +91,7 @@ class SecurityPortfolioTest {
 		this.portfolio.initializeTransactions();
 		Assert.assertTrue(this.portfolio.isEmpty());
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -105,7 +105,7 @@ class SecurityPortfolioTest {
 		this.portfolio.removeTransaction(this.tx);
 		Assert.assertTrue(this.portfolio.isEmpty());
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -113,14 +113,14 @@ class SecurityPortfolioTest {
 		SecurityPosition pos = this.portfolio.findPosition(this.stock);
 		Assert.assertNotNull(pos);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
 	void testCreatePosition() {
 		this.portfolio.createPosition(this.stock.secid);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -129,7 +129,7 @@ class SecurityPortfolioTest {
 		List<SecurityPosition> plist = this.portfolio.getPositions();
 		Assert.assertNotNull(plist);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -137,7 +137,7 @@ class SecurityPortfolioTest {
 		SecurityPosition pos = this.portfolio.getPosition(this.stock.secid);
 		Assert.assertNotNull(pos);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -145,14 +145,14 @@ class SecurityPortfolioTest {
 		SecurityPosition pos = this.portfolio.getPosition(this.stock);
 		Assert.assertNotNull(pos);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
 	void testPurgeEmptyPositions() {
 		this.portfolio.purgeEmptyPositions();
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -160,7 +160,7 @@ class SecurityPortfolioTest {
 		Map<Security, PositionInfo> pmap = this.portfolio.getOpenPositionsForDate(this.today);
 		Assert.assertNotNull(pmap);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -168,7 +168,7 @@ class SecurityPortfolioTest {
 		Map<Account, PositionInfo> pmap = this.portfolio.getOpenPositionsForDateByAccount(this.stock, this.today);
 		Assert.assertNotNull(pmap);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -176,7 +176,7 @@ class SecurityPortfolioTest {
 		BigDecimal v = this.portfolio.getPortfolioValueForDate(this.today);
 		Assert.assertNotNull(v);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -188,14 +188,14 @@ class SecurityPortfolioTest {
 	void testSize() {
 		Assert.assertTrue(this.portfolio.size() > 0);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
 	void testIsEmpty() {
 		Assert.assertFalse(this.portfolio.isEmpty());
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -204,7 +204,7 @@ class SecurityPortfolioTest {
 		Assert.assertFalse(this.portfolio.isEmptyForDate(this.today));
 		Assert.assertFalse(this.portfolio.isEmptyForDate(this.today.addDays(1)));
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -212,14 +212,14 @@ class SecurityPortfolioTest {
 		String s = this.portfolio.toString();
 		Assert.assertNotNull(s);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
 	void testGetFirstTransactionDate() {
 		Assert.assertEquals(this.today, this.portfolio.getFirstTransactionDate());
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -229,7 +229,7 @@ class SecurityPortfolioTest {
 		SecurityPortfolio newp = new SecurityPortfolio(this.invest, null);
 		Assert.assertNotNull(this.portfolio.matches(newp));
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 }

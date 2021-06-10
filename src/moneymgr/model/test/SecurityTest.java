@@ -53,9 +53,9 @@ class SecurityTest {
 		this.model.setAsOfDate(this.today);
 
 		this.foo = new Security("FOO", "Foo, Inc");
-		MoneyMgrModel.currModel.addSecurity(foo);
+		this.model.addSecurity(foo);
 		this.bar = new Security("BAR", "Bar, Inc");
-		MoneyMgrModel.currModel.addSecurity(bar);
+		this.model.addSecurity(bar);
 
 		this.itx = new InvestmentTxn(this.invest.acctid);
 		this.itx.setAction(TxAction.BUY);
@@ -73,16 +73,16 @@ class SecurityTest {
 	void testModelFunctions() {
 		Security sec;
 
-		sec = MoneyMgrModel.currModel.findSecurity("FOO");
+		sec = this.model.findSecurity("FOO");
 		Assert.assertNotNull(sec);
 
-		sec = MoneyMgrModel.currModel.findSecurityByName("Foo, Inc");
+		sec = this.model.findSecurityByName("Foo, Inc");
 		Assert.assertNotNull(sec);
 
-		sec = MoneyMgrModel.currModel.findSecurityBySymbol("FOO");
+		sec = this.model.findSecurityBySymbol("FOO");
 		Assert.assertNotNull(sec);
 
-		sec = MoneyMgrModel.currModel.findSecurity("bogus");
+		sec = this.model.findSecurity("bogus");
 		Assert.assertNull(sec);
 	}
 
@@ -163,7 +163,7 @@ class SecurityTest {
 
 		Lot lot = new Lot( //
 				null, this.invest.acctid, new BigDecimal("1.0"), this.itx);
-		
+
 		this.foo.addLot(lot);
 
 		// fail("Not yet implemented");
@@ -195,7 +195,7 @@ class SecurityTest {
 
 	@Test
 	void testAddPrice() {
-		foo.addPrice(new QPrice(today, foo.secid, new BigDecimal("1.23")));
+		foo.addPrice(new QPrice(this.model, today, foo.secid, new BigDecimal("1.23")));
 
 		// TODO fail("Not yet implemented");
 	}

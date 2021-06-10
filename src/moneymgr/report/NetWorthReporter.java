@@ -28,16 +28,22 @@ public class NetWorthReporter {
 		public BigDecimal liabilities = BigDecimal.ZERO;
 	}
 
+	public final MoneyMgrModel model;
+
+	public NetWorthReporter(MoneyMgrModel model) {
+		this.model = model;
+	}
+
 	/** Current net worth - obsolete QifLoader only */
-	public static void reportCurrentNetWorth() {
+	public void reportCurrentNetWorth() {
 		reportNetWorthForDate(QDate.today());
 	}
 
 	/** Net worth for date - obsolete QifLoader only */
-	public static void reportNetWorthForDate(QDate d) {
-		StatusForDateModel model = new StatusForDateModel(d);
+	public void reportNetWorthForDate(QDate d) {
+		StatusForDateModel sfdModel = new StatusForDateModel(this.model, d);
 
-		String s = generateReportStatusForDate(model);
+		String s = generateReportStatusForDate(sfdModel);
 
 		System.out.println(s);
 	}
@@ -45,11 +51,11 @@ public class NetWorthReporter {
 	// TODO the following methods/functions could be relocated into a better spot
 
 	/** Generate itemized list of account information and net worth summary */
-	public static String generateReportStatusForDate(CashFlowModel model) {
+	public String generateReportStatusForDate(CashFlowModel cashFlowModel) {
 		String sb1 = "";
 		String sb2 = "";
 
-		for (AcctInfo ainfo : model.acctinfoMonth) {
+		for (AcctInfo ainfo : cashFlowModel.acctinfoMonth) {
 			if (ainfo.balanceMatches()) {
 				sb1 += ainfo.toString();
 				sb1 += "\n";
@@ -59,7 +65,7 @@ public class NetWorthReporter {
 			}
 		}
 
-		String ret = model.toString();
+		String ret = cashFlowModel.toString();
 		if (QifDom.verbose) {
 			// model.getSummary()
 			ret += "\n--------\n" + sb2 + sb1;
@@ -69,21 +75,21 @@ public class NetWorthReporter {
 	}
 
 	/** Generate itemized list of account information and net worth summary */
-	public static String generateReportStatusForDate(StatusForDateModel model) {
+	public String generateReportStatusForDate(StatusForDateModel statusForDateModel) {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("\n");
-		sb.append(String.format("Global status for date: %s\n", model.date.toString()));
+		sb.append(String.format("Global status for date: %s\n", statusForDateModel.date.toString()));
 		sb.append("--------------------------------------------------------\n");
-		sb.append(String.format("Assets:      %15.2f\n", model.assets));
-		sb.append(String.format("Liabilities: %15.2f\n", model.liabilities));
-		sb.append(String.format("Balance:     %15.2f\n", model.netWorth));
+		sb.append(String.format("Assets:      %15.2f\n", statusForDateModel.assets));
+		sb.append(String.format("Liabilities: %15.2f\n", statusForDateModel.liabilities));
+		sb.append(String.format("Balance:     %15.2f\n", statusForDateModel.netWorth));
 		sb.append("--------------------------------------------------------\n");
 		sb.append("\n");
 
 		sb.append(String.format("  %-36s : %10s\n", "Account", "Balance\n"));
 
-		for (Section sect : model.sections) {
+		for (Section sect : statusForDateModel.sections) {
 			String label = sect.acctCategory.label + " Accounts ";
 			while (label.length() < 30) {
 				label += "=";
@@ -125,7 +131,7 @@ public class NetWorthReporter {
 	}
 
 	/** Calculate/return summary balance information for a date */
-	public static Balances getBalancesForDate(QDate d) {
+	public Balances getBalancesForDate(QDate d) {
 		final Balances b = new Balances();
 
 		if (d == null) {
@@ -134,7 +140,7 @@ public class NetWorthReporter {
 
 		b.date = d;
 
-		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
+		for (Account a : this.model.getAccounts()) {
 			final BigDecimal amt = a.getValueForDate(d);
 
 			b.netWorth = b.netWorth.add(amt);

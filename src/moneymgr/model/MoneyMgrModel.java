@@ -109,6 +109,23 @@ public class MoneyMgrModel {
 	private QDate _currentDate;
 	private QDate _asOfDate;
 
+	private final AccountDetailsFixer accountDetailsFixer;
+
+	// -------------------------------------
+
+	public MoneyMgrModel(String name) {
+		int nn = 0;
+		String thename = name;
+		while (MoneyMgrModel.models.containsKey(thename)) {
+			thename = String.format("%s_%d", name, nn++);
+		}
+
+		this.name = thename;
+		this.accountDetailsFixer = new AccountDetailsFixer(this);
+
+		MoneyMgrModel.models.put(thename, this);
+	}
+
 	public QDate getCurrentDate() {
 		return this._currentDate;
 	}
@@ -124,21 +141,6 @@ public class MoneyMgrModel {
 	public void setAsOfDate(QDate date) {
 		this._asOfDate = date;
 	}
-
-	// -------------------------------------
-
-	public MoneyMgrModel(String name) {
-		int nn = 0;
-		String thename = name;
-		while (MoneyMgrModel.models.containsKey(thename)) {
-			thename = String.format("%s_%d", name, nn++);
-		}
-
-		this.name = thename;
-		MoneyMgrModel.models.put(thename, this);
-	}
-
-	// -------------------------------------
 
 	public List<Category> getCategories() {
 		return Collections.unmodifiableList(this.categories);
@@ -174,6 +176,26 @@ public class MoneyMgrModel {
 		}
 
 		return null;
+	}
+
+	public int parseCategory(String s) {
+		if (s.startsWith("[") || s.startsWith("Transfer:[")) {
+			s = s.substring(s.indexOf("[") + 1, s.length() - 1).trim();
+
+			Account acct = findAccount(s);
+
+			return (short) ((acct != null) ? (-acct.acctid) : 0);
+		}
+
+		int slash = s.indexOf('/');
+		if (slash >= 0) {
+			// Throw away tag
+			s = s.substring(slash + 1);
+		}
+
+		Category cat = findCategory(s);
+
+		return (cat != null) ? (cat.catid) : 0;
 	}
 
 	// -------------------------------------
@@ -259,11 +281,11 @@ public class MoneyMgrModel {
 		Account acct = findAccount(name);
 
 		if (acct == null) {
-			type = AccountDetailsFixer.fixType(name, type);
+			type = this.accountDetailsFixer.fixType(name, type);
 			acct = new Account(name, type, desc, closeDate, statFreq, statDayOfMonth);
 			addAccount(acct);
 		} else {
-			AccountDetailsFixer.updateAccount(acct, //
+			this.accountDetailsFixer.updateAccount(acct, //
 					closeDate, statFreq, statDayOfMonth);
 		}
 
@@ -297,7 +319,7 @@ public class MoneyMgrModel {
 	/** Get Account list sorted on isOpen|type|name */
 	public List<Account> getSortedAccounts(boolean showToday) {
 		List<Account> accts = new ArrayList<>();
-		QDate thedate = (showToday) ? QDate.today() : currModel.getAsOfDate();
+		QDate thedate = (showToday) ? QDate.today() : getAsOfDate();
 
 		for (Account acct : getAccounts()) {
 			if (acct.isOpenAsOf(thedate)) {
@@ -410,7 +432,7 @@ public class MoneyMgrModel {
 			return a1.type.compareTo(a2.type);
 		}
 
-		QDate aod = currModel.getAsOfDate();
+		QDate aod = a1.model.getAsOfDate();
 
 		BigDecimal cv1 = a1.getValueForDate(aod).abs();
 		BigDecimal cv2 = a2.getValueForDate(aod).abs();
@@ -890,7 +912,7 @@ public class MoneyMgrModel {
 	public List<StockOption> getStockOptions() {
 		return Collections.unmodifiableList(this.stockOptions);
 	}
-	
+
 	public String toString() {
 		return String.format("Model[%s]", this.name);
 	}

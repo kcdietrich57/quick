@@ -34,12 +34,13 @@ public class StatementDetails {
 	}
 
 	/**
-	 * Create a string representation of the statement for saving<br>
+	 * TODO move this to Statement Create a string representation of the statement
+	 * for saving<br>
 	 * Format:<br>
 	 * acctname;date;bal;cashBal;numTx;numPos;[cashTx;][sec;numTx[txIdx;shareBal;]]
 	 */
 	public static String formatStatementForSave(Statement stmt) {
-		Account a = MoneyMgrModel.currModel.getAccountByID(stmt.acctid);
+		Account a = stmt.model.getAccountByID(stmt.acctid);
 
 		String s = String.format("%s;%s;%5.2f;%5.2f;%d;%d", //
 				a.name, //
@@ -121,6 +122,8 @@ public class StatementDetails {
 		return s;
 	}
 
+	public final MoneyMgrModel model;
+
 	// TODO make fields final; use factory to construct
 	public int acctid;
 	public QDate date;
@@ -140,7 +143,9 @@ public class StatementDetails {
 	/** All Uncleared transactions as of closing date */
 	public List<StatementTxInfo> unclearedTransactions;
 
-	private StatementDetails() {
+	private StatementDetails(MoneyMgrModel model) {
+		this.model = model;
+
 		this.closingCashBalance = BigDecimal.ZERO;
 		this.transactions = new ArrayList<StatementTxInfo>();
 		this.unclearedTransactions = new ArrayList<StatementTxInfo>();
@@ -149,8 +154,8 @@ public class StatementDetails {
 	}
 
 	/** Construct details by loading from file */
-	public StatementDetails(String s) {
-		this();
+	public StatementDetails(MoneyMgrModel model, String s) {
+		this(model);
 
 		parseStatementDetails(s);
 	}
@@ -166,7 +171,7 @@ public class StatementDetails {
 		String txCountStr = ss[ssx++].trim();
 		String secCountStr = ss[ssx++].trim();
 
-		this.acctid = MoneyMgrModel.currModel.findAccount(acctname).acctid;
+		this.acctid = this.model.findAccount(acctname).acctid;
 		this.date = Common.parseQDate(dateStr);
 		this.closingBalance = new BigDecimal(closeStr);
 		this.closingCashBalance = new BigDecimal(closeCashStr);
@@ -213,7 +218,7 @@ public class StatementDetails {
 			txinfo.cknum = Integer.parseInt(cknumStr);
 			txinfo.cashAmount = new BigDecimal(amtStr);
 			if (secStr.length() > 0) {
-				txinfo.security = MoneyMgrModel.currModel.findSecurity(secStr);
+				txinfo.security = this.model.findSecurity(secStr);
 				txinfo.shares = (shrStr.length() > 0) ? Common.parseDecimal(shrStr) : BigDecimal.ZERO;
 			}
 
@@ -225,7 +230,7 @@ public class StatementDetails {
 			String symStr = ss[ssx++].trim();
 			String numtxStr = ss[ssx++].trim();
 
-			Security sec = MoneyMgrModel.currModel.findSecurity(symStr);
+			Security sec = this.model.findSecurity(symStr);
 
 			StatementPosition spos = new StatementPosition();
 			spos.sec = sec;

@@ -34,22 +34,27 @@ public class QuoteDownloader {
 	private static final String NAME_DAILY = "Time Series (Daily)";
 	private static final String API_KEY = "O7JYIMJXJOWQB9BY";
 
-	static List<String> securitiesNotDownlaoded = new ArrayList<String>();
+	public List<String> securitiesNotDownlaoded = new ArrayList<String>();
+	public final MoneyMgrModel model;
 
-	public static List<QPrice> loadPriceHistory(String symbol) {
+	public QuoteDownloader(MoneyMgrModel model) {
+		this.model = model;
+	}
+
+	public List<QPrice> loadPriceHistory(String symbol) {
 		JSONObject quotes = loadQuoteHistory(symbol, FUNC_DAILY, true);
 
 		return extractQuoteHistory(symbol, quotes);
 	}
 
-	public static List<QPrice> loadQuotes(String symbol) {
+	public List<QPrice> loadQuotes(String symbol) {
 		JSONObject quotes = loadQuoteHistory(symbol, FUNC_DAILY, false);
 
 		return extractQuoteHistory(symbol, quotes);
 	}
 
 	/** Process JSON results to get quote data */
-	private static List<QPrice> extractQuoteHistory(String symbol, JSONObject quotes) {
+	private List<QPrice> extractQuoteHistory(String symbol, JSONObject quotes) {
 		if (quotes == null) {
 			return null;
 		}
@@ -92,8 +97,8 @@ public class QuoteDownloader {
 			BigDecimal closingPrice = quote.getBigDecimal(closePriceKey);
 			BigDecimal splitPrice = quote.getBigDecimal(splitPriceKey);
 
-			prices.add(new QPrice(Common.parseQDate(date), //
-					MoneyMgrModel.currModel.findSecurity(symbol).secid, //
+			prices.add(new QPrice(this.model, Common.parseQDate(date), //
+					this.model.findSecurity(symbol).secid, //
 					closingPrice, splitPrice));
 		}
 
@@ -108,7 +113,7 @@ public class QuoteDownloader {
 	 * @param full     True - full history, False - recent prices
 	 * @return JSON results
 	 */
-	private static JSONObject loadQuoteHistory(String symbol, String function, boolean full) {
+	private JSONObject loadQuoteHistory(String symbol, String function, boolean full) {
 		StringBuilder sb = new StringBuilder();
 		String json = "No quotes";
 		File outdir = new File(QifDom.qifDir, "quotes");
@@ -187,7 +192,9 @@ public class QuoteDownloader {
 	}
 
 	public static void main(String[] args) {
-		List<QPrice> prices = loadQuotes("TSLA");
+		QuoteDownloader quoteLoader = new QuoteDownloader(null);
+
+		List<QPrice> prices = quoteLoader.loadQuotes("TSLA");
 		System.out.println(prices.toString());
 	}
 }

@@ -44,9 +44,15 @@ public class LotProcessor {
 				}
 			};
 
+	private final MoneyMgrModel model;
+
+	public LotProcessor(MoneyMgrModel model) {
+		this.model = model;
+	}
+
 	/** Create lots for all security transactions, all accounts */
-	public static void setupSecurityLots() {
-		for (Security sec : MoneyMgrModel.currModel.getSecurities()) {
+	public void setupSecurityLots() {
+		for (Security sec : this.model.getSecurities()) {
 			List<InvestmentTxn> txns = new ArrayList<InvestmentTxn>(sec.getTransactions());
 			Collections.sort(txns, sortTransactionsForLots);
 
@@ -66,7 +72,7 @@ public class LotProcessor {
 	}
 
 	/** Analyze a list of transactions, building lots for the investments */
-	private static void createLotsForTransactions(List<Lot> thelots, List<InvestmentTxn> txns) {
+	private void createLotsForTransactions(List<Lot> thelots, List<InvestmentTxn> txns) {
 		for (int txIdx = 0; txIdx < txns.size();) {
 //			String txstr = txns.get(txIdx).toString();
 
@@ -93,7 +99,7 @@ public class LotProcessor {
 	}
 
 	/** Analyze a transaction, updating lot information */
-	private static int createLotsForTransaction(List<Lot> thelots, List<InvestmentTxn> txns, int txIdx) {
+	private int createLotsForTransaction(List<Lot> thelots, List<InvestmentTxn> txns, int txIdx) {
 		// TODO should these be sets? It would simplify gather func
 		List<InvestmentTxn> srcTxns = new ArrayList<InvestmentTxn>();
 		List<InvestmentTxn> dstTxns = new ArrayList<InvestmentTxn>();
@@ -148,7 +154,7 @@ public class LotProcessor {
 	}
 
 	/** Insert a lot into a list sorted by date acquired */
-	private static void addLot(List<Lot> thelots, Lot newLot) {
+	private void addLot(List<Lot> thelots, Lot newLot) {
 		int idx = 0;
 		for (; idx < thelots.size(); ++idx) {
 			Lot lot = thelots.get(idx);
@@ -165,7 +171,7 @@ public class LotProcessor {
 	}
 
 	/** Create a lot for new shares created by a transaction */
-	private static void addShares(List<Lot> thelots, InvestmentTxn txn) {
+	private void addShares(List<Lot> thelots, InvestmentTxn txn) {
 		Lot lot = new Lot(txn.getAccountID(), txn.getDate(), txn.getSecurityId(), //
 				txn.getShares(), txn.getShareCost(), txn);
 		addLot(thelots, lot);
@@ -174,7 +180,7 @@ public class LotProcessor {
 	}
 
 	/** Get open lots for account */
-	private static List<Lot> getOpenLots(List<Lot> thelots, int acctid) {
+	private List<Lot> getOpenLots(List<Lot> thelots, int acctid) {
 		List<Lot> ret = new ArrayList<Lot>();
 
 		for (Lot lot : thelots) {
@@ -187,7 +193,7 @@ public class LotProcessor {
 	}
 
 	/** Get open lots to satisfy txns that consume lots (sell/xfer out/split) */
-	private static List<Lot> getSrcLots(List<Lot> thelots, List<InvestmentTxn> txns) {
+	private List<Lot> getSrcLots(List<Lot> thelots, List<InvestmentTxn> txns) {
 		List<Lot> lots = getOpenLots(thelots, txns.get(0).getAccountID());
 		List<Lot> ret = new ArrayList<Lot>();
 		BigDecimal sharesRequired = BigDecimal.ZERO;
@@ -222,7 +228,7 @@ public class LotProcessor {
 	 * Get/remove the best lot to supply shares to remove (prefer size match).<br>
 	 * NOTE: This removes the lot from the source list.
 	 */
-	private static Lot getBestLot(BigDecimal shares, List<Lot> lots) {
+	private Lot getBestLot(BigDecimal shares, List<Lot> lots) {
 		for (Lot lot : lots) {
 			// TODO why do we prefer this rather than the oldest lot?
 			if (lot.shares.equals(shares)) {
@@ -243,7 +249,7 @@ public class LotProcessor {
 	 * Dispose lot(s) removed by a transaction.<br>
 	 * Split the last lot if partially removed.
 	 */
-	private static void removeShares(List<Lot> thelots, InvestmentTxn txn, List<Lot> srcLots) {
+	private void removeShares(List<Lot> thelots, InvestmentTxn txn, List<Lot> srcLots) {
 		BigDecimal sharesRemaining = txn.getShares().abs();
 
 		while (!Common.isEffectivelyZero(sharesRemaining)) {
@@ -270,7 +276,7 @@ public class LotProcessor {
 	}
 
 	/** Build a formatted string describing the open lots in an account */
-	private static String printOpenLots(List<Lot> thelots, int acctid) {
+	private String printOpenLots(List<Lot> thelots, int acctid) {
 		String s = "";
 		BigDecimal bal = BigDecimal.ZERO;
 		// TODO since lot.addshares is always true, this means "not first lot"
@@ -310,7 +316,7 @@ public class LotProcessor {
 	 * Transfer lot(s) between accounts for a set of transactions.<br>
 	 * Split the last lot if partially transferred.
 	 */
-	private static void transferShares( //
+	private void transferShares( //
 			List<Lot> thelots, //
 			List<InvestmentTxn> srcTxns, //
 			List<InvestmentTxn> dstTxns, //
@@ -379,7 +385,7 @@ public class LotProcessor {
 	}
 
 	/** Find the first open lot in a list matching an account/number of shares. */
-	private static Lot getFirstOpenLot(List<Lot> thelots, int acctid, BigDecimal sharesToMatch) {
+	private Lot getFirstOpenLot(List<Lot> thelots, int acctid, BigDecimal sharesToMatch) {
 		int idx = 0;
 		for (Lot lot : thelots) {
 			if (lot.isOpen() //
@@ -414,7 +420,7 @@ public class LotProcessor {
 	}
 
 	/** Apply a split to all open lots in all accounts */
-	private static void processSplit(List<Lot> thelots, InvestmentTxn txn) {
+	private void processSplit(List<Lot> thelots, InvestmentTxn txn) {
 		List<Lot> newLots = new ArrayList<Lot>();
 
 		for (;;) {
@@ -439,7 +445,7 @@ public class LotProcessor {
 	}
 
 	/** Remove duplicate stock splits (based on date) from the list of txns */
-	private static void purgeDuplicateSplitTransactions(List<InvestmentTxn> txns) {
+	private void purgeDuplicateSplitTransactions(List<InvestmentTxn> txns) {
 		for (int ii = 0; ii < txns.size(); ++ii) {
 			InvestmentTxn txn = txns.get(ii);
 			if (txn.getAction() != TxAction.STOCKSPLIT) {
@@ -471,7 +477,7 @@ public class LotProcessor {
 	 * @param dstTxns  Destination of transfer
 	 * @return Updated list index following last xfer txn
 	 */
-	private static int gatherXferTransactions(List<InvestmentTxn> txns, int startIdx, //
+	private int gatherXferTransactions(List<InvestmentTxn> txns, int startIdx, //
 			List<InvestmentTxn> srcTxns, List<InvestmentTxn> dstTxns) {
 		InvestmentTxn starttx = txns.get(startIdx);
 
@@ -512,7 +518,7 @@ public class LotProcessor {
 	 * 
 	 * @return The index of the last txn in the main list involved in the transfer
 	 */
-	private static int collectTransfers( //
+	private int collectTransfers( //
 			List<InvestmentTxn> txns, //
 			int startIdx, //
 			int maxidx, //
@@ -539,13 +545,13 @@ public class LotProcessor {
 	}
 
 	/** Output lot information and balance summary for all securities to the log. */
-	private static void logLotInfo() {
+	private void logLotInfo() {
 		boolean SUMMARY_ONLY = true;
 		boolean FULL_DETAILS = !SUMMARY_ONLY;
 
 		Common.debugInfo("\nSummary of open lots:");
 
-		for (Security sec : MoneyMgrModel.currModel.getSecurities()) {
+		for (Security sec : this.model.getSecurities()) {
 			logLotsHistory(sec, sec.getLots(), SUMMARY_ONLY);
 		}
 	}
@@ -559,7 +565,7 @@ public class LotProcessor {
 	 * @param summaryOnly If true, log summary only without detailed history
 	 * @return Final share balance
 	 */
-	private static BigDecimal logLotsHistory( //
+	private BigDecimal logLotsHistory( //
 			Security sec, List<Lot> origlots, boolean summaryOnly) {
 		if (origlots.isEmpty()) {
 			return BigDecimal.ZERO;
@@ -598,7 +604,7 @@ public class LotProcessor {
 	 * Calculate share balance for a security from lots with optional logging of
 	 * detailed info
 	 */
-	private static BigDecimal calculateOpenLotsBalance( //
+	private BigDecimal calculateOpenLotsBalance( //
 			StringBuilder sb, List<Lot> lots, boolean summaryOnly) {
 		BigDecimal balance = BigDecimal.ZERO;
 		int lotcount = 0;
@@ -628,7 +634,7 @@ public class LotProcessor {
 	}
 
 	/** Log details of lot ancestry */
-	private static void logSecurityHistoryDetails( //
+	private void logSecurityHistoryDetails( //
 			StringBuilder sb, Security sec, List<Lot> toplots) {
 		sb.append("\n--------------------------------");
 		sb.append("Lots for security " + sec.getSymbol());
@@ -637,7 +643,7 @@ public class LotProcessor {
 	}
 
 	/** Print a hierarchical representation of the history of lots */
-	private static void logSecurityChildHierarchy(StringBuilder sb, List<Lot> lots, String indent) {
+	private void logSecurityChildHierarchy(StringBuilder sb, List<Lot> lots, String indent) {
 		for (Lot lot : lots) {
 			sb.append(indent + "- " + lot.toString());
 

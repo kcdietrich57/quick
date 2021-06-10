@@ -44,7 +44,7 @@ public class Statement {
 	public Statement(int acctid, QDate date, //
 			BigDecimal closebal, BigDecimal cashbal, Statement prevstat) {
 		this.model = MoneyMgrModel.currModel;
-		
+
 		this.isBalanced = false;
 		this.acctid = acctid;
 		this.date = date;
@@ -63,7 +63,7 @@ public class Statement {
 	public Statement(int acctid, QDate date, Statement prevstat) {
 		this(acctid, date, BigDecimal.ZERO, BigDecimal.ZERO, prevstat);
 	}
-	
+
 	public Account getAccount() {
 		return this.model.getAccountByID(this.acctid);
 	}

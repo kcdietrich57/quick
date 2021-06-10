@@ -38,15 +38,15 @@ public class QDate implements Comparable<QDate> {
 		if (y % 4 != 0) {
 			return false;
 		}
-		
+
 		return (y % 400 == 0) || (y % 100 != 0);
 	}
-	
+
 	public static int lastDayOfMonth(int y, int m) {
 		if (m == 2) {
 			return isLeapYear(y) ? 29 : 28;
 		}
-		
+
 		return MONTH_DAYS[m - 1];
 	}
 
@@ -65,11 +65,11 @@ public class QDate implements Comparable<QDate> {
 		y = adjustYear(y);
 
 		int lastday = lastDayOfMonth(y, m);
-		
+
 		if (d > lastday) {
 			Common.reportWarning(String.format( //
 					"Adjusting days for QDate: %d/%d/%d", m, d, y));
-			
+
 			QDate qd = new QDate(y, m, lastday).addDays(d - lastday);
 
 			y = qd.getYear();

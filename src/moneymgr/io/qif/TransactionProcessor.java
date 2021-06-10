@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 
 import moneymgr.io.TransactionInfo;
 import moneymgr.model.InvestmentTxn;
-import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.NonInvestmentTxn;
 import moneymgr.model.SplitTxn;
 import moneymgr.model.TxAction;
@@ -19,7 +18,7 @@ public class TransactionProcessor {
 	}
 
 	public void loadInvestmentTransactions() {
-		if (!MoneyMgrModel.currModel.currAccountBeingLoaded.isInvestmentAccount()) {
+		if (!this.qrdr.model.currAccountBeingLoaded.isInvestmentAccount()) {
 			loadNonInvestmentTransactions();
 			return;
 		}
@@ -43,17 +42,17 @@ public class TransactionProcessor {
 				txn.getSecurity().addTransaction(txn);
 			}
 
-			MoneyMgrModel.currModel.currAccountBeingLoaded.addTransaction(txn);
+			this.qrdr.model.currAccountBeingLoaded.addTransaction(txn);
 		}
 	}
 
 	private InvestmentTxn loadInvestmentTransaction() {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
-		TransactionInfo tinfo = new TransactionInfo(MoneyMgrModel.currModel.currAccountBeingLoaded);
+		TransactionInfo tinfo = new TransactionInfo(this.qrdr.model.currAccountBeingLoaded);
 
 		// TODO gather info and create transaction at the end
-		InvestmentTxn txn = new InvestmentTxn(MoneyMgrModel.currModel.currAccountBeingLoaded.acctid);
+		InvestmentTxn txn = new InvestmentTxn(this.qrdr.model.currAccountBeingLoaded.acctid);
 
 		for (;;) {
 			this.qrdr.getFileReader().nextInvLine(qline);
@@ -83,7 +82,7 @@ public class TransactionProcessor {
 				txn.setAction(TxAction.parseAction(qline.value));
 				tinfo.setValue(TransactionInfo.ACTION_IDX, qline.value);
 				break;
-				
+
 			case InvPayee:
 				txn.setPayee(qline.value);
 				tinfo.setValue(TransactionInfo.PAYEE_IDX, qline.value);
@@ -118,7 +117,7 @@ public class TransactionProcessor {
 				break;
 
 			case InvSecurity:
-				txn.setSecurity(MoneyMgrModel.currModel.findSecurityByName(qline.value));
+				txn.setSecurity(this.qrdr.model.findSecurityByName(qline.value));
 				tinfo.setValue(TransactionInfo.SECURITY_IDX, qline.value);
 
 				if (txn.getSecurity() == null) {
@@ -138,7 +137,7 @@ public class TransactionProcessor {
 				break;
 
 			case InvXferAcct: {
-				int catid = Common.parseCategory(qline.value);
+				int catid = this.qrdr.model.parseCategory(qline.value);
 				if (catid < 0) {
 					txn.setAccountForTransfer(qline.value);
 				}
@@ -155,7 +154,7 @@ public class TransactionProcessor {
 	}
 
 	public void loadNonInvestmentTransactions() {
-		if (MoneyMgrModel.currModel.currAccountBeingLoaded.isInvestmentAccount()) {
+		if (this.qrdr.model.currAccountBeingLoaded.isInvestmentAccount()) {
 			loadInvestmentTransactions();
 			return;
 		}
@@ -177,17 +176,17 @@ public class TransactionProcessor {
 
 			txn.verifySplit();
 
-			MoneyMgrModel.currModel.currAccountBeingLoaded.addTransaction(txn);
+			this.qrdr.model.currAccountBeingLoaded.addTransaction(txn);
 		}
 	}
 
 	private NonInvestmentTxn loadNonInvestmentTransaction() {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
-		TransactionInfo tinfo = new TransactionInfo(MoneyMgrModel.currModel.currAccountBeingLoaded);
+		TransactionInfo tinfo = new TransactionInfo(this.qrdr.model.currAccountBeingLoaded);
 
 		// TODO gather info and create transaction at the end
-		NonInvestmentTxn txn = new NonInvestmentTxn(MoneyMgrModel.currModel.currAccountBeingLoaded.acctid);
+		NonInvestmentTxn txn = new NonInvestmentTxn(this.qrdr.model.currAccountBeingLoaded.acctid);
 		SplitTxn cursplit = null;
 
 		for (;;) {
@@ -199,7 +198,7 @@ public class TransactionProcessor {
 				return txn;
 
 			case TxnCategory: {
-				int catid = Common.parseCategory(qline.value);
+				int catid = this.qrdr.model.parseCategory(qline.value);
 
 				if (catid == 0) {
 					Common.reportError("Can't find xtxn: " + qline.value);
@@ -248,13 +247,13 @@ public class TransactionProcessor {
 				if (cursplit == null || cursplit.getCatid() != 0) {
 					cursplit = new SplitTxn(txn);
 					txn.addSplit(cursplit);
-					MoneyMgrModel.currModel.addTransaction(cursplit);
+					this.qrdr.model.addTransaction(cursplit);
 				}
 
 				if (qline.value == null || qline.value.trim().isEmpty()) {
 					qline.value = "Fix Me";
 				}
-				cursplit.setCatid(Common.parseCategory(qline.value));
+				cursplit.setCatid(this.qrdr.model.parseCategory(qline.value));
 
 				if (cursplit.getCatid() == 0) {
 					Common.reportError("Can't find xtxn: " + qline.value);
@@ -265,7 +264,7 @@ public class TransactionProcessor {
 				if (cursplit == null || cursplit.getAmount() != null) {
 					txn.addSplit(cursplit);
 					cursplit = new SplitTxn(txn);
-					MoneyMgrModel.currModel.addTransaction(cursplit);
+					this.qrdr.model.addTransaction(cursplit);
 				}
 
 				cursplit.setAmount(Common.getDecimal(qline.value));

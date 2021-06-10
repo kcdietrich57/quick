@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.QPrice;
 import moneymgr.model.Security;
 import moneymgr.model.Security.StockSplitInfo;
@@ -29,7 +30,13 @@ import moneymgr.util.QDate;
  * otherwise: quote data<br>
  */
 public class QQuoteLoader {
-	public static void loadQuoteFile(Security sec, File f) {
+	public final MoneyMgrModel model;
+
+	public QQuoteLoader(MoneyMgrModel model) {
+		this.model = model;
+	}
+
+	public void loadQuoteFile(Security sec, File f) {
 		if (!f.getName().endsWith(".csv")) {
 			return;
 		}
@@ -161,7 +168,7 @@ public class QQuoteLoader {
 					saprice = price.divide(splitRatio);
 				}
 
-				QPrice qprice = new QPrice(date, sec.secid, price, saprice);
+				QPrice qprice = new QPrice(this.model, date, sec.secid, price, saprice);
 
 				sec.addPrice(qprice);
 

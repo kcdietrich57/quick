@@ -58,7 +58,7 @@ class SecurityPositionTest {
 		this.model.setAsOfDate(this.today);
 
 		stock = new Security("FOO", "Foo, Inc");
-		stock.addPrice(new QPrice(today, stock.secid, new BigDecimal("1.23")));
+		stock.addPrice(new QPrice(this.model, today, stock.secid, new BigDecimal("1.23")));
 
 		this.tx = new InvestmentTxn(this.invest.acctid);
 		this.tx.setAction(TxAction.BUY);
@@ -68,7 +68,7 @@ class SecurityPositionTest {
 
 		invest.addTransaction(this.tx);
 
-		this.portfolio = new SecurityPortfolio(MoneyMgrModel.currModel, null);
+		this.portfolio = new SecurityPortfolio(this.model, null);
 
 		this.position = new SecurityPosition(this.portfolio, this.stock);
 		this.position.addTransaction(this.tx);
@@ -88,7 +88,7 @@ class SecurityPositionTest {
 		SecurityPosition newpos = new SecurityPosition(this.portfolio, pos);
 		assertNotNull(newpos);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -102,7 +102,7 @@ class SecurityPositionTest {
 	void testIsEmptyForDate() {
 		assertFalse(this.position.isEmptyForDate(this.today));
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -110,7 +110,7 @@ class SecurityPositionTest {
 		BigDecimal val = this.position.getEndingValue();
 		assertTrue(Common.isEffectivelyZero(val));
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -118,7 +118,7 @@ class SecurityPositionTest {
 		BigDecimal shares = this.position.getStartingShares();
 		assertTrue(Common.isEffectivelyZero(shares));
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -126,7 +126,7 @@ class SecurityPositionTest {
 		BigDecimal shares = this.position.getEndingShares();
 		assertTrue(Common.isEffectivelyZero(shares));
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -134,7 +134,7 @@ class SecurityPositionTest {
 		BigDecimal shares = this.position.getExpectedEndingShares();
 		assertTrue(Common.isEffectivelyZero(shares));
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -149,7 +149,7 @@ class SecurityPositionTest {
 		shares = this.position.getExpectedEndingShares();
 		assertTrue(Common.isEffectivelyEqual(newshares, shares));
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -161,7 +161,7 @@ class SecurityPositionTest {
 		BigDecimal val = this.position.getEndingValue();
 		assertTrue(Common.isEffectivelyEqual(val, newval));
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -170,7 +170,7 @@ class SecurityPositionTest {
 		assertNotNull(bals);
 		assertFalse(bals.isEmpty());
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -199,7 +199,7 @@ class SecurityPositionTest {
 		val = this.position.getEndingValue();
 		assertTrue(Common.isEffectivelyZero(val));
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -208,7 +208,7 @@ class SecurityPositionTest {
 		assertNotNull(date);
 		assertEquals(this.today, date);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -217,7 +217,7 @@ class SecurityPositionTest {
 		assertNotNull(txns);
 		assertFalse(txns.isEmpty());
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -232,7 +232,7 @@ class SecurityPositionTest {
 
 		this.position.addTransaction(newtx);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -241,7 +241,7 @@ class SecurityPositionTest {
 		this.position.removeTransaction(this.tx);
 		Assert.assertTrue(this.position.isEmpty());
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -250,14 +250,14 @@ class SecurityPositionTest {
 		txns.add(this.tx);
 		this.position.setTransactions(txns);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
 	void testUpdateShareBalances() {
 		this.position.updateShareBalances();
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -265,7 +265,7 @@ class SecurityPositionTest {
 		BigDecimal shares = this.position.getValueForDate(this.today);
 		Assert.assertNotNull(shares);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -273,7 +273,7 @@ class SecurityPositionTest {
 		BigDecimal shares = this.position.getSharesForDate(this.today);
 		Assert.assertNotNull(shares);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -284,7 +284,7 @@ class SecurityPositionTest {
 		String s = info.toString();
 		Assert.assertNotNull(s);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -292,7 +292,7 @@ class SecurityPositionTest {
 		String s = this.position.toString();
 		Assert.assertNotNull(s);
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 	@Test
@@ -318,13 +318,13 @@ class SecurityPositionTest {
 		SecurityPerformance perf = new SecurityPerformance( //
 				this.position, this.today.addDays(-1), this.today.addDays(3));
 		Assert.assertNotNull(perf);
-		
+
 		perf.getStartPrice();
 		perf.getEndPrice();
 		perf.getStartValue();
 		perf.getEndValue();
 
-		//fail("Not yet implemented");
+		// fail("Not yet implemented");
 	}
 
 }

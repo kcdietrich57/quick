@@ -50,30 +50,30 @@ public class CSVImport {
 
 	/** TESTING: Import CSV file and compare to QIF version */
 	public static void testCsvImport() {
-		MoneyMgrModel sourceModel = MoneyMgrModel.getModel(MoneyMgrModel.WIN_QIF_MODEL_NAME);
-
-		printMessage("Processing csv file");
-		printMessage(String.format("Source model has %d transactions", //
-				sourceModel.getAllTransactions().size()));
-
 		String importDir = "/Users/greg/qif/";
 		importCSV(importDir + "DIETRICH.csv");
-
-		printMessage(String.format("Imported %d transactions", //
-				MoneyMgrModel.currModel.getAllTransactions().size()));
 	}
 
 	/** Process a CSV file exported from MacOs */
 	public static void importCSV(String filename) {
+		printMessage("Processing csv file");
+
 		CSVImport csvimp = new CSVImport(filename);
 
+		// TODO move the following into CSVImport
 		csvimp.cloneSourceModelInfo();
 		csvimp.importFile();
 
-		QifDomReader rdr = new QifDomReader(new File("/Users/greg/qif"));
+		QifDomReader rdr = new QifDomReader(csvimp.csvModel, new File("/Users/greg/qif"));
 		rdr.postLoad();
 
-		TransactionCleaner.cleanUpTransactionsFromCsv();
+		TransactionCleaner transactionCleaner = new TransactionCleaner(csvimp.csvModel);
+		transactionCleaner.cleanUpTransactionsFromCsv();
+
+		printMessage(String.format("Source model has %d transactions", //
+				csvimp.sourceModel.getAllTransactions().size()));
+		printMessage(String.format("Imported %d transactions", //
+				csvimp.csvModel.getAllTransactions().size()));
 	}
 
 	private LineNumberReader rdr;
@@ -482,7 +482,7 @@ public class CSVImport {
 				String msg = "\n" + msgs[ii] + "\n-------------------------------------";
 				out.println(msg);
 
-				for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
+				for (Account acct : this.csvModel.getAccounts()) {
 					List<TransactionInfo> tuples = this.transactionsMap.get(acct.name);
 					if (tuples == null) {
 						continue;
@@ -538,7 +538,7 @@ public class CSVImport {
 
 			int unmatchedWindowsTxns = 0;
 
-			for (SimpleTxn stx : MoneyMgrModel.currModel.getAllTransactions()) {
+			for (SimpleTxn stx : this.csvModel.getAllTransactions()) {
 				if (!isWinTxnMatched(stx, true)) {
 //					out.println(gtx.toString());
 					++unmatchedWindowsTxns;
@@ -585,7 +585,7 @@ public class CSVImport {
 				"Cloning source account '" + acct.name + "'" + //
 						"(" + acct.acctid + ")");
 
-		a = new Account( //
+		a = new Account(this.csvModel, //
 				acct.acctid, acct.name, acct.description, acct.type, //
 				acct.getStatementFrequency(), acct.getStatementDay());
 
@@ -693,7 +693,7 @@ public class CSVImport {
 
 		out.println("\nUnrecognized Categories\n=====================");
 		for (String catName : cats) {
-			Category cat = MoneyMgrModel.currModel.findCategory(catName);
+			Category cat = this.csvModel.findCategory(catName);
 
 			if (cat == null) {
 				out.println(catName);
@@ -723,7 +723,7 @@ public class CSVImport {
 
 		out.println("\nUnrecognized Accounts\n=====================");
 		for (String acctName : accts) {
-			Account acct = MoneyMgrModel.currModel.findAccount(acctName);
+			Account acct = this.csvModel.findAccount(acctName);
 
 			if (acct == null) {
 				out.println(acctName);
@@ -753,7 +753,7 @@ public class CSVImport {
 
 		out.println("\nUnrecognized Security\n=====================");
 		for (String secName : secNames) {
-			Security sec = MoneyMgrModel.currModel.findSecurity(secName);
+			Security sec = this.csvModel.findSecurity(secName);
 
 			if (sec == null) {
 				out.println(secName);
@@ -826,7 +826,7 @@ public class CSVImport {
 					}
 
 					if (currentSplitParent == null) {
-						currentSplitParent = new TransactionInfo(new ArrayList<String>());
+						currentSplitParent = new TransactionInfo(this.csvModel, new ArrayList<String>());
 
 						currentSplitParent.setValue(TransactionInfo.ACCOUNT_IDX, acctname);
 						currentSplitParent.setValue(TransactionInfo.DATE_IDX, date);
@@ -856,7 +856,7 @@ public class CSVImport {
 								}
 
 							} else if (cat.equals(scat)) {
-								newsplit = new TransactionInfo(new ArrayList<>());
+								newsplit = new TransactionInfo(this.csvModel, new ArrayList<>());
 
 								newsplit.setValue(TransactionInfo.ACCOUNT_IDX, acctname);
 								newsplit.setValue(TransactionInfo.DATE_IDX, date);
@@ -983,13 +983,6 @@ public class CSVImport {
 	}
 
 	private SimpleTxn createTransaction(TransactionInfo tuple) {
-		MoneyMgrModel model = MoneyMgrModel.currModel;
-
-		// TODO xyzzy defunct test here
-		if (!model.name.equals(MoneyMgrModel.MAC_CSV_MODEL_NAME)) {
-			System.out.println(String.format( //
-					"Creating CSV transaction in wrong model '%s'", model.name));
-		}
 		GenericTxn txn = null;
 
 		try {
@@ -1038,7 +1031,7 @@ public class CSVImport {
 				// TODO deal with multiple xfer splits
 				int xacctid = 0; // itxn.getCashTransferAcctid();
 				if (xacctid > 0) {
-					itxn.setAccountForTransfer(model.getAccountByID(xacctid).name);
+					itxn.setAccountForTransfer(this.csvModel.getAccountByID(xacctid).name);
 					itxn.setAction((tuple.inflow != null && tuple.inflow.signum() > 0) //
 							? TxAction.XIN //
 							: TxAction.XOUT);
@@ -1103,7 +1096,7 @@ public class CSVImport {
 
 					txn.addSplit(splittx);
 					// NB split txns are not automatically added to model
-					model.addTransaction(splittx);
+					this.csvModel.addTransaction(splittx);
 				}
 			}
 
@@ -1210,7 +1203,7 @@ public class CSVImport {
 
 	private TransactionInfo readRecord() {
 		List<String> fields = readRawRecord();
-		return (fields != null) ? new TransactionInfo(fields) : null;
+		return (fields != null) ? new TransactionInfo(this.csvModel, fields) : null;
 	}
 
 	private boolean readFieldNames() {

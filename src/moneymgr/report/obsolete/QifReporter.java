@@ -4,8 +4,8 @@ import java.util.Date;
 
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
-import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.SimpleTxn;
+import moneymgr.ui.MainFrame;
 
 /** Various reporting functions - used by obsolete QifLoader */
 public class QifReporter {
@@ -18,7 +18,7 @@ public class QifReporter {
 		int reconciled = 0;
 		int unreconciled = 0;
 
-		for (SimpleTxn st : MoneyMgrModel.currModel.getAllTransactions()) {
+		for (SimpleTxn st : MainFrame.appFrame.model.getAllTransactions()) {
 			if ((st != null) && !(st instanceof GenericTxn)) {
 				continue;
 			}

@@ -13,6 +13,7 @@ import moneymgr.model.InvestmentTxn;
 import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Security;
 import moneymgr.model.SecurityPosition;
+import moneymgr.ui.MainFrame;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -226,6 +227,8 @@ public class InvestmentPerformanceModel {
 		}
 	};
 
+	public final MoneyMgrModel model;
+
 	public StatusForDateModel startStatusModel;
 	public StatusForDateModel endStatusModel;
 
@@ -243,14 +246,16 @@ public class InvestmentPerformanceModel {
 	public BigDecimal liabilities = BigDecimal.ZERO;
 	public BigDecimal netWorth = BigDecimal.ZERO;
 
-	public InvestmentPerformanceModel(QDate startDate, QDate endDate) {
+	public InvestmentPerformanceModel(MoneyMgrModel model, QDate startDate, QDate endDate) {
+		this.model = model;
+
 		this.summary = new Summary();
 		this.sections = Section.getSections();
 
-		this.startStatusModel = new StatusForDateModel(startDate);
-		this.endStatusModel = new StatusForDateModel(endDate);
+		this.startStatusModel = new StatusForDateModel(model, startDate);
+		this.endStatusModel = new StatusForDateModel(model, endDate);
 
-		this.txns = MoneyMgrModel.currModel.getInvestmentTransactions(startDate, endDate);
+		this.txns = MainFrame.appFrame.model.getInvestmentTransactions(startDate, endDate);
 
 		build();
 	}
@@ -339,7 +344,7 @@ public class InvestmentPerformanceModel {
 
 		List<AccountSummary> asums = new ArrayList<AccountSummary>();
 
-		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
+		for (Account a : MainFrame.appFrame.model.getAccounts()) {
 			if (!a.isInvestmentAccount() //
 					|| (a.getOpenDate().compareTo(endDate()) >= 0) //
 					|| ((a.getCloseDate() != null) //
@@ -440,7 +445,7 @@ public class InvestmentPerformanceModel {
 
 		Map<Security, SecuritySummary> ssums = new HashMap<Security, SecuritySummary>();
 
-		for (SecurityPosition pos : MoneyMgrModel.currModel.portfolio.getPositions()) {
+		for (SecurityPosition pos : MainFrame.appFrame.model.portfolio.getPositions()) {
 			SecuritySummary sum = ssums.get(pos.security);
 			if (sum == null) {
 				sum = new SecuritySummary(pos, startDate(), endDate());

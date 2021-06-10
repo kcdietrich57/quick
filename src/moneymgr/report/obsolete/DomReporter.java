@@ -7,9 +7,9 @@ import app.QifDom;
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
-import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.SecurityPosition;
+import moneymgr.ui.MainFrame;
 import moneymgr.util.Common;
 
 /** TODO unused */
@@ -34,7 +34,7 @@ public class DomReporter {
 		System.out.println("Accounts");
 		System.out.println("============================");
 
-		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
+		for (Account a : MainFrame.appFrame.model.getAccounts()) {
 			if (!a.isInvestmentAccount() || //
 					Common.isEffectivelyZero(a.getBalance())) {
 				continue;
@@ -172,7 +172,7 @@ public class DomReporter {
 	}
 
 	private static void reportGlobalPortfolio() {
-		for (SecurityPosition p : MoneyMgrModel.currModel.portfolio.getPositions()) {
+		for (SecurityPosition p : MainFrame.appFrame.model.portfolio.getPositions()) {
 			System.out.println("Sec: " + p.security.getName());
 
 			System.out.println(String.format( //
@@ -191,7 +191,7 @@ public class DomReporter {
 					System.out.println(String.format( //
 							"  %-12s  %-20s  %-10s  %s  %s", //
 							t.getDate().toString(), //
-							MoneyMgrModel.currModel.getAccountByID(t.getAccountID()).name, //
+							MainFrame.appFrame.model.getAccountByID(t.getAccountID()).name, //
 							t.getAction().toString(), //
 							Common.formatAmount3(t.getShares()), //
 							Common.formatAmount3(shrbal)));

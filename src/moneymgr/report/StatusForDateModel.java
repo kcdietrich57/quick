@@ -10,6 +10,7 @@ import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Security;
 import moneymgr.model.SecurityPosition;
 import moneymgr.model.StockOption;
+import moneymgr.ui.MainFrame;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -68,6 +69,7 @@ public class StatusForDateModel {
 		}
 	};
 
+	public final MoneyMgrModel model;
 	public final QDate date;
 	public BigDecimal assets = BigDecimal.ZERO;
 	public BigDecimal liabilities = BigDecimal.ZERO;
@@ -75,7 +77,8 @@ public class StatusForDateModel {
 	public final StatusForDateModel.Section[] sections;
 
 	/** Construct status for a particular date */
-	public StatusForDateModel(QDate date) {
+	public StatusForDateModel(MoneyMgrModel model, QDate date) {
+		this.model = model;
 		this.date = date;
 		this.sections = Section.getSections(true);
 
@@ -95,7 +98,7 @@ public class StatusForDateModel {
 
 	/** Construct model from account info */
 	private void build() {
-		for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
+		for (Account acct : this.model.getAccounts()) {
 			if (!acct.isOpenOn(this.date)) {
 				continue;
 			}
@@ -122,7 +125,7 @@ public class StatusForDateModel {
 				StatusForDateModel.SecuritySummary ssummary = new StatusForDateModel.SecuritySummary();
 
 				StockOption opt = opts.get(0);
-				Security sec = MoneyMgrModel.currModel.getSecurity(opt.secid);
+				Security sec = MainFrame.appFrame.model.getSecurity(opt.secid);
 
 				ssummary.name = "Options:" + sec.getName();
 				ssummary.shares = opt.getAvailableShares(true);

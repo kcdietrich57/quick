@@ -115,7 +115,7 @@ class AccountTests {
 
 	@Test
 	void testModelFunctions() {
-		MoneyMgrModel m = MoneyMgrModel.currModel;
+		MoneyMgrModel m = this.model;
 
 		List<Account> accts = m.getAccounts();
 		List<Account> acctsById = m.getAccountsById();
@@ -159,7 +159,7 @@ class AccountTests {
 
 	@Test
 	void testAccountIntStringStringAccountTypeIntInt() {
-		new Account(99, "new-account", "new-account-desc", AccountType.Bank, 30, 1);
+		new Account(this.model, 99, "new-account", "new-account-desc", AccountType.Bank, 30, 1);
 		// TODO fail("Not yet implemented");
 	}
 
@@ -525,7 +525,7 @@ class AccountTests {
 		s = bank.createUnclearedStatement(null);
 		this.bank.addStatement(s);
 		s = bank.getUnclearedStatement();
-		//Assert.assertNotNull(s);
+		// Assert.assertNotNull(s);
 
 		// TODO fail("Not yet implemented");
 	}

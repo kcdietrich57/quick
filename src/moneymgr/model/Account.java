@@ -38,8 +38,9 @@ public class Account {
 	private final List<Statement> statements;
 	public final SecurityPortfolio securities;
 
-	public Account(int acctid, String name, String desc, AccountType type, int statFreq, int statDayOfMonth) {
-		this.model = MoneyMgrModel.currModel;
+	public Account(MoneyMgrModel model, int acctid, //
+			String name, String desc, AccountType type, int statFreq, int statDayOfMonth) {
+		this.model = (model != null) ? model : MoneyMgrModel.currModel;
 		this.acctid = (acctid > 0) ? acctid : this.model.nextAccountID();
 		this.name = name;
 		this.description = (desc != null) ? desc : "";
@@ -57,7 +58,7 @@ public class Account {
 
 	public Account(String name, AccountType type, String desc, QDate closeDate, //
 			int statFreq, int statDayOfMonth) {
-		this(0, name, desc, type, statFreq, statDayOfMonth);
+		this(null, 0, name, desc, type, statFreq, statDayOfMonth);
 
 		this.closeDate = closeDate;
 	}

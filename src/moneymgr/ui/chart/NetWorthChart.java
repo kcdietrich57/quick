@@ -15,11 +15,17 @@ import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.general.DatasetUtilities;
 
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.ui.MainWindow;
 import moneymgr.util.QDate;
 
 public class NetWorthChart {
+	public final MoneyMgrModel model;
 	JFreeChart chart = null;
+
+	public NetWorthChart(MoneyMgrModel model) {
+		this.model = model;
+	}
 
 	public JPanel createChartPanel() {
 		this.chart = createChart();
@@ -34,7 +40,7 @@ public class NetWorthChart {
 		QDate start = MainWindow.instance.getIntervalStart();
 		QDate end = MainWindow.instance.getIntervalEnd();
 
-		BalanceChartData balanceData = new BalanceChartData(start, end);
+		BalanceChartData balanceData = new BalanceChartData(this.model, start, end);
 
 		CategoryDataset networthDataset = DatasetUtilities.createCategoryDataset( //
 				"NetWorth", "Value", balanceData.netWorthValues);
@@ -66,7 +72,7 @@ public class NetWorthChart {
 		QDate start = MainWindow.instance.getIntervalStart();
 		QDate end = MainWindow.instance.getIntervalEnd();
 
-		BalanceChartData balanceData = new BalanceChartData(start, end);
+		BalanceChartData balanceData = new BalanceChartData(this.model, start, end);
 
 		CategoryDataset networthDataset = DatasetUtilities.createCategoryDataset( //
 				"NetWorth", "Value", balanceData.netWorthValues);

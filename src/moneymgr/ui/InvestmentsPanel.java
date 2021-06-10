@@ -10,7 +10,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 
 import moneymgr.model.Account;
-import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.SecurityPosition;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
@@ -83,7 +82,7 @@ public class InvestmentsPanel extends JPanel {
 				"Name", "Shares", "Price", "Value"));
 
 		int num = 1;
-		for (SecurityPosition pos : MoneyMgrModel.currModel.portfolio.getPositions()) {
+		for (SecurityPosition pos : MainFrame.appFrame.model.portfolio.getPositions()) {
 			BigDecimal shr = pos.getSharesForDate(curdate);
 			BigDecimal value = pos.getValueForDate(curdate);
 
@@ -128,7 +127,7 @@ public class InvestmentsPanel extends JPanel {
 		int num = 1;
 		BigDecimal totalValue = BigDecimal.ZERO;
 
-		for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
+		for (Account acct : MainFrame.appFrame.model.getAccounts()) {
 			BigDecimal value = acct.getValueForDate(curdate);
 			// acct.securities.getPortfolioValueForDate(MainWindow.instance.asOfDate);
 

@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import moneymgr.model.Account;
-import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Security;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.SecurityPosition;
@@ -17,8 +16,14 @@ import moneymgr.util.QDate;
 
 /** Load statements from extra quasi-QIF input file */
 public class StatementProcessor {
+	private final QifDomReader qrdr;
+
+	public StatementProcessor(QifDomReader qrdr) {
+		this.qrdr = qrdr;
+	}
+
 	/** Load each statement file (one per account) in the statements directory */
-	public static void loadStatments(QifDomReader qrdr, File stmtDirectory) {
+	public void loadStatments(File stmtDirectory) {
 		if (!stmtDirectory.isDirectory()) {
 			return;
 		}
@@ -31,7 +36,7 @@ public class StatementProcessor {
 			}
 
 			try {
-				qrdr.load(f.getAbsolutePath(), false);
+				this.qrdr.load(f.getAbsolutePath(), false);
 			} catch (Exception e) {
 				e.printStackTrace();
 				Common.reportError("statement file '" + f.getName() + "' loading failed");
@@ -40,23 +45,23 @@ public class StatementProcessor {
 	}
 
 	/** Load statements for an account from the quasi-QIF file */
-	public static void loadStatements(QifDomReader qrdr, File file) {
+	public void loadStatements(File file) {
 		for (;;) {
-			String s = qrdr.getFileReader().peekLine();
+			String s = this.qrdr.getFileReader().peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			List<Statement> stmts = loadStatementsSection(qrdr.getFileReader());
+			List<Statement> stmts = loadStatementsSection(this.qrdr.getFileReader());
 
 			for (Statement stmt : stmts) {
-				Account a = MoneyMgrModel.currModel.currAccountBeingLoaded;
+				Account a = this.qrdr.model.currAccountBeingLoaded;
 				a.addStatement(stmt);
 			}
 		}
 	}
 
-	private static List<Statement> loadStatementsSection(QFileReader qfr) {
+	private List<Statement> loadStatementsSection(QFileReader qfr) {
 		QFileReader.QLine qline = new QFileReader.QLine();
 		List<Statement> stmts = new ArrayList<Statement>();
 
@@ -71,12 +76,12 @@ public class StatementProcessor {
 
 			case StmtsAccount: {
 				String aname = qline.value;
-				Account a = MoneyMgrModel.currModel.findAccount(aname);
+				Account a = this.qrdr.model.findAccount(aname);
 				if (a == null) {
 					Common.reportError("Can't find account: " + aname);
 				}
 
-				MoneyMgrModel.currModel.currAccountBeingLoaded = a;
+				this.qrdr.model.currAccountBeingLoaded = a;
 				currstmt = null;
 				break;
 			}
@@ -121,7 +126,7 @@ public class StatementProcessor {
 							? QDate.getDateForEndOfMonth(year, month) //
 							: new QDate(year, month, day);
 
-					Account acct = MoneyMgrModel.currModel.currAccountBeingLoaded;
+					Account acct = this.qrdr.model.currAccountBeingLoaded;
 
 					Statement prevstmt = acct.getLastStatement();
 
@@ -170,7 +175,7 @@ public class StatementProcessor {
 				String valStr = ((vidx >= 0) && (vidx + ssx < ss.length)) ? ss[vidx + ssx] : "x";
 				String priceStr = ((pidx >= 0) && (pidx + ssx < ss.length)) ? ss[pidx + ssx] : "x";
 
-				Security sec = MoneyMgrModel.currModel.findSecurity(secStr);
+				Security sec = this.qrdr.model.findSecurity(secStr);
 				if (sec == null) {
 					Common.reportError("Unknown security: " + secStr);
 				}

@@ -12,6 +12,7 @@ import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.SecurityPortfolio;
 import moneymgr.model.Statement;
 import moneymgr.ui.AccountSelectionListener;
+import moneymgr.ui.MainFrame;
 import moneymgr.ui.StatementSelectionListener;
 import moneymgr.util.Common;
 
@@ -21,12 +22,16 @@ public class ReconcileTransactionTableModel //
 		extends GenericTransactionTableModel //
 		implements AccountSelectionListener, StatementSelectionListener {
 
+	private final MoneyMgrModel model;
 	private final List<GenericTxn> clearedTransactions;
+	private final Reconciler reconciler;
 
 	public ReconcileTransactionTableModel() {
 		super("reconcileTransactionTable");
 
+		this.model = MainFrame.appFrame.model;
 		this.clearedTransactions = new ArrayList<GenericTxn>();
+		this.reconciler = new Reconciler(this.model);
 	}
 
 	protected void setObject(Object obj, boolean update) {
@@ -42,7 +47,7 @@ public class ReconcileTransactionTableModel //
 			this.curAccount = (Account) obj;
 		} else if (obj instanceof Statement) {
 			this.curStatement = (Statement) obj;
-			this.curAccount = MoneyMgrModel.currModel.getAccountByID(curStatement.acctid);
+			this.curAccount = this.model.getAccountByID(curStatement.acctid);
 		} else {
 			return;
 		}
@@ -102,7 +107,7 @@ public class ReconcileTransactionTableModel //
 				this.curAccount.addStatement(this.curStatement);
 
 				this.curStatement.dirty = true;
-				Reconciler.saveReconciledStatement(this.curStatement);
+				this.reconciler.saveReconciledStatement(this.curStatement);
 			} else {
 				System.out.println("Can't finish statement");
 			}

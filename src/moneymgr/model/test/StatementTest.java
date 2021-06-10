@@ -69,7 +69,7 @@ class StatementTest {
 		bank.addTransaction(this.ntx);
 
 		stock = new Security("FOO", "Foo, Inc");
-		stock.addPrice(new QPrice(today, stock.secid, new BigDecimal("1.23")));
+		stock.addPrice(new QPrice(this.model, today, stock.secid, new BigDecimal("1.23")));
 
 		this.itx = new InvestmentTxn(this.invest.acctid);
 		this.itx.setAction(TxAction.BUY);
@@ -154,7 +154,7 @@ class StatementTest {
 	@Test
 	void testGetSetCashBalance() {
 		Statement stat;
-		
+
 		stat = new Statement(this.bank.acctid, this.today, null, null, null);
 		Assert.assertNotNull(stat);
 		Assert.assertNull(stat.getCashBalance());
@@ -163,7 +163,7 @@ class StatementTest {
 		stat.setCashBalance(val);
 
 		Assert.assertTrue(Common.isEffectivelyEqual(val, stat.getCashBalance()));
-		
+
 		stat = new Statement(this.bank.acctid, this.today, val, null, null);
 		Assert.assertNotNull(stat);
 		Assert.assertTrue(Common.isEffectivelyEqual(val, stat.getCashBalance()));

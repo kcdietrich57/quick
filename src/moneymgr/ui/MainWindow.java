@@ -31,6 +31,8 @@ public class MainWindow extends JPanel {
 
 	public static MainWindow instance;
 
+	public final MoneyMgrModel model;
+
 	/** Time span for charts */
 	public enum IntervalLength {
 		All, TenYear, FiveYear, OneYear, Quarter, Month, Week, Day
@@ -186,6 +188,8 @@ public class MainWindow extends JPanel {
 
 		instance = this;
 
+		this.model = MainFrame.appFrame.model;
+
 		updateAsOfDate(QDate.today());
 
 		this.reportPeriod = IntervalLength.All;
@@ -202,11 +206,11 @@ public class MainWindow extends JPanel {
 	}
 
 	public QDate getAsOfDate() {
-		return MoneyMgrModel.currModel.getAsOfDate();
+		return this.model.getAsOfDate();
 	}
 
 	public QDate currentDate() {
-		return MoneyMgrModel.currModel.getCurrentDate();
+		return this.model.getCurrentDate();
 	}
 
 	/** Calculate the starting date given the end (asOfDate-period) */
@@ -237,11 +241,11 @@ public class MainWindow extends JPanel {
 			break;
 
 		case All:
-			return MoneyMgrModel.currModel.getFirstTransactionDate();
+			return this.model.getFirstTransactionDate();
 		}
 
-		if (first.compareTo(MoneyMgrModel.currModel.getFirstTransactionDate()) < 0) {
-			first = MoneyMgrModel.currModel.getFirstTransactionDate();
+		if (first.compareTo(this.model.getFirstTransactionDate()) < 0) {
+			first = this.model.getFirstTransactionDate();
 		}
 
 		return first;
@@ -275,11 +279,11 @@ public class MainWindow extends JPanel {
 			break;
 
 		case All:
-			return MoneyMgrModel.currModel.getLastTransactionDate();
+			return this.model.getLastTransactionDate();
 		}
 
-		if (last.compareTo(MoneyMgrModel.currModel.getLastTransactionDate()) > 0) {
-			last = MoneyMgrModel.currModel.getLastTransactionDate();
+		if (last.compareTo(this.model.getLastTransactionDate()) > 0) {
+			last = this.model.getLastTransactionDate();
 		}
 
 		return last;
@@ -334,13 +338,13 @@ public class MainWindow extends JPanel {
 
 	/** Change current display date */
 	private void updateAsOfDate(QDate date) {
-		MoneyMgrModel.currModel.setAsOfDate(date);
+		this.model.setAsOfDate(date);
 
 		if (date.compareTo(QDate.today()) > 0) {
 			date = QDate.today();
 		}
 
-		MoneyMgrModel.currModel.setCurrentDate(date);
+		this.model.setCurrentDate(date);
 
 		QDate aod = getAsOfDate();
 
@@ -356,11 +360,11 @@ public class MainWindow extends JPanel {
 
 	/** Set current display date */
 	public void setAsOfDate(QDate date) {
-		if (date.compareTo(MoneyMgrModel.currModel.getFirstTransactionDate()) < 0) {
-			date = MoneyMgrModel.currModel.getFirstTransactionDate();
+		if (date.compareTo(this.model.getFirstTransactionDate()) < 0) {
+			date = this.model.getFirstTransactionDate();
 		}
-		if (date.compareTo(MoneyMgrModel.currModel.getLastTransactionDate()) > 0) {
-			date = MoneyMgrModel.currModel.getLastTransactionDate();
+		if (date.compareTo(this.model.getLastTransactionDate()) > 0) {
+			date = this.model.getLastTransactionDate();
 		}
 
 		// TODO distinguish between effective date (for calculating balances, etc)
@@ -382,7 +386,7 @@ public class MainWindow extends JPanel {
 	}
 
 	private void createContentPanel() {
-		this.dashboardPanel = new Dashboard();
+		this.dashboardPanel = new Dashboard(this.model);
 		createAccountsPanel();
 		createInvestmentsPanel();
 		createChartsPanel();
@@ -396,7 +400,7 @@ public class MainWindow extends JPanel {
 	}
 
 	private void createAccountsPanel() {
-		this.accountNavigationPanel = new AccountNavigationPanel();
+		this.accountNavigationPanel = new AccountNavigationPanel(this.model);
 		this.accountPanel = new AccountInfoPanel();
 
 		this.accountViewSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, //
@@ -414,15 +418,15 @@ public class MainWindow extends JPanel {
 		this.chartPanel = new JPanel(new BorderLayout());
 		JTabbedPane chartTabs = new JTabbedPane();
 
-		this.nwChartXCHART = new NetWorthChart_old();
+		this.nwChartXCHART = new NetWorthChart_old(this.model);
 		this.nwChartXCHART.create();
-		this.balChartXCHART = new BalanceChart_old();
+		this.balChartXCHART = new BalanceChart_old(this.model);
 		this.balChartXCHART.create();
 		this.optChartXCHART = new ISIOptionsChart_old();
 		this.optChartXCHART.create();
 
-		this.balChart = new BalanceChart();
-		this.nwChart = new NetWorthChart();
+		this.balChart = new BalanceChart(this.model);
+		this.nwChart = new NetWorthChart(this.model);
 		this.optChart = new ISIOptionsChart();
 
 		// XChartPanel<Chart> nwChartPanel_old = new

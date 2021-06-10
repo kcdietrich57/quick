@@ -424,7 +424,7 @@ class TxTest {
 	void testSetCatid() {
 		Category cat = new Category("new-cat", "new-cat-desc", true);
 		Assert.assertNotNull(cat);
-		MoneyMgrModel.currModel.addCategory(cat);
+		this.model.addCategory(cat);
 
 		this.tx.setCatid(cat.catid);
 		Assert.assertEquals(cat.catid, this.tx.getCatid());

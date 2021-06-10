@@ -19,17 +19,16 @@ public class QPrice implements Comparable<QPrice> {
 	/** splitAdjustedPrice is the price adjusted for later splits */
 	private BigDecimal splitAdjustedPrice;
 
-	public QPrice(QDate date, int secid, BigDecimal price, BigDecimal splitAdjPrice) {
-		this.model = MoneyMgrModel.currModel;
-		
+	public QPrice(MoneyMgrModel model, QDate date, int secid, BigDecimal price, BigDecimal splitAdjPrice) {
+		this.model = model;
 		this.secid = secid;
 		this.date = date;
 		this.price = price;
 		this.splitAdjustedPrice = splitAdjPrice;
 	}
 
-	public QPrice(QDate date, int secid, BigDecimal price) {
-		this(date, secid, price, null);
+	public QPrice(MoneyMgrModel model, QDate date, int secid, BigDecimal price) {
+		this(model, date, secid, price, null);
 	}
 
 	public BigDecimal getPrice() {
@@ -81,7 +80,7 @@ public class QPrice implements Comparable<QPrice> {
 			Common.reportError("syntax error for price");
 		}
 
-		Security sec = MoneyMgrModel.currModel.findSecurity(sym);
+		Security sec = qfr.model.findSecurity(sym);
 		final String pricestr = s.substring(1, idx);
 		final BigDecimal price = Common.parsePrice(pricestr);
 
@@ -100,7 +99,7 @@ public class QPrice implements Comparable<QPrice> {
 		final QDate date = Common.parseQDate(datestr);
 
 		// TODO figure out splitAdjustedPrice (or ignore quicken price history?)
-		QPrice p = new QPrice(date, sec.secid, price);
+		QPrice p = new QPrice(qfr.model, date, sec.secid, price);
 
 		// Ex: "FEQIX",48 3/4," 2/16' 0"
 		qfr.nextPriceLine(qline);

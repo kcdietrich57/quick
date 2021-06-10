@@ -50,7 +50,7 @@ public class AccountCategoryTests {
 		Assert.assertNotNull(cat);
 
 		System.out.println("cat is '" + cat + "'");
-		
+
 		cat = AccountCategory.forAccountType(AccountType.Asset);
 		cat = AccountCategory.forAccountType(AccountType.CCard);
 		cat = AccountCategory.forAccountType(AccountType.Invest);

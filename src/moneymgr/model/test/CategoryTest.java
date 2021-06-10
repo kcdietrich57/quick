@@ -9,6 +9,7 @@ import moneymgr.model.Category;
 import moneymgr.model.MoneyMgrModel;
 
 class CategoryTest {
+	MoneyMgrModel model;
 
 	@BeforeAll
 	public static void beforeClass() throws Exception {
@@ -19,7 +20,7 @@ class CategoryTest {
 	public void beforeTest() throws Exception {
 		System.out.println("Before each test");
 
-		new MoneyMgrModel("test_model");
+		this.model = new MoneyMgrModel("test_model");
 		MoneyMgrModel.changeModel("test_model");
 	}
 
@@ -36,7 +37,7 @@ class CategoryTest {
 
 	@Test
 	void testCategoryStringStringBoolean() {
-		int nextid = MoneyMgrModel.currModel.nextCategoryID();
+		int nextid = this.model.nextCategoryID();
 
 		Category cat = new Category("cat-name", "cat-desc", true);
 
@@ -46,7 +47,7 @@ class CategoryTest {
 		Assert.assertEquals(cat.description, "cat-desc");
 		Assert.assertTrue(cat.isExpense);
 
-		MoneyMgrModel.currModel.addCategory(cat);
+		this.model.addCategory(cat);
 
 		cat = new Category("cat-name2", "cat-desc2", false);
 
@@ -56,17 +57,17 @@ class CategoryTest {
 		Assert.assertEquals(cat.description, "cat-desc2");
 		Assert.assertFalse(cat.isExpense);
 
-		MoneyMgrModel.currModel.addCategory(cat);
+		this.model.addCategory(cat);
 	}
 
 	@Test
 	void testToString() {
 		Category cat = new Category("cat-name", "cat-desc", true);
-		
+
 		String s = cat.toString();
-		
+
 		System.out.println("Cat: '" + s + "'");
-		
+
 		Assert.assertTrue(s.contains("cat-name"));
 		Assert.assertTrue(s.contains("cat-desc"));
 		Assert.assertTrue(s.contains("=true"));

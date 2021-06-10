@@ -14,6 +14,8 @@ import moneymgr.util.QDate;
 
 /** This data class is used by various charts */
 public class BalanceChartData {
+	public final MoneyMgrModel model;
+
 	/** Date for each value */
 	public QDate[] dates;
 
@@ -29,11 +31,13 @@ public class BalanceChartData {
 	// TODO per-account values
 	// TODO break out by money source
 
-	public BalanceChartData(QDate start, QDate end) {
-		this(start, end, MainWindow.instance.reportUnit);
+	public BalanceChartData(MoneyMgrModel model, QDate start, QDate end) {
+		this(model, start, end, MainWindow.instance.reportUnit);
 	}
 
-	public BalanceChartData(QDate start, QDate end, IntervalUnit units) {
+	private BalanceChartData(MoneyMgrModel model, QDate start, QDate end, IntervalUnit units) {
+		this.model = model;
+
 		List<StatusForDateModel> balances = getNetWorthData(start, end, units);
 
 		getData(balances);
@@ -66,18 +70,18 @@ public class BalanceChartData {
 	}
 
 	/** Construct a skeleton list of values to be filled in later */
-	public static List<StatusForDateModel> getNetWorthData() {
+	public List<StatusForDateModel> getNetWorthData() {
 		return getNetWorthData(null, MainWindow.instance.getAsOfDate(), //
 				MainWindow.instance.reportUnit);
 	}
 
 	/** Construct a skeleton list of values to be filled in later */
-	public static List<StatusForDateModel> getNetWorthData(QDate start, QDate end) {
+	public List<StatusForDateModel> getNetWorthData(QDate start, QDate end) {
 		return getNetWorthData(start, end, MainWindow.instance.reportUnit);
 	}
 
 	/** Construct a skeleton list of values to be filled in later */
-	public static List<StatusForDateModel> getNetWorthData( //
+	public List<StatusForDateModel> getNetWorthData( //
 			QDate start, QDate end, MainWindow.IntervalUnit unit) {
 		List<StatusForDateModel> balances = new ArrayList<StatusForDateModel>();
 
@@ -89,7 +93,7 @@ public class BalanceChartData {
 		d = QDate.getDateForEndOfMonth(year, month);
 
 		do {
-			StatusForDateModel b = new StatusForDateModel(d);
+			StatusForDateModel b = new StatusForDateModel(this.model, d);
 
 			balances.add(b);
 
@@ -99,7 +103,7 @@ public class BalanceChartData {
 		return balances;
 	}
 
-	private static QDate getFirstTransactionDate() {
+	private QDate getFirstTransactionDate() {
 		QDate retdate = null;
 
 		for (final Account a : MoneyMgrModel.currModel.getAccounts()) {

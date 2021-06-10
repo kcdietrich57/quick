@@ -28,41 +28,46 @@ import moneymgr.util.QDate;
  * track of successful and unsuccessful attempts to connect transfers.
  */
 public class TransactionCleaner {
-	private TransactionCleaner() {
+	private final MoneyMgrModel model;
+	private final LotProcessor lotProcessor;
+
+	public TransactionCleaner(MoneyMgrModel model) {
+		this.model = model;
+		this.lotProcessor = new LotProcessor(model);
 	}
 
-	public static void cleanUpTransactionsFromQIF() {
+	public void cleanUpTransactionsFromQIF() {
 		cleanUpSplits();
 //		calculateRunningTotals();
 		connectTransfers();
 		connectSecurityTransfers();
-		LotProcessor.setupSecurityLots();
+		this.lotProcessor.setupSecurityLots();
 
 //		cleanStatementHoldings();
 	}
 
-	public static void cleanUpTransactionsFromJSON() {
+	public void cleanUpTransactionsFromJSON() {
 		cleanUpSplits();
 		calculateRunningTotals();
 		connectTransfers();
 		connectSecurityTransfers();
-//		LotProcessor.setupSecurityLots();
+//		this.lotProcessor.setupSecurityLots();
 
 		cleanStatementHoldings();
 	}
 
-	public static void cleanUpTransactionsFromCsv() {
+	public void cleanUpTransactionsFromCsv() {
 		cleanUpSplits();
 		calculateRunningTotals();
 		connectTransfers();
 		connectSecurityTransfers();
-		LotProcessor.setupSecurityLots();
+		this.lotProcessor.setupSecurityLots();
 
 //		cleanStatementHoldings();
 	}
 
-	public static void cleanStatementHoldings() {
-		for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
+	public void cleanStatementHoldings() {
+		for (Account acct : this.model.getAccounts()) {
 			for (Statement stat : acct.getStatements()) {
 				stat.holdings.purgeEmptyPositions();
 			}
@@ -73,8 +78,8 @@ public class TransactionCleaner {
 	 * Go through acct txns and plug in running balance values.<br>
 	 * Also update account current and cleared balance values.
 	 */
-	public static void calculateRunningTotals() {
-		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
+	public void calculateRunningTotals() {
+		for (Account a : this.model.getAccounts()) {
 			BigDecimal bal = BigDecimal.ZERO;
 			BigDecimal cleared = BigDecimal.ZERO;
 
@@ -98,8 +103,8 @@ public class TransactionCleaner {
 	}
 
 	/** Correct any issues with split transactions */
-	private static void cleanUpSplits() {
-		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
+	private void cleanUpSplits() {
+		for (Account a : this.model.getAccounts()) {
 			for (GenericTxn txn : a.getTransactions()) {
 				massageSplits(txn);
 			}
@@ -107,7 +112,7 @@ public class TransactionCleaner {
 	}
 
 	/** A txn may have multiple splits transferring to/from another account. */
-	private static void massageSplits(GenericTxn txn) {
+	private void massageSplits(GenericTxn txn) {
 		if (!txn.hasSplits()) {
 			return;
 		}
@@ -129,7 +134,7 @@ public class TransactionCleaner {
 				if (stxn.getCatid() == stxn2.getCatid()) {
 					if (mtxn == null) {
 						mtxn = new MultiSplitTxn(txn);
-						MoneyMgrModel.currModel.addTransaction(mtxn);
+						this.model.addTransaction(mtxn);
 						splits.set(ii, mtxn);
 
 						// mtxn.setAmount(stxn.getAmount());
@@ -148,8 +153,8 @@ public class TransactionCleaner {
 	}
 
 	/** Connect transfer transactions between accounts */
-	private static void connectTransfers() {
-		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
+	private void connectTransfers() {
+		for (Account a : this.model.getAccounts()) {
 			for (GenericTxn txn : a.getTransactions()) {
 				connectTransfers(txn);
 			}
@@ -159,14 +164,14 @@ public class TransactionCleaner {
 	static int[] counts = { 0, 0 };
 
 	/** Connect transfers for a transaction */
-	private static void connectTransfers(SimpleTxn txn) {
+	private void connectTransfers(SimpleTxn txn) {
 		if (txn.hasSplits()) {
 			List<SimpleTxn> transfers = txn.getCashTransfers();
 
 			for (SimpleTxn transfer : transfers) {
 				connectTransfersNonSplit(transfer);
 			}
-			
+
 			return;
 		}
 
@@ -191,13 +196,13 @@ public class TransactionCleaner {
 		}
 	}
 
-	private static int multWarnCount = 0;
+	private int multWarnCount = 0;
 
 	/**
 	 * Given a transaction that is a transfer, search the associated account's
 	 * transactions for a suitable mate for this transaction.
 	 */
-	private static void connectTransfersNonSplit(SimpleTxn txn) {
+	private void connectTransfersNonSplit(SimpleTxn txn) {
 		if (txn.hasSplits()) {
 			Common.reportWarning("Should not have splits");
 			return;
@@ -215,7 +220,7 @@ public class TransactionCleaner {
 		int totalXfers = 0;
 		int failedXfers = 0;
 
-		Account a = MoneyMgrModel.currModel.getAccountByID(-txn.getCatid());
+		Account a = this.model.getAccountByID(-txn.getCatid());
 
 		findMatchesForTransfer(a, matchingTxns, txn, true);
 
@@ -264,7 +269,7 @@ public class TransactionCleaner {
 	 * @param txn          The transfer for which we are looking for matches
 	 * @param strict       Whether to ignore sign of amount
 	 */
-	private static void findMatchesForTransfer(//
+	private void findMatchesForTransfer(//
 			Account acct, //
 			List<SimpleTxn> matchingTxns, //
 			SimpleTxn txn, //
@@ -275,14 +280,13 @@ public class TransactionCleaner {
 		int tolerance = 2;
 
 		QDate date = txn.getDate();
-		MoneyMgrModel model = MoneyMgrModel.currModel;
 
-		int idx0 = model.getLastTransactionIndexOnOrBeforeDate( //
+		int idx0 = this.model.getLastTransactionIndexOnOrBeforeDate( //
 				txns, date.addDays(-tolerance));
 		if (idx0 < 0) {
 			idx0 = 0;
 		}
-		int idx1 = model.getLastTransactionIndexOnOrBeforeDate( //
+		int idx1 = this.model.getLastTransactionIndexOnOrBeforeDate( //
 				txns, date.addDays(tolerance));
 		if (idx1 < 0) {
 			idx1 = 0;
@@ -326,7 +330,7 @@ public class TransactionCleaner {
 	 * Locate a match for txn in gtxn (either gtxn itself, or a split)<br>
 	 * Account/amount must match and not already matched with an xfer.
 	 */
-	private static SimpleTxn checkMatchForTransfer( //
+	private SimpleTxn checkMatchForTransfer( //
 			SimpleTxn txn, //
 			SimpleTxn gtxn, //
 			boolean strict) {
@@ -361,12 +365,12 @@ public class TransactionCleaner {
 	}
 
 	/** Process transfers of securities between accounts */
-	private static void connectSecurityTransfers() {
+	private void connectSecurityTransfers() {
 		List<InvestmentTxn> xins = new ArrayList<InvestmentTxn>();
 		List<InvestmentTxn> xouts = new ArrayList<InvestmentTxn>();
 
 		// Gather all security transfers
-		for (SimpleTxn txn : MoneyMgrModel.currModel.getAllTransactions()) {
+		for (SimpleTxn txn : this.model.getAllTransactions()) {
 			if (txn instanceof InvestmentTxn) {
 				if ((txn.getAction() == TxAction.SHRS_IN)) {
 					xins.add((InvestmentTxn) txn);
@@ -381,7 +385,7 @@ public class TransactionCleaner {
 	}
 
 	/** Go through security transfers and connect in/out transactions */
-	private static void connectSecurityTransfers(List<InvestmentTxn> xins, List<InvestmentTxn> xouts) {
+	private void connectSecurityTransfers(List<InvestmentTxn> xins, List<InvestmentTxn> xouts) {
 		Comparator<InvestmentTxn> cpr = (o1, o2) -> {
 			int diff;
 

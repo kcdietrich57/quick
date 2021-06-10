@@ -4,7 +4,6 @@ import java.util.Date;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 
-import moneymgr.io.Reconciler;
 import moneymgr.io.qif.QifDomReader;
 import moneymgr.model.Account;
 import moneymgr.model.MoneyMgrModel;
@@ -43,6 +42,9 @@ public class QifLoader {
 	public static void main(String[] args) {
 		scn = new Scanner(System.in);
 
+		MoneyMgrModel qifModel = MoneyMgrModel.getModel(MoneyMgrModel.WIN_QIF_MODEL_NAME);
+		NetWorthReporter netWorthReporter = new NetWorthReporter(qifModel);
+
 		QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
 
 		for (;;) {
@@ -57,7 +59,8 @@ public class QifLoader {
 			if (s.startsWith("u")) {
 				usage();
 			} else if (s.startsWith("s")) {
-				ReconcileStatusReporter.reportStatus();
+				ReconcileStatusReporter reporter = new ReconcileStatusReporter(qifModel);
+				reporter.reportStatus();
 			} else if (s.startsWith("a")) {
 				if (s.startsWith("act")) {
 					StringTokenizer toker = new StringTokenizer(s);
@@ -70,11 +73,11 @@ public class QifLoader {
 
 					QifReporter.reportActivity(d1, d2);
 				} else if (s.startsWith("accts")) {
-					NetWorthReporter.reportCurrentNetWorth();
+					netWorthReporter.reportCurrentNetWorth();
 				} else {
 					final String aname = s.substring(1).trim();
 
-					final Account a = MoneyMgrModel.currModel.findAccount(aname);
+					final Account a = qifModel.findAccount(aname);
 					if (a != null) {
 						AccountReporter.reportStatus(a, "m");
 					}
@@ -101,7 +104,7 @@ public class QifLoader {
 			} else if (s.startsWith("g")) {
 				final String aname = s.substring(1).trim();
 
-				Account a = MoneyMgrModel.currModel.findAccount(aname);
+				Account a = qifModel.findAccount(aname);
 				if (a != null) {
 					QifReporter.generateMonthlyStatements(a);
 				}
@@ -127,7 +130,7 @@ public class QifLoader {
 				}
 			} else if (s.startsWith("r")) {
 				if (s.startsWith("relog")) {
-					Reconciler.rewriteStatementLogFile();
+					// Reconciler.rewriteStatementLogFile();
 				}
 			} else if (s.startsWith("y")) {
 				if (s.startsWith("ys")) {
@@ -136,7 +139,7 @@ public class QifLoader {
 			} else {
 				final QDate d = Common.parseQDate(s);
 				if (d != null) {
-					NetWorthReporter.reportNetWorthForDate(d);
+					netWorthReporter.reportNetWorthForDate(d);
 				}
 			}
 		}

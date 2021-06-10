@@ -3,10 +3,10 @@ package moneymgr.report;
 import java.math.BigDecimal;
 
 import moneymgr.model.Account;
-import moneymgr.model.MoneyMgrModel;
 import moneymgr.report.StatusForDateModel.AccountSummary;
 import moneymgr.report.StatusForDateModel.Section;
 import moneymgr.report.StatusForDateModel.SecuritySummary;
+import moneymgr.ui.MainFrame;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -99,7 +99,7 @@ public class InvestmentPerformanceReporter {
 
 		b.date = d;
 
-		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
+		for (Account a : MainFrame.appFrame.model.getAccounts()) {
 			final BigDecimal amt = a.getValueForDate(d);
 
 			b.netWorth = b.netWorth.add(amt);

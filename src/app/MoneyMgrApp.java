@@ -36,8 +36,12 @@ public class MoneyMgrApp {
 	}
 
 	public static void main(String[] args) {
+		MoneyMgrModel qifModel = null;
+		MoneyMgrModel jsonModel = null;
+		MoneyMgrModel csvModel = null;
+
 		boolean ENABLE_EXPERIMENTAL_CODE = false;
-		boolean ENABLE_QIF_IMPORT = false;
+		boolean ENABLE_CSV_IMPORT = false;
 
 		boolean savejson = false;
 		boolean comparejson = false;
@@ -66,7 +70,7 @@ public class MoneyMgrApp {
 		lapTime = startupTime;
 
 		if (loadwin) {
-			MoneyMgrModel.changeModel(MoneyMgrModel.WIN_QIF_MODEL_NAME);
+			qifModel = MoneyMgrModel.changeModel(MoneyMgrModel.WIN_QIF_MODEL_NAME);
 
 			Common.reportInfo("Loading QIF data");
 			MoneyMgrApp.scn = new Scanner(System.in);
@@ -83,13 +87,14 @@ public class MoneyMgrApp {
 
 		if (ENABLE_EXPERIMENTAL_CODE) {
 			Common.reportInfo(String.format("Running experimental code"));
-			InvestmentPerformanceModel model = new InvestmentPerformanceModel( //
+			InvestmentPerformanceModel investmentPerformanceModel = new InvestmentPerformanceModel( //
+					null, //
 					new QDate(2018, 8, 1), //
 					QDate.today());
 
-			System.out.println(model.toString());
+			System.out.println(investmentPerformanceModel.toString());
 
-			runExperimentalCode();
+			runExperimentalCode(qifModel);
 			Common.reportInfo(String.format("Experimental code complete: %s", elapsedTime()));
 		}
 
@@ -100,14 +105,14 @@ public class MoneyMgrApp {
 		Persistence persistence = new Persistence();
 
 		if (savejson) {
-			Common.reportInfo(String.format("Saving JSON"));
-			persistence.saveJSON(MoneyMgrModel.currModel, jsonFilename);
+			Common.reportInfo(String.format("Saving QIF model as JSON"));
+			persistence.saveJSON(qifModel, jsonFilename);
 			Common.reportInfo(String.format("JSON saved: %s", elapsedTime()));
 		}
 
 		if (loadjson) {
 			Common.reportInfo(String.format("Loading JSON"));
-			persistence.loadJSON(MoneyMgrModel.WIN_JSON_MODEL_NAME, jsonFilename);
+			jsonModel = persistence.loadJSON(MoneyMgrModel.WIN_JSON_MODEL_NAME, jsonFilename);
 			Common.reportInfo(String.format("JSON loaded: %s", elapsedTime()));
 		}
 
@@ -118,31 +123,35 @@ public class MoneyMgrApp {
 			Common.reportInfo(String.format("Compare complete: %s", elapsedTime()));
 		}
 
-		if (ENABLE_QIF_IMPORT) {
+		if (ENABLE_CSV_IMPORT) {
 			CSVImport.testCsvImport();
+			csvModel = MoneyMgrModel.getModel(MoneyMgrModel.MAC_CSV_MODEL_NAME);
 
 //			Common.reportInfo(String.format("Comparing QIF/CSV models"));
 //			MoneyMgrModel.compareModels(MoneyMgrModel.WIN_QIF_MODEL_NAME, //
 //					MoneyMgrModel.MAC_CSV_MODEL_NAME);
 //			Common.reportInfo(String.format("Compare complete: %s", elapsedTime()));
 		}
-		
-		MoneyMgrModel.changeModel((usejson) //
-				? MoneyMgrModel.WIN_JSON_MODEL_NAME //
-				: MoneyMgrModel.WIN_QIF_MODEL_NAME);
 
-		if (ENABLE_QIF_IMPORT) {
-			MoneyMgrModel.changeModel(MoneyMgrModel.MAC_CSV_MODEL_NAME);
+		MoneyMgrModel model;
+
+		if (ENABLE_CSV_IMPORT) {
+			model = MoneyMgrModel.changeModel(MoneyMgrModel.MAC_CSV_MODEL_NAME);
+		} else if (usejson) {
+			model = MoneyMgrModel.changeModel(MoneyMgrModel.WIN_JSON_MODEL_NAME);
+		} else {
+			model = MoneyMgrModel.changeModel(MoneyMgrModel.WIN_QIF_MODEL_NAME);
 		}
 
 		Common.reportInfo(String.format("Building UI"));
-		MainFrame.createUI(MoneyMgrModel.currModel);
+		MainFrame.createUI(model);
 
 		Common.reportInfo(String.format("Startup complete: %s", elapsedTime()));
 	}
 
 	/** This function will run experimental code for the current data */
-	private static void runExperimentalCode() {
-		CashFlow.reportCashFlowForTrailingYear();
+	private static void runExperimentalCode(MoneyMgrModel model) {
+		CashFlow cashflow = new CashFlow(model);
+		cashflow.reportCashFlowForTrailingYear();
 	}
 }

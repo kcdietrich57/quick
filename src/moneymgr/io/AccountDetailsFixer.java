@@ -8,8 +8,14 @@ import moneymgr.util.QDate;
 
 /** Helper class to correct account information after QIF load */
 public class AccountDetailsFixer {
+	private final MoneyMgrModel model;
+
+	public AccountDetailsFixer(MoneyMgrModel model) {
+		this.model = model;
+	}
+
 	/** Repair Quicken's confusion about specific account types */
-	public static AccountType fixType(String name, AccountType type) {
+	public AccountType fixType(String name, AccountType type) {
 		if (name.endsWith("Checking")) {
 			type = AccountType.Bank;
 		} else if (name.equals("UnionNationalCD") //
@@ -40,7 +46,7 @@ public class AccountDetailsFixer {
 		}
 
 		if (type == null) {
-			Account existing = MoneyMgrModel.currModel.findAccount(name);
+			Account existing = this.model.findAccount(name);
 			type = (existing == null) ? AccountType.Bank : existing.type;
 		}
 
@@ -51,7 +57,7 @@ public class AccountDetailsFixer {
 	 * When encountering an account again during data load, compare the two and
 	 * report issues as necessary, or update account properties where appropriate.
 	 */
-	public static void updateAccount( //
+	public void updateAccount( //
 			Account acct, QDate closeDate, int freq, int dom) {
 		if (acct.type == null) {
 			Common.reportError("Account type is null: " //

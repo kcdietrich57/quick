@@ -19,9 +19,14 @@ import moneymgr.util.Common;
 
 /** Process statement info in statementLog.dat */
 public class Reconciler {
+	public final MoneyMgrModel model;
+
+	public Reconciler(MoneyMgrModel model) {
+		this.model = model;
+	}
 
 	/** After loading QIF data, read statement log file, filling in details. */
-	public static void processStatementLog() {
+	public void processStatementLog() {
 		if (!Statement.stmtLogFile.isFile()) {
 			return;
 		}
@@ -42,7 +47,7 @@ public class Reconciler {
 			// Ingest statements (each input line)
 			s = stmtLogReader.readLine();
 			while (s != null) {
-				StatementDetails d = new StatementDetails(s);
+				StatementDetails d = new StatementDetails(this.model, s);
 
 				details.add(d);
 
@@ -96,9 +101,9 @@ public class Reconciler {
 	}
 
 	/** Update statements with their reconciliation information */
-	public static void processStatementDetails(List<StatementDetails> details) {
+	public void processStatementDetails(List<StatementDetails> details) {
 		for (StatementDetails d : details) {
-			Account a = MoneyMgrModel.currModel.getAccountByID(d.acctid);
+			Account a = this.model.getAccountByID(d.acctid);
 
 			// We've loaded basic statement info (date, closing balance)
 			// We must connect the statements with the associated transactions
@@ -123,7 +128,7 @@ public class Reconciler {
 		}
 	}
 
-	private static boolean isMatch(SimpleTxn tx, StatementTxInfo txinfo) {
+	private boolean isMatch(SimpleTxn tx, StatementTxInfo txinfo) {
 		if (!txinfo.date.equals(tx.getDate())) {
 			return false;
 		}
@@ -142,7 +147,7 @@ public class Reconciler {
 	}
 
 	/** Match up statement and its transactions using statement details. */
-	private static void getTransactionsFromDetails(Account a, Statement s, StatementDetails d) {
+	private void getTransactionsFromDetails(Account a, Statement s, StatementDetails d) {
 		if (s.isBalanced()) {
 			return;
 		}
@@ -193,7 +198,7 @@ public class Reconciler {
 	}
 
 	/** Add a reconciled statement's info to the statement log file */
-	public static void saveReconciledStatement(Statement stat) {
+	public void saveReconciledStatement(Statement stat) {
 		PrintWriter pw = null;
 		try {
 			pw = openStatementsLogFile();
@@ -218,7 +223,7 @@ public class Reconciler {
 	 * Recreate log file when the format has changed from the previous version.<br>
 	 * Save the previous file as <name>.N
 	 */
-	public static void rewriteStatementLogFile() {
+	public void rewriteStatementLogFile() {
 		String basename = Statement.stmtLogFile.getName();
 		File tmpLogFile = new File(QifDom.qifDir, basename + ".tmp");
 
@@ -232,7 +237,7 @@ public class Reconciler {
 		}
 
 		pw.println("" + StatementDetails.CURRENT_VERSION);
-		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
+		for (Account a : this.model.getAccounts()) {
 			for (Statement s : a.getStatements()) {
 				pw.println(StatementDetails.formatStatementForSave(s));
 			}
@@ -266,7 +271,7 @@ public class Reconciler {
 	}
 
 	/** Open the statement log file for appending */
-	private static PrintWriter openStatementsLogFile() {
+	private PrintWriter openStatementsLogFile() {
 		try {
 			return new PrintWriter(new FileWriter(Statement.stmtLogFile, true));
 		} catch (Exception e) {

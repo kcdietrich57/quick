@@ -56,7 +56,7 @@ public abstract class GenericTxn //
 	public GenericTxn(int acctid) {
 		this(0, acctid);
 	}
-	
+
 	// TODO clone transaction
 //	public GenericTxn(GenericTxn other) {
 //		this(other.getAccountID());

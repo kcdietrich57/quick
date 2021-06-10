@@ -18,7 +18,7 @@ public class QifDomReader {
 	public static void loadDom(String[] qifFiles) {
 		QifDom.qifDir = new File(qifFiles[0]).getParentFile();
 
-		QifDomReader rdr = new QifDomReader(QifDom.qifDir);
+		QifDomReader rdr = new QifDomReader(MoneyMgrModel.currModel, QifDom.qifDir);
 
 		// Process all the QIF files
 		for (String fn : qifFiles) {
@@ -26,10 +26,18 @@ public class QifDomReader {
 		}
 
 		// Additional processing once the data is loaded (quotes, stmts, etc)
-		if (MoneyMgrModel.currModel != null) {
+		if (rdr.model != null) {
 			rdr.postLoad();
 		}
 	}
+
+	public final MoneyMgrModel model;
+	private final TransactionCleaner transactionCleaner;
+	private final SecurityProcessor securityProcessor;
+	private final StatementProcessor statementProcessor;
+	private final OptionsProcessor optionsProcessor;
+	private final PortfolioProcessor portfolioProcessor;
+	private final Reconciler reconciler;
 
 	/** Where data files live */
 	private File qifDir;
@@ -40,8 +48,17 @@ public class QifDomReader {
 	/** Reader for data files */
 	private QFileReader filerdr = null;
 
-	public QifDomReader(File qifDir) {
+	public QifDomReader(MoneyMgrModel model, File qifDir) {
+		this.model = model;
 		this.qifDir = qifDir;
+
+		this.transactionCleaner = new TransactionCleaner(this.model);
+		this.securityProcessor = new SecurityProcessor(this);
+		this.statementProcessor = new StatementProcessor(this);
+		this.optionsProcessor = new OptionsProcessor(this.model);
+		this.portfolioProcessor = new PortfolioProcessor(this.model);
+
+		this.reconciler = new Reconciler(this.model);
 	}
 
 	public QFileReader getFileReader() {
@@ -62,7 +79,7 @@ public class QifDomReader {
 
 		processFile2();
 	}
-	
+
 	private void processFile2() {
 		Object fileContents = this.filerdr.ingestFile();
 	}
@@ -83,42 +100,42 @@ public class QifDomReader {
 
 		processFile();
 
-		if (doCleanup && MoneyMgrModel.currModel != null) {
-			TransactionCleaner.cleanUpTransactionsFromQIF();
+		if (doCleanup && this.model != null) {
+			this.transactionCleaner.cleanUpTransactionsFromQIF();
 		}
 	}
 
 	/** Process security info, statements, etc after all basic data is loaded */
 	public void postLoad() {
 		File d = new File(this.qifDir, "quotes");
-		SecurityProcessor.loadSecurityPriceHistory(d);
+		this.securityProcessor.loadSecurityPriceHistory(d);
 		Security.fixSplits();
 
 		// Create option objects
-		OptionsProcessor.loadStockOptions();
+		this.optionsProcessor.loadStockOptions();
 
 		// Load basic statement info
 		File dd = new File(this.qifDir, "statements");
-		StatementProcessor.loadStatments(this, dd);
+		this.statementProcessor.loadStatments(dd);
 
 		// Add transactions to portfolios/positions
-		SecurityProcessor.processSecurities();
+		this.securityProcessor.processSecurities();
 
-		OptionsProcessor.matchOptionsWithTransactions();
+		this.optionsProcessor.matchOptionsWithTransactions();
 
 		// Process saved statement reconciliation information
 		// Match statements with transactions
-		Reconciler.processStatementLog();
+		this.reconciler.processStatementLog();
 
 		// Update share balances in all positions
-		PortfolioProcessor.fixPortfolios();
+		this.portfolioProcessor.fixPortfolios();
 
-		TransactionCleaner.calculateRunningTotals();
-		TransactionCleaner.cleanStatementHoldings();
+		this.transactionCleaner.calculateRunningTotals();
+		this.transactionCleaner.cleanStatementHoldings();
 
 		// Update statement reconciliation file if format has changed
 		if (QifDom.loadedStatementsVersion != StatementDetails.CURRENT_VERSION) {
-			Reconciler.rewriteStatementLogFile();
+			this.reconciler.rewriteStatementLogFile();
 		}
 	}
 
@@ -129,7 +146,7 @@ public class QifDomReader {
 		}
 
 		this.curFile = f;
-		this.filerdr = new QFileReader(f);
+		this.filerdr = new QFileReader(this.model, f);
 	}
 
 	/** Process a file, loading the various sections via helper classes */
@@ -160,15 +177,15 @@ public class QifDomReader {
 				break;
 
 			case Statements:
-				StatementProcessor.loadStatements(this, this.curFile);
+				this.statementProcessor.loadStatements(this.curFile);
 				break;
 
 			case Security:
-				SecurityProcessor.loadSecurities(this);
+				this.securityProcessor.loadSecurities();
 				break;
 
 			case Prices:
-				SecurityProcessor.loadPrices(this);
+				this.securityProcessor.loadPrices();
 				break;
 
 			case QClass:

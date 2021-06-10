@@ -77,6 +77,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.util.Common;
 
 class RawObjectInfo {
@@ -397,10 +398,13 @@ public class QFileReader {
 		}
 	}
 
+	public final MoneyMgrModel model;
 	private LineNumberReader rdr;
 	private String lookaheadLine = null;
 
-	public QFileReader(File file) {
+	public QFileReader(MoneyMgrModel model, File file) {
+		this.model = model;
+
 		try {
 			this.rdr = new LineNumberReader(new FileReader(file));
 		} catch (final FileNotFoundException e) {

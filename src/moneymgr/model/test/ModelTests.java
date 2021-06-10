@@ -8,20 +8,20 @@ import org.junit.runner.RunWith;
 
 // SelectPackages("com.howtodoinjava.junit5.examples.packageA") 
 @RunWith(JUnitPlatform.class)
-@SelectClasses({
-	AccountCategoryTests.class,
-	AccountTests.class,
-	AccountTypeTest.class,
-	CategoryTest.class,
-	ITxTest.class,
-	LotTest.class,
-	SecurityTest.class,
-	SecurityPositionTest.class,
-	SecurityPortfolioTest.class,
-	StatementTest.class,
-	StockOptionTest.class,
-	TxTest.class
-	})
+@SelectClasses({ //
+		AccountCategoryTests.class, //
+		AccountTests.class, //
+		AccountTypeTest.class, //
+		CategoryTest.class, //
+		ITxTest.class, //
+		LotTest.class, //
+		SecurityTest.class, //
+		SecurityPositionTest.class, //
+		SecurityPortfolioTest.class, //
+		StatementTest.class, //
+		StockOptionTest.class, //
+		TxTest.class //
+})
 public class ModelTests {
 	// code relevant to test suite goes here
 }

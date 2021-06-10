@@ -9,7 +9,6 @@ import moneymgr.io.QuoteDownloader;
 import moneymgr.model.Account;
 import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
-import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.QPrice;
 import moneymgr.model.Security;
 import moneymgr.model.SecurityPortfolio;
@@ -21,35 +20,45 @@ import moneymgr.util.Common;
 
 /** Load securities and set up security and lot details afterwards. */
 public class SecurityProcessor {
+	private final QifDomReader qrdr;
+	private final QuoteDownloader quoteDownloader;
+	private final QQuoteLoader quoteLoader;
+
+	public SecurityProcessor(QifDomReader qrdr) {
+		this.qrdr = qrdr;
+		this.quoteDownloader = new QuoteDownloader(qrdr.model);
+		this.quoteLoader = new QQuoteLoader(qrdr.model);
+	}
+
 	/** Process securities section of an input file and create security objects */
-	public static void loadSecurities(QifDomReader qrdr) {
+	public void loadSecurities() {
 		for (;;) {
-			String s = qrdr.getFileReader().peekLine();
+			String s = this.qrdr.getFileReader().peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			Security sec = loadSecurity(qrdr);
+			Security sec = loadSecurity(this.qrdr);
 			if (sec == null) {
 				break;
 			}
 
 			Security existing = (sec.symbol != null) //
-					? MoneyMgrModel.currModel.findSecurityBySymbol(sec.symbol) //
-					: MoneyMgrModel.currModel.findSecurityByName(sec.getName());
+					? this.qrdr.model.findSecurityBySymbol(sec.symbol) //
+					: this.qrdr.model.findSecurityByName(sec.getName());
 
 			if (existing != null) {
 				if (!existing.names.contains(sec.getName())) {
 					existing.names.add(sec.getName());
 				}
 			} else {
-				MoneyMgrModel.currModel.addSecurity(sec);
+				this.qrdr.model.addSecurity(sec);
 			}
 		}
 	}
 
 	/** Load an individual security from the input file */
-	private static Security loadSecurity(QifDomReader qrdr) {
+	private Security loadSecurity(QifDomReader qrdr) {
 		QFileReader.QLine qline = new QFileReader.QLine();
 
 		String symbol = null;
@@ -94,13 +103,13 @@ public class SecurityProcessor {
 	}
 
 	/** Process security txns (global, accounts) after loading from QIF */
-	public static void processSecurities() {
+	public void processSecurities() {
 		// Process global porfolio info
-		processAllSecurities2(MoneyMgrModel.currModel.portfolio, //
-				MoneyMgrModel.currModel.getAllTransactions());
+		processAllSecurities2(this.qrdr.model.portfolio, //
+				this.qrdr.model.getAllTransactions());
 
 		// Process holdings for each account
-		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
+		for (Account a : this.qrdr.model.getAccounts()) {
 			if (a.isInvestmentAccount()) {
 				processAccountSecurities2(a.securities, a.getTransactions());
 			}
@@ -114,7 +123,7 @@ public class SecurityProcessor {
 	 * Add share balance to positions.<br>
 	 * Process splits along the way.
 	 */
-	private static void processAllSecurities2(SecurityPortfolio port, List<SimpleTxn> txns) {
+	private void processAllSecurities2(SecurityPortfolio port, List<SimpleTxn> txns) {
 		for (SimpleTxn stxn : txns) {
 			if ((stxn != null) && (stxn.getSecurity() != null)) {
 				processSecurities2(port, (InvestmentTxn) stxn);
@@ -122,7 +131,7 @@ public class SecurityProcessor {
 		}
 	}
 
-	private static void processAccountSecurities2(SecurityPortfolio port, List<GenericTxn> txns) {
+	private void processAccountSecurities2(SecurityPortfolio port, List<GenericTxn> txns) {
 		for (SimpleTxn stxn : txns) {
 			if ((stxn != null) && (stxn.getSecurity() != null)) {
 				processSecurities2(port, (InvestmentTxn) stxn);
@@ -130,7 +139,7 @@ public class SecurityProcessor {
 		}
 	}
 
-	private static void processSecurities2(SecurityPortfolio port, InvestmentTxn txn) {
+	private void processSecurities2(SecurityPortfolio port, InvestmentTxn txn) {
 		if (txn.getAction() == TxAction.STOCKSPLIT) {
 			// TODO processSplit() - only keep one split tx, not one per acct
 			StockOption.processSplit(txn);
@@ -141,7 +150,7 @@ public class SecurityProcessor {
 	}
 
 	/** Load quotes from CSV input files in a specified directory */
-	public static void loadSecurityPriceHistory(File quoteDirectory) {
+	public void loadSecurityPriceHistory(File quoteDirectory) {
 		if (!quoteDirectory.isDirectory()) {
 			return;
 		}
@@ -151,22 +160,22 @@ public class SecurityProcessor {
 		// Load saved quote data
 		for (File f : quoteFiles) {
 			String symbol = f.getName().replaceFirst(".csv", "");
-			Security sec = MoneyMgrModel.currModel.findSecurityBySymbol(symbol);
+			Security sec = this.qrdr.model.findSecurityBySymbol(symbol);
 
 			if (sec != null) {
-				QQuoteLoader.loadQuoteFile(sec, f);
+				this.quoteLoader.loadQuoteFile(sec, f);
 			}
 		}
 
 		// Download quotes from service
-		for (Security sec : MoneyMgrModel.currModel.getSecurities()) {
+		for (Security sec : this.qrdr.model.getSecurities()) {
 			String symbol = sec.getSymbol();
 
 			if (symbol != null) {
 				int warningCount = 0;
 				Common.debugInfo("Loading/comparing price history for " + symbol);
 
-				List<QPrice> prices = QuoteDownloader.loadPriceHistory(symbol);
+				List<QPrice> prices = this.quoteDownloader.loadPriceHistory(symbol);
 
 				if (prices != null) {
 					for (QPrice price : prices) {
@@ -186,19 +195,19 @@ public class SecurityProcessor {
 	}
 
 	/** Load quotes from a QIF input file */
-	public static void loadPrices(QifDomReader qrdr) {
+	public void loadPrices() {
 		for (;;) {
-			String s = qrdr.getFileReader().peekLine();
+			String s = this.qrdr.getFileReader().peekLine();
 			if ((s == null) || ((s.length() > 0) && (s.charAt(0) == '!'))) {
 				break;
 			}
 
-			QPrice price = QPrice.load(qrdr.getFileReader());
+			QPrice price = QPrice.load(this.qrdr.getFileReader());
 			if (price == null) {
 				break;
 			}
 
-			Security sec = MoneyMgrModel.currModel.getSecurity(price.secid);
+			Security sec = this.qrdr.model.getSecurity(price.secid);
 			if (sec != null) {
 				sec.addPrice(price);
 			}

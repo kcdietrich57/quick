@@ -145,6 +145,8 @@ public class TransactionInfo {
 		PRICE_IDX = getFieldIndex("Price");
 	}
 
+	public final MoneyMgrModel model;
+
 	public boolean isInvestmentTransaction;
 
 	public String[] values;
@@ -216,6 +218,8 @@ public class TransactionInfo {
 
 	/** Constructor - empty transaction info */
 	public TransactionInfo(Account acct) {
+		this.model = acct.model;
+
 		this.isInvestmentTransaction = acct.isInvestmentAccount();
 
 		this.values = new String[fieldNames.length];
@@ -228,7 +232,9 @@ public class TransactionInfo {
 	}
 
 	/** Constructor - with values - e.g. from CSV import */
-	public TransactionInfo(List<String> values) {
+	public TransactionInfo(MoneyMgrModel model, List<String> values) {
+		this.model = model;
+
 		this.isInvestmentTransaction = false;
 
 		while (values.size() < TransactionInfo.fieldNames.length) {
@@ -278,7 +284,7 @@ public class TransactionInfo {
 				"Cloning source account '" + acctName + "'" + //
 						"(" + a.acctid + ")");
 
-		return new Account( //
+		return new Account(this.model, //
 				a.acctid, acctName, a.description, a.type, //
 				a.getStatementFrequency(), a.getStatementDay());
 	}
@@ -286,10 +292,8 @@ public class TransactionInfo {
 	/** Extract values from raw info and set member variables accordingly */
 	public void processValues(MoneyMgrModel sourceModel) {
 		try {
-			MoneyMgrModel model = MoneyMgrModel.currModel;
-
 			String acctName = value(ACCOUNT_IDX);
-			this.account = model.findAccount(acctName);
+			this.account = this.model.findAccount(acctName);
 			if (this.account == null) {
 				Common.reportWarning("No account '" + acctName + "'"); // TODO xyzzy
 			}
@@ -359,17 +363,17 @@ public class TransactionInfo {
 
 			if (catstring != null && !catstring.isEmpty() //
 					&& !catstring.equals("Uncategorized")) {
-				int catid = Common.parseCategory(catstring);
+				int catid = this.model.parseCategory(catstring);
 				if (catid > 0) {
-					this.category = model.getCategory(catid);
+					this.category = this.model.getCategory(catid);
 					this.xaccount = null;
 				} else if (catid < 0) {
 					this.category = null;
-					this.xaccount = model.getAccountByID(-catid);
+					this.xaccount = this.model.getAccountByID(-catid);
 				} else {
 					Common.reportWarning("Creating category from '" + value(CATEGORY_IDX) + "'");
-					Common.parseCategory(catstring);
-					model.addCategory(new Category(catstring, "mac category", true));
+					this.model.parseCategory(catstring);
+					this.model.addCategory(new Category(catstring, "mac category", true));
 				}
 			}
 
@@ -385,12 +389,12 @@ public class TransactionInfo {
 					setValue(SECURITY_IDX, sname);
 				}
 
-				this.security = model.findSecurity(sname);
+				this.security = this.model.findSecurity(sname);
 
 				if (this.security == null) {
 					Common.reportWarning("Creating dummy security for '" + sname + "'");
 					this.security = new Security(sname, sname);
-					model.addSecurity(this.security);
+					this.model.addSecurity(this.security);
 				}
 			}
 
@@ -418,13 +422,13 @@ public class TransactionInfo {
 				if (catOrXfer.startsWith("[")) {
 					acctName = catOrXfer.substring(1, catOrXfer.length() - 1);
 
-					this.xaccount = model.findAccount(acctName);
+					this.xaccount = this.model.findAccount(acctName);
 
 					if (this.xaccount == null) {
 						Common.reportWarning("No xfer account from '" + catOrXfer + "'");
 					}
 				} else {
-					this.category = model.findCategory(catOrXfer);
+					this.category = this.model.findCategory(catOrXfer);
 
 					if (this.category == null) {
 						Common.reportWarning("No category from '" + catOrXfer + "'");
@@ -503,7 +507,7 @@ public class TransactionInfo {
 			this.splits = new ArrayList<>();
 		}
 
-		Account acct = MoneyMgrModel.currModel.findAccount(value(ACCOUNT_IDX));
+		Account acct = this.model.findAccount(value(ACCOUNT_IDX));
 		TransactionInfo splitinfo = new TransactionInfo(acct);
 
 		splitinfo.setValue(TransactionInfo.SPLIT_IDX, "S");

@@ -56,7 +56,7 @@ public class Lot {
 			InvestmentTxn createTxn, InvestmentTxn disposingTxn, //
 			Lot srcLot) {
 		this.model = MoneyMgrModel.currModel;
-		
+
 		this.lotid = (lotid > 0) ? lotid : this.model.nextLotId();
 		this.acctid = acctid;
 		this.createDate = date;

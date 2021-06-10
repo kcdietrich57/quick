@@ -7,6 +7,7 @@ import moneymgr.model.GenericTxn;
 import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.Statement;
 import moneymgr.ui.AccountSelectionListener;
+import moneymgr.ui.MainFrame;
 import moneymgr.ui.MainWindow;
 import moneymgr.ui.StatementSelectionListener;
 import moneymgr.util.QDate;
@@ -17,8 +18,12 @@ public class TransactionTableModel //
 		extends GenericTransactionTableModel //
 		implements AccountSelectionListener, StatementSelectionListener {
 
+	private final MoneyMgrModel model;
+
 	public TransactionTableModel() {
 		super("transactionTable");
+
+		this.model = MainFrame.appFrame.model;
 	}
 
 	protected void setObject(Object obj, boolean update) {
@@ -37,7 +42,7 @@ public class TransactionTableModel //
 			txns = this.curAccount.getTransactions();
 		} else if (obj instanceof Statement) {
 			curStatement = (Statement) obj;
-			curAccount = MoneyMgrModel.currModel.getAccountByID(curStatement.acctid);
+			curAccount = this.model.getAccountByID(curStatement.acctid);
 			txns = curStatement.transactions;
 		} else {
 			return;

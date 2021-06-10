@@ -9,6 +9,7 @@ import java.util.Map;
 import moneymgr.model.Account;
 import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.SimpleTxn;
+import moneymgr.ui.MainFrame;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
@@ -18,6 +19,7 @@ import moneymgr.util.QDate;
  * Cash in/out (total and itemized by account)
  */
 class CashFlowNode {
+	public final MoneyMgrModel model;
 	public Account acct;
 	public QDate start;
 	public QDate end;
@@ -38,6 +40,7 @@ class CashFlowNode {
 
 	/** Construct an empty Node */
 	public CashFlowNode(Account acct, QDate start, QDate end) {
+		this.model = acct.model;
 		this.acct = acct;
 		this.start = start;
 		this.end = end;
@@ -71,7 +74,7 @@ class CashFlowNode {
 		// TODO handle multiple transfer splits
 		int xacctid = -transfers.get(0).getCatid();
 
-		Account xacct = MoneyMgrModel.currModel.getAccountByID(xacctid);
+		Account xacct = this.model.getAccountByID(xacctid);
 
 		// Save transfer info
 		if (xfer.signum() > 0) {
@@ -148,7 +151,7 @@ class CashFlowNode {
 		String ret = "";
 		boolean first = true;
 
-		for (Account xacct : MoneyMgrModel.currModel.getAccounts()) {
+		for (Account xacct : this.model.getAccounts()) {
 			BigDecimal inx = this.inxTotalForAccount.get(xacct);
 			BigDecimal outx = this.outxTotalForAccount.get(xacct);
 
@@ -202,6 +205,7 @@ class CashFlowNode {
  * between accounts.
  */
 public class CashFlow {
+	public final MoneyMgrModel model;
 	public QDate start;
 	public QDate end;
 
@@ -211,6 +215,10 @@ public class CashFlow {
 	Map<Account, List<CashFlowNode>> terminalOutputs = new HashMap<>();
 	/** Lists places where cash is transferred between accounts */
 	Map<Account, List<CashFlowNode>> intermediaries = new HashMap<>();
+
+	public CashFlow(MoneyMgrModel model) {
+		this.model = model;
+	}
 
 	private void addNode(CashFlowNode node, Map<Account, List<CashFlowNode>> nodes) {
 		List<CashFlowNode> list = terminalInputs.get(node.acct);
@@ -275,19 +283,19 @@ public class CashFlow {
 	}
 
 	/** Report cash flow for last 12 months */
-	public static void reportCashFlowForTrailingYear() {
+	public void reportCashFlowForTrailingYear() {
 		QDate d = QDate.today();
 		QDate start = d.getFirstDayOfMonth().addMonths(-12).getFirstDayOfMonth();
 
 		Map<Account, List<CashFlowNode>> nodes = new HashMap<>();
 
-		for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
+		for (Account acct : MainFrame.appFrame.model.getAccounts()) {
 			if (acct.isOpenDuring(start, QDate.today())) {
 				buildCashFlowNode(nodes, acct, start);
 			}
 		}
 
-		for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
+		for (Account acct : this.model.getAccounts()) {
 			List<CashFlowNode> anodes = nodes.get(acct);
 			if (anodes == null) {
 				continue;
@@ -316,7 +324,7 @@ public class CashFlow {
 
 		System.out.println();
 
-		for (Account acct : MoneyMgrModel.currModel.getAccounts()) {
+		for (Account acct : this.model.getAccounts()) {
 			List<CashFlowNode> anodes = nodes.get(acct);
 			if (anodes == null) {
 				continue;

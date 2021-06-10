@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 
 import javax.swing.JPanel;
 
+import moneymgr.model.MoneyMgrModel;
+
 /**
  * This panel displays accounts and selection drives AccountPanel<br>
  * Controls<br>
@@ -12,18 +14,22 @@ import javax.swing.JPanel;
  */
 @SuppressWarnings("serial")
 public class AccountNavigationPanel extends JPanel {
+	public final MoneyMgrModel model;
+
 	private AccountNavigationControlsPanel controlsPanel;
 	private AccountNavigationListPanel accountListPanel;
 	private AccountNavigationSummaryPanel summaryPanel;
 
-	public AccountNavigationPanel() {
+	public AccountNavigationPanel(MoneyMgrModel model) {
 		setLayout(new BorderLayout());
+
+		this.model = model;
 
 		this.controlsPanel = new AccountNavigationControlsPanel(this);
 
 		this.accountListPanel = new AccountNavigationListPanel(false, false);
 		MainWindow.instance.accountListPanel = this.accountListPanel;
-		this.summaryPanel = new AccountNavigationSummaryPanel();
+		this.summaryPanel = new AccountNavigationSummaryPanel(this.model);
 		MainWindow.instance.summaryPanel = this.summaryPanel;
 
 		add(this.controlsPanel, BorderLayout.NORTH);

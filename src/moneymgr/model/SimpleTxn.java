@@ -2,7 +2,6 @@ package moneymgr.model;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -654,7 +653,7 @@ public abstract class SimpleTxn implements Txn {
 			List<SimpleTxn> transfers = getCashTransfers();
 			for (SimpleTxn transfer : transfers) {
 				s += String.format("%s(%s),", //
-						transfer.getAccount().name,
+						transfer.getAccount().name, //
 						transfer.getAmount().toString());
 			}
 			s += "]";

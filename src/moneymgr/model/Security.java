@@ -267,7 +267,7 @@ public class Security {
 		}
 
 		// We either have no price history, or the date is before the start
-		return new QPrice(date, this.secid, BigDecimal.ZERO);
+		return new QPrice(this.model, date, this.secid, BigDecimal.ZERO);
 	}
 
 	/**
@@ -278,7 +278,7 @@ public class Security {
 	 */
 	private int getPriceIndexForDate(QDate date) {
 		int idx = Collections.binarySearch(this.prices, //
-				new QPrice(date, 1, BigDecimal.ZERO), //
+				new QPrice(this.model, date, 1, BigDecimal.ZERO), //
 				new Comparator<QPrice>() {
 					public int compare(QPrice p1, QPrice p2) {
 						return p1.date.compareTo(p2.date);

@@ -15,6 +15,11 @@ import moneymgr.util.QDate;
 
 /** Generate report on reconciliation status for all accounts */
 public class ReconcileStatusReporter {
+	public final MoneyMgrModel model;
+
+	public ReconcileStatusReporter(MoneyMgrModel model) {
+		this.model = model;
+	}
 
 	/** Comparator for ranking accounts by most recent statement date */
 	private static final Comparator<Account> compareLastBalancedStatementDate = (o1, o2) -> {
@@ -38,7 +43,7 @@ public class ReconcileStatusReporter {
 	};
 
 	/** Print reconcile status report - obsolete QifLoader only */
-	public static void reportStatus() {
+	public void reportStatus() {
 		ReconcileStatusModel model = buildReportStatusModel();
 		String s = generateReportStatus(model);
 		System.out.println(s);
@@ -139,10 +144,10 @@ public class ReconcileStatusReporter {
 	}
 
 	/** Create a model with current reconciliation information */
-	public static ReconcileStatusModel buildReportStatusModel() {
+	public ReconcileStatusModel buildReportStatusModel() {
 		ReconcileStatusModel model = new ReconcileStatusModel();
 
-		List<Account> accountsByLastStatement = new ArrayList<>(MoneyMgrModel.currModel.getAccounts());
+		List<Account> accountsByLastStatement = new ArrayList<>(this.model.getAccounts());
 
 		Collections.sort(accountsByLastStatement, compareLastBalancedStatementDate);
 
@@ -154,7 +159,7 @@ public class ReconcileStatusReporter {
 	}
 
 	/** Format one account's information */
-	private static String formatAccountInfo(int anum, AccountInfo ainfo) {
+	private String formatAccountInfo(int anum, AccountInfo ainfo) {
 		return String.format("%3d   %-35s : %8s  %8s  %s : %5d/%5d :    %8s", //
 				anum, //
 				ainfo.name, //
@@ -167,7 +172,7 @@ public class ReconcileStatusReporter {
 	}
 
 	/** Output a section for accounts with a range of dates since the last stmt */
-	private static int appendAccountSection(StringBuilder sb, //
+	private int appendAccountSection(StringBuilder sb, //
 			int anum, String header, List<AccountInfo> accts) {
 		sb.append("\n");
 		sb.append(header);
@@ -182,7 +187,7 @@ public class ReconcileStatusReporter {
 	}
 
 	/** Produce a text report with accounts organized by next statement date */
-	public static String generateReportStatus(ReconcileStatusModel model) {
+	public String generateReportStatus(ReconcileStatusModel model) {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("\n");

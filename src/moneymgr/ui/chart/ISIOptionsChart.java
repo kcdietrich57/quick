@@ -19,7 +19,7 @@ import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.general.DatasetUtilities;
 
 import moneymgr.model.Account;
-import moneymgr.model.MoneyMgrModel;
+import moneymgr.ui.MainFrame;
 import moneymgr.ui.MainWindow;
 import moneymgr.ui.MainWindow.IntervalUnit;
 import moneymgr.util.QDate;
@@ -48,7 +48,7 @@ class ISIOptionsChartData {
 	}
 
 	private void getData(List<StatusForOptionsModel> optionsData) {
-		Account optionsAccount = MoneyMgrModel.currModel.findAccount("ISI Options");
+		Account optionsAccount = MainFrame.appFrame.model.findAccount("ISI Options");
 
 		this.dates = new QDate[optionsData.size()];
 		this.optionsValues = new double[1][optionsData.size()];

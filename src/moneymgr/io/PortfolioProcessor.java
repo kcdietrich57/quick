@@ -8,11 +8,17 @@ import moneymgr.model.Statement;
 
 /** Post-process portfolios after loading data */
 public class PortfolioProcessor {
-	/** Update global portfolio and each account portfolio */
-	public static void fixPortfolios() {
-		fixPortfolio(MoneyMgrModel.currModel.portfolio);
+	public final MoneyMgrModel model;
 
-		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
+	public PortfolioProcessor(MoneyMgrModel model) {
+		this.model = model;
+	}
+
+	/** Update global portfolio and each account portfolio */
+	public void fixPortfolios() {
+		fixPortfolio(this.model.portfolio);
+
+		for (Account a : this.model.getAccounts()) {
 			if (a.isInvestmentAccount()) {
 				fixPortfolio(a.securities);
 
@@ -24,7 +30,7 @@ public class PortfolioProcessor {
 	}
 
 	/** Update positions in a portfolio */
-	private static void fixPortfolio(SecurityPortfolio port) {
+	private void fixPortfolio(SecurityPortfolio port) {
 		for (SecurityPosition pos : port.getPositions()) {
 			pos.updateShareBalances();
 		}

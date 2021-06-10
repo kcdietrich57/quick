@@ -60,7 +60,7 @@ class ITxTest {
 		this.model.setAsOfDate(this.today);
 
 		stock = new Security("FOO", "Foo, Inc");
-		stock.addPrice(new QPrice(today, stock.secid, new BigDecimal("1.23")));
+		stock.addPrice(new QPrice(this.model, today, stock.secid, new BigDecimal("1.23")));
 
 		this.ntx = new NonInvestmentTxn(this.bank.acctid);
 		this.ntx.setDate(today);

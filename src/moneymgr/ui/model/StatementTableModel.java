@@ -45,7 +45,7 @@ public class StatementTableModel //
 
 		if (acct != null) {
 			QDate aod = MainWindow.instance.getAsOfDate();
-			
+
 			if (aod.compareTo(QDate.today()) < 0) {
 				Statement laststmt = null;
 

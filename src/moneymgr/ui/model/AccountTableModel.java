@@ -7,6 +7,7 @@ import javax.swing.table.AbstractTableModel;
 
 import moneymgr.model.Account;
 import moneymgr.model.MoneyMgrModel;
+import moneymgr.ui.MainFrame;
 import moneymgr.ui.MainWindow;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
@@ -18,11 +19,16 @@ public class AccountTableModel //
 
 	private static final String[] columnNames = { "Name", "Type", "Balance" };
 
+	private final MoneyMgrModel model;
 	private final List<Account> accounts = new ArrayList<Account>();
 
 	private boolean includeClosedAccounts = false;
 	private boolean includeZeroBalanceAccounts = false;
 	private boolean showTodayBalance = false;
+
+	public AccountTableModel() {
+		this.model = MainFrame.appFrame.model;
+	}
 
 	/** Reload data and set to show open vs closed accounts */
 	public void reload(boolean includeClosedAccounts, //
@@ -39,7 +45,7 @@ public class AccountTableModel //
 	public void reload() {
 		this.accounts.clear();
 
-		List<Account> accts = MoneyMgrModel.currModel.getSortedAccounts(this.showTodayBalance);
+		List<Account> accts = this.model.getSortedAccounts(this.showTodayBalance);
 		for (Account acct : accts) {
 			if (accountIsVisible(acct)) {
 				this.accounts.add(acct);

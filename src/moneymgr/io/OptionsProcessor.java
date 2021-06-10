@@ -27,8 +27,14 @@ import moneymgr.util.QDate;
 public class OptionsProcessor {
 	private final static String OPTIONS_DATA_FILENAME = "options.txt";
 
+	public final MoneyMgrModel model;
+
+	public OptionsProcessor(MoneyMgrModel model) {
+		this.model = model;
+	}
+
 	/** Load information about stock options from additional data file */
-	public static void loadStockOptions() {
+	public void loadStockOptions() {
 		LineNumberReader rdr = null;
 
 		try {
@@ -58,16 +64,16 @@ public class OptionsProcessor {
 				if (op.equals("ESPP")) {
 					// 09/30/90 ESPP "ISI ESPP Stock" 241 4.04 4.75 973.64 1144.75
 					String secname = toker.nextToken();
-					Security sec = MoneyMgrModel.currModel.findSecurity(secname);
+					Security sec = this.model.findSecurity(secname);
 					String acctname = toker.nextToken(); // .replaceAll("_", " ");
-					Account acct = MoneyMgrModel.currModel.findAccount(acctname);
+					Account acct = this.model.findAccount(acctname);
 					BigDecimal shares = new BigDecimal(toker.nextToken());
 					BigDecimal buyPrice = new BigDecimal(toker.nextToken());
 					BigDecimal cost = new BigDecimal(toker.nextToken());
 					BigDecimal mktPrice = new BigDecimal(toker.nextToken());
 					BigDecimal value = new BigDecimal(toker.nextToken());
 
-					opt = StockOption.esppPurchase(date, //
+					opt = StockOption.esppPurchase(model, date, //
 							acct.acctid, sec.secid, //
 							shares, buyPrice, cost, mktPrice, value);
 
@@ -78,16 +84,16 @@ public class OptionsProcessor {
 					if (op.equals("GRANT")) {
 						// 05/23/91 GRANT 2656 ASCL ISI_Options 500 6.00 Y 4 10y
 						String secname = toker.nextToken();
-						Security sec = MoneyMgrModel.currModel.findSecurity(secname);
+						Security sec = this.model.findSecurity(secname);
 						String acctname = toker.nextToken(); // .replaceAll("_", " ");
-						Account acct = MoneyMgrModel.currModel.findAccount(acctname);
+						Account acct = this.model.findAccount(acctname);
 						BigDecimal shares = new BigDecimal(toker.nextToken());
 						BigDecimal price = new BigDecimal(toker.nextToken());
 						String vestPeriod = toker.nextToken();
 						int vestPeriodMonths = (vestPeriod.charAt(0) == 'Y') ? 12 : 3;
 						int vestCount = Integer.parseInt(toker.nextToken());
 
-						opt = StockOption.grant(name, date, //
+						opt = StockOption.grant(this.model, name, date, //
 								acct.acctid, sec.secid, //
 								shares, price, vestPeriodMonths, vestCount, 0);
 
@@ -96,7 +102,7 @@ public class OptionsProcessor {
 						// 05/23/92 VEST 2656 1
 						int vestNumber = Integer.parseInt(toker.nextToken());
 
-						opt = StockOption.vest(name, date, vestNumber);
+						opt = StockOption.vest(this.model, name, date, vestNumber);
 
 						Common.debugInfo("Vested: " + opt.toString());
 
@@ -105,19 +111,19 @@ public class OptionsProcessor {
 						int newShares = Integer.parseInt(toker.nextToken());
 						int oldShares = Integer.parseInt(toker.nextToken());
 
-						opt = StockOption.split(name, date, newShares, oldShares);
+						opt = StockOption.split(this.model, name, date, newShares, oldShares);
 
 						Common.debugInfo("Split: " + opt.toString());
 					} else if (op.equals("EXPIRE")) {
 						// 05/23/01 EXPIRE 2656
-						opt = StockOption.expire(name, date);
+						opt = StockOption.expire(this.model, name, date);
 
 						if (opt != null) {
 							Common.debugInfo("Expire: " + opt.toString());
 						}
 					} else if (op.equals("CANCEL")) {
 						// 05/23/01 CANCEL 2656
-						opt = StockOption.cancel(name, date);
+						opt = StockOption.cancel(this.model, name, date);
 
 						if (opt != null) {
 							Common.debugInfo("Cancel: " + opt.toString());
@@ -127,14 +133,14 @@ public class OptionsProcessor {
 						BigDecimal shares = new BigDecimal(toker.nextToken());
 						// BigDecimal price = new BigDecimal(toker.nextToken());
 
-						opt = StockOption.exercise(name, date, shares);
+						opt = StockOption.exercise(this.model, name, date, shares);
 
 						Common.debugInfo("Exercise: " + opt.toString());
 					}
 				}
 
 				if (opt != null) {
-					MoneyMgrModel.currModel.addStockOption(opt);
+					this.model.addStockOption(opt);
 				}
 
 				line = rdr.readLine();
@@ -150,16 +156,16 @@ public class OptionsProcessor {
 			}
 		}
 
-		List<StockOption> openOptions = StockOption.getOpenOptions();
+		List<StockOption> openOptions = StockOption.getOpenOptions(this.model);
 		Common.debugInfo("\nOpen Stock Options:\n" + openOptions.toString());
 	}
 
 	/** Post-load processing for stock options */
-	public static void matchOptionsWithTransactions() {
-		matchOptionsWithAllTransactions(MoneyMgrModel.currModel.getAllTransactions());
+	public void matchOptionsWithTransactions() {
+		matchOptionsWithAllTransactions(this.model.getAllTransactions());
 
 		// TODO seems we are processing transactions twice here.
-		for (Account a : MoneyMgrModel.currModel.getAccounts()) {
+		for (Account a : this.model.getAccounts()) {
 			if (a.isInvestmentAccount()) {
 				matchOptionsWithAccountTransactions(a.getTransactions());
 			}
@@ -167,7 +173,7 @@ public class OptionsProcessor {
 	}
 
 	/** Process options (either global for all txns, or one account's txns) */
-	private static void matchOptionsWithAccountTransactions(List<GenericTxn> txns) {
+	private void matchOptionsWithAccountTransactions(List<GenericTxn> txns) {
 		for (GenericTxn gtxn : txns) {
 			if ((gtxn != null) && (gtxn.getSecurity() != null)) {
 				matchOptionsWithTransactions((InvestmentTxn) gtxn);
@@ -176,7 +182,7 @@ public class OptionsProcessor {
 	}
 
 	/** Process options (either global for all txns, or one account's txns) */
-	private static void matchOptionsWithAllTransactions(List<SimpleTxn> txns) {
+	private void matchOptionsWithAllTransactions(List<SimpleTxn> txns) {
 		for (SimpleTxn gtxn : txns) {
 			if ((gtxn != null) && (gtxn.getSecurity() != null)) {
 				matchOptionsWithTransactions((InvestmentTxn) gtxn);
@@ -185,7 +191,7 @@ public class OptionsProcessor {
 	}
 
 	/** Process options (either global for all txns, or one account's txns) */
-	private static void matchOptionsWithTransactions(InvestmentTxn txn) {
+	private void matchOptionsWithTransactions(InvestmentTxn txn) {
 		// SecurityPosition pos = port.getPosition(txn.security);
 		// pos.transactions.add(txn);
 

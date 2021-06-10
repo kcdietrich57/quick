@@ -10,10 +10,7 @@ import java.util.Date;
 import java.util.List;
 
 import app.QifDom;
-import moneymgr.model.Account;
-import moneymgr.model.Category;
 import moneymgr.model.GenericTxn;
-import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.QPrice;
 
 /** Useful utility functions */
@@ -68,26 +65,6 @@ public class Common {
 		Collections.sort(txns, cmptor);
 	}
 
-	public static int parseCategory(String s) {
-		if (s.startsWith("[") || s.startsWith("Transfer:[")) {
-			s = s.substring(s.indexOf("[") + 1, s.length() - 1).trim();
-
-			Account acct = MoneyMgrModel.currModel.findAccount(s);
-
-			return (short) ((acct != null) ? (-acct.acctid) : 0);
-		}
-
-		int slash = s.indexOf('/');
-		if (slash >= 0) {
-			// Throw away tag
-			s = s.substring(slash + 1);
-		}
-
-		Category cat = MoneyMgrModel.currModel.findCategory(s);
-
-		return (cat != null) ? (cat.catid) : 0;
-	}
-
 	/** Parse a decimal value string (possibly with separators) */
 	public static BigDecimal getDecimal(String value) {
 		return parseDecimal(value.trim().replace(",", ""));
@@ -130,7 +107,7 @@ public class Common {
 		}
 
 		final BigDecimal diff = d1.subtract(d2).abs();
-		return (diff.signum() == 0) ||(CLOSE_ENOUGH_TO_ZERO.compareTo(diff) > 0);
+		return (diff.signum() == 0) || (CLOSE_ENOUGH_TO_ZERO.compareTo(diff) > 0);
 	}
 
 	/** Parse an input boolean string (using Java rules) */

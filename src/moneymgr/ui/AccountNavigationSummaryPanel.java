@@ -8,6 +8,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
+import moneymgr.model.MoneyMgrModel;
 import moneymgr.report.NetWorthReporter;
 import moneymgr.report.NetWorthReporter.Balances;
 import moneymgr.util.Common;
@@ -21,6 +22,8 @@ import moneymgr.util.QDate;
  */
 @SuppressWarnings("serial")
 public class AccountNavigationSummaryPanel extends JPanel {
+	public final MoneyMgrModel model;
+
 	private JLabel nowTitle;
 	private JLabel asofTitle;
 	private JLabel assLabel;
@@ -30,8 +33,10 @@ public class AccountNavigationSummaryPanel extends JPanel {
 	private JLabel liabLabel2;
 	private JLabel netLabel2;
 
-	public AccountNavigationSummaryPanel() {
+	public AccountNavigationSummaryPanel(MoneyMgrModel model) {
 		super(new GridBagLayout());
+
+		this.model = model;
 
 		setBorder(new EmptyBorder(10, 0, 10, 0));
 
@@ -54,8 +59,9 @@ public class AccountNavigationSummaryPanel extends JPanel {
 	}
 
 	public void updateValues() {
-		Balances bals = NetWorthReporter.getBalancesForDate(QDate.today());
-		Balances bals2 = NetWorthReporter.getBalancesForDate( //
+		NetWorthReporter netWorthReporter = new NetWorthReporter(this.model);
+		Balances bals = netWorthReporter.getBalancesForDate(QDate.today());
+		Balances bals2 = netWorthReporter.getBalancesForDate( //
 				MainWindow.instance.getAsOfDate());
 
 		this.nowTitle.setText("Today");

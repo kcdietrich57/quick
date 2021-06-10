@@ -85,7 +85,7 @@ public class NonInvestmentTxn extends GenericTxn {
 			List<SimpleTxn> transfers = getCashTransfers();
 			for (SimpleTxn transfer : transfers) {
 				s += String.format("%s(%s),", //
-						transfer.getAccount().name,
+						transfer.getAccount().name, //
 						transfer.getAmount().toString());
 			}
 			s += "]";
