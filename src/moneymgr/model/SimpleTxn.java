@@ -103,7 +103,7 @@ public abstract class SimpleTxn implements Txn {
 			dec = dec.add(txn.getAmount());
 		}
 
-		if (!dec.equals(getAmount())) {
+		if (!Common.isEffectivelyEqual(dec, getAmount())) {
 			Common.reportError("Total(" + getAmount() + ") does not match split total (" + dec + ")");
 		}
 	}

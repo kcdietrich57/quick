@@ -625,6 +625,16 @@ public class MoneyMgrModel {
 		}
 	}
 
+	public void removeTransaction(SimpleTxn txn) {
+		if (this.allTransactionsByID.get(txn.getTxid()) == null) {
+			Common.reportWarning("Trying to remove nonexistent transaction from model");
+			return;
+		}
+
+		this.allTransactionsByID.set(txn.getTxid(), null);
+		this.allTransactionsByDate.remove(txn);
+	}
+
 	/** Insert a transaction into the date-sorted list */
 	private void addTransactionDate(GenericTxn txn) {
 		int idx = getTransactionInsertIndexByDate(allTransactionsByDate, txn);

@@ -159,6 +159,11 @@ public class InvestmentTxn extends GenericTxn {
 		if (xact1.startsWith("[")) {
 			xact1 = xact1.substring(1, xact1.length() - 1);
 		}
+		if (xact1.isEmpty()) {
+			if (getCatid() < 0) {
+				xact1 = this.model.getAccountByID(-getCatid()).name;
+			}
+		}
 		String xact2 = Common.formatString(other.accountForTransfer, 0);
 		if (xact2.startsWith("[")) {
 			xact2 = xact2.substring(1, xact2.length() - 1);

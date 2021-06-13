@@ -317,7 +317,6 @@ public class CSVImport {
 
 					if (fixBuyx(wintx, tmpmac, macMatches)) {
 						matchFound = true;
-						// TODO delete/disregard extra mac xfer tx altogether
 					}
 
 					if (fixZeroTransfer(wintx, tmpmac, macMatches)) {
@@ -330,10 +329,6 @@ public class CSVImport {
 
 						todayMac.removeAll(tmpmac);
 						unmatchedMac.removeAll(tmpmac);
-					} else {
-						if (wintx.getDate().toString().equals("4/30/93")) {
-							// System.out.println("xyzzy");
-						}
 					}
 				}
 
@@ -355,18 +350,52 @@ public class CSVImport {
 			printMessage(String.format("Unmatched: win=%d(-%d) mac=%d(-%d)", //
 					winmax, winNewmatch, macmax, macNewmatch));
 
-			printMessage("\nUnmatched transactions in source model:");
-			int count = 1;
-			for (GenericTxn tx : unmatchedWin) {
-				printMessage(String.format(" %d: %s", count, tx.toString()));
-				++count;
+			Comparator<GenericTxn> adSort = new Comparator<GenericTxn>() {
+				public int compare(GenericTxn t1, GenericTxn t2) {
+					int diff = t1.getDate().compareTo(t2.getDate());
+					if (diff != 0) {
+						return diff;
+					}
+
+					if (t1.model == t2.model) {
+						return 0;
+					}
+
+					diff = t1.getAccount().name.compareTo(t2.getAccount().name);
+					if (diff != 0) {
+						return diff;
+					}
+
+					return t1.model.name.equals(MoneyMgrModel.WIN_QIF_MODEL_NAME) //
+							? -1 //
+							: 1;
+				}
+			};
+
+			Collections.sort(unmatchedWin, adSort);
+			Collections.sort(unmatchedMac, adSort);
+
+			List<GenericTxn> allUnmatched = new ArrayList<>(unmatchedWin);
+			allUnmatched.addAll(unmatchedMac);
+			Collections.sort(allUnmatched, adSort);
+
+			QDate limit = new QDate(2021, 6, 1);
+			for (Iterator<GenericTxn> iter = allUnmatched.iterator(); iter.hasNext();) {
+				if (iter.next().getDate().compareTo(limit) >= 0) {
+					iter.remove();
+				}
 			}
 
-			printMessage("\nUnmatched transactions in new model:");
-			count = 1;
-			for (GenericTxn tx : unmatchedMac) {
-				printMessage(String.format(" %d: %s", count, tx.toString()));
-				++count;
+			printMessage(String.format("\n%d Unmatched transactions:", allUnmatched.size()));
+
+			String lastdate = "";
+			for (GenericTxn tx : allUnmatched) {
+				if (!tx.getDate().toString().equals(lastdate)) {
+					printMessage("");
+					lastdate = tx.getDate().toString();
+				}
+				String indent = (tx.model == sourceModel) ? "<" : "    >";
+				printMessage(String.format("%s %s", indent, tx.toString()));
 			}
 
 			// ps.close();
@@ -391,6 +420,7 @@ public class CSVImport {
 		TxAction buysellx;
 		TxAction inout;
 		BigDecimal amount;
+
 		if (wintx.getAction() == TxAction.BUYX) {
 			buysell = TxAction.BUY;
 			buysellx = TxAction.BUYX;
@@ -404,22 +434,24 @@ public class CSVImport {
 		}
 
 		InvestmentTxn macx = (InvestmentTxn) tmpmac.get(0);
-		InvestmentTxn macbs = (InvestmentTxn) ((macx.getAction() == inout) //
+		InvestmentTxn macbs = (InvestmentTxn) //
+		((macx.getAction() == inout || macx.getAction() == TxAction.CASH) //
 				? tmpmac.get(1) //
 				: macx);
 		if (macbs == macx) {
 			macx = (InvestmentTxn) tmpmac.get(1);
 		}
 
-		if (!(macx.getAction() == inout //
+		if (!((macx.getAction() == inout || macx.getAction() == TxAction.CASH) //
 				&& macbs.getAction() == buysell //
 				&& Common.isEffectivelyEqual(wintx.getAmount(), macbs.getAmount()) //
-				&& Common.isEffectivelyEqual(macx.getAmount(), macbs.getAmount()))) {
+				&& Common.isEffectivelyEqual(macx.getAmount().abs(), macbs.getAmount()))) {
 			return false;
 		}
 
 		macbs.setAction(buysellx);
 		macbs.setCatid(macx.getCatid());
+
 		// TODO deal with multiple xfer splits
 		List<SimpleTxn> transfers = macx.getCashTransfers();
 		Account xacct = (transfers.isEmpty()) ? null : transfers.get(0).getAccount();
@@ -430,6 +462,10 @@ public class CSVImport {
 
 		macbs.info.setWinTransaction(wintx);
 		macToRemove.add(macx);
+
+		// Discard the transaction merged into the BUYX/SELLX
+		macx.getAccount().removeTransaction(macx);
+		macx.model.removeTransaction(macx);
 
 		return true;
 	}
@@ -1063,8 +1099,12 @@ public class CSVImport {
 							String pricestr = tuple.description.substring(priceidx + 1).trim();
 							String quantitystr = tuple.description.substring(0, sharesidx).trim();
 
-							itxn.setQuantity(Common.getDecimal(quantitystr));
-							itxn.setPrice(Common.getDecimal(pricestr));
+							if (itxn.getQuantity() == null || itxn.getQuantity().signum() == 0) {
+								itxn.setQuantity(Common.getDecimal(quantitystr));
+							}
+							if (itxn.getPrice() == null || itxn.getPrice().signum() == 0) {
+								itxn.setPrice(Common.getDecimal(pricestr));
+							}
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -1072,7 +1112,10 @@ public class CSVImport {
 				}
 
 				// Calculate missing amount for e.g. reinvest (p*q)
-				if (Common.isEffectivelyZero(itxn.getAmount())) {
+				if (Common.isEffectivelyZero(itxn.getAmount()) //
+						&& itxn.getAction() != TxAction.SHRS_IN //
+						&& itxn.getAction() != TxAction.SHRS_OUT //
+				) {
 					BigDecimal p = itxn.getPrice();
 					BigDecimal q = itxn.getQuantity();
 

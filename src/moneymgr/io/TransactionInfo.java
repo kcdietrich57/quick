@@ -410,11 +410,13 @@ public class TransactionInfo {
 			// TODO work out the kinks in whether amount is positive or negative
 			if (this.outflow != null && this.outflow.signum() > 0 //
 					&& ( //
-					this.type.equals("Buy") //
+							this.type.equals("Buy") //
+							|| this.type.equals("Buy Bonds") //
 							|| this.type.equals("WithdrawX") //
 					) //
 					&& this.amount.signum() < 0) {
 				this.amount = this.amount.negate();
+				this.setValue(AMOUNT_IDX, this.amount.toString());
 			}
 
 			String catOrXfer = value(XACCOUNT_IDX);
@@ -439,6 +441,19 @@ public class TransactionInfo {
 			this.xamount = decimalValue(XAMOUNT_IDX);
 			this.price = Common.parsePrice(value(PRICE_IDX));
 			this.commission = decimalValue(COMMISSION_IDX);
+
+			if (this.action == TxAction.STOCKSPLIT) {
+				StringTokenizer toker = new StringTokenizer(this.description);
+				BigDecimal num = (toker.hasMoreTokens()) //
+						? Common.getDecimal(toker.nextToken()) //
+						: null;
+				toker.nextToken();
+				BigDecimal denom = (toker.hasMoreTokens()) //
+						? Common.getDecimal(toker.nextToken()) //
+						: null;
+				
+				this.shares = num.multiply(BigDecimal.TEN).divide(denom);
+			}
 
 			// Fix amount for CSV with certain TxAction
 			if ((this.action == TxAction.REINV_DIV //
@@ -467,10 +482,10 @@ public class TransactionInfo {
 						&& (this.price == null || Common.isEffectivelyZero(this.price))) {
 					this.price = p;
 				}
-			}
 
-			if (this.commission != null && !Common.isEffectivelyZero(this.commission)) {
-				this.amount = this.amount.add(this.commission);
+				if (this.commission != null && !Common.isEffectivelyZero(this.commission)) {
+					this.amount = this.amount.add(this.commission);
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

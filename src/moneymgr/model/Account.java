@@ -204,6 +204,16 @@ public class Account {
 
 		this.transactions.add(idx, txn);
 	}
+	
+	public void removeTransaction(GenericTxn txn) {
+		if (this.transactions.contains(txn)) {
+			if (txn.isCleared()) {
+				Common.reportError("Account: Can't remove cleared transaction");
+			}
+
+			this.transactions.remove(txn);
+		}
+	}
 
 	/** Find the index to insert a new transaction in a list sorted by date */
 	private int getTransactionIndexForDate(QDate date) {
