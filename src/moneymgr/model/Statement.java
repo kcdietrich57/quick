@@ -13,7 +13,16 @@ import moneymgr.util.QDate;
 /** Information about statements */
 public class Statement {
 	/** Info about reconciled statements goes into this file. */
-	public static File stmtLogFile = new File(QifDom.qifDir, "statementLog.dat");
+	private static String stmtLogFile = "statementLog.dat";
+	private static String stmtLogFileCsv = "statementLog.csv.dat";
+
+	public static File getStatementLogFileForModel(MoneyMgrModel model) {
+		String name = (model.name.equals(MoneyMgrModel.MAC_CSV_MODEL_NAME)) //
+				? stmtLogFileCsv //
+				: stmtLogFile;
+
+		return new File(QifDom.qifDir, name);
+	}
 
 	public final MoneyMgrModel model;
 	public final int acctid;

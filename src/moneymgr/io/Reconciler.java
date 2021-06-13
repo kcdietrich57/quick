@@ -27,7 +27,9 @@ public class Reconciler {
 
 	/** After loading QIF data, read statement log file, filling in details. */
 	public void processStatementLog() {
-		if (!Statement.stmtLogFile.isFile()) {
+		File logfile = Statement.getStatementLogFileForModel(this.model);
+
+		if (!logfile.isFile()) {
 			return;
 		}
 
@@ -35,7 +37,7 @@ public class Reconciler {
 		List<StatementDetails> details = new ArrayList<StatementDetails>();
 
 		try {
-			stmtLogReader = new LineNumberReader(new FileReader(Statement.stmtLogFile));
+			stmtLogReader = new LineNumberReader(new FileReader(logfile));
 
 			String s = stmtLogReader.readLine();
 			if (s == null) {
@@ -120,10 +122,10 @@ public class Reconciler {
 			getTransactionsFromDetails(a, s, d);
 
 			if (!s.isBalanced()) {
-				getTransactionsFromDetails(a, s, d);
-				Common.reportError("Can't reconcile statement from log.\n" //
-						+ " a=" + a.name //
-						+ " s=" + s.toString());
+				// getTransactionsFromDetails(a, s, d);
+//				Common.reportError("Can't reconcile statement from log.\n" //
+//						+ " a=" + a.name //
+//						+ " s=" + s.toString());
 			}
 		}
 	}
@@ -180,21 +182,20 @@ public class Reconciler {
 		}
 
 		s.unclearedTransactions.addAll(txns);
-
+boolean b = false;
 		if (!badinfo.isEmpty()) {
 			// d.transactions.removeAll(badinfo);
-			Common.reportWarning( //
-					"Can't find " + badinfo.size() + " reconciled transactions" //
-							+ " for acct " + a.name + ":\n" //
-							+ badinfo.toString() + "\n"); // + toString());
-			return;
+			Common.reportWarning(String.format( //
+					"Statement: %s\n  %d missing transactions\n  %s", //
+					s.toString(), badinfo.size(), badinfo.toString()));
+			b = true;
 		}
 
 		for (GenericTxn t : s.transactions) {
 			t.setStatementDate(s.date);
 		}
 
-		s.setIsBalanced(true);
+		s.setIsBalanced(badinfo.isEmpty());
 	}
 
 	/** Add a reconciled statement's info to the statement log file */
@@ -224,15 +225,16 @@ public class Reconciler {
 	 * Save the previous file as <name>.N
 	 */
 	public void rewriteStatementLogFile() {
-		String basename = Statement.stmtLogFile.getName();
+		File logfile = Statement.getStatementLogFileForModel(this.model);
+
+		String basename = logfile.getName();
 		File tmpLogFile = new File(QifDom.qifDir, basename + ".tmp");
 
 		PrintWriter pw = null;
 		try {
 			pw = new PrintWriter(new FileWriter(tmpLogFile));
 		} catch (IOException e) {
-			Common.reportError("Can't open tmp stmt log file: " //
-					+ Statement.stmtLogFile.getAbsolutePath());
+			Common.reportError("Can't open tmp stmt log file: " + logfile.getAbsolutePath());
 			return;
 		}
 
@@ -259,13 +261,12 @@ public class Reconciler {
 			}
 		}
 
-		Statement.stmtLogFile.renameTo(logFileBackup);
-		if (logFileBackup.exists() && tmpLogFile.exists() //
-				&& !Statement.stmtLogFile.exists()) {
-			tmpLogFile.renameTo(Statement.stmtLogFile);
+		logfile.renameTo(logFileBackup);
+		if (logFileBackup.exists() && tmpLogFile.exists() && !logfile.exists()) {
+			tmpLogFile.renameTo(logfile);
 		}
 
-		assert (logFileBackup.exists() && !Statement.stmtLogFile.exists());
+		assert (logFileBackup.exists() && !logfile.exists());
 
 		QifDom.loadedStatementsVersion = StatementDetails.CURRENT_VERSION;
 	}
@@ -273,7 +274,8 @@ public class Reconciler {
 	/** Open the statement log file for appending */
 	private PrintWriter openStatementsLogFile() {
 		try {
-			return new PrintWriter(new FileWriter(Statement.stmtLogFile, true));
+			return new PrintWriter(new FileWriter( //
+					Statement.getStatementLogFileForModel(this.model), true));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

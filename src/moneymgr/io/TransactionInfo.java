@@ -301,7 +301,10 @@ public class TransactionInfo {
 			this.date = getDate();
 
 			this.cknum = value(CHECKNUM_IDX);
-			if (this.cknum == "" && this.account.name.equals("UnionNationalChecking")) {
+			if (this.cknum == "" //
+					&& (this.account.name.equals("UnionNationalChecking") //
+							|| (this.account.name.equals("CapCheck") //
+							))) {
 				// TODO I don't know why the data is different in this case
 				this.cknum = value(REFERENCE_IDX);
 			}
@@ -410,7 +413,7 @@ public class TransactionInfo {
 			// TODO work out the kinks in whether amount is positive or negative
 			if (this.outflow != null && this.outflow.signum() > 0 //
 					&& ( //
-							this.type.equals("Buy") //
+					this.type.equals("Buy") //
 							|| this.type.equals("Buy Bonds") //
 							|| this.type.equals("WithdrawX") //
 					) //
@@ -451,7 +454,7 @@ public class TransactionInfo {
 				BigDecimal denom = (toker.hasMoreTokens()) //
 						? Common.getDecimal(toker.nextToken()) //
 						: null;
-				
+
 				this.shares = num.multiply(BigDecimal.TEN).divide(denom);
 			}
 
