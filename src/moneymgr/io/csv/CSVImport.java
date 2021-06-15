@@ -26,6 +26,7 @@ import moneymgr.model.GenericTxn;
 import moneymgr.model.InvestmentTxn;
 import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.NonInvestmentTxn;
+import moneymgr.model.QPrice;
 import moneymgr.model.Security;
 import moneymgr.model.SimpleTxn;
 import moneymgr.model.SplitTxn;
@@ -668,6 +669,12 @@ public class CSVImport {
 		s.names.addAll(sec.names);
 
 		csvModel.addSecurity(s);
+
+		for (QPrice price : sec.prices) {
+			QPrice newprice = new QPrice(s.model, price.date, sec.secid, //
+					price.getPrice(), price.getSplitAdjustedPrice());
+			s.addPrice(newprice);
+		}
 
 		return s;
 	}
