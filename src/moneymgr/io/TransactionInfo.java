@@ -374,7 +374,7 @@ public class TransactionInfo {
 					this.category = null;
 					this.xaccount = this.model.getAccountByID(-catid);
 				} else {
-					Common.reportWarning("Creating category from '" + value(CATEGORY_IDX) + "'");
+					//Common.reportWarning("Creating category from '" + value(CATEGORY_IDX) + "'");
 					this.model.parseCategory(catstring);
 					this.model.addCategory(new Category(catstring, "mac category", true));
 				}
@@ -395,7 +395,7 @@ public class TransactionInfo {
 				this.security = this.model.findSecurity(sname);
 
 				if (this.security == null) {
-					Common.reportWarning("Creating dummy security for '" + sname + "'");
+					// Common.reportWarning("Creating dummy security for '" + sname + "'");
 					this.security = new Security(sname, sname);
 					this.model.addSecurity(this.security);
 				}

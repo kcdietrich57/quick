@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.LineNumberReader;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import app.QifDom;
@@ -19,10 +21,19 @@ import moneymgr.util.Common;
 
 /** Process statement info in statementLog.dat */
 public class Reconciler {
+	public int problemStatements;
+	public int problemTransactions;
+	public int inexactDates;
+	public int multipleMatches;
+
 	public final MoneyMgrModel model;
 
 	public Reconciler(MoneyMgrModel model) {
 		this.model = model;
+		this.problemStatements = 0;
+		this.problemTransactions = 0;
+		this.inexactDates = 0;
+		this.multipleMatches = 0;
 	}
 
 	/** After loading QIF data, read statement log file, filling in details. */
@@ -56,7 +67,29 @@ public class Reconciler {
 				s = stmtLogReader.readLine();
 			}
 
+			Collections.sort(details, new Comparator<StatementDetails>() {
+				public int compare(StatementDetails sd1, StatementDetails sd2) {
+					Account a1 = model.getAccountByID(sd1.acctid);
+					Account a2 = model.getAccountByID(sd2.acctid);
+
+					int diff = a1.name.compareTo(a2.name);
+					if (diff != 0) {
+						return diff;
+					}
+
+					return sd1.date.compareTo(sd2.date);
+				}
+			});
+
 			processStatementDetails(details);
+
+			System.out.println(String.format( //
+					"\n*** %d statements, %d transactions had problems", //
+					this.problemStatements, this.problemTransactions));
+			System.out.println(String.format( //
+					"\n  %d inexact dates, %d multiple matches", //
+					this.inexactDates, this.multipleMatches));
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -122,6 +155,8 @@ public class Reconciler {
 			getTransactionsFromDetails(a, s, d);
 
 			if (!s.isBalanced()) {
+				++this.problemStatements;
+
 				// getTransactionsFromDetails(a, s, d);
 //				Common.reportError("Can't reconcile statement from log.\n" //
 //						+ " a=" + a.name //
@@ -130,8 +165,9 @@ public class Reconciler {
 		}
 	}
 
-	private boolean isMatch(SimpleTxn tx, StatementTxInfo txinfo) {
-		if (!txinfo.date.equals(tx.getDate())) {
+	private boolean isMatch(SimpleTxn tx, StatementTxInfo txinfo, int dateTolerance) {
+		int diff = Math.abs(txinfo.date.subtract(tx.getDate()));
+		if (diff > dateTolerance) {
 			return false;
 		}
 
@@ -162,33 +198,53 @@ public class Reconciler {
 		List<StatementTxInfo> badinfo = new ArrayList<StatementTxInfo>();
 
 		for (StatementTxInfo info : d.transactions) {
-			boolean found = false;
+			GenericTxn match = null;
+			int matchCount = 0;
+			int tolerance = 5;
 
 			for (int ii = 0; ii < txns.size(); ++ii) {
 				GenericTxn t = txns.get(ii);
 
-				if (isMatch(t, info)) {
-					s.addTransaction(t);
-					txns.remove(ii);
-					found = true;
+				if (isMatch(t, info, tolerance)) {
+					while (tolerance > 0 && isMatch(t, info, tolerance - 1)) {
+						match = null;
+						matchCount = 0;
+						--tolerance;
+					}
 
-					break;
+					if (match == null) {
+						match = t;
+					}
+
+					++matchCount;
 				}
 			}
 
-			if (!found) {
+			if (match != null) {
+				s.addTransaction(match);
+				txns.remove(match);
+
+				if (tolerance > 0) {
+					++this.inexactDates;
+				}
+
+				if (matchCount > 1) {
+					++this.multipleMatches;
+				}
+			} else {
 				badinfo.add(info);
 			}
 		}
 
 		s.unclearedTransactions.addAll(txns);
-boolean b = false;
+
 		if (!badinfo.isEmpty()) {
 			// d.transactions.removeAll(badinfo);
 			Common.reportWarning(String.format( //
 					"Statement: %s\n  %d missing transactions\n  %s", //
 					s.toString(), badinfo.size(), badinfo.toString()));
-			b = true;
+
+			this.problemTransactions += badinfo.size();
 		}
 
 		for (GenericTxn t : s.transactions) {
