@@ -114,14 +114,14 @@ public class QifDomReader {
 		// Create option objects
 		this.optionsProcessor.loadStockOptions();
 
-		// Load basic statement info
-		File dd = new File(this.qifDir, "statements");
-		this.statementProcessor.loadStatments(dd);
-
 		// Add transactions to portfolios/positions
 		this.securityProcessor.processSecurities();
 
 		this.optionsProcessor.matchOptionsWithTransactions();
+
+		// Load basic statement info
+		File dd = new File(this.qifDir, "statements");
+		this.statementProcessor.loadStatments(dd);
 
 		// Process saved statement reconciliation information
 		// Match statements with transactions

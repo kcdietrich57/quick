@@ -229,7 +229,6 @@ public class Statement {
 	public void unclearTransaction(GenericTxn txn) {
 		if (this.transactions.remove(txn)) {
 			txn.setStatementDate(null);
-			;
 
 			this.holdings.removeTransaction(txn);
 			this.unclearedTransactions.add(txn);

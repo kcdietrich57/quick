@@ -435,6 +435,7 @@ public class SecurityPosition {
 
 		this.transactions.clear();
 		this.shrBalance.clear();
+		this.actualEndingShares = getStartingShares();
 
 		for (InvestmentTxn txn : txns) {
 			addTransaction(txn);

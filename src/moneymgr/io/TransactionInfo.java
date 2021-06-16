@@ -10,6 +10,7 @@ import java.util.StringTokenizer;
 import moneymgr.model.Account;
 import moneymgr.model.Category;
 import moneymgr.model.MoneyMgrModel;
+import moneymgr.model.QPrice;
 import moneymgr.model.Security;
 import moneymgr.model.SimpleTxn;
 import moneymgr.model.TxAction;
@@ -274,21 +275,6 @@ public class TransactionInfo {
 		return null;
 	}
 
-	private Account cloneAccount(MoneyMgrModel sourceModel, String acctName) {
-		Account a = sourceModel.findAccount(acctName);
-		if (a == null) {
-			Common.reportError("Account '" + acctName + "' not found");
-		}
-
-		Common.debugInfo( //
-				"Cloning source account '" + acctName + "'" + //
-						"(" + a.acctid + ")");
-
-		return new Account(this.model, //
-				a.acctid, acctName, a.description, a.type, //
-				a.getStatementFrequency(), a.getStatementDay());
-	}
-
 	/** Extract values from raw info and set member variables accordingly */
 	public void processValues(MoneyMgrModel sourceModel) {
 		try {
@@ -374,7 +360,7 @@ public class TransactionInfo {
 					this.category = null;
 					this.xaccount = this.model.getAccountByID(-catid);
 				} else {
-					//Common.reportWarning("Creating category from '" + value(CATEGORY_IDX) + "'");
+					// Common.reportWarning("Creating category from '" + value(CATEGORY_IDX) + "'");
 					this.model.parseCategory(catstring);
 					this.model.addCategory(new Category(catstring, "mac category", true));
 				}
@@ -384,6 +370,35 @@ public class TransactionInfo {
 			this.memo = value(MEMO_IDX);
 			this.description = value(DESCRIPTION_IDX);
 			this.type = value(TYPE_IDX);
+
+			Map<String, String> symMap = new HashMap<>();
+			symMap.put("ISHARES CORE S&P 500 ETF IV", "IVV");
+			symMap.put("ISHARES CORE MSCI EMERGING ETF IV", "IEMG");
+			symMap.put("SPDR PORTFOLIO S&P 400 MID CP ETF IV", "SPMD");
+			symMap.put("VANGUARD FTSE DEVELOPED MATS ETF IV", "VEA");
+			symMap.put("VANGUARD INTRMDIAT TRM TRSRY ETF", "VCIT");
+			symMap.put("VANGUARD INTERMEDIATE TERM COR ETF", "VGIT");
+			symMap.put("VANGUARD REAL ESTATE ETF IV", "VNQ");
+			symMap.put("VANGUARD TOTAL BOND MARKET ETF", "BND");
+			symMap.put("WSDMTREE EMRG MKTS SMALLCAP DVD ETF", "DGS");
+			symMap.put("DFA INTERNATIONAL SMALL COMPANY I", "DFISX");
+			symMap.put("DFA US MICRO CAP I", "DFSCX");
+			symMap.put("DFA US SMALL CAP VALUE I", "DFSVX");
+			// TARGETRETIREMENT2015, TARGETRETIREMENT2025 2
+
+			Map<String, BigDecimal> priceMap = new HashMap<>();
+			priceMap.put("IVV", new BigDecimal("422.58"));
+			priceMap.put("IEMG", new BigDecimal("65.94"));
+			priceMap.put("SPMD", new BigDecimal("47.53"));
+			priceMap.put("VEA", new BigDecimal("52.95"));
+			priceMap.put("VCIT", new BigDecimal("94.44"));
+			priceMap.put("VGIT", new BigDecimal("67.58"));
+			priceMap.put("VNQ", new BigDecimal("103.68"));
+			priceMap.put("BND", new BigDecimal("85.36"));
+			priceMap.put("DGS", new BigDecimal("54.24"));
+			priceMap.put("DFISX", new BigDecimal("23.32"));
+			priceMap.put("DFSCX", new BigDecimal("29.33"));
+			priceMap.put("DFSVX", new BigDecimal("46.62"));
 
 			String sname = value(SECURITY_IDX);
 			if (sname != null && !sname.isEmpty()) {
@@ -395,9 +410,23 @@ public class TransactionInfo {
 				this.security = this.model.findSecurity(sname);
 
 				if (this.security == null) {
-					// Common.reportWarning("Creating dummy security for '" + sname + "'");
-					this.security = new Security(sname, sname);
+					String sym = symMap.get(sname);
+					if (sym == null) {
+						System.out.println("xyzzy try again");
+						sym = sname;
+					}
+					Common.reportInfo(String.format( //
+							"Creating security '%s:%s'", sym, sname));
+
+					this.security = new Security(sym, sname);
 					this.model.addSecurity(this.security);
+
+					// TODO Dummy price
+					if (priceMap.containsKey(sym)) {
+						this.security.addPrice(new QPrice( //
+								this.model, new QDate(2021, 6, 14), //
+								this.security.secid, priceMap.get(sym)));
+					}
 				}
 			}
 
