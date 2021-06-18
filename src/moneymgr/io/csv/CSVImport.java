@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import app.MoneyMgrApp;
 import app.QifDom;
 import moneymgr.io.TransactionInfo;
 import moneymgr.io.qif.QifDomReader;
@@ -51,8 +52,10 @@ public class CSVImport {
 
 	/** TESTING: Import CSV file and compare to QIF version */
 	public static void testCsvImport() {
-		String importDir = "/Users/greg/qif/";
-		importCSV(importDir + "DIETRICH.csv");
+		String importDir = "/Users/greg/qif";
+		String csvfile = String.format("%s/%s", importDir, "DIETRICH.csv");
+		
+		importCSV(MoneyMgrApp.csvFilename);
 	}
 
 	/** Process a CSV file exported from MacOs */
@@ -65,7 +68,9 @@ public class CSVImport {
 		csvimp.cloneSourceModelInfo();
 		csvimp.importFile();
 
-		QifDomReader rdr = new QifDomReader(csvimp.csvModel, new File("/Users/greg/qif"));
+		
+		QifDomReader rdr = new QifDomReader( //
+				csvimp.csvModel, new File(MoneyMgrApp.DATA_DIR));
 		rdr.postLoad();
 
 		TransactionCleaner transactionCleaner = new TransactionCleaner(csvimp.csvModel);
@@ -93,8 +98,8 @@ public class CSVImport {
 
 	private CSVImport(String filename) {
 		try {
-			this.sourceModel = MoneyMgrModel.getModel(MoneyMgrModel.WIN_QIF_MODEL_NAME);
-			this.csvModel = MoneyMgrModel.changeModel(MoneyMgrModel.MAC_CSV_MODEL_NAME);
+			this.sourceModel = MoneyMgrModel.getModel(MoneyMgrModel.QIF_MODEL_NAME);
+			this.csvModel = MoneyMgrModel.changeModel(MoneyMgrModel.CSV_MODEL_NAME);
 
 			this.rdr = new LineNumberReader(new FileReader(filename));
 		} catch (Exception e) {
@@ -367,7 +372,7 @@ public class CSVImport {
 						return diff;
 					}
 
-					return t1.model.name.equals(MoneyMgrModel.WIN_QIF_MODEL_NAME) //
+					return t1.model.name.equals(MoneyMgrModel.QIF_MODEL_NAME) //
 							? -1 //
 							: 1;
 				}

@@ -15,10 +15,10 @@ import moneymgr.util.Common;
 /** Class which loads quicken exported data (plus some additional info) */
 public class QifDomReader {
 	/** The main load method - processes all files in qifdir */
-	public static void loadDom(String[] qifFiles) {
+	public static void loadDom(MoneyMgrModel model, String[] qifFiles) {
 		QifDom.qifDir = new File(qifFiles[0]).getParentFile();
 
-		QifDomReader rdr = new QifDomReader(MoneyMgrModel.currModel, QifDom.qifDir);
+		QifDomReader rdr = new QifDomReader(model, QifDom.qifDir);
 
 		// Process all the QIF files
 		for (String fn : qifFiles) {

@@ -17,7 +17,7 @@ public class Statement {
 	private static String stmtLogFileCsv = "statementLog.csv.dat";
 
 	public static File getStatementLogFileForModel(MoneyMgrModel model) {
-		String name = (model.name.equals(MoneyMgrModel.MAC_CSV_MODEL_NAME)) //
+		String name = (model.name.equals(MoneyMgrModel.CSV_MODEL_NAME)) //
 				? stmtLogFileCsv //
 				: stmtLogFile;
 

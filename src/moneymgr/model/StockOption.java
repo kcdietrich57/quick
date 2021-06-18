@@ -403,8 +403,8 @@ public class StockOption {
 		return retOptions;
 	}
 
-	public final int optid;
 	public final MoneyMgrModel model;
+	public final int optid;
 
 	/** The option this is derived from (split, partial sale, etc) */
 	public final StockOption srcOption;
@@ -434,11 +434,6 @@ public class StockOption {
 
 	public QDate cancelDate;
 
-//	private StockOption() {
-//		this.optid = StockOption.options.size();
-//		StockOption.options.add(this);		
-//	}
-
 	/**
 	 * Create a new option for an ESPP purchase
 	 * 
@@ -462,8 +457,9 @@ public class StockOption {
 			BigDecimal cost, //
 			BigDecimal mktPrice, //
 			BigDecimal mktValue) {
-		this.optid = model.nextStockOptionId();
 		this.model = model;
+
+		this.optid = model.nextStockOptionId();
 
 		this.srcOption = null;
 		this.cancelDate = null;
@@ -498,8 +494,9 @@ public class StockOption {
 			int vestPeriod, //
 			int vestCount, //
 			int lifetimeMonths) {
-		this.optid = model.nextStockOptionId();
 		this.model = model;
+
+		this.optid = model.nextStockOptionId();
 
 		this.srcOption = null;
 		this.cancelDate = null;
@@ -528,8 +525,9 @@ public class StockOption {
 			StockOption src, //
 			QDate date, //
 			int vestNumber) {
-		this.optid = src.model.nextStockOptionId();
 		this.model = src.model;
+
+		this.optid = src.model.nextStockOptionId();
 
 		this.srcOption = src;
 		src.cancelDate = date;
@@ -559,8 +557,9 @@ public class StockOption {
 			QDate date, //
 			int newshr, //
 			int oldshr) {
-		this.optid = src.model.nextStockOptionId();
 		this.model = src.model;
+
+		this.optid = src.model.nextStockOptionId();
 
 		this.srcOption = src;
 		src.cancelDate = date;
@@ -592,8 +591,9 @@ public class StockOption {
 			StockOption src, //
 			QDate date, //
 			BigDecimal shares) {
-		this.optid = src.model.nextStockOptionId();
 		this.model = src.model;
+
+		this.optid = src.model.nextStockOptionId();
 
 		this.srcOption = src;
 		src.cancelDate = date;
@@ -632,8 +632,9 @@ public class StockOption {
 			BigDecimal strikeprice, BigDecimal cost, //
 			BigDecimal marketprice, BigDecimal origmarketvalue, //
 			int lifetimeMonths, int vestFrequency, int vestCount) {
-		this.optid = optid;
 		this.model = srcopt.model;
+
+		this.optid = optid;
 
 		this.srcOption = srcopt;
 		this.cancelDate = null;
@@ -655,6 +656,10 @@ public class StockOption {
 		this.vestCurrent = 0;
 
 		this.sharesRemaining = this.grantShares;
+	}
+
+	public Security getSecurity() {
+		return this.model.getSecurity(this.secid);
 	}
 
 	/** Return whether this option is still in play on a given date */
@@ -683,7 +688,7 @@ public class StockOption {
 		}
 
 		BigDecimal shares = getAvailableShares(date, true);
-		QPrice qprice = this.model.getSecurity(this.secid).getPriceForDate(date);
+		QPrice qprice = getSecurity().getPriceForDate(date);
 		BigDecimal netPrice = qprice.getPrice().subtract(this.strikePrice);
 
 		return (netPrice.signum() > 0) ? shares.multiply(netPrice) : BigDecimal.ZERO;
@@ -771,7 +776,7 @@ public class StockOption {
 		s += this.name;
 		s += ", " + this.date.longString;
 		s += ", " + this.model.getAccountByID(this.acctid).name;
-		s += ", " + this.model.getSecurity(this.secid).getSymbol();
+		s += ", " + getSecurity().getSymbol();
 		s += ", " + this.grantShares;
 		s += ":" + Common.formatAmount3(this.strikePrice).trim();
 		s += ", disc=" + Common.formatAmount3(getDiscount()).trim();
@@ -796,11 +801,9 @@ public class StockOption {
 	public String formatInfo(QDate date) {
 		StringBuffer ret = new StringBuffer(this.toString());
 
-		Security sec = this.model.getSecurity(this.secid);
-
 		ret.append("\n");
 
-		BigDecimal price = sec.getPriceForDate(date).getPrice();
+		BigDecimal price = getSecurity().getPriceForDate(date).getPrice();
 
 		BigDecimal val = this.sharesRemaining.multiply(price);
 		BigDecimal cost = this.sharesRemaining.multiply(this.strikePrice);

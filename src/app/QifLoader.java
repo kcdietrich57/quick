@@ -42,10 +42,10 @@ public class QifLoader {
 	public static void main(String[] args) {
 		scn = new Scanner(System.in);
 
-		MoneyMgrModel qifModel = MoneyMgrModel.getModel(MoneyMgrModel.WIN_QIF_MODEL_NAME);
+		MoneyMgrModel qifModel = MoneyMgrModel.getModel(MoneyMgrModel.QIF_MODEL_NAME);
 		NetWorthReporter netWorthReporter = new NetWorthReporter(qifModel);
 
-		QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
+		QifDomReader.loadDom(qifModel, new String[] { "qif/DIETRICH.QIF" });
 
 		for (;;) {
 			QifReporter.showStatistics();

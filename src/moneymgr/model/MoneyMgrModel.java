@@ -17,9 +17,9 @@ import moneymgr.util.QDate;
 
 /** Class comprising the complete MoneyManager data model */
 public class MoneyMgrModel {
-	public static final String WIN_QIF_MODEL_NAME = "Windows QIF";
-	public static final String WIN_JSON_MODEL_NAME = "Windows JSON";
-	public static final String MAC_CSV_MODEL_NAME = "Mac CSV";
+	public static final String QIF_MODEL_NAME = "Windows QIF";
+	public static final String JSON_MODEL_NAME = "Windows JSON";
+	public static final String CSV_MODEL_NAME = "Mac CSV";
 
 	/** Maintain multiple models so we can switch between them and compare */
 	private static final Map<String, MoneyMgrModel> models = new HashMap<String, MoneyMgrModel>();

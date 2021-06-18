@@ -16,6 +16,12 @@ import moneymgr.util.QDate;
  * App for working with Quicken data (Windows QIF export, MacOS CSV export)
  */
 public class MoneyMgrApp {
+	public static final String DATA_DIR = "qif/data";
+	
+	public static final String qifFilename = String.format("%s/%s", DATA_DIR, "DIETRICH.QIF");
+	public static final String jsonFilename = String.format("%s/%s", DATA_DIR, "DIETRICH.json");
+	public static final String csvFilename = String.format("%s/%s", DATA_DIR, "DIETRICH.csv");
+	
 	public static Scanner scn;
 
 	private static long startupTime;
@@ -70,11 +76,11 @@ public class MoneyMgrApp {
 		lapTime = startupTime;
 
 		if (loadwin) {
-			qifModel = MoneyMgrModel.changeModel(MoneyMgrModel.WIN_QIF_MODEL_NAME);
+			qifModel = MoneyMgrModel.changeModel(MoneyMgrModel.QIF_MODEL_NAME);
 
 			Common.reportInfo("Loading QIF data");
 			MoneyMgrApp.scn = new Scanner(System.in);
-			QifDomReader.loadDom(new String[] { "qif/DIETRICH.QIF" });
+			QifDomReader.loadDom(qifModel, new String[] { qifFilename });
 			Common.reportInfo(String.format("Load complete: %s", elapsedTime()));
 		}
 
@@ -100,8 +106,6 @@ public class MoneyMgrApp {
 
 		// ----------------------------------------------------------
 
-		String jsonFilename = "qif/DIETRICH.json";
-
 		Persistence persistence = new Persistence();
 
 		if (savejson) {
@@ -112,20 +116,20 @@ public class MoneyMgrApp {
 
 		if (loadjson) {
 			Common.reportInfo(String.format("Loading JSON"));
-			jsonModel = persistence.loadJSON(MoneyMgrModel.WIN_JSON_MODEL_NAME, jsonFilename);
+			jsonModel = persistence.loadJSON(MoneyMgrModel.JSON_MODEL_NAME, jsonFilename);
 			Common.reportInfo(String.format("JSON loaded: %s", elapsedTime()));
 		}
 
 		if (comparejson) {
 			Common.reportInfo(String.format("Comparing QIF/JSON models"));
-			MoneyMgrModel.compareModels(MoneyMgrModel.WIN_QIF_MODEL_NAME, //
-					MoneyMgrModel.WIN_JSON_MODEL_NAME);
+			MoneyMgrModel.compareModels(MoneyMgrModel.QIF_MODEL_NAME, //
+					MoneyMgrModel.JSON_MODEL_NAME);
 			Common.reportInfo(String.format("Compare complete: %s", elapsedTime()));
 		}
 
 		if (ENABLE_CSV_IMPORT) {
 			CSVImport.testCsvImport();
-			csvModel = MoneyMgrModel.getModel(MoneyMgrModel.MAC_CSV_MODEL_NAME);
+			csvModel = MoneyMgrModel.getModel(MoneyMgrModel.CSV_MODEL_NAME);
 
 //			Common.reportInfo(String.format("Comparing QIF/CSV models"));
 //			MoneyMgrModel.compareModels(MoneyMgrModel.WIN_QIF_MODEL_NAME, //
@@ -136,11 +140,11 @@ public class MoneyMgrApp {
 		MoneyMgrModel model;
 
 		if (ENABLE_CSV_IMPORT) {
-			model = MoneyMgrModel.changeModel(MoneyMgrModel.MAC_CSV_MODEL_NAME);
+			model = MoneyMgrModel.changeModel(MoneyMgrModel.CSV_MODEL_NAME);
 		} else if (usejson) {
-			model = MoneyMgrModel.changeModel(MoneyMgrModel.WIN_JSON_MODEL_NAME);
+			model = MoneyMgrModel.changeModel(MoneyMgrModel.JSON_MODEL_NAME);
 		} else {
-			model = MoneyMgrModel.changeModel(MoneyMgrModel.WIN_QIF_MODEL_NAME);
+			model = MoneyMgrModel.changeModel(MoneyMgrModel.QIF_MODEL_NAME);
 		}
 
 		Common.reportInfo(String.format("Building UI"));
