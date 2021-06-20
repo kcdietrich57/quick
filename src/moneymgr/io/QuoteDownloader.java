@@ -34,6 +34,10 @@ public class QuoteDownloader {
 	private static final String NAME_DAILY = "Time Series (Daily)";
 	private static final String API_KEY = "O7JYIMJXJOWQB9BY";
 
+	// If we appear to have hit the 500 api calls per hour limit, simply
+	// disable quote downloads for this session.
+	private static boolean disableDownload = false;
+
 	public List<String> securitiesNotDownlaoded = new ArrayList<String>();
 	public final MoneyMgrModel model;
 
@@ -114,78 +118,146 @@ public class QuoteDownloader {
 	 * @return JSON results
 	 */
 	private JSONObject loadQuoteHistory(String symbol, String function, boolean full) {
-		StringBuilder sb = new StringBuilder();
-		String json = "No quotes";
 		File outdir = new File(QifDom.qifDir, "quotes");
 		File outfile = new File(outdir, symbol + ".quote");
 
-		// Read the file if present
-		if (outfile.isFile() && outfile.canRead()) {
-			try {
-				LineNumberReader rdr = new LineNumberReader(new FileReader(outfile));
-				for (;;) {
-					String line = rdr.readLine();
-					if (line == null) {
-						rdr.close();
-						break;
-					}
+		String json = "No quotes";
 
-					sb.append(line);
-					sb.append('\n');
-				}
+		long now = System.currentTimeMillis();
+		long mod = outfile.lastModified();
+		long ONE_DAY = ((long) 1000) * 60 * 60 * 24;
 
-				json = sb.toString();
-			} catch (Exception e) {
-				Common.reportError("Error opening/reading file " + outfile.toString());
+		boolean refreshQuotes = false;
+		boolean oldQuotes = (now - mod) > ONE_DAY;
+		boolean retryAfterThrottle = false;
+
+		String msg = String.format("Checking quote history for '%s'", symbol);
+
+		for (;;) {
+			if (!refreshQuotes && outfile.isFile() && outfile.canRead()) {
+				msg += "... loading file";
+				json = loadQuoteFile(outfile);
+			} else if (disableDownload) {
+				Common.reportInfo(msg + "... downloads disabled");
+				return null;
+			} else {
+				msg += "... downloading quotes";
+				json = downloadQuotes(symbol, outfile, function, full);
+				oldQuotes = false;
 			}
-		} else {
-			// Download quotes
-			String charset = "UTF-8";
-
-			URLConnection connection = null;
-			InputStream response = null;
-
-			String urlString = String.format(queryPattern, //
-					DOMAIN, function, symbol, (full) ? FULL_HISTORY : "", API_KEY);
 
 			try {
-				connection = new URL(urlString).openConnection();
-				connection.setRequestProperty("Accept-Charset", charset);
-				response = connection.getInputStream();
-
-				try (Scanner scanner = new Scanner(response)) {
-					String line = scanner.useDelimiter("\\A").next();
-
-					sb.append(line);
+				if (json.startsWith("No quotes")) {
+					// We don't expect to be able to download for this security
+					Common.reportInfo(msg + "... download not available");
+					return null;
 				}
 
-				json = sb.toString();
-			} catch (Exception e) {
-				// e.printStackTrace();
-			} finally {
+				if (oldQuotes) {
+					msg += "... old, downloading latest";
+					refreshQuotes = true;
+					continue;
+				}
+
+				if (!json.contains("calls per minute")) {
+					break;
+				}
+
+				if (retryAfterThrottle) {
+					Common.reportInfo(msg + "... Hourly limit reached, disabling downloads");
+
+					disableDownload = true;
+					return null;
+				}
+
+				msg += "... limit reached, waiting 60s";
+				refreshQuotes = true;
+				retryAfterThrottle = true;
+
 				try {
-					if (response != null) {
-						response.close();
-					}
-				} catch (Exception e) {
+					Thread.sleep(60000);
+				} catch (InterruptedException e1) {
 				}
+
+			} catch (Exception e) {
+				Common.reportWarning(String.format( //
+						"%s...\n  Invalid quote JSON: '%s'", msg, json));
+				return null;
+			}
+		}
+
+		Common.reportInfo(msg + "... success");
+
+		return new JSONObject(json);
+	}
+
+	private String downloadQuotes(String symbol, File quoteFile, //
+			String function, boolean full) {
+		String charset = "UTF-8";
+
+		URLConnection connection = null;
+		InputStream response = null;
+
+		String urlString = String.format(queryPattern, //
+				DOMAIN, function, symbol, (full) ? FULL_HISTORY : "", API_KEY);
+
+		String json = "No quotes";
+		StringBuilder sb = new StringBuilder();
+
+		try {
+			connection = new URL(urlString).openConnection();
+			connection.setRequestProperty("Accept-Charset", charset);
+			response = connection.getInputStream();
+
+			try (Scanner scanner = new Scanner(response)) {
+				String line = scanner.useDelimiter("\\A").next();
+
+				sb.append(line);
 			}
 
+			json = sb.toString();
+		} catch (Exception e) {
+			// e.printStackTrace();
+		} finally {
 			try {
-				PrintWriter writer = new PrintWriter(outfile);
-				writer.print(json);
-				writer.close();
+				if (response != null) {
+					response.close();
+				}
 			} catch (Exception e) {
-
 			}
 		}
 
 		try {
-			if (!json.startsWith("No quotes")) {
-				return new JSONObject(json);
-			}
+			PrintWriter writer = new PrintWriter(quoteFile);
+			writer.print(json);
+			writer.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+
+		}
+
+		return json;
+	}
+
+	private String loadQuoteFile(File quoteFile) {
+		try {
+			LineNumberReader rdr = new LineNumberReader(new FileReader(quoteFile));
+			StringBuilder sb = new StringBuilder();
+
+			for (;;) {
+				String line = rdr.readLine();
+				if (line == null) {
+					rdr.close();
+					break;
+				}
+
+				sb.append(line);
+				sb.append('\n');
+			}
+
+			return sb.toString();
+
+		} catch (Exception e) {
+			Common.reportError("Error opening/reading file " + quoteFile.toString());
 		}
 
 		return null;

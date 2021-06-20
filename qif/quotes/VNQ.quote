@@ -2,11 +2,41 @@
     "Meta Data": {
         "1. Information": "Daily Time Series with Splits and Dividend Events",
         "2. Symbol": "VNQ",
-        "3. Last Refreshed": "2021-06-15",
+        "3. Last Refreshed": "2021-06-18",
         "4. Output Size": "Full size",
         "5. Time Zone": "US/Eastern"
     },
     "Time Series (Daily)": {
+        "2021-06-18": {
+            "1. open": "103.02",
+            "2. high": "103.465",
+            "3. low": "101.79",
+            "4. close": "101.79",
+            "5. adjusted close": "101.79",
+            "6. volume": "5357979",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-06-17": {
+            "1. open": "103.41",
+            "2. high": "103.703",
+            "3. low": "102.86",
+            "4. close": "103.55",
+            "5. adjusted close": "103.55",
+            "6. volume": "5055058",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-06-16": {
+            "1. open": "104.58",
+            "2. high": "105.05",
+            "3. low": "103.49",
+            "4. close": "103.68",
+            "5. adjusted close": "103.68",
+            "6. volume": "4495334",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
         "2021-06-15": {
             "1. open": "105.4",
             "2. high": "105.49",
