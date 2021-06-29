@@ -2,11 +2,21 @@
     "Meta Data": {
         "1. Information": "Daily Time Series with Splits and Dividend Events",
         "2. Symbol": "UNCMX",
-        "3. Last Refreshed": "2017-10-12",
+        "3. Last Refreshed": "2017-10-13",
         "4. Output Size": "Full size",
         "5. Time Zone": "US/Eastern"
     },
     "Time Series (Daily)": {
+        "2017-10-13": {
+            "1. open": "6.37",
+            "2. high": "6.37",
+            "3. low": "6.37",
+            "4. close": "6.37",
+            "5. adjusted close": "6.37",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
         "2017-10-12": {
             "1. open": "6.38",
             "2. high": "6.38",

@@ -2,11 +2,71 @@
     "Meta Data": {
         "1. Information": "Daily Time Series with Splits and Dividend Events",
         "2. Symbol": "VCIT",
-        "3. Last Refreshed": "2021-06-18",
+        "3. Last Refreshed": "2021-06-28",
         "4. Output Size": "Full size",
         "5. Time Zone": "US/Eastern"
     },
     "Time Series (Daily)": {
+        "2021-06-28": {
+            "1. open": "94.81",
+            "2. high": "94.93",
+            "3. low": "94.72",
+            "4. close": "94.9",
+            "5. adjusted close": "94.9",
+            "6. volume": "3475248",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-06-25": {
+            "1. open": "94.86",
+            "2. high": "94.88",
+            "3. low": "94.54",
+            "4. close": "94.685",
+            "5. adjusted close": "94.685",
+            "6. volume": "2982845",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-06-24": {
+            "1. open": "94.79",
+            "2. high": "94.86",
+            "3. low": "94.7",
+            "4. close": "94.81",
+            "5. adjusted close": "94.81",
+            "6. volume": "2956084",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-06-23": {
+            "1. open": "94.77",
+            "2. high": "94.88",
+            "3. low": "94.5",
+            "4. close": "94.7",
+            "5. adjusted close": "94.7",
+            "6. volume": "9649903",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-06-22": {
+            "1. open": "94.66",
+            "2. high": "94.87",
+            "3. low": "94.6",
+            "4. close": "94.87",
+            "5. adjusted close": "94.87",
+            "6. volume": "1515580",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-06-21": {
+            "1. open": "94.78",
+            "2. high": "94.86",
+            "3. low": "94.695",
+            "4. close": "94.73",
+            "5. adjusted close": "94.73",
+            "6. volume": "2379733",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
         "2021-06-18": {
             "1. open": "94.69",
             "2. high": "94.955",

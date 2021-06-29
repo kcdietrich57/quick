@@ -131,6 +131,7 @@ public class QuoteDownloader {
 		boolean oldQuotes = (now - mod) > ONE_DAY;
 		boolean retryAfterThrottle = false;
 
+		// TODO disregard securities that I don't hold any more?
 		String msg = String.format("Checking quote history for '%s'", symbol);
 
 		for (;;) {
