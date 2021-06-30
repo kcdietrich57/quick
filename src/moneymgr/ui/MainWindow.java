@@ -346,16 +346,7 @@ public class MainWindow extends JPanel {
 
 		this.model.setCurrentDate(date);
 
-		QDate aod = getAsOfDate();
-
-		int year = aod.getYear();
-		int lastMonth = aod.getMonth() - 1;
-		if (lastMonth < 1) {
-			lastMonth += 12;
-			--year;
-		}
-
-		this.startAsOfDate = new QDate(year, lastMonth, 1).getLastDayOfMonth();
+		this.startAsOfDate = date.getFirstDayOfMonth();
 	}
 
 	/** Set current display date */

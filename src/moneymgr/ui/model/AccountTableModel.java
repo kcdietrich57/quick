@@ -60,13 +60,6 @@ public class AccountTableModel //
 		QDate start = MainWindow.instance.startAsOfDate;
 		QDate end = MainWindow.instance.getAsOfDate();
 
-		if (this.showTodayBalance) {
-			QDate today = QDate.today();
-			if (start.compareTo(today) <= 0 && end.compareTo(today) >= 0) {
-				end = QDate.today();
-			}
-		}
-
 		boolean isopen = acct.isOpenDuring(start, end);
 		boolean isnonzero = !Common.isEffectivelyZero(acct.getValueForDate(end));
 

@@ -19,7 +19,10 @@ import org.json.JSONObject;
 import app.QifDom;
 import moneymgr.model.MoneyMgrModel;
 import moneymgr.model.QPrice;
+import moneymgr.model.Security;
+import moneymgr.model.SecurityPosition;
 import moneymgr.util.Common;
+import moneymgr.util.QDate;
 
 /**
  * Download security history from online service.<br>
@@ -118,20 +121,29 @@ public class QuoteDownloader {
 	 * @return JSON results
 	 */
 	private JSONObject loadQuoteHistory(String symbol, String function, boolean full) {
+		Security sec = this.model.findSecurityBySymbol(symbol);
+		SecurityPosition pos = this.model.portfolio.getPosition(sec);
+		BigDecimal shares = pos.getSharesForDate(QDate.today());
+		boolean isHeldToday = !Common.isEffectivelyZero(shares);
+		// TODO disregard securities that I don't hold any more?
+		// NB We don't know holdings yet when this is called during startup
+		isHeldToday = true;
+
 		File outdir = new File(QifDom.qifDir, "quotes");
 		File outfile = new File(outdir, symbol + ".quote");
 
 		String json = "No quotes";
 
-		long now = System.currentTimeMillis();
-		long mod = outfile.lastModified();
-		long ONE_DAY = ((long) 1000) * 60 * 60 * 24;
+		QDate now = QDate.today();
+		QDate mod = new QDate(outfile.lastModified());
+		boolean oldQuotes = isHeldToday && (now.subtract(mod) > 0);
 
+//		System.out.println(String.format("now: %s mod: %s held; %s old: %s", //
+//				now.toString(), mod.toString(), //
+//				Boolean.toString(isHeldToday), Boolean.toString(oldQuotes)));
 		boolean refreshQuotes = false;
-		boolean oldQuotes = (now - mod) > ONE_DAY;
 		boolean retryAfterThrottle = false;
 
-		// TODO disregard securities that I don't hold any more?
 		String msg = String.format("Checking quote history for '%s'", symbol);
 
 		for (;;) {
@@ -171,12 +183,12 @@ public class QuoteDownloader {
 					return null;
 				}
 
-				msg += "... limit reached, waiting 60s";
+				Common.reportInfo(msg + "... API limit reached, waiting 60s");
 				refreshQuotes = true;
 				retryAfterThrottle = true;
 
 				try {
-					Thread.sleep(60000);
+					Thread.sleep(61000);
 				} catch (InterruptedException e1) {
 				}
 
