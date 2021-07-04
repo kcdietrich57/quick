@@ -2,11 +2,41 @@
     "Meta Data": {
         "1. Information": "Daily Time Series with Splits and Dividend Events",
         "2. Symbol": "VEA",
-        "3. Last Refreshed": "2021-06-28",
+        "3. Last Refreshed": "2021-07-01",
         "4. Output Size": "Full size",
         "5. Time Zone": "US/Eastern"
     },
     "Time Series (Daily)": {
+        "2021-07-01": {
+            "1. open": "51.5",
+            "2. high": "51.68",
+            "3. low": "51.41",
+            "4. close": "51.67",
+            "5. adjusted close": "51.67",
+            "6. volume": "8125006",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-06-30": {
+            "1. open": "51.47",
+            "2. high": "51.6362",
+            "3. low": "51.33",
+            "4. close": "51.52",
+            "5. adjusted close": "51.52",
+            "6. volume": "9424285",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-06-29": {
+            "1. open": "51.93",
+            "2. high": "51.95",
+            "3. low": "51.79",
+            "4. close": "51.87",
+            "5. adjusted close": "51.87",
+            "6. volume": "7136379",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
         "2021-06-28": {
             "1. open": "52.05",
             "2. high": "52.05",
