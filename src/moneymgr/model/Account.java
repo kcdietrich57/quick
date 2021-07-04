@@ -204,7 +204,7 @@ public class Account {
 
 		this.transactions.add(idx, txn);
 	}
-	
+
 	public void removeTransaction(GenericTxn txn) {
 		if (this.transactions.contains(txn)) {
 			if (txn.isCleared()) {
@@ -385,6 +385,12 @@ public class Account {
 						|| (s.closingBalance.compareTo(balance) == 0)) {
 					return s;
 				}
+
+				Common.reportWarning(String.format( //
+						"Statement date (%s) matches but balance does not (%s/%s)", //
+						date.toString(), //
+						balance.toString(), //
+						s.closingBalance.toString()));
 			}
 		}
 

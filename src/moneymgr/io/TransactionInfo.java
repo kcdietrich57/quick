@@ -492,7 +492,8 @@ public class TransactionInfo {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			Common.reportWarning(String.format( //
+					"quantity/price parse error for '%s'", this.description));
 		}
 	}
 
