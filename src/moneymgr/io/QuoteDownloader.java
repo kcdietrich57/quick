@@ -152,7 +152,7 @@ public class QuoteDownloader {
 				json = loadQuoteFile(outfile);
 			} else if (disableDownload) {
 				Common.reportInfo(msg + "... downloads disabled");
-				return null;
+				break;
 			} else {
 				msg += "... downloading quotes";
 				json = downloadQuotes(symbol, outfile, function, full);
@@ -183,7 +183,7 @@ public class QuoteDownloader {
 					return null;
 				}
 
-				Common.reportInfo(msg + "... API limit reached, waiting 60s");
+				Common.reportInfo(msg + "\n  ... API limit reached, waiting 60s");
 				refreshQuotes = true;
 				retryAfterThrottle = true;
 

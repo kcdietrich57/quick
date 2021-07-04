@@ -6,6 +6,7 @@ import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
+import moneymgr.io.csv.CSVImport;
 import moneymgr.model.Account;
 import moneymgr.model.Security;
 import moneymgr.model.SecurityPortfolio;
@@ -177,7 +178,26 @@ public class StatementProcessor {
 
 				Security sec = this.qrdr.model.findSecurity(secStr);
 				if (sec == null) {
-					Common.reportError("Unknown security: " + secStr);
+					String sym;
+					String name;
+
+					if (CSVImport.predefinedSecurityMap.containsKey(secStr)) {
+						name = secStr;
+						sym = CSVImport.predefinedSecurityMap.get(name);
+					}
+					if (CSVImport.predefinedSymbolMap.containsKey(secStr)) {
+						sym = secStr;
+						name = CSVImport.predefinedSymbolMap.get(sym);
+					} else {
+						Common.reportWarning("Unknown security: " + secStr);
+						sym = secStr;
+						name = secStr;
+					}
+
+					Common.reportWarning(String.format( //
+							"Creating security: %s / '%s'", sym, name));
+					sec = new Security(sym, name);
+					this.qrdr.model.addSecurity(sec);
 				}
 
 				SecurityPortfolio hold = currstmt.holdings;

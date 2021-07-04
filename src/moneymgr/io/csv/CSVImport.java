@@ -35,8 +35,44 @@ import moneymgr.model.TxAction;
 import moneymgr.util.Common;
 import moneymgr.util.QDate;
 
-/** EXPERIMENTAL Import data from CSV file exported from MacOS Quicken */
+/** Import data from CSV file exported from MacOS Quicken */
 public class CSVImport {
+
+	public static final Map<String, String> predefinedSecurityMap = new HashMap<>();
+	public static final Map<String, String> predefinedSymbolMap = new HashMap<>();
+	public static final Map<String, BigDecimal> priceMap = new HashMap<>();
+
+	static {
+		predefinedSecurityMap.put("ISHARES CORE S&P 500 ETF IV", "IVV");
+		predefinedSecurityMap.put("ISHARES CORE MSCI EMERGING ETF IV", "IEMG");
+		predefinedSecurityMap.put("SPDR PORTFOLIO S&P 400 MID CP ETF IV", "SPMD");
+		predefinedSecurityMap.put("VANGUARD FTSE DEVELOPED MATS ETF IV", "VEA");
+		predefinedSecurityMap.put("VANGUARD INTRMDIAT TRM TRSRY ETF", "VGIT");
+		predefinedSecurityMap.put("VANGUARD INTERMEDIATE TERM COR ETF", "VCIT");
+		predefinedSecurityMap.put("VANGUARD REAL ESTATE ETF IV", "VNQ");
+		predefinedSecurityMap.put("VANGUARD TOTAL BOND MARKET ETF", "BND");
+		predefinedSecurityMap.put("WSDMTREE EMRG MKTS SMALLCAP DVD ETF", "DGS");
+		predefinedSecurityMap.put("DFA INTERNATIONAL SMALL COMPANY I", "DFISX");
+		predefinedSecurityMap.put("DFA US MICRO CAP I", "DFSCX");
+		predefinedSecurityMap.put("DFA US SMALL CAP VALUE I", "DFSVX");
+
+		for (Map.Entry<String, String> entry : predefinedSecurityMap.entrySet()) {
+			predefinedSymbolMap.put(entry.getValue(), entry.getKey());
+		}
+
+		priceMap.put("IVV", new BigDecimal("422.58"));
+		priceMap.put("IEMG", new BigDecimal("65.94"));
+		priceMap.put("SPMD", new BigDecimal("47.53"));
+		priceMap.put("VEA", new BigDecimal("52.95"));
+		priceMap.put("VCIT", new BigDecimal("94.44"));
+		priceMap.put("VGIT", new BigDecimal("67.58"));
+		priceMap.put("VNQ", new BigDecimal("103.68"));
+		priceMap.put("BND", new BigDecimal("85.36"));
+		priceMap.put("DGS", new BigDecimal("54.24"));
+		priceMap.put("DFISX", new BigDecimal("23.32"));
+		priceMap.put("DFSCX", new BigDecimal("29.33"));
+		priceMap.put("DFSVX", new BigDecimal("46.62"));
+	}
 
 	private static void infoMessage(String msg) {
 		if (QifDom.verbose) {
@@ -54,7 +90,7 @@ public class CSVImport {
 	public static void testCsvImport() {
 		String importDir = "/Users/greg/qif";
 		String csvfile = String.format("%s/%s", importDir, "DIETRICH.csv");
-		
+
 		importCSV(MoneyMgrApp.csvFilename);
 	}
 
@@ -68,7 +104,6 @@ public class CSVImport {
 		csvimp.cloneSourceModelInfo();
 		csvimp.importFile();
 
-		
 		QifDomReader rdr = new QifDomReader( //
 				csvimp.csvModel, new File(MoneyMgrApp.DATA_DIR));
 		rdr.postLoad();
