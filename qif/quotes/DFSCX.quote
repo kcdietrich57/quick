@@ -2,11 +2,41 @@
     "Meta Data": {
         "1. Information": "Daily Time Series with Splits and Dividend Events",
         "2. Symbol": "DFSCX",
-        "3. Last Refreshed": "2021-07-01",
+        "3. Last Refreshed": "2021-07-07",
         "4. Output Size": "Full size",
         "5. Time Zone": "US/Eastern"
     },
     "Time Series (Daily)": {
+        "2021-07-07": {
+            "1. open": "28.23",
+            "2. high": "28.23",
+            "3. low": "28.23",
+            "4. close": "28.23",
+            "5. adjusted close": "28.23",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-07-06": {
+            "1. open": "28.4",
+            "2. high": "28.4",
+            "3. low": "28.4",
+            "4. close": "28.4",
+            "5. adjusted close": "28.4",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-07-02": {
+            "1. open": "28.91",
+            "2. high": "28.91",
+            "3. low": "28.91",
+            "4. close": "28.91",
+            "5. adjusted close": "28.91",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
         "2021-07-01": {
             "1. open": "29.21",
             "2. high": "29.21",

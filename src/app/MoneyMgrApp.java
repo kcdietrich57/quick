@@ -47,7 +47,7 @@ public class MoneyMgrApp {
 		MoneyMgrModel csvModel = null;
 
 		boolean ENABLE_EXPERIMENTAL_CODE = false;
-		boolean ENABLE_CSV_IMPORT = false;
+		boolean ENABLE_CSV_IMPORT = true;
 
 		boolean savejson = false;
 		boolean comparejson = false;

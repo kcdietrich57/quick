@@ -2,11 +2,41 @@
     "Meta Data": {
         "1. Information": "Daily Time Series with Splits and Dividend Events",
         "2. Symbol": "SPMD",
-        "3. Last Refreshed": "2021-07-01",
+        "3. Last Refreshed": "2021-07-07",
         "4. Output Size": "Full size",
         "5. Time Zone": "US/Eastern"
     },
     "Time Series (Daily)": {
+        "2021-07-07": {
+            "1. open": "46.86",
+            "2. high": "47.1678",
+            "3. low": "46.527",
+            "4. close": "47.0",
+            "5. adjusted close": "47.0",
+            "6. volume": "1505977",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-07-06": {
+            "1. open": "47.5",
+            "2. high": "47.5",
+            "3. low": "46.54",
+            "4. close": "46.92",
+            "5. adjusted close": "46.92",
+            "6. volume": "570904",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-07-02": {
+            "1. open": "47.69",
+            "2. high": "47.73",
+            "3. low": "47.3075",
+            "4. close": "47.46",
+            "5. adjusted close": "47.46",
+            "6. volume": "536148",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
         "2021-07-01": {
             "1. open": "47.4",
             "2. high": "47.7299",

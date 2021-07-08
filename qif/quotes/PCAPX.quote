@@ -2,11 +2,71 @@
     "Meta Data": {
         "1. Information": "Daily Time Series with Splits and Dividend Events",
         "2. Symbol": "PCAPX",
-        "3. Last Refreshed": "2021-06-28",
+        "3. Last Refreshed": "2021-07-07",
         "4. Output Size": "Full size",
         "5. Time Zone": "US/Eastern"
     },
     "Time Series (Daily)": {
+        "2021-07-07": {
+            "1. open": "65.37",
+            "2. high": "65.37",
+            "3. low": "65.37",
+            "4. close": "65.37",
+            "5. adjusted close": "65.37",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-07-06": {
+            "1. open": "65.04",
+            "2. high": "65.04",
+            "3. low": "65.04",
+            "4. close": "65.04",
+            "5. adjusted close": "65.04",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-07-02": {
+            "1. open": "65.01",
+            "2. high": "65.01",
+            "3. low": "65.01",
+            "4. close": "65.01",
+            "5. adjusted close": "65.01",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-07-01": {
+            "1. open": "64.47",
+            "2. high": "64.47",
+            "3. low": "64.47",
+            "4. close": "64.47",
+            "5. adjusted close": "64.47",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-06-30": {
+            "1. open": "64.17",
+            "2. high": "64.17",
+            "3. low": "64.17",
+            "4. close": "64.17",
+            "5. adjusted close": "64.17",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-06-29": {
+            "1. open": "64.24",
+            "2. high": "64.24",
+            "3. low": "64.24",
+            "4. close": "64.24",
+            "5. adjusted close": "64.24",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
         "2021-06-28": {
             "1. open": "64.09",
             "2. high": "64.09",

@@ -2,11 +2,61 @@
     "Meta Data": {
         "1. Information": "Daily Time Series with Splits and Dividend Events",
         "2. Symbol": "FDGRX",
-        "3. Last Refreshed": "2021-06-28",
+        "3. Last Refreshed": "2021-07-06",
         "4. Output Size": "Full size",
         "5. Time Zone": "US/Eastern"
     },
     "Time Series (Daily)": {
+        "2021-07-06": {
+            "1. open": "38.51",
+            "2. high": "38.51",
+            "3. low": "38.51",
+            "4. close": "38.51",
+            "5. adjusted close": "38.51",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-07-02": {
+            "1. open": "38.34",
+            "2. high": "38.34",
+            "3. low": "38.34",
+            "4. close": "38.34",
+            "5. adjusted close": "38.34",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-07-01": {
+            "1. open": "38.06",
+            "2. high": "38.06",
+            "3. low": "38.06",
+            "4. close": "38.06",
+            "5. adjusted close": "38.06",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-06-30": {
+            "1. open": "38.03",
+            "2. high": "38.03",
+            "3. low": "38.03",
+            "4. close": "38.03",
+            "5. adjusted close": "38.03",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-06-29": {
+            "1. open": "38.1",
+            "2. high": "38.1",
+            "3. low": "38.1",
+            "4. close": "38.1",
+            "5. adjusted close": "38.1",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
         "2021-06-28": {
             "1. open": "38.03",
             "2. high": "38.03",

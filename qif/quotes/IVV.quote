@@ -2,11 +2,41 @@
     "Meta Data": {
         "1. Information": "Daily Time Series with Splits and Dividend Events",
         "2. Symbol": "IVV",
-        "3. Last Refreshed": "2021-07-01",
+        "3. Last Refreshed": "2021-07-07",
         "4. Output Size": "Full size",
         "5. Time Zone": "US/Eastern"
     },
     "Time Series (Daily)": {
+        "2021-07-07": {
+            "1. open": "435.57",
+            "2. high": "436.62",
+            "3. low": "433.41",
+            "4. close": "436.31",
+            "5. adjusted close": "436.31",
+            "6. volume": "4430929",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-07-06": {
+            "1. open": "435.67",
+            "2. high": "435.87",
+            "3. low": "431.87",
+            "4. close": "434.53",
+            "5. adjusted close": "434.53",
+            "6. volume": "4966668",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-07-02": {
+            "1. open": "433.54",
+            "2. high": "435.975",
+            "3. low": "433.2",
+            "4. close": "435.64",
+            "5. adjusted close": "435.64",
+            "6. volume": "3920033",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
         "2021-07-01": {
             "1. open": "430.71",
             "2. high": "432.47",
