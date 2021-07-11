@@ -2,11 +2,21 @@
     "Meta Data": {
         "1. Information": "Daily Time Series with Splits and Dividend Events",
         "2. Symbol": "DFSVX",
-        "3. Last Refreshed": "2021-07-07",
+        "3. Last Refreshed": "2021-07-08",
         "4. Output Size": "Full size",
         "5. Time Zone": "US/Eastern"
     },
     "Time Series (Daily)": {
+        "2021-07-08": {
+            "1. open": "43.37",
+            "2. high": "43.37",
+            "3. low": "43.37",
+            "4. close": "43.37",
+            "5. adjusted close": "43.37",
+            "6. volume": "0",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
         "2021-07-07": {
             "1. open": "43.96",
             "2. high": "43.96",

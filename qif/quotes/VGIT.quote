@@ -2,11 +2,31 @@
     "Meta Data": {
         "1. Information": "Daily Time Series with Splits and Dividend Events",
         "2. Symbol": "VGIT",
-        "3. Last Refreshed": "2021-07-07",
+        "3. Last Refreshed": "2021-07-09",
         "4. Output Size": "Full size",
         "5. Time Zone": "US/Eastern"
     },
     "Time Series (Daily)": {
+        "2021-07-09": {
+            "1. open": "68.15",
+            "2. high": "68.15",
+            "3. low": "68.09",
+            "4. close": "68.1",
+            "5. adjusted close": "68.1",
+            "6. volume": "391993",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
+        "2021-07-08": {
+            "1. open": "68.23",
+            "2. high": "68.3489",
+            "3. low": "68.21",
+            "4. close": "68.29",
+            "5. adjusted close": "68.29",
+            "6. volume": "472038",
+            "7. dividend amount": "0.0000",
+            "8. split coefficient": "1.0"
+        },
         "2021-07-07": {
             "1. open": "68.08",
             "2. high": "68.19",
