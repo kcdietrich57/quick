@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -29,6 +30,24 @@ import moneymgr.util.QDate;
  * Use information cached in files instead if available.
  */
 public class QuoteDownloader {
+	private static final List<String> whitelist = new ArrayList<>( //
+			Arrays.asList(new String[] { //
+					"BND", "DFISX", "DFSCX", "DFSVX", "DGS", "IEMG", //
+					"IVV", "SPMD", "VEA", "VGIT", "VCIT", "VNQ" //
+			}));
+
+	private static final List<String> blacklist = new ArrayList<>( //
+			Arrays.asList(new String[] { //
+					"ASCL", "CNTX", "CSIEQ", "CSIG", "INVX", //
+					"LCVIDX", "LCZX", "PBEGX", "QPISQ", "SBMM", //
+					"USTS", "UTS", "FNR", "TR2020", "TR2025", //
+					"ETMM2014986", "ETMMBR", "ETMMGD", "ETMMTD", "ETRDZ", //
+					"FIDRETMM", "INVMM", "MMDA1", "OLDEMM", //
+					"STABLE", "TBOND1", "TR2030", "CCCFran", "CPC Bond", //
+					"Total Bond Market 0", "Unidentified security", //
+					"#2021396", "#2145605" //
+			}));
+
 	private static final String queryPattern = "%s/query?function=%s&symbol=%s%s&apikey=%s";
 
 	private static final String DOMAIN = "https://www.alphavantage.co";
@@ -125,9 +144,9 @@ public class QuoteDownloader {
 		SecurityPosition pos = this.model.portfolio.getPosition(sec);
 		BigDecimal shares = pos.getSharesForDate(QDate.today());
 		boolean isHeldToday = !Common.isEffectivelyZero(shares);
-		// TODO disregard securities that I don't hold any more?
+
 		// NB We don't know holdings yet when this is called during startup
-		isHeldToday = true;
+		isHeldToday = whitelist.contains(sec.getSymbol());
 
 		File outdir = new File(QifDom.qifDir, "quotes");
 		File outfile = new File(outdir, symbol + ".quote");
@@ -136,22 +155,27 @@ public class QuoteDownloader {
 
 		QDate now = QDate.today();
 		QDate mod = new QDate(outfile.lastModified());
-		boolean oldQuotes = isHeldToday && (now.subtract(mod) > 0);
+		boolean oldQuotes = now.subtract(mod) > 0;
 
-//		System.out.println(String.format("now: %s mod: %s held; %s old: %s", //
-//				now.toString(), mod.toString(), //
-//				Boolean.toString(isHeldToday), Boolean.toString(oldQuotes)));
 		boolean refreshQuotes = false;
 		boolean retryAfterThrottle = false;
 
 		String msg = String.format("Checking quote history for '%s'", symbol);
 
 		for (;;) {
+			if (blacklist.contains(sec.getSymbol())) {
+				msg += "... in blacklist";
+				return null;
+			}
+
 			if (!refreshQuotes && outfile.isFile() && outfile.canRead()) {
 				msg += "... loading file";
 				json = loadQuoteFile(outfile);
 			} else if (disableDownload) {
 				Common.reportInfo(msg + "... downloads disabled");
+				break;
+			} else if (!whitelist.contains(sec.getSymbol())) {
+				msg += "... not in whitelist";
 				break;
 			} else {
 				msg += "... downloading quotes";
@@ -199,7 +223,7 @@ public class QuoteDownloader {
 			}
 		}
 
-		Common.reportInfo(msg + "... success");
+		Common.reportInfo(msg + "... complete");
 
 		return new JSONObject(json);
 	}
